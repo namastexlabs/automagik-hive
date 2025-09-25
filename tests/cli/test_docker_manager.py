@@ -15,7 +15,7 @@ Safety guarantees:
 
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open, call
+from unittest.mock import patch, MagicMock, mock_open, call, ANY
 import subprocess
 import yaml
 
@@ -254,7 +254,7 @@ class TestContainerOperations:
         result = manager._get_containers("unknown")
         
         assert result == []
-        mock_print.assert_called_with("❌ Unknown component: unknown")
+        mock_print.assert_called_with("❌ Unsupported component: unknown")
 
     def test_container_exists_true(self, mock_all_subprocess):
         """Test container exists check returns True."""
@@ -352,14 +352,6 @@ class TestDockerfileAndImageManagement:
         result = manager._get_dockerfile_path("workspace")
         
         expected = manager.project_root / "docker" / "main" / "Dockerfile"
-        assert result == expected
-
-    def test_get_dockerfile_path_agent(self):
-        """Test getting Dockerfile path for agent component."""
-        manager = DockerManager()
-        result = manager._get_dockerfile_path("agent")
-        
-        expected = manager.project_root / "docker" / "agent" / "Dockerfile.api"
         assert result == expected
 
     def test_get_dockerfile_path_unknown_component(self):
@@ -480,17 +472,17 @@ class TestDataDirectoryManagement:
     @patch('os.chown', side_effect=PermissionError("Permission denied"))
     @patch('subprocess.run')
     def test_create_data_directories_sudo_fallback(self, mock_subprocess, mock_chown, mock_mkdir, mock_getgid, mock_getuid):
-        """Test data directory creation with sudo fallback."""
+        """Test workspace data directory fallback when chown requires sudo."""
         mock_subprocess.return_value = MagicMock(returncode=0)
-        
+
         manager = DockerManager()
-        manager._create_data_directories_with_ownership("agent")
-        
-        expected_path = manager.project_root / "data" / "postgres-agent"
+        manager._create_data_directories_with_ownership("workspace")
+
+        expected_path = manager.project_root / "data" / "postgres"
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
         mock_subprocess.assert_called_once_with(
-            ["sudo", "chown", "-R", "1001:1001", str(expected_path)], 
-            check=False
+            ["sudo", "chown", "-R", "1001:1001", str(expected_path)],
+            check=False,
         )
 
 
@@ -520,29 +512,6 @@ class TestDockerComposeOperations:
         expected_compose_file = manager.project_root / "docker/main/docker-compose.yml"
         mock_run.assert_called_once_with([
             "docker", "compose", "-f", str(expected_compose_file), "up", "-d", "postgres"
-        ], check=True)
-
-    @patch('pathlib.Path.exists')
-    @patch.object(DockerManager, '_create_compose_env_file')
-    @patch.object(DockerManager, '_create_data_directories_with_ownership')
-    @patch.object(DockerManager, '_get_docker_compose_command')
-    @patch('cli.docker_manager.subprocess.run')
-    def test_create_containers_via_compose_agent(self, mock_run, mock_get_compose, mock_create_dirs, mock_create_env, mock_exists):
-        """Test creating agent containers via Docker Compose."""
-        mock_exists.return_value = True
-        mock_get_compose.return_value = "docker-compose"
-        mock_run.return_value = None
-        
-        manager = DockerManager()
-        credentials = {"postgres_user": "test", "postgres_password": "pass", "postgres_database": "db"}
-        result = manager._create_containers_via_compose("agent", credentials)
-        
-        assert result is True
-        
-        # Should call docker-compose without specific service (starts all services)
-        expected_compose_file = manager.project_root / "docker/agent/docker-compose.yml"
-        mock_run.assert_called_once_with([
-            "docker-compose", "-f", str(expected_compose_file), "up", "-d"
         ], check=True)
 
     @patch('pathlib.Path.exists')
@@ -925,7 +894,7 @@ class TestInteractiveInstallation:
         
         manager = DockerManager()
         result = manager._interactive_install()
-        
+
         assert result is True
         mock_input.assert_called_once()
 
@@ -937,7 +906,7 @@ class TestInteractiveInstallation:
     def test_interactive_install_recreate_db(self, mock_install, mock_run_command, mock_running, mock_exists, mock_input):
         """Test interactive installation with database recreation."""
         # User choices: install hive, use container, recreate db
-        mock_input.side_effect = ["y", "1", "c", "n", "n"]  # yes hive, container, recreate, no genie, no agent
+        mock_input.side_effect = ["y", "1", "c"]  # install hive, use container, recreate db
         mock_exists.return_value = True
         mock_running.return_value = True
         # Mock _run_command to return empty string for volume list (no volumes found)
@@ -964,7 +933,7 @@ class TestInteractiveInstallation:
     @patch.object(DockerManager, 'install')
     def test_interactive_install_reuse_db(self, mock_install, mock_exists, mock_input):
         """Test interactive installation with database reuse."""
-        mock_input.side_effect = ["y", "1", "r", "n", "n"]  # yes hive, container, reuse, no genie, no agent  
+        mock_input.side_effect = ["y", "1", "r"]  # install hive, use container, reuse db
         mock_exists.return_value = True
         mock_install.return_value = True
         
@@ -989,7 +958,7 @@ class TestInteractiveInstallation:
     def test_interactive_install_invalid_choices(self, mock_install, mock_input):
         """Test interactive installation with invalid user choices."""
         # Invalid choice, then valid choice
-        mock_input.side_effect = ["maybe", "y", "3", "1", "n", "n"]
+        mock_input.side_effect = ["maybe", "y", "3", "1"]
         mock_install.return_value = True
         
         manager = DockerManager()
@@ -997,21 +966,7 @@ class TestInteractiveInstallation:
         
         # Should handle invalid input gracefully
         assert result is True
-
-    @patch('builtins.input')
-    @patch.object(DockerManager, 'install')
-    def test_interactive_install_all_components(self, mock_install, mock_input):
-        """Test interactive installation with all components selected."""
-        mock_input.side_effect = ["y", "1", "y", "y"]  # yes hive, container, yes genie, yes agent
-        mock_install.return_value = True
-        
-        manager = DockerManager()
-        result = manager._interactive_install()
-        
-        assert result is True
-        # Should install both workspace and agent
-        mock_install.assert_any_call("workspace")
-        mock_install.assert_any_call("agent")
+        mock_install.assert_called_once_with("workspace")
 
 
 class TestErrorHandlingAndEdgeCases:
@@ -1085,23 +1040,30 @@ class TestErrorHandlingAndEdgeCases:
         
         assert result is False
 
-    @patch.object(DockerManager, '_check_docker')
-    @patch('builtins.print')
-    def test_install_all_components(self, mock_print, mock_check_docker, mock_credential_service):
-        """Test installation of all components."""
-        mock_check_docker.return_value = True
-        # Use the existing mock_credential_service fixture
+    @patch.object(DockerManager, '_create_containers_via_compose', return_value=True)
+    @patch.object(DockerManager, '_create_network')
+    @patch.object(DockerManager, '_check_docker', return_value=True)
+    @patch('time.sleep')
+    def test_install_all_components(self, mock_sleep, mock_check_docker, mock_create_network, mock_create_containers, mock_credential_service):
+        """`--install all` maps to workspace-only deployment."""
         mock_instance = mock_credential_service.return_value
         mock_instance.install_all_modes.return_value = {
-            "agent": {"postgres_user": "test", "api_key": "key1"},
-            "workspace": {"postgres_user": "test", "api_key": "key2"}
+            "workspace": {
+                "postgres_user": "test",
+                "postgres_password": "pass",
+                "postgres_database": "hive_workspace",
+                "api_key": "key"
+            }
         }
-        
-        # This would require more extensive mocking to complete fully
-        # Focus on the entry point validation
+
         manager = DockerManager()
-        # Should not crash with "all" parameter
-        # Further implementation would require complete container creation mocking
+        result = manager.install("all")
+
+        assert result is True
+        mock_check_docker.assert_called_once()
+        mock_create_network.assert_called_once()
+        mock_instance.install_all_modes.assert_called_once_with(["workspace"])
+        mock_create_containers.assert_called_once_with("workspace", ANY)
 
 
 class TestIntegrationScenarios:
@@ -1136,30 +1098,6 @@ class TestIntegrationScenarios:
         mock_instance.install_all_modes.assert_called_once_with(["workspace"])
         mock_create_containers.assert_called_once()
 
-    @patch.object(DockerManager, '_get_containers', return_value=["hive-postgres", "hive-api"])
-    @patch.object(DockerManager, '_container_exists', return_value=True)
-    @patch.object(DockerManager, '_container_running')
-    @patch.object(DockerManager, '_run_command')
-    def test_agent_multi_container_operations(self, mock_run_command, mock_running, mock_exists, mock_get_containers):
-        """Test operations on agent component with multiple containers."""
-        # Setup different running states for containers
-        def running_side_effect(container):
-            if container == "hive-postgres":
-                return True
-            elif container == "hive-api":
-                return False
-            return False
-        
-        mock_running.side_effect = running_side_effect
-        mock_run_command.return_value = True  # Success
-        
-        manager = DockerManager()
-        result = manager.start("agent")
-        
-        # Should start only the stopped container
-        assert result is True
-        mock_run_command.assert_called_once_with(["docker", "start", "hive-api"])
-
     @patch.object(DockerManager, '_get_containers', return_value=[])
     def test_operations_on_empty_component(self, mock_get_containers):
         """Test various operations when component has no containers."""
@@ -1178,8 +1116,9 @@ class TestIntegrationScenarios:
 
 
 @pytest.mark.parametrize("component,expected_containers", [
-    ("workspace", ["hive-postgres"]),
+    ("workspace", ["hive-postgres", "hive-api"]),
     ("postgres", ["hive-postgres"]),
+    ("api", ["hive-api"]),
     ("all", ["hive-postgres", "hive-api"]),
 ])
 def test_get_containers_parametrized(component, expected_containers):
@@ -1189,22 +1128,17 @@ def test_get_containers_parametrized(component, expected_containers):
     assert set(result) == set(expected_containers)
 
 
-@pytest.mark.parametrize("component,expected_port", [
-    ("workspace", 5532),
-    ("agent", 35532),
-    ("genie", 45532),
+@pytest.mark.parametrize("env_var,expected_port", [
+    ("HIVE_POSTGRES_PORT", 5532),
 ])
 @patch.dict('os.environ', {
     'HIVE_POSTGRES_PORT': '5532',
-    'HIVE_AGENT_POSTGRES_PORT': '35532', 
-    'HIVE_AGENT_API_PORT': '38886',
-    'HIVE_GENIE_POSTGRES_PORT': '45532',
-    'HIVE_GENIE_API_PORT': '48886'
+    'HIVE_API_PORT': '8886'
 })
-def test_postgres_port_mapping(component, expected_port):
-    """Parametrized test for PostgreSQL port mappings."""
+def test_postgres_port_mapping(env_var, expected_port):
+    """Ensure workspace ports derive from environment variables."""
     manager = DockerManager()
-    assert manager.PORTS[component]["postgres"] == expected_port
+    assert manager.PORTS["postgres"] == expected_port
 
 
 # Edge case and boundary condition tests
@@ -1352,7 +1286,7 @@ class TestPerformanceEdgeCases:
         
         # All results should be identical (thread-safe access)
         assert len(results) == 10
-        assert all(result == ["hive-postgres"] for result in results)
+        assert all(result == ["hive-postgres", "hive-api"] for result in results)
 
 
 # ============================================================================
@@ -1495,13 +1429,14 @@ class TestComprehensiveCoverage:
         """Verify all container types are properly handled."""
         manager = DockerManager()
         
-        # Test each defined component
+        # Test each defined component returns at least one container
         for component in manager.CONTAINERS.keys():
             containers = manager._get_containers(component)
             assert len(containers) > 0, f"Component {component} should have containers"
-            
-            # Verify port mappings exist
-            assert component in manager.PORTS, f"Component {component} should have port mappings"
+
+        ports = manager.PORTS
+        assert ports["postgres"] == 5532
+        assert ports["api"] == 8886
 
     @patch.dict('os.environ', {
         'HIVE_POSTGRES_PORT': '5532',

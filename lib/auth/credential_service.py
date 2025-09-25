@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
+from lib.auth.env_file_manager import EnvFileManager
 from lib.logging import logger
 
 
@@ -32,33 +33,56 @@ class CredentialService:
         "postgres": 5532,
         "api": 8886
     }
+    DEFAULT_BASE_PORTS = {
+        "db": DEFAULT_PORTS["postgres"],
+        "api": DEFAULT_PORTS["api"],
+    }
     
     # Temporary compatibility - to be removed
     PORT_PREFIXES = {"workspace": ""}
     DATABASES = {"workspace": "hive"}
+    CONTAINERS = {
+        "workspace": {
+            "postgres": "hive-postgres",
+            "api": "hive-api",
+        }
+    }
 
-    def __init__(self, project_root: Path = None, env_file: Path = None) -> None:
+    def __init__(
+        self,
+        project_root: Path | None = None,
+        env_file: Path | None = None,
+        env_manager: EnvFileManager | None = None,
+    ) -> None:
         """
         Initialize credential service.
 
         Args:
             project_root: Project root directory (defaults to current working directory)
             env_file: Path to environment file (defaults to .env) - for backward compatibility
+            env_manager: Optional env file manager instance for dependency injection
         """
-        # Handle backward compatibility
-        if env_file is not None and project_root is None:
-            # Legacy usage: CredentialService(env_file=Path(".env"))
-            self.project_root = env_file.parent if env_file.parent != Path(".") else Path.cwd()
-            self.env_file = env_file
+        if env_manager is not None:
+            self.env_manager = env_manager
         else:
-            # New usage: CredentialService(project_root=Path("/path"))
-            self.project_root = project_root or Path.cwd()
-            self.env_file = self.project_root / ".env"
+            self.env_manager = EnvFileManager(
+                project_root=project_root,
+                env_file=env_file,
+            )
+
+        self.project_root = self.env_manager.project_root
+        self.env_file = self.env_manager.primary_env_path
+        self.master_env_file = self.env_manager.master_env_path
         self.postgres_user_var = "POSTGRES_USER"
         self.postgres_password_var = "POSTGRES_PASSWORD"
         self.postgres_db_var = "POSTGRES_DB"
         self.database_url_var = "HIVE_DATABASE_URL"
         self.api_key_var = "HIVE_API_KEY"
+
+    def _refresh_env_paths(self) -> None:
+        """Refresh cached env file paths from the manager."""
+        self.env_file = self.env_manager.primary_env_path
+        self.master_env_file = self.env_manager.master_env_path
 
     def generate_postgres_credentials(
         self, host: str = "localhost", port: int = 5532, database: str = "hive"
@@ -182,51 +206,8 @@ class CredentialService:
         Returns:
             Dict containing extracted credentials (may contain None values)
         """
-        credentials = {
-            "user": None,
-            "password": None,
-            "database": None,
-            "host": None,
-            "port": None,
-            "url": None,
-        }
-
-        if not self.env_file.exists():
-            logger.warning("Environment file not found", env_file=str(self.env_file))
-            return credentials
-
-        try:
-            env_content = self.env_file.read_text()
-
-            # Look for HIVE_DATABASE_URL
-            for line in env_content.splitlines():
-                line = line.strip()
-                if line.startswith(f"{self.database_url_var}="):
-                    url = line.split("=", 1)[1].strip()
-                    if url and "postgresql+psycopg://" in url:
-                        credentials["url"] = url
-
-                        # Parse URL to extract components
-                        parsed = urlparse(url)
-                        if parsed.username:
-                            credentials["user"] = parsed.username
-                        if parsed.password:
-                            credentials["password"] = parsed.password
-                        if parsed.hostname:
-                            credentials["host"] = parsed.hostname
-                        if parsed.port:
-                            credentials["port"] = str(parsed.port)
-                        if parsed.path and len(parsed.path) > 1:
-                            credentials["database"] = parsed.path[
-                                1:
-                            ]  # Remove leading /
-
-                        logger.info("PostgreSQL credentials extracted from .env")
-                        break
-
-        except Exception as e:
-            logger.error("Failed to extract PostgreSQL credentials", error=str(e))
-
+        credentials = self.env_manager.extract_postgres_credentials(self.database_url_var)
+        self._refresh_env_paths()
         return credentials
 
     def extract_hive_api_key_from_env(self) -> str | None:
@@ -238,25 +219,9 @@ class CredentialService:
         Returns:
             API key if found, None otherwise
         """
-        if not self.env_file.exists():
-            logger.warning("Environment file not found", env_file=str(self.env_file))
-            return None
-
-        try:
-            env_content = self.env_file.read_text()
-
-            for line in env_content.splitlines():
-                line = line.strip()
-                if line.startswith(f"{self.api_key_var}="):
-                    api_key = line.split("=", 1)[1].strip()
-                    if api_key:
-                        logger.info("Hive API key extracted from .env")
-                        return api_key
-
-        except Exception as e:
-            logger.error("Failed to extract Hive API key", error=str(e))
-
-        return None
+        api_key = self.env_manager.extract_api_key(self.api_key_var)
+        self._refresh_env_paths()
+        return api_key
 
     def save_credentials_to_env(
         self,
@@ -273,47 +238,32 @@ class CredentialService:
             create_if_missing: Create .env file if it doesn't exist
         """
         logger.info("Saving credentials to .env file")
+        updates: Dict[str, str] = {}
 
-        env_content = []
-        postgres_found = False
-        api_key_found = False
+        if postgres_creds and postgres_creds.get("url"):
+            updates[self.database_url_var] = postgres_creds["url"]
 
-        # Read existing content if file exists
-        if self.env_file.exists():
-            env_content = self.env_file.read_text().splitlines()
-        elif not create_if_missing:
-            logger.error("Environment file does not exist and create_if_missing=False")
+        if api_key:
+            updates[self.api_key_var] = api_key
+
+        if not updates:
+            logger.debug("No credential updates provided; skipping env write")
             return
 
-        # Update PostgreSQL database URL
-        if postgres_creds:
-            for i, line in enumerate(env_content):
-                if line.startswith(f"{self.database_url_var}="):
-                    env_content[i] = f"{self.database_url_var}={postgres_creds['url']}"
-                    postgres_found = True
-                    break
+        success = self.env_manager.update_values(
+            updates,
+            create_if_missing=create_if_missing,
+        )
 
-            if not postgres_found:
-                env_content.append(f"{self.database_url_var}={postgres_creds['url']}")
+        if not success:
+            logger.error(
+                "Failed to persist credentials to env file",
+                env_file=str(self.env_file),
+            )
+            return
 
-        # Update API key
-        if api_key:
-            for i, line in enumerate(env_content):
-                if line.startswith(f"{self.api_key_var}="):
-                    env_content[i] = f"{self.api_key_var}={api_key}"
-                    api_key_found = True
-                    break
-
-            if not api_key_found:
-                env_content.append(f"{self.api_key_var}={api_key}")
-
-        # Write back to file
-        try:
-            self.env_file.write_text("\n".join(env_content) + "\n")
-            logger.info("Credentials saved to .env file successfully")
-        except Exception as e:
-            logger.error("Failed to save credentials to .env file", error=str(e))
-            raise
+        self._refresh_env_paths()
+        logger.info("Credentials saved to .env file successfully")
 
     def sync_mcp_config_with_credentials(self, mcp_file: Path | None = None) -> None:
         """
@@ -544,38 +494,14 @@ class CredentialService:
         Returns:
             Dict containing base ports for db and api
         """
-        base_ports = self.DEFAULT_BASE_PORTS.copy()
-        
-        if not self.master_env_file.exists():
-            logger.debug("No .env file found, using default base ports", defaults=base_ports)
-            return base_ports
-        
-        try:
-            env_content = self.master_env_file.read_text()
-            
-            for line in env_content.splitlines():
-                line = line.strip()
-                if line.startswith("HIVE_DATABASE_URL="):
-                    url = line.split("=", 1)[1].strip()
-                    if "postgresql+psycopg://" in url:
-                        parsed = urlparse(url)
-                        if parsed.port:
-                            base_ports["db"] = parsed.port
-                            logger.debug("Found custom database port in .env", port=parsed.port)
-                            
-                elif line.startswith("HIVE_API_PORT="):
-                    port = line.split("=", 1)[1].strip()
-                    try:
-                        base_ports["api"] = int(port)
-                        logger.debug("Found custom API port in .env", port=port)
-                    except ValueError:
-                        logger.warning("Invalid API port in .env, using default", invalid_port=port)
-                        
-        except Exception as e:
-            logger.error("Failed to extract base ports from .env", error=str(e))
-            
-        logger.info("Base ports extracted", ports=base_ports)
-        return base_ports
+        ports = self.env_manager.extract_base_ports(
+            self.DEFAULT_BASE_PORTS,
+            self.database_url_var,
+            "HIVE_API_PORT",
+        )
+        self._refresh_env_paths()
+        logger.info("Base ports extracted", ports=ports)
+        return ports
     
     def calculate_ports(self, mode: str, base_ports: Dict[str, int]) -> Dict[str, int]:
         """Compatibility method - returns base ports for workspace."""
@@ -793,13 +719,15 @@ class CredentialService:
             # Generate new simplified credentials
             new_creds = self.generate_credentials()
             
+            normalized_master_creds = self._normalize_master_credentials_payload(new_creds)
+
             # Save credentials to .env file
-            self._save_master_credentials(new_creds)
+            self._save_master_credentials(normalized_master_creds)
             
             # Format for backward compatibility
             credentials = {
-                "postgres_user": new_creds["HIVE_POSTGRES_USER"],
-                "postgres_password": new_creds["HIVE_POSTGRES_PASSWORD"],
+                "postgres_user": normalized_master_creds["postgres_user"],
+                "postgres_password": normalized_master_creds["postgres_password"],
                 "postgres_database": "hive",
                 "postgres_host": "localhost",
                 "postgres_port": new_creds["HIVE_POSTGRES_PORT"],
@@ -879,57 +807,98 @@ class CredentialService:
                 
         except Exception as e:
             logger.error("Failed to extract existing master credentials", error=str(e))
-            
+        
         return None
         
+    def _normalize_master_credentials_payload(
+        self, master_credentials: Dict[str, str] | None
+    ) -> Dict[str, str]:
+        """Normalize incoming payloads to the master credential schema."""
+        if not master_credentials:
+            raise ValueError("Master credentials payload cannot be empty")
+
+        postgres_user = master_credentials.get("postgres_user") or master_credentials.get(
+            "HIVE_POSTGRES_USER"
+        )
+        postgres_password = master_credentials.get("postgres_password") or master_credentials.get(
+            "HIVE_POSTGRES_PASSWORD"
+        )
+
+        api_key_base = master_credentials.get("api_key_base")
+        if not api_key_base:
+            raw_api_key = master_credentials.get("HIVE_API_KEY") or master_credentials.get("api_key")
+            if raw_api_key and raw_api_key.startswith("hive_"):
+                api_key_base = raw_api_key[len("hive_"):]
+            else:
+                api_key_base = raw_api_key
+
+        normalized = {
+            "postgres_user": postgres_user,
+            "postgres_password": postgres_password,
+            "api_key_base": api_key_base,
+        }
+
+        missing = [key for key, value in normalized.items() if not value]
+        if missing:
+            raise ValueError(
+                "Missing required master credential fields after normalization: "
+                + ", ".join(missing)
+            )
+
+        return normalized
+
     def _save_master_credentials(self, master_credentials: Dict[str, str]) -> None:
         """Save master credentials to main .env file."""
         logger.info("Saving master credentials to main .env file")
-        
-        # Create main .env from .env.example if it doesn't exist
-        if not self.master_env_file.exists():
+        master_credentials = self._normalize_master_credentials_payload(master_credentials)
+
+        primary_exists = self.env_manager.primary_env_path.exists()
+        alias_exists = self.env_manager.alias_env_path.exists()
+
+        if not primary_exists and alias_exists:
+            self.env_manager.sync_alias()
+        elif not primary_exists and not alias_exists:
             env_example = self.project_root / ".env.example"
-            if env_example.exists():
-                logger.info("Creating .env from .env.example template with comprehensive configuration")
-                self.master_env_file.write_text(env_example.read_text())
-            else:
-                logger.warning(".env.example not found, creating minimal .env file")
-                self.master_env_file.write_text(self._get_base_env_template())
-        
-        # Update credentials in .env file
-        env_content = self.master_env_file.read_text()
-        lines = env_content.splitlines()
-        
+            try:
+                if env_example.exists():
+                    logger.info(
+                        "Creating .env from .env.example template with comprehensive configuration"
+                    )
+                    content = env_example.read_text()
+                else:
+                    logger.warning(
+                        ".env.example not found, creating minimal .env file"
+                    )
+                    content = self._get_base_env_template()
+                self.env_manager.primary_env_path.write_text(content)
+                self.env_manager.sync_alias()
+            except OSError as error:
+                logger.error(
+                    "Failed to hydrate master env file",
+                    file=str(self.env_manager.primary_env_path),
+                    error=str(error),
+                )
+
         # Generate main workspace credentials for main .env
         main_db_url = (
             f"postgresql+psycopg://{master_credentials['postgres_user']}:"
             f"{master_credentials['postgres_password']}@localhost:5532/hive"
         )
         main_api_key = f"hive_{master_credentials['api_key_base']}"
-        
-        # Update lines
-        modified_lines = []
-        db_url_found = False
-        api_key_found = False
-        
-        for line in lines:
-            if line.startswith("HIVE_DATABASE_URL="):
-                modified_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
-                db_url_found = True
-            elif line.startswith("HIVE_API_KEY="):
-                modified_lines.append(f"HIVE_API_KEY={main_api_key}")
-                api_key_found = True
-            else:
-                modified_lines.append(line)
-        
-        # Add missing entries
-        if not db_url_found:
-            modified_lines.append(f"HIVE_DATABASE_URL={main_db_url}")
-        if not api_key_found:
-            modified_lines.append(f"HIVE_API_KEY={main_api_key}")
-            
-        self.master_env_file.write_text("\n".join(modified_lines) + "\n")
-        logger.info("Master credentials saved to .env with all comprehensive configurations from template")
+        updates = {
+            "HIVE_DATABASE_URL": main_db_url,
+            "HIVE_API_KEY": main_api_key,
+        }
+
+        success = self.env_manager.update_values(updates, create_if_missing=True)
+        if success:
+            logger.info(
+                "Master credentials saved to .env with all comprehensive configurations from template"
+            )
+        else:
+            logger.error("Failed to persist master credentials to env file")
+
+        self._refresh_env_paths()
         
     def _get_base_env_template(self) -> str:
         """Get base environment template for new installations."""
