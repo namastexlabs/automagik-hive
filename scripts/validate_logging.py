@@ -14,6 +14,8 @@ from typing import Any
 
 import yaml
 
+from lib.logging import initialize_logging
+
 # Emoji categories for validation
 EMOJI_CATEGORIES = {
     "🔧": "System/Config",
@@ -470,6 +472,8 @@ class LoggingValidator:
 
 
 def main():
+    initialize_logging(surface="scripts.validate_logging")
+
     parser = argparse.ArgumentParser(
         description="Validate logging standards compliance",
     )

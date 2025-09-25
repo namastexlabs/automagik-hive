@@ -60,23 +60,26 @@ def resolve_ai_root(explicit_path: Optional[Union[str, Path]] = None,
     Raises:
         AIRootError: If resolved path doesn't exist or isn't a directory
     """
-    # DEBUG: Add detailed logging to track resolution process
     from lib.logging import logger
-    logger.debug(f"DEBUG AI ROOT: Starting resolution with explicit_path={explicit_path}, settings={settings}")
+    logger.debug(
+        "AI root resolution started",
+        explicit_path=explicit_path,
+        settings=settings,
+    )
 
     resolved_path = None
 
     # Level 1: Explicit path (highest precedence) - treat empty string as None
     if explicit_path is not None and explicit_path != "":
         resolved_path = Path(explicit_path)
-        logger.debug(f"DEBUG AI ROOT: Level 1 - Explicit path: {resolved_path}")
+        logger.debug("AI root resolution", step="explicit_path", resolved_path=resolved_path)
 
     # Level 2: HIVE_AI_ROOT environment variable
     elif "HIVE_AI_ROOT" in os.environ:
         env_path = os.environ["HIVE_AI_ROOT"].strip()
         if env_path:  # Only use non-empty environment variables
             resolved_path = Path(env_path)
-            logger.debug(f"DEBUG AI ROOT: Level 2 - Environment variable: {resolved_path}")
+            logger.debug("AI root resolution", step="env_var", resolved_path=resolved_path)
 
     # Level 3: Settings object hive_ai_root attribute
     if resolved_path is None and settings is not None:
@@ -84,32 +87,40 @@ def resolve_ai_root(explicit_path: Optional[Union[str, Path]] = None,
             settings_path = getattr(settings, 'hive_ai_root')
             if settings_path:
                 resolved_path = Path(settings_path)
-                logger.debug(f"DEBUG AI ROOT: Level 3 - Settings path: {resolved_path}")
+                logger.debug("AI root resolution", step="settings", resolved_path=resolved_path)
 
     # Level 4: Default to "ai" directory (lowest precedence)
     if resolved_path is None:
         resolved_path = Path("ai")
-        logger.debug(f"DEBUG AI ROOT: Level 4 - Default path: {resolved_path}")
+        logger.debug("AI root resolution", step="default", resolved_path=resolved_path)
 
     # Convert to absolute path only if validation passes
     absolute_path = resolved_path.resolve()
-    logger.debug(f"DEBUG AI ROOT: Resolved absolute path: {absolute_path}")
+    logger.debug("AI root resolution", step="resolved", absolute_path=absolute_path)
 
     # Validate the resolved path
     if not absolute_path.exists():
-        logger.error(f"DEBUG AI ROOT: Validation failed - path does not exist: {absolute_path}")
+        logger.error(
+            "AI root validation failed",
+            reason="path_missing",
+            path=str(absolute_path),
+        )
         raise AIRootError(f"AI root directory '{absolute_path}' does not exist")
 
     if not absolute_path.is_dir():
-        logger.error(f"DEBUG AI ROOT: Validation failed - not a directory: {absolute_path}")
+        logger.error(
+            "AI root validation failed",
+            reason="not_a_directory",
+            path=str(absolute_path),
+        )
         raise AIRootError(f"AI root '{absolute_path}' is not a directory")
 
     # Return original Path if it was relative "ai", otherwise absolute path
     if str(resolved_path) == "ai":
-        logger.debug(f"DEBUG AI ROOT: Returning relative path: {resolved_path}")
+        logger.debug("AI root resolution complete", return_type="relative", resolved_path=resolved_path)
         return resolved_path
     else:
-        logger.debug(f"DEBUG AI ROOT: Returning absolute path: {absolute_path}")
+        logger.debug("AI root resolution complete", return_type="absolute", resolved_path=absolute_path)
         return absolute_path
 
 

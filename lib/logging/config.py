@@ -176,15 +176,16 @@ def setup_logging():
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
 
-    # Only add our handler if it's not already there
-    if not any(isinstance(h, EmojiLoggingHandler) for h in root_logger.handlers):
-        emoji_handler = EmojiLoggingHandler()
-        emoji_handler.setLevel(log_level)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        emoji_handler.setFormatter(formatter)
-        root_logger.addHandler(emoji_handler)
+    # Reset existing handlers before attaching our sink to avoid duplicate output
+    root_logger.handlers.clear()
+
+    emoji_handler = EmojiLoggingHandler()
+    emoji_handler.setLevel(log_level)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    emoji_handler.setFormatter(formatter)
+    root_logger.addHandler(emoji_handler)
 
     # Configure specific logger levels
     # Always suppress uvicorn access logs (too noisy)
@@ -237,6 +238,31 @@ def ensure_logging_initialized():
     if not _logging_initialized:
         setup_logging()
         _logging_initialized = True
+
+
+def initialize_logging(surface: str | None = None, *, force: bool = False) -> bool:
+    """Bootstrap logging and optionally tag the requesting surface.
+
+    Args:
+        surface: Identifier for the component requesting initialization.
+        force: When True, re-run setup even if initialization already occurred.
+
+    Returns:
+        bool: True when this call performed initialization, False when already active.
+    """
+
+    global _logging_initialized
+
+    if force:
+        _logging_initialized = False
+
+    already_initialized = _logging_initialized
+    ensure_logging_initialized()
+
+    if surface and not already_initialized:
+        logger.debug("Logging bootstrap complete", surface=surface)
+
+    return not already_initialized
 
 
 # Remove auto-initialization on import to prevent race condition

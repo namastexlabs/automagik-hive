@@ -345,7 +345,7 @@ dev: ## 🛠️ Start development server with hot reload
 	fi
 	@echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
 	@echo -e "$(FONT_PURPLE)🚀 Starting server...$(FONT_RESET)"
-	@HIVE_DEV_GRACEFUL=1 uv run automagik-hive --dev
+	@HIVE_DEV_GRACEFUL=1 uv run automagik-hive dev
 
 .PHONY: serve
 serve: ## 🚀 Start production server (Docker) - mirrors CLI --serve

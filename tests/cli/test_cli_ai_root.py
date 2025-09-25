@@ -7,12 +7,11 @@ All tests designed to FAIL initially for TDD RED phase implementation.
 
 Key test scenarios:
 1. setup_ai_root() precedence logic with CLI arguments
-2. Empty string handling for nargs="?" patterns
-3. Environment variable side effects (os.environ["HIVE_AI_ROOT"])
-4. Command counting and mutual exclusion validation
-5. Service integration (ServiceManager, PostgreSQLCommands)
-6. Exception handling (AIRootError, KeyboardInterrupt, SystemExit)
-7. Argument parsing edge cases and routing
+2. Environment variable side effects (os.environ["HIVE_AI_ROOT"])
+3. Command counting and mutual exclusion validation
+4. Service integration (ServiceManager, PostgreSQLCommands)
+5. Exception handling (AIRootError, KeyboardInterrupt, SystemExit)
+6. Argument parsing edge cases and routing
 """
 
 import os
@@ -81,10 +80,10 @@ class TestSetupAIRootFunction:
         with patch('cli.main.resolve_ai_root') as mock_resolve:
             mock_resolve.side_effect = AIRootError("Invalid AI root directory")
 
-        # When: setup_ai_root() is called
-        # Then: Should exit with code 1 and print error
-        with pytest.raises(SystemExit) as exc_info:
-            setup_ai_root("/invalid/path")
+            # When: setup_ai_root() is called
+            # Then: Should exit with code 1 and print error
+            with pytest.raises(SystemExit) as exc_info:
+                setup_ai_root("/invalid/path")
 
         assert exc_info.value.code == 1
         captured = capsys.readouterr()
@@ -118,8 +117,8 @@ class TestCLIArgumentParsing:
 
         # Then: Should capture AI root argument correctly
         assert args.serve == "/path/to/ai"
-        assert args.dev is None
-        assert args.ai_root is None
+        assert getattr(args, 'dev', None) is None
+        assert getattr(args, 'ai_root', None) is None
 
     def test_parser_serve_flag_without_ai_root(self):
         """Test --serve flag without AI root argument (empty string sentinel)."""
@@ -131,20 +130,15 @@ class TestCLIArgumentParsing:
 
         # Then: Should use empty string sentinel
         assert args.serve == ""
-        assert args.dev is None
-        assert args.ai_root is None
+        assert getattr(args, 'dev', None) is None
+        assert getattr(args, 'ai_root', None) is None
 
-    def test_parser_dev_flag_patterns(self):
-        """Test --dev flag with various argument patterns."""
+    def test_parser_rejects_dev_flag(self):
+        """Test that --dev flag is rejected in favor of dev subcommand."""
         parser = create_parser()
 
-        # Test with explicit AI root
-        args1 = parser.parse_args(["--dev", "/custom/ai"])
-        assert args1.dev == "/custom/ai"
-
-        # Test without argument (empty string sentinel)
-        args2 = parser.parse_args(["--dev"])
-        assert args2.dev == ""
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--dev"])
 
     def test_parser_postgres_commands_with_ai_root(self):
         """Test PostgreSQL commands with AI root arguments."""
@@ -187,9 +181,9 @@ class TestCLIArgumentParsing:
         args = parser.parse_args(["/positional/ai/root"])
 
         # Then: Should capture as ai_root
-        assert args.ai_root == "/positional/ai/root"
+        assert getattr(args, 'positional_ai_root', None) == "/positional/ai/root"
         assert args.serve is None
-        assert args.dev is None
+        assert getattr(args, 'dev', None) is None
 
 
 class TestCommandCounting:
@@ -215,7 +209,7 @@ class TestCommandCounting:
     def test_multiple_commands_rejected(self, monkeypatch, capsys):
         """Test that multiple commands are rejected."""
         # Given: Multiple commands provided
-        monkeypatch.setattr(sys, 'argv', ['cli', '--serve', '--dev'])
+        monkeypatch.setattr(sys, 'argv', ['cli', '--serve', '--postgres-status'])
 
         # When: Running main()
         result = main()
@@ -245,7 +239,7 @@ class TestCommandCounting:
         # Test all flag commands with arguments
         flag_args = parser.parse_args(["--serve", "/path"])
         commands = [
-            flag_args.serve is not None, flag_args.dev is not None,
+            flag_args.serve is not None,
             flag_args.postgres_status is not None,
         ]
         assert sum(1 for cmd in commands if cmd) == 1
@@ -256,7 +250,7 @@ class TestCommandCounting:
 
         # Test positional
         pos_args = parser.parse_args(["/path"])
-        assert pos_args.ai_root is not None
+        assert getattr(pos_args, 'positional_ai_root', None) is not None
 
 
 class TestServiceIntegration:
@@ -283,18 +277,18 @@ class TestServiceIntegration:
     @patch('cli.main.ServiceManager')
     @patch('cli.main.setup_ai_root')
     def test_dev_command_integration(self, mock_setup, mock_service_mgr, monkeypatch):
-        """Test --dev command integration with ServiceManager."""
-        # Given: --dev command with empty string (flag provided)
-        monkeypatch.setattr(sys, 'argv', ['cli', '--dev'])
+        """Test dev subcommand integration with ServiceManager."""
+        # Given: dev subcommand invoked without explicit AI root
+        monkeypatch.setattr(sys, 'argv', ['cli', 'dev'])
         mock_setup.return_value = Path("/resolved/ai")
         mock_service_mgr.return_value.serve_local.return_value = True
 
         # When: Running main()
         result = main()
 
-        # Then: Should call setup_ai_root with empty string and serve_local
+        # Then: Should call setup_ai_root with None and serve_local
         assert result == 0
-        mock_setup.assert_called_once_with("")
+        mock_setup.assert_called_once_with(None)
         mock_service_mgr.return_value.serve_local.assert_called_once_with("0.0.0.0", None, reload=True)
 
     @patch('cli.main.ServiceManager')
@@ -360,13 +354,13 @@ class TestSubcommandAIRootHandling:
         main()
         mock_setup.assert_called_with('/sub/ai')
 
-        # Reset mock
         mock_setup.reset_mock()
 
-        # Test --dev flag with AI root
-        monkeypatch.setattr(sys, 'argv', ['cli', '--dev', '/flag/ai'])
-        main()
-        mock_setup.assert_called_with('/flag/ai')
+        # Legacy --dev flag should be rejected by parser without calling setup_ai_root
+        with pytest.raises(SystemExit):
+            parser = create_parser()
+            parser.parse_args(["--dev", "/flag/ai"])
+        mock_setup.assert_not_called()
 
     @patch('cli.main.ServiceManager')
     @patch('cli.main.setup_ai_root')
@@ -438,7 +432,11 @@ class TestEnvironmentVariableSideEffects:
         """Test that environment variable is available to service classes."""
         # Given: CLI command that sets AI root
         monkeypatch.setattr(sys, 'argv', ['cli', '--serve', '/test/ai'])
-        mock_setup.return_value = Path("/resolved/ai")
+        def _setup(path):
+            os.environ["HIVE_AI_ROOT"] = str(Path("/resolved/ai"))
+            return Path("/resolved/ai")
+
+        mock_setup.side_effect = _setup
         mock_service_mgr.return_value.serve_docker.return_value = True
 
         # When: Running command
@@ -528,10 +526,10 @@ class TestEdgeCasesAndBoundaryConditions:
         args1 = parser.parse_args(["--serve"])
         assert args1.serve == ""
 
-        # None for flag not provided
-        args2 = parser.parse_args(["--dev", "/path"])
-        assert args2.serve is None
-        assert args2.dev == "/path"
+        # Subcommand captures AI root separately
+        args2 = parser.parse_args(["dev", "/path"])
+        assert args2.command == "dev"
+        assert args2.ai_root == "/path"
 
     @patch('cli.main.ServiceManager')
     def test_service_instantiation_patterns(self, mock_service_mgr, monkeypatch):
@@ -556,9 +554,10 @@ class TestEdgeCasesAndBoundaryConditions:
         args1 = parser.parse_args(["--serve", "/path/with spaces/ai-root"])
         assert args1.serve == "/path/with spaces/ai-root"
 
-        # Test with relative paths
-        args2 = parser.parse_args(["--dev", "relative/ai/path"])
-        assert args2.dev == "relative/ai/path"
+        # Test with relative paths using dev subcommand
+        args2 = parser.parse_args(["dev", "relative/ai/path"])
+        assert args2.command == "dev"
+        assert args2.ai_root == "relative/ai/path"
 
         # Test with current directory
         args3 = parser.parse_args(["--serve", "."])
@@ -608,7 +607,11 @@ class TestCLIIntegrationScenarios:
         """Test complete --serve workflow with AI root setup."""
         # Given: Full --serve command with custom AI root
         monkeypatch.setattr(sys, 'argv', ['cli', '--serve', '/custom/ai/root'])
-        mock_setup.return_value = Path("/resolved/ai/root")
+        def _setup(path):
+            os.environ["HIVE_AI_ROOT"] = str(Path("/resolved/ai/root"))
+            return Path("/resolved/ai/root")
+
+        mock_setup.side_effect = _setup
         mock_service_mgr.return_value.serve_docker.return_value = True
 
         # When: Running complete workflow

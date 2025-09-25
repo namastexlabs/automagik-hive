@@ -80,7 +80,8 @@ class TestServeModuleImports:
 
     def test_logging_setup(self):
         """Test logging setup in serve module."""
-        with patch("lib.logging.setup_logging") as mock_setup:
+        with patch("lib.logging.initialize_logging") as mock_initialize:
+            mock_initialize.return_value = True
             with patch("lib.logging.logger"):
                 # Re-import to trigger logging setup
                 import importlib
@@ -88,7 +89,7 @@ class TestServeModuleImports:
                 import api.serve
 
                 importlib.reload(api.serve)
-                # Logging setup should be called during module import
+                # Logging bootstrap should be called during module import
                 # Note: This might not be called if already imported
 
 
