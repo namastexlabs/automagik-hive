@@ -226,3 +226,24 @@ uv run mypy lib/knowledge
 - [ ] pgvector + contents DB runbooks documented with logging evidence
 - [ ] Ruff + mypy clean for lib/knowledge modules
 - [ ] Wish status updated with command outputs and linked Death Testaments
+
+## Group E Validation Evidence (2025-09-25)
+
+### Commands executed
+```bash
+uv run pytest tests/lib/knowledge -q
+uv run pytest tests/integration/knowledge -q
+uv run ruff check lib/knowledge
+uv run mypy lib/knowledge
+```
+
+### Outcomes
+- Unit tests (tests/lib/knowledge): 17 failed, 405 passed, 2 skipped
+- Integration tests (tests/integration/knowledge): 180 passed, 2 warnings
+- Ruff (lib/knowledge): 105 issues (67 auto-fixable)
+- Mypy (lib/knowledge): 62 errors across 12 files
+
+See detailed logs, failing test list, and representative diagnostics in:
+- Death Testament: @genie/reports/hive-tests-knowledge-agno-pgvector-alignment-wish-group-e-20250925T1300Z.md
+
+Status remains READY_FOR_REVIEW pending remediation decisions; evidence captured and linked.
