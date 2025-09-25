@@ -123,12 +123,18 @@ class CSVHotReloadManager:
             contents_db = self._build_contents_db(db_url)
             self._contents_db = contents_db
 
-            # Pass contents_db to enable remove_content_by_id during reloads
+            # Create knowledge base without constructor drift; attach contents DB afterward
             self.knowledge_base = RowBasedCSVKnowledgeBase(
                 csv_path=str(self.csv_path),
                 vector_db=vector_db,
-                contents_db=contents_db,
             )
+            if contents_db is not None and getattr(self.knowledge_base, "knowledge", None):
+                try:
+                    self.knowledge_base.knowledge.contents_db = contents_db
+                    logger.debug("Activated contents DB", table=getattr(contents_db, "session_table", None))
+                except Exception:
+                    # Non-fatal: continue without contents DB
+                    pass
 
             if self.csv_path.exists():
                 self.knowledge_base.load(recreate=False, skip_existing=True)
@@ -292,7 +298,7 @@ class CSVHotReloadManager:
         }
 
     def force_reload(self) -> None:
-        logger.debug("Force reloading knowledge base", component="csv_hot_reload")
+        logger.info("Force reloading knowledge base", component="csv_hot_reload")
         self._reload_knowledge_base()
 
 

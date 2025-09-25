@@ -125,7 +125,31 @@ class ChangeAnalyzer:
 
             from lib.logging import logger
             logger.debug("Analysis complete", new_rows=len(new_rows), changed_rows=len(changed_rows), removed_rows=removed_count)
-            
+
+            # Build structured status payload with Agno v2 metadata
+            csv_config = self.config.get("knowledge", {}).get("csv_reader", {})
+            status_payload: Dict[str, Any] = {
+                "component": "change_analyzer",
+                "mode": "agno_native_incremental",
+                "config": {
+                    "csv_reader": {
+                        "content_column": csv_config.get("content_column", "answer"),
+                        "metadata_columns": csv_config.get("metadata_columns", ["question"]),
+                    }
+                },
+                "db": {
+                    "schema": "agno",
+                    "table_name": "knowledge_base",
+                },
+                "results": {
+                    "csv_total_rows": len(csv_rows),
+                    "existing_vector_rows": existing_count,
+                    "new_rows_count": len(new_rows),
+                    "changed_rows_count": len(changed_rows),
+                    "removed_rows_count": removed_count,
+                },
+            }
+
             return {
                 "csv_total_rows": len(csv_rows),
                 "existing_vector_rows": existing_count,
@@ -135,10 +159,12 @@ class ChangeAnalyzer:
                 "new_rows": new_rows,
                 "changed_rows": changed_rows,
                 "removed_hashes": orphaned_ids,
+                "potential_removals": orphaned_ids,  # alias for observability consumers
                 "needs_processing": needs_processing,
                 "status": "up_to_date"
                 if not needs_processing
                 else "incremental_update_required",
+                "status_payload": status_payload,
             }
 
         except Exception as e:
