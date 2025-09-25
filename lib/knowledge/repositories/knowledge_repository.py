@@ -4,11 +4,21 @@ Database Repository - All database operations extracted from SmartIncrementalLoa
 Contains all SQL operations and database interactions for knowledge management.
 """
 
+import re
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, cast
 
 from agno.utils.string import generate_id
 from sqlalchemy import create_engine, text
+
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _validate_identifier(identifier: str) -> str:
+    """Ensure identifiers used in dynamic SQL are safe for direct interpolation."""
+    if not _IDENTIFIER_RE.fullmatch(identifier):
+        raise ValueError(f"Unsafe SQL identifier: {identifier}")
+    return identifier
 
 
 class KnowledgeRepository:
@@ -39,7 +49,10 @@ class KnowledgeRepository:
                 """),
                     {"table_name": self.table_name},
                 )
-                table_exists = result.fetchone()[0] > 0
+                table_row = result.fetchone()
+                if table_row is None:
+                    return set()
+                table_exists = bool(table_row[0])
 
                 if not table_exists:
                     return set()
@@ -53,7 +66,10 @@ class KnowledgeRepository:
                 """),
                     {"table_name": self.table_name},
                 )
-                hash_column_exists = result.fetchone()[0] > 0
+                hash_row = result.fetchone()
+                if hash_row is None:
+                    return set()
+                hash_column_exists = bool(hash_row[0])
 
                 if not hash_column_exists:
                     # Old table without hash tracking - treat as empty for fresh start
@@ -67,7 +83,7 @@ class KnowledgeRepository:
                 # Get existing content hashes from agno schema
                 query = "SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL"
                 result = conn.execute(text(query))
-                return {row[0] for row in result.fetchall()}
+                return {cast(str, row[0]) for row in result.fetchall() if row[0]}
 
         except Exception as e:
             from lib.logging import logger
@@ -150,10 +166,11 @@ class KnowledgeRepository:
                 select_stmt = text(" ".join(select_query) + f" AND ({select_sql}) LIMIT 1")
 
                 row = conn.execute(select_stmt, params).fetchone()
-                if not row:
+                if row is None:
                     return False
 
-                db_id, db_content = row[0], row[1]
+                db_id = cast(str, row[0])
+                db_content = cast(str, row[1])
                 if db_content != expected_content:
                     # Content changed; do not update hash here
                     return False
@@ -191,7 +208,7 @@ class KnowledgeRepository:
                     text(delete_query),
                     {"question_prefix": f"**Q:** {question_text}%"},
                 )
-                removed_hashes = [row[0] for row in result.fetchall() if row[0]]
+                removed_hashes = [cast(str, row[0]) for row in result.fetchall() if row[0]]
                 try:
                     conn.commit()
                 except Exception:
@@ -224,7 +241,8 @@ class KnowledgeRepository:
                 try:
                     for h in removed_hashes:
                         result = conn.execute(text(delete_query), {"hash": h})
-                        actual_removed += result.rowcount
+                        rowcount = result.rowcount or 0
+                        actual_removed += rowcount
                     conn.commit()
                 except Exception:
                     try:
@@ -264,14 +282,20 @@ class KnowledgeRepository:
             except Exception as exc:  # pragma: no cover - defensive logging
                 logger.warning("Failed to remove knowledge content", error=str(exc))
 
-    def get_row_count(self, table_name: str = None) -> int:
+    def get_row_count(self, table_name: str | None = None) -> int:
         """Get total row count from database - EXTRACTED"""
         try:
             table = table_name or self.table_name
+            safe_table = _validate_identifier(table)
             engine = create_engine(self.db_url)
             with engine.connect() as conn:
-                result = conn.execute(text(f"SELECT COUNT(*) FROM agno.{table}"))
-                return result.fetchone()[0]
+                stmt = text(
+                    f"SELECT COUNT(*) FROM agno.{safe_table}"  # noqa: S608 - identifier sanitized via _validate_identifier
+                )
+                row = conn.execute(stmt).fetchone()
+                if row is None or row[0] is None:
+                    return 0
+                return int(row[0])
         except Exception as e:
             from lib.logging import logger
             logger.warning("Could not get row count", error=str(e))

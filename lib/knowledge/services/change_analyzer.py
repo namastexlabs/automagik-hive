@@ -5,19 +5,24 @@ Extracted from SmartIncrementalLoader for better separation of concerns.
 Keeps orphan detection exactly as-is from the original implementation.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import text
+from sqlalchemy.engine import Connection
 
 
 class ChangeAnalyzer:
     """Service for analyzing changes between CSV data and database state."""
     
-    def __init__(self, config: dict[str, Any], repository):
+    def __init__(self, config: dict[str, Any], repository: Any) -> None:
         self.config = config
         self.repository = repository
-    
-    def analyze_changes(self, csv_rows: list[dict[str, Any]], db_connection) -> dict[str, Any]:
+
+    def analyze_changes(
+        self,
+        csv_rows: list[dict[str, Any]],
+        db_connection: Connection,
+    ) -> dict[str, Any]:
         """Analyze what needs to be loaded by checking specific content vs PostgreSQL - EXTRACTED from SmartIncrementalLoader.analyze_changes"""
         try:
             _csv_hashes = {row["hash"] for row in csv_rows}
@@ -46,13 +51,13 @@ class ChangeAnalyzer:
                 })
                 
                 db_row = result.fetchone()
-                
+
                 if db_row is None:
                     # Row doesn't exist - it's new
                     new_rows.append(row)
                 else:
                     # Row exists - check if hash matches
-                    db_hash = db_row[0]
+                    db_hash = cast(str, db_row[0])
                     csv_hash = row["hash"]
                     
                     # Debug: Show first row comparison at DEBUG level only
@@ -106,7 +111,7 @@ class ChangeAnalyzer:
                     content = result.fetchone()
                     
                     if content:
-                        content_text = content[0]
+                        content_text = cast(str, content[0])
                         # Check if this content matches any CSV row
                         found_match = False
                         for csv_row in csv_rows:

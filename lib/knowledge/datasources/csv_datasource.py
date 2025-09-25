@@ -15,8 +15,12 @@ import pandas as pd
 class CSVDataSource:
     """Service for CSV data reading and single row processing with StringIO support."""
     
-    def __init__(self, csv_path: Path, hash_manager):
-        self.csv_path = Path(csv_path) if csv_path else None
+    def __init__(
+        self,
+        csv_path: Path | str | None,
+        hash_manager: Any,
+    ) -> None:
+        self.csv_path: Path | None = Path(csv_path) if csv_path else None
         self.hash_manager = hash_manager
     
     def get_csv_rows_with_hashes(self) -> list[dict[str, Any]]:
@@ -45,7 +49,12 @@ class CSVDataSource:
             logger.warning("Could not read CSV with hashes", error=str(e))
             return []
     
-    def process_single_row(self, row_data: dict[str, Any], kb, update_row_hash_func: Callable) -> bool:
+    def process_single_row(
+        self,
+        row_data: dict[str, Any],
+        kb: Any,
+        update_row_hash_func: Callable[[dict[str, Any], str], bool],
+    ) -> bool:
         """Process a single new row and add it to the vector database.
 
         Builds a Document with a stable ID based on the original CSV index,

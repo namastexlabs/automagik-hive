@@ -5,11 +5,11 @@ from __future__ import annotations
 import csv
 import hashlib
 import logging
-from collections.abc import Iterable, Iterator
+from collections.abc import Awaitable, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from agno.knowledge import Knowledge
 from agno.knowledge.document.base import Document
@@ -66,16 +66,17 @@ class RowBasedCSVKnowledgeBase:
         self,
         csv_path: str,
         vector_db: VectorDb | None,
-        contents_db: BaseDb | None | None = None,
+        contents_db: BaseDb | None = None,
         *,
         knowledge: Knowledge | None = None,
     ) -> None:
         self._csv_path = Path(csv_path)
-        self.vector_db = vector_db
-        self.contents_db = contents_db
+        self.vector_db: VectorDb | None = vector_db
+        self.contents_db: BaseDb | None = contents_db
         self.num_documents = 10
         self.valid_metadata_filters: set[str] | None = None
         self._signatures: dict[str, DocumentSignature] = {}
+        self.knowledge: Knowledge | None
 
         if vector_db is not None:
             self.knowledge = knowledge or Knowledge(
@@ -92,7 +93,7 @@ class RowBasedCSVKnowledgeBase:
         else:
             self.knowledge = None
 
-        self.documents = self._load_csv_as_documents(self._csv_path)
+        self.documents: list[Document] = self._load_csv_as_documents(self._csv_path)
 
     # ------------------------------------------------------------------
     # Public API
@@ -324,7 +325,10 @@ class RowBasedCSVKnowledgeBase:
     def _load_csv_as_documents(self, csv_path: Path | None) -> list[Document]:
         documents: list[Document] = []
 
-        path_to_use = csv_path or getattr(self, "_csv_path", None)
+        stored_path = getattr(self, "_csv_path", None)
+        path_to_use: Path | None = csv_path or stored_path
+        if path_to_use is not None and not isinstance(path_to_use, Path):
+            path_to_use = Path(path_to_use)
 
         if path_to_use is None:
             logger.error("CSV path not available - neither parameter nor stored path provided")
@@ -353,7 +357,11 @@ class RowBasedCSVKnowledgeBase:
             if document is None:
                 continue
 
-            self._signatures[document.id] = self._compute_signature(document)
+            doc_id = document.id
+            if doc_id is None:
+                logger.debug("Skipping document without stable id", row_index=row_index)
+                continue
+            self._signatures[doc_id] = self._compute_signature(document)
             documents.append(document)
 
             metadata = document.meta_data or {}
@@ -406,7 +414,11 @@ class RowBasedCSVKnowledgeBase:
             return
 
         signature = self._compute_signature(document)
-        self._signatures[document.id] = signature
+        doc_id = document.id
+        if doc_id is None:
+            logger.debug("Document missing id; cannot compute signature")
+            return
+        self._signatures[doc_id] = signature
 
         vector_db = knowledge.vector_db
         if vector_db is None:
@@ -451,23 +463,21 @@ class RowBasedCSVKnowledgeBase:
 
             # Otherwise try async_upsert first (if truly coroutine), then sync upsert
             async_upsert_attr = getattr(vector_db, "async_upsert", None)
-            try_async_upsert = False
-            if async_upsert_attr is not None:
+            if callable(async_upsert_attr):
+                async_upsert_callable = cast(Callable[..., Awaitable[Any]], async_upsert_attr)
                 try:
                     import inspect as _inspect
-                    try_async_upsert = _inspect.iscoroutinefunction(async_upsert_attr)
-                except Exception:  # pragma: no cover - conservative fallback
-                    try_async_upsert = False
-            if try_async_upsert:
-                try:
-                    import asyncio
 
-                    asyncio.run(
-                        async_upsert_attr(
-                            signature.content_hash, [document], filters=vector_filters
+                    if _inspect.iscoroutinefunction(async_upsert_callable):
+                        import asyncio
+
+                        coroutine = async_upsert_callable(
+                            signature.content_hash,
+                            [document],
+                            filters=vector_filters,
                         )
-                    )
-                    return
+                        asyncio.run(coroutine)
+                        return
                 except Exception as exc:  # pragma: no cover - continue to fallback
                     logger.debug(
                         "async_upsert not available or failed; falling back",

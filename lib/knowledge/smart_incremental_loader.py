@@ -19,14 +19,15 @@ import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 import yaml
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
 
 import lib.logging as app_log
-from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
+from lib.knowledge.row_based_csv_knowledge import DocumentSignature, RowBasedCSVKnowledgeBase
 
 
 def _load_config() -> dict[str, Any]:
@@ -57,7 +58,7 @@ class _HashManager:
             document = self.knowledge_base.build_document_from_row(row_index, row_dict)
             if document is None:
                 return ""
-            signature = self.knowledge_base.get_signature(document)
+            signature = cast(DocumentSignature, self.knowledge_base.get_signature(document))
             return signature.content_hash
         # Fallback shouldn't usually run in tests; keep for completeness
         fields = [
@@ -66,7 +67,9 @@ class _HashManager:
             str((row.get("typification") if hasattr(row, "get") else None) or ""),
             str((row.get("business_unit") if hasattr(row, "get") else None) or ""),
         ]
-        return hashlib.md5("".join(fields).encode("utf-8")).hexdigest()
+        return hashlib.md5(  # noqa: S324 - legacy hash preserved for deterministic IDs
+            "".join(fields).encode("utf-8")
+        ).hexdigest()
 
 
 class SmartIncrementalLoader:
@@ -92,15 +95,20 @@ class SmartIncrementalLoader:
         )
 
         # DB URL is required by tests
-        self.db_url = os.getenv("HIVE_DATABASE_URL")
-        if not self.db_url:
+        db_url_env = os.getenv("HIVE_DATABASE_URL")
+        if not db_url_env:
             raise RuntimeError("HIVE_DATABASE_URL required")
+        self.db_url: str = db_url_env
 
         # Knowledge base (may be provided by factory). Avoid eager creation to reduce noise in tests.
         self.kb: RowBasedCSVKnowledgeBase | None = kb
 
         # Auxiliary manager consistent with legacy semantics
         self._hash_manager = _HashManager(knowledge_base=self.kb)
+
+    def _engine(self) -> Engine:
+        """Return a fresh SQLAlchemy engine bound to the knowledge database."""
+        return create_engine(self.db_url)
 
     def _create_default_kb(self) -> RowBasedCSVKnowledgeBase | None:
         try:
@@ -161,12 +169,14 @@ class SmartIncrementalLoader:
             # Determine total entries via DB for reporting
             entries_processed = 0
             try:
-                engine = create_engine(self.db_url)
+                engine = self._engine()
                 with engine.connect() as conn:
                     result = conn.execute(
                         text("SELECT COUNT(*) FROM agno.knowledge_base")
                     )
-                    entries_processed = int(result.fetchone()[0])
+                    row = result.fetchone()
+                    if row is not None and row[0] is not None:
+                        entries_processed = int(row[0])
             except Exception:
                 # Non-fatal for tests; keep zero when not available
                 entries_processed = 0
@@ -235,7 +245,7 @@ class SmartIncrementalLoader:
             total_rows = 0
             existing_rows = 0
 
-            engine = create_engine(self.db_url)
+            engine = self._engine()
             with engine.connect() as conn:
                 for _, row in df.iterrows():
                     total_rows += 1
@@ -249,7 +259,8 @@ class SmartIncrementalLoader:
                         ),
                         {"prefix": f"{prefix}%"},
                     )
-                    count = int(result.fetchone()[0])
+                    db_row = result.fetchone()
+                    count = int(db_row[0]) if db_row is not None and db_row[0] is not None else 0
                     if count > 0:
                         existing_rows += 1
 
@@ -277,7 +288,9 @@ class SmartIncrementalLoader:
             str(row.get("typification", "")),
             str(row.get("business_unit", "")),
         ]
-        return hashlib.md5("".join(parts).encode("utf-8")).hexdigest()
+        return hashlib.md5(  # noqa: S324 - legacy hash alignment
+            "".join(parts).encode("utf-8")
+        ).hexdigest()
 
     def _get_csv_rows_with_hashes(self) -> list[dict[str, Any]]:
         try:
@@ -295,10 +308,10 @@ class SmartIncrementalLoader:
 
     def _get_existing_row_hashes(self) -> set[str]:
         try:
-            engine = create_engine(self.db_url)
+            engine = self._engine()
             with engine.connect() as conn:
                 # table exists?
-                exists = conn.execute(
+                exists_row = conn.execute(
                     text(
                         """
                         SELECT COUNT(*) as count
@@ -307,12 +320,13 @@ class SmartIncrementalLoader:
                         """
                     ),
                     {"table_name": self.table_name},
-                ).fetchone()[0]
-                if int(exists) == 0:
+                ).fetchone()
+                exists = int(exists_row[0]) if exists_row and exists_row[0] is not None else 0
+                if exists == 0:
                     return set()
 
                 # hash column exists?
-                has_hash = conn.execute(
+                hash_row = conn.execute(
                     text(
                         """
                         SELECT COUNT(*) as count
@@ -321,8 +335,9 @@ class SmartIncrementalLoader:
                         """
                     ),
                     {"table_name": self.table_name},
-                ).fetchone()[0]
-                if int(has_hash) == 0:
+                ).fetchone()
+                has_hash = int(hash_row[0]) if hash_row and hash_row[0] is not None else 0
+                if has_hash == 0:
                     app_log.logger.warning(
                         "Table exists but no content_hash column - will recreate with hash tracking"
                     )
@@ -333,14 +348,18 @@ class SmartIncrementalLoader:
                         "SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL"
                     )
                 )
-                return {row[0] for row in result.fetchall()}
+                return {
+                    cast(str, row[0])
+                    for row in result.fetchall()
+                    if row[0] is not None
+                }
         except Exception as exc:
             app_log.logger.warning("Could not check existing hashes", error=str(exc))
             return set()
 
     def _add_hash_column_to_table(self) -> bool:
         try:
-            engine = create_engine(self.db_url)
+            engine = self._engine()
             with engine.connect() as conn:
                 conn.execute(
                     text(
@@ -382,7 +401,7 @@ class SmartIncrementalLoader:
 
     def _update_row_hash(self, row_data: dict[str, Any], content_hash: str) -> bool:
         try:
-            engine = create_engine(self.db_url)
+            engine = self._engine()
             with engine.connect() as conn:
                 question = str(row_data.get("question", ""))
                 problem = str(row_data.get("problem", ""))
@@ -407,7 +426,7 @@ class SmartIncrementalLoader:
         if not removed_hashes:
             return 0
         try:
-            engine = create_engine(self.db_url)
+            engine = self._engine()
             with engine.connect() as conn:
                 # Transactional safety: perform all deletes then commit once
                 removed = 0
@@ -417,14 +436,17 @@ class SmartIncrementalLoader:
                             text("DELETE FROM agno.knowledge_base WHERE content_hash = :hash"),
                             {"hash": h},
                         )
-                        removed += int(getattr(res, "rowcount", 1))
+                        rowcount = res.rowcount or 0
+                        removed += int(rowcount)
                     conn.commit()
                 except Exception:
                     # Rollback on any failure to avoid partial removals
                     try:
                         conn.rollback()
-                    except Exception:
-                        pass
+                    except Exception as rollback_exc:
+                        app_log.logger.debug(
+                            "Rollback failed during removal", error=str(rollback_exc)
+                        )
                     raise
                 app_log.logger.info("Removed obsolete rows", removed_count=removed)
                 return removed
@@ -461,10 +483,12 @@ class SmartIncrementalLoader:
                 stats = self.kb.get_knowledge_statistics()
                 entries = int(stats.get("total_entries", 0))
             else:
-                engine = create_engine(self.db_url)
+                engine = self._engine()
                 with engine.connect() as conn:
                     result = conn.execute(text("SELECT COUNT(*) FROM agno.knowledge_base"))
-                    entries = int(result.fetchone()[0])
+                    row = result.fetchone()
+                    if row is not None and row[0] is not None:
+                        entries = int(row[0])
         except Exception:
             entries = 0
 

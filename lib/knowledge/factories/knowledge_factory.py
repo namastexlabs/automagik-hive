@@ -4,9 +4,10 @@ Creates configurable shared knowledge base to prevent duplication
 """
 
 # Global shared instance with thread safety
+import re
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 from agno.db.postgres import PostgresDb
@@ -16,7 +17,16 @@ from agno.vectordb.pgvector import HNSW, PgVector, SearchType
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.logging import logger
 
-_shared_kb = None
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _validate_identifier(identifier: str) -> str:
+    if not _IDENTIFIER_RE.fullmatch(identifier):
+        raise ValueError(f"Unsafe SQL identifier: {identifier}")
+    return identifier
+
+
+_shared_kb: RowBasedCSVKnowledgeBase | None = None
 _kb_lock = threading.Lock()
 
 
@@ -39,14 +49,19 @@ def _check_knowledge_base_exists(
             """),
                 {"table_name": table_name},
             )
-            table_exists = result.fetchone()[0] > 0
+            table_row = result.fetchone()
+            table_exists = bool(table_row and table_row[0])
 
             if not table_exists:
                 return False
 
             # Check if table has data in agno schema
-            result = conn.execute(text(f"SELECT COUNT(*) FROM agno.{table_name}"))
-            row_count = result.fetchone()[0]
+            safe_table = _validate_identifier(str(table_name))
+            stmt = text(
+                f"SELECT COUNT(*) FROM agno.{safe_table}"  # noqa: S608 - identifier sanitized with _validate_identifier
+            )
+            count_row = conn.execute(stmt).fetchone()
+            row_count = int(count_row[0]) if count_row and count_row[0] is not None else 0
             return row_count > 0
     except Exception as e:
         logger.warning("Could not check knowledge base existence", error=str(e))
@@ -106,20 +121,17 @@ def create_knowledge_base(
             or config.get("csv_file_path")
             or "data/knowledge_rag.csv"
         )
-        csv_path = Path(__file__).parent / configured_csv
-        logger.debug("Using CSV path from configuration", csv_path=str(csv_path))
+        csv_path_value = (Path(__file__).parent / configured_csv).resolve()
+        logger.debug("Using CSV path from configuration", csv_path=str(csv_path_value))
     else:
-        # Convert to Path and resolve if relative
-        csv_path = Path(csv_path)
-        if not csv_path.is_absolute():
-            # For relative paths, resolve against knowledge directory
-            if str(csv_path).startswith("lib/knowledge/"):
-                # Path already includes knowledge folder, resolve from project root
-                csv_path = csv_path.resolve()
+        candidate = Path(csv_path)
+        if not candidate.is_absolute():
+            if str(candidate).startswith("lib/knowledge/"):
+                candidate = candidate.resolve()
             else:
-                # Path doesn't include knowledge folder, add it
-                csv_path = Path(__file__).parent / csv_path
-        logger.debug("Using provided CSV path", csv_path=str(csv_path))
+                candidate = (Path(__file__).parent / candidate).resolve()
+        csv_path_value = candidate
+        logger.debug("Using provided CSV path", csv_path=str(csv_path_value))
 
     # Get vector database configuration with parity (support top-level and nested keys)
     def _merge_vector_config(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -180,7 +192,7 @@ def create_knowledge_base(
         # Create shared knowledge base with row-based processing (one document per CSV row)
         # Note: This will load documents from CSV, but smart loader will handle incremental updates
         _shared_kb = RowBasedCSVKnowledgeBase(
-            csv_path=str(csv_path),
+            csv_path=str(csv_path_value),
             vector_db=vector_db,
             contents_db=contents_db,
         )
@@ -201,31 +213,31 @@ def create_knowledge_base(
     try:
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
-        smart_loader = SmartIncrementalLoader(csv_path=str(csv_path), kb=_shared_kb)
+        smart_loader = SmartIncrementalLoader(csv_path=str(csv_path_value), kb=_shared_kb)
 
         # Perform smart loading with incremental updates
-        result = smart_loader.smart_load()
+        load_result = smart_loader.smart_load()
 
-        if "error" in result:
-            logger.warning("Smart loading failed", error=result["error"]) 
+        if "error" in load_result:
+            logger.warning("Smart loading failed", error=load_result["error"]) 
             # Fallback to basic loading
             logger.info("Falling back to basic knowledge base loading")
             _shared_kb.load(recreate=False, upsert=True)
         else:
             # Smart loading succeeded - just connect to the populated database
-            strategy = result.get("strategy", "unknown")
+            strategy = load_result.get("strategy", "unknown")
             if strategy == "no_changes":
                 logger.info(
                     "No changes needed (all documents already exist)"
                 )
             elif strategy == "incremental_update":
-                new_docs = result.get("new_rows_processed", 0)
+                new_docs = load_result.get("new_rows_processed", 0)
                 logger.info(
                     "Added new documents (incremental)",
                     new_docs=new_docs,
                 )
             elif strategy == "initial_load_with_hashes":
-                total_docs = result.get("entries_processed", "unknown")
+                total_docs = load_result.get("entries_processed", "unknown")
                 logger.info(
                     "Initial load completed", total_docs=total_docs
                 )
@@ -243,15 +255,20 @@ def create_knowledge_base(
         from sqlalchemy import create_engine, text
         engine = create_engine(db_url)
         with engine.connect() as conn:
-            table_name = vector_config.get("table_name", "knowledge_base")
-            schema_name = vector_config.get("schema", "agno")
-            result = conn.execute(text(f"SELECT COUNT(*) FROM {schema_name}.{table_name}"))
-            doc_count = result.fetchone()[0]
+            raw_table = vector_config.get("table_name", "knowledge_base")
+            raw_schema = vector_config.get("schema", "agno")
+            table_name = _validate_identifier(str(raw_table))
+            schema_name = _validate_identifier(str(raw_schema))
+            stmt = text(
+                f"SELECT COUNT(*) FROM {schema_name}.{table_name}"  # noqa: S608 - identifiers sanitized
+            )
+            count_row = conn.execute(stmt).fetchone()
+            doc_count = int(count_row[0]) if count_row and count_row[0] is not None else 0
             logger.info("Knowledge base ready", documents=doc_count)
     except Exception:
         logger.info("Knowledge base ready")
 
-    return _shared_kb
+    return cast(RowBasedCSVKnowledgeBase, _shared_kb)
 
 
 def _load_knowledge_config() -> dict[str, Any]:
@@ -259,7 +276,8 @@ def _load_knowledge_config() -> dict[str, Any]:
     try:
         config_path = Path(__file__).parent.parent / "config.yaml"
         with open(config_path) as f:
-            return yaml.safe_load(f)
+            data = yaml.safe_load(f)
+            return cast(dict[str, Any], data if isinstance(data, dict) else {})
     except Exception as e:
         logger.warning("Could not load knowledge config", error=str(e))
         return {}

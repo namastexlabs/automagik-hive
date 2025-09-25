@@ -5,10 +5,9 @@ from __future__ import annotations
 import argparse
 import builtins
 import os
-import sys
 from pathlib import Path
 from threading import Timer
-from typing import Any
+from typing import Any, cast
 
 from agno.db.postgres import PostgresDb
 from agno.knowledge.embedder.openai import OpenAIEmbedder
@@ -30,7 +29,8 @@ def load_global_knowledge_config() -> dict[str, Any]:
 
     from lib.utils.version_factory import load_global_knowledge_config as loader
 
-    return loader()
+    raw_config = loader()
+    return cast(dict[str, Any], raw_config if isinstance(raw_config, dict) else {})
 
 
 class CSVHotReloadManager:
@@ -42,10 +42,10 @@ class CSVHotReloadManager:
         *,
         config: dict[str, Any] | None = None,
     ) -> None:
-        self._config = config or self._load_config()
+        self._config: dict[str, Any] = config or self._load_config()
         self.csv_path = self._resolve_csv_path(csv_path)
         self.is_running = False
-        self.observer = None
+        self.observer: Any | None = None
         self.knowledge_base: RowBasedCSVKnowledgeBase | None = None
         self._debounce_timer: Timer | None = None
         self._debounce_delay = self._extract_debounce_delay()
@@ -245,7 +245,7 @@ class CSVHotReloadManager:
                 def _is_target(self, event_path: str) -> bool:
                     return event_path.endswith(self._manager.csv_path.name)
 
-                def on_modified(self, event):  # type: ignore[override]
+                def on_modified(self, event: Any) -> None:  # type: ignore[override]
                     if not getattr(event, "is_directory", False):
                         try:
                             src_path = getattr(event, "src_path", "") or ""
@@ -259,7 +259,7 @@ class CSVHotReloadManager:
                             # Defensive: never raise from watchdog callback
                             return
 
-                def on_moved(self, event):  # type: ignore[override]
+                def on_moved(self, event: Any) -> None:  # type: ignore[override]
                     try:
                         dest_path = getattr(event, "dest_path", "") or ""
                         if dest_path and self._is_target(str(dest_path)):
@@ -268,10 +268,11 @@ class CSVHotReloadManager:
                     except Exception:
                         return
 
-            self.observer = Observer()
+            observer = Observer()
             handler = Handler(self)
-            self.observer.schedule(handler, str(self.csv_path.parent), recursive=False)
-            self.observer.start()
+            observer.schedule(handler, str(self.csv_path.parent), recursive=False)
+            observer.start()
+            self.observer = observer
 
             logger.debug("File watching active", observer_started=True)
         except Exception as exc:
@@ -375,7 +376,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":  # pragma: no cover - script mode
-    sys.exit(main())
+    main()
 
 # Test compatibility: expose CLI entry in builtins for unqualified calls in tests
 try:  # pragma: no cover - test-only shim
