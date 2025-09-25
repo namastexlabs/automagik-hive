@@ -118,22 +118,31 @@ class ServiceManager:
         """Complete environment setup with deployment choice - ENHANCED METHOD."""
         try:
             print(f"🛠️ Setting up Automagik Hive environment in: {workspace}")
-            
+
+            resolved_workspace = self._resolve_install_root(workspace)
+            if Path(workspace).resolve() != resolved_workspace:
+                print(
+                    "🔁 Existing workspace configuration detected outside the AI bundle; "
+                    f"using {resolved_workspace}"
+                )
+
             # 1. DEPLOYMENT CHOICE SELECTION (NEW)
             deployment_mode = self._prompt_deployment_choice()
-            
+
             # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
             from lib.auth.credential_service import CredentialService
-            credential_service = CredentialService(project_root=Path(workspace))
-            
+            credential_service = CredentialService(project_root=resolved_workspace)
+
             # Generate workspace credentials using existing comprehensive service
             all_credentials = credential_service.install_all_modes(modes=["workspace"])
-            
+
             # 3. DEPLOYMENT-SPECIFIC SETUP (NEW)
             if deployment_mode == "local_hybrid":
-                return self._setup_local_hybrid_deployment(workspace)
+                return self._setup_local_hybrid_deployment(str(resolved_workspace))
             else:  # full_docker
-                return self.main_service.install_main_environment(workspace)
+                return self.main_service.install_main_environment(
+                    str(resolved_workspace)
+                )
                 
         except KeyboardInterrupt:
             print("\n🛑 Installation cancelled by user")
@@ -141,7 +150,41 @@ class ServiceManager:
         except Exception as e:
             print(f"❌ Failed to install environment: {e}")
             return False
-    
+
+    def _resolve_install_root(self, workspace: str) -> Path:
+        """Determine the correct project root for installation assets."""
+        raw_path = Path(workspace)
+        try:
+            workspace_path = raw_path.resolve()
+        except (FileNotFoundError, RuntimeError):
+            workspace_path = raw_path
+
+        if self._workspace_has_install_markers(workspace_path):
+            return workspace_path
+
+        if workspace_path.name == "ai":
+            parent_path = workspace_path.parent
+            if self._workspace_has_install_markers(parent_path):
+                return parent_path
+
+        return workspace_path
+
+    def _workspace_has_install_markers(self, path: Path) -> bool:
+        """Check if a path contains install-time assets like .env.example or docker configs."""
+        try:
+            if not path.exists():
+                return False
+        except OSError:
+            return False
+
+        markers = [
+            path / "docker" / "main" / "docker-compose.yml",
+            path / "docker-compose.yml",
+            path / ".env.example",
+            path / "Makefile",
+        ]
+        return any(marker.exists() for marker in markers)
+
     def _setup_env_file(self, workspace: str) -> bool:
         """Setup .env file with API key generation if needed."""
         try:
@@ -180,7 +223,7 @@ class ServiceManager:
         except Exception as e:
             print(f"❌ Failed to setup .env file: {e}")
             return False
-    
+
     def _setup_postgresql_interactive(self, workspace: str) -> bool:
         """Interactive PostgreSQL setup - validates credentials exist in .env."""
         try:

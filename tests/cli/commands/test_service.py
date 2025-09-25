@@ -241,16 +241,48 @@ class TestServiceManagerEnvironmentSetup:
         """Test successful full environment installation."""
         manager = ServiceManager()
         with patch.object(manager, '_prompt_deployment_choice', return_value='full_docker'):
+            resolved_path = Path("/resolved/workspace")
             with patch('lib.auth.credential_service.CredentialService') as mock_credential_service_class:
                 mock_credential_service = mock_credential_service_class.return_value
                 mock_credential_service.install_all_modes.return_value = {}
                 with patch.object(manager, 'main_service') as mock_main:
                     mock_main.install_main_environment.return_value = True
-                    
-                    result = manager.install_full_environment("./test")
-                    
+                    with patch.object(manager, '_resolve_install_root', return_value=resolved_path):
+                        result = manager.install_full_environment("./test")
+
                     assert result is True
-                    mock_main.install_main_environment.assert_called_once_with("./test")
+                    mock_main.install_main_environment.assert_called_once_with(
+                        str(resolved_path)
+                    )
+                    mock_credential_service_class.assert_called_once()
+                    kwargs = mock_credential_service_class.call_args.kwargs
+                    assert kwargs.get("project_root") == resolved_path
+
+    def test_install_full_environment_uses_parent_workspace(self, tmp_path):
+        """Install should pivot to parent directory when AI bundle lacks markers."""
+        repo_root = tmp_path
+        ai_dir = repo_root / "ai"
+        ai_dir.mkdir()
+        (repo_root / ".env").write_text("HIVE_DATABASE_URL=postgresql://existing")
+        (repo_root / "docker").mkdir()
+        docker_main = repo_root / "docker" / "main"
+        docker_main.mkdir()
+        (docker_main / "docker-compose.yml").write_text("version: '3'")
+
+        manager = ServiceManager()
+        with patch.object(manager, '_prompt_deployment_choice', return_value='local_hybrid'):
+            with patch('lib.auth.credential_service.CredentialService') as mock_credential_service_class:
+                credential_instance = mock_credential_service_class.return_value
+                credential_instance.install_all_modes.return_value = {}
+                with patch.object(manager, 'main_service') as mock_main:
+                    with patch.object(manager, '_setup_local_hybrid_deployment', return_value=True) as mock_local:
+                        result = manager.install_full_environment(str(ai_dir))
+
+        assert result is True
+        mock_credential_service_class.assert_called_once()
+        called_kwargs = mock_credential_service_class.call_args.kwargs
+        assert called_kwargs.get("project_root") == repo_root
+        mock_local.assert_called_once_with(str(repo_root))
 
     def test_install_full_environment_env_setup_fails(self):
         """Test environment installation when env setup fails."""
