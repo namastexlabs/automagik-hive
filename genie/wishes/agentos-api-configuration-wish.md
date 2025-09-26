@@ -7,8 +7,8 @@ Expose a configurable AgentOS API surface that loads Agno v2 configuration from 
 
 ## Current State Analysis
 **What exists:** Agno v2 core migration established new dependency patterns, but Automagik Hive still lacks an AgentOS integration layer or configuration loader. API routers only ship health, version, and MCP surfaces; no endpoint returns AgentOS metadata.
-**Gap identified:** Without an AgentOS service the control plane cannot discover agents, databases, quick prompts, or display names, blocking the v2 rollout. Configuration defaults live only in docs; settings provide no contract for supplying YAML paths or typed overrides.
-**Solution approach:** Introduce dedicated AgentOS config models and loaders, wrap them in a service that assembles runtime metadata from existing registries, and publish the result through a secured `/api/v1/agentos` router that mirrors Agno’s `/config` schema with tests and documentation.
+**Gap identified:** Without an AgentOS service the control plane cannot discover agents, databases, quick prompts, or display names, blocking the v2 rollout. Configuration defaults live only in docs; settings provide no contract for supplying YAML paths or typed overrides. Registries currently expose identifiers via filesystem scans (agents/teams/workflows) but contain no quick prompt corpus, and database naming lives inside `HiveSettings` plus memory/knowledge factories.
+**Solution approach:** Introduce dedicated AgentOS config models and loaders, wrap them in a service that assembles runtime metadata from existing registries/settings, seed a default YAML that supplies quick prompts + display names, and publish the result through a secured `/api/v1/agentos` router (with `/config` compatibility alias) that mirrors Agno’s schema with tests and documentation.
 
 ## Change Isolation Strategy
 - **Isolation principle:** Keep AgentOS logic inside `lib/agentos/` and a single service entry point so the rest of the platform consumes a stable interface.
@@ -16,8 +16,10 @@ Expose a configurable AgentOS API surface that loads Agno v2 configuration from 
 - **Stability assurance:** Wire the new router through dependency providers and feature flags to ensure existing API clients and CLI flows remain unchanged until AgentOS is invoked.
 
 ## Success Criteria
+-✅ Default YAML seeds quick prompts, display names, and database IDs derived from Automagik registries/settings.
 ✅ `AgentOSService.load_configuration()` returns an `AgentOSConfig` instance whether the source is YAML or Python.
 ✅ `/api/v1/agentos/config` responds with the documented JSON contract (OS id, databases, agents, teams, workflows, quick prompts, etc.).
+✅ `/config` alias mirrors the versioned route so Agno AgentOS UI keeps working.
 ✅ Settings allow operators to point to an external AgentOS config file while validating path existence at startup.
 ✅ `uv run pytest` suites covering AgentOS service and API pass, and FastAPI dependency wiring enforces API key protection.
 ✅ README (or relevant ops docs) tells humans how to supply custom AgentOS configuration and inspect it through the API.
@@ -89,23 +91,23 @@ Dependencies: None | Execute simultaneously
 
 **A1-config-schemas**: Define AgentOS config dataclasses  @lib/agentos [context]  Creates: `lib/agentos/config_models.py` wrapping Agno `AgentOSConfig`, `ChatConfig`, etc., plus typed helpers for defaults  Exports: `AgentOSCasing` alias consumed by loaders  Success: Imported without circular deps; docstring explains fallback priorities.
 
-**A2-config-loader**: Implement loader utilities  @lib/agentos [context]  Creates: `lib/agentos/config_loader.py` with `load_agentos_config(path: Path | None, overrides: dict | None)` reading YAML via `yaml.safe_load` and returning `AgentOSConfig`  Success: Handles missing files via default builder; raises explicit errors when schema mismatches.
+**A2-config-loader**: Implement loader utilities  @lib/agentos [context]  Creates: `lib/agentos/config_loader.py` with `load_agentos_config(path: Path | None, overrides: dict | None)` reading YAML via `yaml.safe_load` and returning `AgentOSConfig` (fallback merges default quick prompts + DB metadata)  Success: Handles missing files via default builder; raises explicit errors when schema mismatches.
 
-**A3-settings-surface**: Expose configuration knobs  @lib/config/settings.py [context]  Modifies: Add `hive_agentos_config_path`, `hive_agentos_enable_defaults`, and validation to ensure file existence when provided  Success: Settings instantiate with/without env vars; new fields documented in class comments.
+**A3-settings-surface**: Expose configuration knobs  @lib/config/settings.py [context]  Modifies: Add `hive_agentos_config_path`, `hive_agentos_enable_defaults`, and validation to ensure file existence when provided; document how the defaults harvest metadata from `HiveSettings`, `lib/memory/config.yaml`, and `lib/knowledge/config.yaml`  Success: Settings instantiate with/without env vars; new fields documented in class comments.
 
 ### Group B: Runtime Services (After A)
 Dependencies: A1-config-schemas, A2-config-loader
 
-**B1-service-layer**: Create service façade  @lib/services/__init__.py [context]  Creates: `lib/services/agentos_service.py` with `AgentOSService` caching config, mapping registry metadata (agents, teams, workflows, databases)  Success: `.get_config()` returns dict matching Agno schema; includes quick prompt normalization.
+**B1-service-layer**: Create service façade  @lib/services/__init__.py [context]  Creates: `lib/services/agentos_service.py` with `AgentOSService` caching config, mapping registry metadata (agents, teams, workflows, databases) via `list_available_*` helpers without instantiating heavy objects  Success: `.get_config()` returns dict matching Agno schema; includes quick prompt normalization.
 
-**B2-default-artifacts**: Ship default config assets  @lib/agentos [context]  Creates: `lib/agentos/default_agentos.yaml` capturing starter quick prompts + display names aligned with template agents  Success: Loader uses this file when path absent; comments clarify editing guidance without secrets.
+**B2-default-artifacts**: Ship default config assets  @lib/agentos [context]  Creates: `lib/agentos/default_agentos.yaml` capturing starter quick prompts + display names aligned with template agents/teams/workflows and pre-populated database identifiers from Automagik settings  Success: Loader uses this file when path absent; comments clarify editing guidance without secrets.
 
 ### Group C: API Surface (After B)
 Dependencies: Group B
 
 **C1-dependency-provider**: Provide FastAPI dependency  @api/dependencies/__init__.py [context]  Creates: `api/dependencies/agentos.py` exposing `get_agentos_service()` returning singleton `AgentOSService`  Success: Importable without triggering heavy startup; dependency reused in router.
 
-**C2-agentos-router**: Implement API contract  @api/routes [context]  Creates: `api/routes/agentos_router.py` with `/api/v1/agentos/config` GET endpoint serializing service output  Success: Endpoint documented with response model; includes API key guard inherited from parent router.
+**C2-agentos-router**: Implement API contract  @api/routes [context]  Creates: `api/routes/agentos_router.py` with `/api/v1/agentos/config` GET endpoint serializing service output (+ `/config` alias if control plane still expects legacy path)  Success: Endpoint documented with response model; includes API key guard inherited from parent router.
 
 **C3-schema-alignment**: Add Pydantic response model  @api/routes/agentos_router.py [context]  Creates: `AgentOSConfigResponse` model matching `/config` schema for validation  Success: Model ensures quick prompts keyed by agent/team/workflow and optional interface metadata.
 
@@ -123,7 +125,7 @@ Dependencies: Groups A–D
 
 **E1-service-tests**: Unit tests for loader + service  @tests/lib/services/test_agentos_service.py [context]  Creates: Tests covering YAML path missing, default fallback, quick prompt normalization  Success: `uv run pytest tests/lib/services/test_agentos_service.py -q` passes.
 
-**E2-api-tests**: API contract regression  @tests/api/test_agentos_config.py [context]  Creates: FastAPI TestClient tests verifying `/api/v1/agentos/config` returns expected payload and respects auth  Success: Tests assert status codes 401/200 and schema fields.
+**E2-api-tests**: API contract regression  @tests/api/test_agentos_config.py [context]  Creates: FastAPI TestClient tests verifying `/api/v1/agentos/config` and `/config` return expected payload and respect auth  Success: Tests assert status codes 401/200 and schema fields for both routes.
 
 **E3-cli-tests**: CLI smoke coverage  @tests/cli/test_agentos_command.py [context]  Creates: Test ensuring CLI command prints config JSON  Success: Pytest run passes with feature flag toggled.
 
