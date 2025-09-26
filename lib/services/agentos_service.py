@@ -14,9 +14,13 @@ from agno.os.schema import (
     WorkflowSummaryResponse,
 )
 
-from ai.agents.registry import AgentRegistry
-from ai.teams.registry import list_available_teams
-from ai.workflows.registry import list_available_workflows
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:  # pragma: no cover - import only for type checkers
+    from ai.agents.registry import AgentRegistry
+    from ai.teams.registry import list_available_teams
+    from ai.workflows.registry import list_available_workflows
 
 from lib.agentos import load_agentos_config
 from lib.agentos.config_models import collect_component_metadata
@@ -139,7 +143,7 @@ class AgentOSService:
         self, display_map: dict[str, str]
     ) -> list[AgentSummaryResponse]:
         agents: list[AgentSummaryResponse] = []
-        for agent_id in AgentRegistry.list_available_agents():
+        for agent_id in _list_available_agents():
             agents.append(
                 AgentSummaryResponse(
                     id=agent_id,
@@ -152,7 +156,7 @@ class AgentOSService:
         self, display_map: dict[str, str]
     ) -> list[TeamSummaryResponse]:
         teams: list[TeamSummaryResponse] = []
-        for team_id in list_available_teams():
+        for team_id in _list_available_teams():
             teams.append(
                 TeamSummaryResponse(
                     id=team_id,
@@ -165,7 +169,7 @@ class AgentOSService:
         self, display_map: dict[str, str]
     ) -> list[WorkflowSummaryResponse]:
         workflows: list[WorkflowSummaryResponse] = []
-        for workflow_id in list_available_workflows():
+        for workflow_id in _list_available_workflows():
             workflows.append(
                 WorkflowSummaryResponse(
                     id=workflow_id,
@@ -200,6 +204,24 @@ class AgentOSService:
         if not parts:
             return identifier
         return " ".join(part.capitalize() for part in parts)
+
+
+def _list_available_agents() -> list[str]:
+    from ai.agents.registry import AgentRegistry
+
+    return AgentRegistry.list_available_agents()
+
+
+def _list_available_teams() -> list[str]:
+    from ai.teams.registry import list_available_teams
+
+    return list_available_teams()
+
+
+def _list_available_workflows() -> list[str]:
+    from ai.workflows.registry import list_available_workflows
+
+    return list_available_workflows()
 
 
 __all__ = ["AgentOSService"]
