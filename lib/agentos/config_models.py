@@ -54,6 +54,12 @@ _COMPONENT_SPECS: dict[str, dict[str, Any]] = {
 }
 
 
+def collect_component_metadata() -> list[ComponentMetadata]:
+    """Expose component metadata for downstream consumers."""
+
+    return _collect_component_metadata()
+
+
 def build_default_agentos_config(settings: HiveSettings | None = None) -> AgentOSConfig:
     """Build an ``AgentOSConfig`` instance populated with Automagik defaults."""
 

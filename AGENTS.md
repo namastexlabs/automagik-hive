@@ -26,6 +26,11 @@
 ```
 
   <learning_entries>
+    <entry date="2025-09-26" violation_type="TOOLING" severity="CRITICAL">
+      <trigger>Ran `python3 -c "print('test')"` directly, breaching the UV-only execution rule.</trigger>
+      <correction>Invoke Python via `uv run python ...` (and enforce the same for collaborators) whenever shell execution is required.</correction>
+      <validation>Capture the next Python invocation showing `uv run python` usage within command evidence.</validation>
+    </entry>
     <!-- Entries will be added by hive-self-learn in the following format:
     <entry date="YYYY-MM-DD" violation_type="TYPE" severity="CRITICAL|HIGH|MEDIUM">
       <trigger>What triggered this learning</trigger>
