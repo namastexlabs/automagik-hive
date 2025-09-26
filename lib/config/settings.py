@@ -24,6 +24,9 @@ from pydantic.networks import HttpUrl
 from lib.logging import logger
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
 class HiveSettings(BaseSettings):
     """
     Centralized configuration settings for Automagik Hive applications.
@@ -79,6 +82,12 @@ class HiveSettings(BaseSettings):
     hive_agno_monitor: bool = Field(False, description="Agno monitoring enabled")
     hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path")
     hive_enable_agui: bool = Field(False, description="Enable AGUI mode for UI interface")
+    hive_agentos_config_path: Path | None = Field(
+        None, description="Path to AgentOS YAML configuration file"
+    )
+    hive_agentos_enable_defaults: bool = Field(
+        True, description="Enable fallback to built-in AgentOS defaults"
+    )
     
     # Optional settings with defaults
     hive_log_dir: Optional[str] = Field(None, description="Log directory path")
@@ -346,6 +355,24 @@ class HiveSettings(BaseSettings):
         if not (10 <= v <= 100000):
             raise ValueError(f'Metrics queue size must be between 10-100000, got {v}')
         return v
+
+    @field_validator('hive_agentos_config_path')
+    @classmethod
+    def validate_agentos_config_path(cls, value):
+        """Ensure AgentOS config path exists and resolves properly."""
+        if value is None:
+            return None
+
+        candidate = Path(value).expanduser()
+        if not candidate.is_absolute():
+            candidate = (PROJECT_ROOT / candidate).resolve()
+
+        if not candidate.exists():
+            raise ValueError(f'AgentOS config path does not exist: {candidate}')
+        if not candidate.is_file():
+            raise ValueError(f'AgentOS config path must be a file: {candidate}')
+
+        return candidate
     
     # =========================================================================
     # SECURITY OVERRIDE (Production Environment)
@@ -369,7 +396,7 @@ class HiveSettings(BaseSettings):
             not self.langwatch_api_key or 
             self.langwatch_api_key.startswith('your-langwatch-api-key')
         )
-        
+
         if invalid_api_key and self.hive_enable_langwatch:
             logger.info(
                 "LangWatch automatically disabled - no valid API key provided",
@@ -377,6 +404,15 @@ class HiveSettings(BaseSettings):
                 api_key_provided=bool(self.langwatch_api_key)
             )
             self.hive_enable_langwatch = False
+        return self
+
+    @model_validator(mode='after')
+    def require_agentos_source(self):
+        """Ensure AgentOS configuration is available when defaults disabled."""
+        if not self.hive_agentos_enable_defaults and self.hive_agentos_config_path is None:
+            raise ValueError(
+                "HIVE_AGENTOS_CONFIG_PATH must be set when AgentOS defaults are disabled"
+            )
         return self
     
     # =========================================================================
