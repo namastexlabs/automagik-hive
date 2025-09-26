@@ -6,6 +6,7 @@ No over-engineering. No abstract patterns. Just working CLI.
 """
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -25,6 +26,11 @@ from .commands.uninstall import UninstallCommands
 from .commands.workspace import WorkspaceCommands
 from .docker_manager import DockerManager
 from .workspace import WorkspaceManager
+
+def _is_agentos_cli_enabled() -> bool:
+    """Feature flag gate for AgentOS CLI surfaces."""
+
+    return os.getenv("HIVE_FEATURE_AGENTOS_CLI", "").lower() in {"1", "true", "yes", "on"}
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -113,7 +119,18 @@ Use --help for detailed options or see documentation.
     # Genie subcommand
     genie_parser = subparsers.add_parser("genie", help="Launch claude with AGENTS.md as system prompt")
     genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
-    
+
+    # AgentOS configuration inspection (feature flagged)
+    agentos_parser = subparsers.add_parser(
+        "agentos-config",
+        help="Inspect AgentOS configuration (feature flagged)",
+    )
+    agentos_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Display raw AgentOS configuration as JSON",
+    )
+
     # Dev subcommand
     dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
@@ -135,6 +152,7 @@ def main() -> int:
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
+        args.command == "agentos-config",
         args.stop, args.restart, args.status, args.logs,
         args.workspace
     ]
@@ -190,7 +208,16 @@ def main() -> int:
             service_manager = ServiceManager()
             workspace = getattr(args, 'workspace', '.') or '.'
             return 0 if service_manager.uninstall_environment(workspace) else 1
-        
+
+        if args.command == "agentos-config":
+            if not _is_agentos_cli_enabled():
+                print("✨ AgentOS config command disabled. Set HIVE_FEATURE_AGENTOS_CLI=1 to enable.")
+                return 1
+
+            service_manager = ServiceManager()
+            success = service_manager.agentos_config(json_output=getattr(args, "json", False))
+            return 0 if success else 1
+
         # Start workspace server (positional argument)
         if args.workspace:
             if not Path(args.workspace).is_dir():

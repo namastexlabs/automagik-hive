@@ -22,6 +22,10 @@ from lib.agentos import load_agentos_config
 from lib.agentos.config_models import collect_component_metadata
 from lib.config.settings import HiveSettings
 
+DEFAULT_OS_ID = "automagik-hive"
+DEFAULT_NAME = "Automagik Hive AgentOS"
+DEFAULT_DESCRIPTION = "Automagik Hive AgentOS configuration"
+
 
 class AgentOSService:
     """Facade for assembling AgentOS configuration metadata."""
@@ -77,8 +81,11 @@ class AgentOSService:
             self._registry_cache = registry
         return self._registry_cache
 
-    def get_config_response(self) -> ConfigResponse:
+    def get_config_response(self, *, force_reload: bool = False) -> ConfigResponse:
         """Return the ``ConfigResponse`` model for AgentOS consumers."""
+
+        if force_reload:
+            self.refresh()
 
         if self._response_cache is None:
             config = self.load_configuration()
@@ -105,7 +112,7 @@ class AgentOSService:
     def serialize(self) -> dict[str, Any]:
         """Serialize the configuration to JSON-compatible payload."""
 
-        return self.get_config_response().model_dump(mode="json", exclude_none=True)
+        return self.get_config_response().model_dump(mode="json")
 
     get_config = serialize
 
@@ -113,9 +120,9 @@ class AgentOSService:
         seen: set[str] = set()
         ordered: list[str] = []
         for section in self._iter_domain_sections(config):
-            if section and section.dbs:
+            if section and getattr(section, "dbs", None):
                 for db in section.dbs:
-                    db_id = db.db_id
+                    db_id = getattr(db, "db_id", None)
                     if db_id and db_id not in seen:
                         seen.add(db_id)
                         ordered.append(db_id)
@@ -174,33 +181,25 @@ class AgentOSService:
     def _resolve_os_id(self) -> str:
         if self._explicit_os_id:
             return self._explicit_os_id
-        return self._slugify(self._resolve_name() or "Automagik AgentOS")
+        return DEFAULT_OS_ID
 
-    def _resolve_name(self) -> str | None:
+    def _resolve_name(self) -> str:
         if self._explicit_name is not None:
             return self._explicit_name
         if hasattr(self._settings, "app_name"):
-            return self._settings.app_name
-        return None
+            return f"{self._settings.app_name} AgentOS"
+        return DEFAULT_NAME
 
-    def _resolve_description(self) -> str | None:
+    def _resolve_description(self) -> str:
         if self._explicit_description is not None:
             return self._explicit_description
-        name = self._resolve_name()
-        if name is None:
-            return "AgentOS runtime metadata"
-        return f"{name} AgentOS runtime"
+        return DEFAULT_DESCRIPTION
 
     def _fallback_display_name(self, identifier: str) -> str:
         parts = [segment for segment in identifier.replace("_", "-").split("-") if segment]
         if not parts:
             return identifier
         return " ".join(part.capitalize() for part in parts)
-
-    def _slugify(self, value: str) -> str:
-        normalized = value.strip().lower().replace("_", "-").replace(" ", "-")
-        tokens = [segment for segment in normalized.split("-") if segment]
-        return "-".join(tokens) or "agentos"
 
 
 __all__ = ["AgentOSService"]

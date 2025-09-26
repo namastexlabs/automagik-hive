@@ -55,7 +55,7 @@ _COMPONENT_SPECS: dict[str, dict[str, Any]] = {
 
 
 def collect_component_metadata() -> list[ComponentMetadata]:
-    """Expose component metadata for downstream consumers."""
+    """Return discovered AgentOS component metadata for agents, teams, and workflows."""
 
     return _collect_component_metadata()
 
