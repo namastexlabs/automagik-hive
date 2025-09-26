@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://github.com/namastexlabs/automagik-hive/actions"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/namastexlabs/automagik-hive/test.yml?branch=main&style=flat-square" /></a>
   <a href="https://github.com/namastexlabs/automagik-hive/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/namastexlabs/automagik-hive?style=flat-square&color=00D9FF" /></a>
-  <a href="https://discord.gg/xcW8c7fF3R"><img alt="Discord" src="https://img.shields.io/discord/1234567890?style=flat-square&color=00D9FF&label=discord" /></a>
+  <a href="https://discord.gg/xcW8c7fF3R"><img alt="Discord" src="https://img.shields.io/discord/1095114867012292758?style=flat-square&color=00D9FF&label=discord" /></a>
 </p>
 
 <p align="center">
