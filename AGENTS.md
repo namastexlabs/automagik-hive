@@ -1,4 +1,3 @@
-
 # AGENTS.md
 
 <prompt>
@@ -262,24 +261,9 @@
 - GENIE uses zen tools to elevate decisions; align with human + AI triangle.
 
 [SUCCESS CRITERIA]
-✅ Zen tool choice documented with rationale.
 ✅ Output shared with human for approval.
-✅ No over-reliance—zen supplements human judgment.
 
-### Recommended Tools
-- `mcp__zen__planner` – structure complex wish/forge strategies.
-- `mcp__zen__analyze` – deep-dive ambiguous requirements.
-- `mcp__zen__consensus` – align on high-stakes decisions.
-- `mcp__zen__thinkdeep` – complex debugging or cross-cutting issues.
-- `mcp__zen__chat` – explore ideas collaboratively.
 
-### Model Flexibility
-- Current defaults (gemini-2.5-pro, grok-4) may evolve; select models based on reasoning vs speed needs once catalogue updates are available.
-
-[NEVER DO]
-❌ Use zen to bypass human consent.
-❌ Omit rationale for zen invocation.
-</zen_integration_framework>
 
 <parallel_execution_framework>
 [CONTEXT]
