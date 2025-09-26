@@ -167,6 +167,26 @@ No overwhelming documentation. Learn as you build.
 
 **No rewrites. No migrations. No platform lock-in.**
 
+## AgentOS Configuration Workflow
+
+Give operators full control over runtime behaviour without touching Python:
+
+1. **Author config**: Copy `lib/agentos/default_agentos.yaml` into your workspace and adjust agents, teams, workflows, or database bindings.
+2. **Point Hive at the file**: Export `HIVE_AGENTOS_CONFIG_PATH=/absolute/path/to/agentos.yaml`. Set `HIVE_AGENTOS_ENABLE_DEFAULTS=0` when you want the loader to fail fast instead of falling back to built-ins.
+3. **Validate locally**: Enable the feature flag and run the CLI inspector to review the assembled payload.
+   ```bash
+   HIVE_FEATURE_AGENTOS_CLI=1 automagik-hive agentos-config --json | jq
+   ```
+   Use the default text mode (`automagik-hive agentos-config`) for a human-friendly summary showing models, agents, teams, and workflows.
+4. **Confirm API outputs**: The protected endpoints share the same data; supply your API key in both cases.
+   ```bash
+   curl -H "x-api-key: $HIVE_API_KEY" http://localhost:8887/api/v1/agentos/config
+   curl -H "x-api-key: $HIVE_API_KEY" http://localhost:8887/config
+   ```
+   Expect matching JSON plus quick prompts capped at three entries per category.
+
+If either call fails, re-run the CLI command for immediate diagnostics before redeploying.
+
 ## Architecture That Scales
 
 ```mermaid

@@ -1,10 +1,60 @@
-"""Tests for the AgentOS service facade."""
+"""Tests for the AgentOS service facade and loader."""
 
 from __future__ import annotations
 
+import yaml
+import pytest
+
 from agno.os.schema import ConfigResponse
 
+from lib.agentos import load_agentos_config
+from lib.agentos.exceptions import AgentOSConfigError
 from lib.config.settings import HiveSettings
+
+
+class TestLoadAgentOSConfig:
+    """Ensure AgentOS loader behaviour matches expectations."""
+
+    def test_loader_prefers_explicit_config_path(self, tmp_path):
+        """Custom YAML payload should override defaults when provided."""
+        config_path = tmp_path / "custom_agentos.yaml"
+
+        baseline = load_agentos_config()
+        payload = baseline.model_dump(mode="python")
+        payload["available_models"] = ["unit-test-model"]
+
+        with config_path.open("w", encoding="utf-8") as handle:
+            yaml.safe_dump(payload, handle)
+
+        settings = HiveSettings().model_copy(
+            update={
+                "hive_agentos_config_path": config_path,
+                "hive_agentos_enable_defaults": False,
+            }
+        )
+
+        config = load_agentos_config(config_path=config_path, settings=settings)
+
+        assert config.available_models == ["unit-test-model"]
+
+    def test_loader_respects_defaults_disabled_flag(self, tmp_path):
+        """Missing config should raise when defaults are disabled."""
+        missing_path = tmp_path / "missing.yaml"
+        settings = HiveSettings().model_copy(
+            update={
+                "hive_agentos_config_path": missing_path,
+                "hive_agentos_enable_defaults": False,
+            }
+        )
+
+        with pytest.raises(AgentOSConfigError):
+            load_agentos_config(config_path=missing_path, settings=settings)
+
+    def test_loader_applies_overrides(self):
+        """Overrides should be merged into loaded configuration."""
+        config = load_agentos_config(overrides={"available_models": ["override-model"]})
+
+        assert config.available_models == ["override-model"]
 
 
 class TestAgentOSService:
@@ -37,3 +87,30 @@ class TestAgentOSService:
         payload = service.serialize()
 
         assert payload == response.model_dump(mode="json")
+
+    def test_config_response_reuses_cached_instance(self):
+        """Subsequent calls should return cached response object."""
+        from lib.services.agentos_service import AgentOSService
+
+        service = AgentOSService(settings=HiveSettings())
+
+        first = service.get_config_response()
+        second = service.get_config_response()
+
+        assert second is first
+
+        reloaded = service.get_config_response(force_reload=True)
+
+        assert reloaded is not first
+
+    def test_refresh_invalidates_cache(self):
+        """Manual refresh should drop cached response state."""
+        from lib.services.agentos_service import AgentOSService
+
+        service = AgentOSService(settings=HiveSettings())
+
+        initial = service.get_config_response()
+        service.refresh()
+        refreshed = service.get_config_response()
+
+        assert refreshed is not initial
