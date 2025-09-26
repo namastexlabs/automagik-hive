@@ -24,6 +24,12 @@ Expose a configurable AgentOS API surface that loads Agno v2 configuration from 
 ✅ `uv run pytest` suites covering AgentOS service and API pass, and FastAPI dependency wiring enforces API key protection.
 ✅ README (or relevant ops docs) tells humans how to supply custom AgentOS configuration and inspect it through the API.
 
+## Reviewer Notes
+- Align the API contract with Agno’s `ConfigResponse` schema (`agno/os/router.py:487`); update tasks to build a typed response model instead of returning `dict[str, object]`.
+- Ensure the service aggregates database metadata for sessions, memory, metrics, and knowledge the same way `AgentOS._get_*_config` patches defaults (`agno/os/app.py:460-556`) so the control plane sees matching entries.
+- Replace the invalid documentation target `@docs/operations.md` with an existing location (for example `README.md`) to avoid dead references during doc updates.
+- Capture Agno’s quick prompt constraints (maximum three per entity) in the loader/model tasks; validate inputs to prevent drifting from `AgentOSConfig.chat.quick_prompts` rules.
+
 ## Never Do (Protection Boundaries)
 ❌ Modify `pyproject.toml` directly or bypass `uv` for dependencies.
 ❌ Hardcode secrets, database URLs, or environment-specific metadata in AgentOS defaults.
