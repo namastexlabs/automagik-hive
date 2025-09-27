@@ -110,6 +110,12 @@ class ToolRegistry:
                     if agno_file_tool:
                         tools.append(agno_file_tool)
                         successfully_loaded_names.append(tool_name)
+                elif tool_name == "CalculatorTools":
+                    # Handle native Agno CalculatorTools directly
+                    agno_calculator_tool = ToolRegistry._load_native_agno_tool("CalculatorTools")
+                    if agno_calculator_tool:
+                        tools.append(agno_calculator_tool)
+                        successfully_loaded_names.append(tool_name)
                 else:
                     logger.warning(f"Unknown tool type for: {tool_name}")
 
@@ -212,10 +218,11 @@ class ToolRegistry:
                 from agno.tools.file import FileTools
 
                 return FileTools()
+            elif tool_name == "CalculatorTools":
+                from agno.tools.calculator import CalculatorTools
+
+                return CalculatorTools()
             # Add more native Agno tools here as needed
-            # elif tool_name == "CalculatorTools":
-            #     from agno.tools.calculator import CalculatorTools
-            #     return CalculatorTools()
             logger.warning(f"Native Agno tool not implemented: {tool_name}")
             return None
         except ImportError as e:
