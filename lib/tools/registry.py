@@ -98,6 +98,12 @@ class ToolRegistry:
                     if agno_python_tool:
                         tools.append(agno_python_tool)
                         successfully_loaded_names.append(tool_name)
+                elif tool_name == "SleepTools":
+                    # Handle native Agno SleepTools directly
+                    agno_sleep_tool = ToolRegistry._load_native_agno_tool("SleepTools")
+                    if agno_sleep_tool:
+                        tools.append(agno_sleep_tool)
+                        successfully_loaded_names.append(tool_name)
                 else:
                     logger.warning(f"Unknown tool type for: {tool_name}")
 
@@ -192,6 +198,10 @@ class ToolRegistry:
                 from agno.tools.python import PythonTools
 
                 return PythonTools()
+            elif tool_name == "SleepTools":
+                from agno.tools.sleep import SleepTools
+
+                return SleepTools()
             # Add more native Agno tools here as needed
             # elif tool_name == "CalculatorTools":
             #     from agno.tools.calculator import CalculatorTools
