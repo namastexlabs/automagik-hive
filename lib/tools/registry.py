@@ -92,6 +92,12 @@ class ToolRegistry:
                     if agno_shell_tool:
                         tools.append(agno_shell_tool)
                         successfully_loaded_names.append(tool_name)
+                elif tool_name == "PythonTools":
+                    # Handle native Agno PythonTools directly
+                    agno_python_tool = ToolRegistry._load_native_agno_tool("PythonTools")
+                    if agno_python_tool:
+                        tools.append(agno_python_tool)
+                        successfully_loaded_names.append(tool_name)
                 else:
                     logger.warning(f"Unknown tool type for: {tool_name}")
 
@@ -182,6 +188,10 @@ class ToolRegistry:
                 from agno.tools.shell import ShellTools
 
                 return ShellTools()
+            elif tool_name == "PythonTools":
+                from agno.tools.python import PythonTools
+
+                return PythonTools()
             # Add more native Agno tools here as needed
             # elif tool_name == "CalculatorTools":
             #     from agno.tools.calculator import CalculatorTools
