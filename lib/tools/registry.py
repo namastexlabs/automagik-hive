@@ -122,6 +122,12 @@ class ToolRegistry:
                     if agno_pandas_tool:
                         tools.append(agno_pandas_tool)
                         successfully_loaded_names.append(tool_name)
+                elif tool_name == "CsvTools":
+                    # Handle native Agno CsvTools directly
+                    agno_csv_tool = ToolRegistry._load_native_agno_tool("CsvTools")
+                    if agno_csv_tool:
+                        tools.append(agno_csv_tool)
+                        successfully_loaded_names.append(tool_name)
                 else:
                     logger.warning(f"Unknown tool type for: {tool_name}")
 
@@ -232,6 +238,10 @@ class ToolRegistry:
                 from agno.tools.pandas import PandasTools
 
                 return PandasTools()
+            elif tool_name == "CsvTools":
+                from agno.tools.csv_toolkit import CsvTools
+
+                return CsvTools()
             # Add more native Agno tools here as needed
             logger.warning(f"Native Agno tool not implemented: {tool_name}")
             return None
