@@ -11,6 +11,7 @@ Replaces the tools.py-based approach with unified YAML-driven architecture.
 
 import importlib
 import inspect
+import pkgutil
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,7 @@ class ToolRegistry:
 
     _shared_tools_cache: dict[str, Any] = {}
     _mcp_tools_cache: dict[str, RealMCPTool] = {}
+    _agno_tools_cache: dict[str, type] = {}
 
     @staticmethod
     def load_tools(tool_configs: list[dict[str, Any]]) -> tuple[list[Callable], list[str]]:
@@ -86,50 +88,15 @@ class ToolRegistry:
                     if tool:
                         tools.append(tool)
                         successfully_loaded_names.append(tool_name)
-                elif tool_name == "ShellTools":
-                    # Handle native Agno ShellTools directly
-                    agno_shell_tool = ToolRegistry._load_native_agno_tool("ShellTools")
-                    if agno_shell_tool:
-                        tools.append(agno_shell_tool)
-                        successfully_loaded_names.append(tool_name)
-                elif tool_name == "PythonTools":
-                    # Handle native Agno PythonTools directly
-                    agno_python_tool = ToolRegistry._load_native_agno_tool("PythonTools")
-                    if agno_python_tool:
-                        tools.append(agno_python_tool)
-                        successfully_loaded_names.append(tool_name)
-                elif tool_name == "SleepTools":
-                    # Handle native Agno SleepTools directly
-                    agno_sleep_tool = ToolRegistry._load_native_agno_tool("SleepTools")
-                    if agno_sleep_tool:
-                        tools.append(agno_sleep_tool)
-                        successfully_loaded_names.append(tool_name)
-                elif tool_name == "FileTools":
-                    # Handle native Agno FileTools directly
-                    agno_file_tool = ToolRegistry._load_native_agno_tool("FileTools")
-                    if agno_file_tool:
-                        tools.append(agno_file_tool)
-                        successfully_loaded_names.append(tool_name)
-                elif tool_name == "CalculatorTools":
-                    # Handle native Agno CalculatorTools directly
-                    agno_calculator_tool = ToolRegistry._load_native_agno_tool("CalculatorTools")
-                    if agno_calculator_tool:
-                        tools.append(agno_calculator_tool)
-                        successfully_loaded_names.append(tool_name)
-                elif tool_name == "PandasTools":
-                    # Handle native Agno PandasTools directly
-                    agno_pandas_tool = ToolRegistry._load_native_agno_tool("PandasTools")
-                    if agno_pandas_tool:
-                        tools.append(agno_pandas_tool)
-                        successfully_loaded_names.append(tool_name)
-                elif tool_name == "CsvTools":
-                    # Handle native Agno CsvTools directly
-                    agno_csv_tool = ToolRegistry._load_native_agno_tool("CsvTools")
-                    if agno_csv_tool:
-                        tools.append(agno_csv_tool)
-                        successfully_loaded_names.append(tool_name)
                 else:
-                    logger.warning(f"Unknown tool type for: {tool_name}")
+                    # Try to load as native Agno tool via auto-discovery
+                    agno_tool = ToolRegistry._load_native_agno_tool(tool_name)
+                    if agno_tool:
+                        tools.append(agno_tool)
+                        successfully_loaded_names.append(tool_name)
+                        logger.debug(f"🔧 Loaded native Agno tool: {tool_name}")
+                    else:
+                        logger.warning(f"Unknown tool type for: {tool_name}")
 
             except Exception as e:
                 logger.error(f"Failed to load tool {tool_name}: {e}")
@@ -205,7 +172,7 @@ class ToolRegistry:
     @staticmethod
     def _load_native_agno_tool(tool_name: str) -> Any:
         """
-        Load native Agno tools directly.
+        Load native Agno tools via auto-discovery.
 
         Args:
             tool_name: Name of the native Agno tool (e.g., "ShellTools")
@@ -214,43 +181,76 @@ class ToolRegistry:
             Agno tool instance or None if not found
         """
         try:
-            if tool_name == "ShellTools":
-                from agno.tools.shell import ShellTools
+            # Get auto-discovered tools
+            discovered_tools = ToolRegistry.discover_agno_tools()
 
-                return ShellTools()
-            elif tool_name == "PythonTools":
-                from agno.tools.python import PythonTools
-
-                return PythonTools()
-            elif tool_name == "SleepTools":
-                from agno.tools.sleep import SleepTools
-
-                return SleepTools()
-            elif tool_name == "FileTools":
-                from agno.tools.file import FileTools
-
-                return FileTools()
-            elif tool_name == "CalculatorTools":
-                from agno.tools.calculator import CalculatorTools
-
-                return CalculatorTools()
-            elif tool_name == "PandasTools":
-                from agno.tools.pandas import PandasTools
-
-                return PandasTools()
-            elif tool_name == "CsvTools":
-                from agno.tools.csv_toolkit import CsvTools
-
-                return CsvTools()
-            # Add more native Agno tools here as needed
-            logger.warning(f"Native Agno tool not implemented: {tool_name}")
-            return None
+            if tool_name in discovered_tools:
+                tool_class = discovered_tools[tool_name]
+                logger.debug(f"🔧 Loading auto-discovered tool: {tool_name}")
+                return tool_class()
+            else:
+                logger.warning(f"Native Agno tool not available: {tool_name}")
+                available_tools = list(discovered_tools.keys())
+                logger.debug(f"Available tools: {available_tools[:10]}{'...' if len(available_tools) > 10 else ''}")
+                return None
         except ImportError as e:
             logger.error(f"Failed to import native Agno tool {tool_name}: {e}")
             return None
         except Exception as e:
             logger.error(f"Failed to load native Agno tool {tool_name}: {e}")
             return None
+
+    @staticmethod
+    def discover_agno_tools() -> dict[str, type]:
+        """
+        Auto-discover all available Agno native tools.
+
+        Scans agno.tools package for classes ending with 'Tools' and caches results.
+        Only loads modules with available dependencies, skipping others gracefully.
+
+        Returns:
+            Dictionary mapping tool names to tool classes
+        """
+        if ToolRegistry._agno_tools_cache:
+            return ToolRegistry._agno_tools_cache
+
+        discovered_tools: dict[str, type] = {}
+
+        try:
+            import agno.tools
+
+            # Discover all modules in agno.tools package
+            for importer, modname, ispkg in pkgutil.iter_modules(agno.tools.__path__, agno.tools.__name__ + '.'):
+                # Skip packages and specific modules we don't want
+                if ispkg or modname.endswith('_toolkit') or modname.startswith('agno.tools.base'):
+                    continue
+
+                try:
+                    module = importlib.import_module(modname)
+
+                    # Find tool classes using inspect for better performance
+                    for name, obj in inspect.getmembers(module, inspect.isclass):
+                        if (name.endswith('Tools') and
+                            name != 'BaseTools' and
+                            obj.__module__ == modname):  # Only classes defined in this module
+                            discovered_tools[name] = obj
+                            logger.debug(f"🔧 Discovered Agno tool: {name}")
+
+                except ImportError as e:
+                    # Expected for tools with missing optional dependencies
+                    logger.debug(f"Skipping {modname} (missing dependencies): {e}")
+                except Exception as e:
+                    # Unexpected errors should be logged as warnings
+                    logger.warning(f"Error loading {modname}: {e}")
+
+        except ImportError:
+            logger.error("agno.tools package not found")
+        except Exception as e:
+            logger.error(f"Failed to discover Agno tools: {e}")
+
+        ToolRegistry._agno_tools_cache = discovered_tools
+        logger.debug(f"🔧 Discovered {len(discovered_tools)} Agno Tools: {sorted(discovered_tools.keys())}")
+        return discovered_tools
 
     @staticmethod
     def _load_shared_tool(tool_name: str) -> Callable:
