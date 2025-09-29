@@ -30,7 +30,7 @@ async def get_agentos_config(
 
 # Register legacy alias while reusing the same handler.
 legacy_agentos_router.add_api_route(
-    "/config",
+    "/agentos/config",
     get_agentos_config,
     methods=["GET"],
     response_model=ConfigResponse,
