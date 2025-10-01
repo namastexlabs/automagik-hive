@@ -82,6 +82,16 @@ class HiveSettings(BaseSettings):
     hive_agno_monitor: bool = Field(False, description="Agno monitoring enabled")
     hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path")
     hive_enable_agui: bool = Field(False, description="Enable AGUI mode for UI interface")
+    hive_embed_playground: bool = Field(
+        True, description="Enable Agno Playground surface within Hive API"
+    )
+    hive_playground_mount_path: str = Field(
+        "/playground", description="Mount path for embedded Agno Playground"
+    )
+    hive_control_pane_base_url: HttpUrl | None = Field(
+        None,
+        description="Optional Control Pane base URL; defaults to Hive API base",
+    )
     hive_agentos_config_path: Path | None = Field(
         None, description="Path to AgentOS YAML configuration file"
     )

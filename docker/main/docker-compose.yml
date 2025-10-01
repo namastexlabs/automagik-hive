@@ -1,5 +1,8 @@
 # =============================================================================
 # Main Application Container - PostgreSQL + FastAPI with Persistent Storage
+# NOTE: Playground and Control Pane now ride on the Hive API surface. Use this
+# stack when you need local infrastructure (Postgres, containerized API), but
+# prefer `http://localhost:${HIVE_API_PORT:-8886}` as the primary access point.
 # =============================================================================
 
 services:
