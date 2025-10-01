@@ -17,32 +17,334 @@ from fastapi.testclient import TestClient
 
 from lib.exceptions import ComponentLoadingError
 
-# Mock all agno modules that might be imported
-agno_mock = MagicMock()
+# Create proper module stubs using types.ModuleType
+import types
+
+# Create agno.os.config module with AgentOSConfig
+agno_os_config = types.ModuleType('agno.os.config')
+class AgentOSConfig:
+    def __init__(self, **kwargs):
+        self.available_models = kwargs.get('available_models', [])
+        self.chat = kwargs.get('chat', {})
+        self.session = kwargs.get('session', {})
+        self.metrics = kwargs.get('metrics', {})
+        self.memory = kwargs.get('memory', {})
+        self.knowledge = kwargs.get('knowledge', {})
+        self.evals = kwargs.get('evals', {})
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_os_config.AgentOSConfig = AgentOSConfig
+
+# Create agno.os.schema module with response classes
+agno_os_schema = types.ModuleType('agno.os.schema')
+class ConfigResponse:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+    def model_dump(self, mode="json"):
+        return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+
+class AgentSummaryResponse:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class TeamSummaryResponse:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class WorkflowSummaryResponse:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class InterfaceResponse:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+agno_os_schema.ConfigResponse = ConfigResponse
+agno_os_schema.AgentSummaryResponse = AgentSummaryResponse
+agno_os_schema.TeamSummaryResponse = TeamSummaryResponse
+agno_os_schema.WorkflowSummaryResponse = WorkflowSummaryResponse
+agno_os_schema.InterfaceResponse = InterfaceResponse
+
+# Create agno.os module
+agno_os = types.ModuleType('agno.os')
+agno_os.config = agno_os_config
+agno_os.schema = agno_os_schema
+
+# Create agno.team module
+agno_team = types.ModuleType('agno.team')
+class Team:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_team.Team = Team
+
+# Create agno.workflow module
+agno_workflow = types.ModuleType('agno.workflow')
+class Workflow:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_workflow.Workflow = Workflow
+
+# Create agno.agent module
+agno_agent = types.ModuleType('agno.agent')
+class Agent:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_agent.Agent = Agent
+
+# Create agno.tools.mcp module
+agno_tools_mcp = types.ModuleType('agno.tools.mcp')
+class MCPTools:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_tools_mcp.MCPTools = MCPTools
+
+# Create agno.tools.shell module
+agno_tools_shell = types.ModuleType('agno.tools.shell')
+class ShellTools:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_tools_shell.ShellTools = ShellTools
+
+# Create agno.tools module
+agno_tools = types.ModuleType('agno.tools')
+agno_tools.mcp = agno_tools_mcp
+agno_tools.shell = agno_tools_shell
+
+# Create agno.knowledge module
+agno_knowledge = types.ModuleType('agno.knowledge')
+class Knowledge:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_knowledge.Knowledge = Knowledge
+
+# Create agno.knowledge.document.base module
+agno_knowledge_document_base = types.ModuleType('agno.knowledge.document.base')
+class Document:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_knowledge_document_base.Document = Document
+
+# Create agno.knowledge.document module
+agno_knowledge_document = types.ModuleType('agno.knowledge.document')
+agno_knowledge_document.base = agno_knowledge_document_base
+
+# Create agno.knowledge.embedder.openai module
+agno_knowledge_embedder_openai = types.ModuleType('agno.knowledge.embedder.openai')
+class OpenAIEmbedder:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_knowledge_embedder_openai.OpenAIEmbedder = OpenAIEmbedder
+
+# Create agno.knowledge.embedder module
+agno_knowledge_embedder = types.ModuleType('agno.knowledge.embedder')
+agno_knowledge_embedder.openai = agno_knowledge_embedder_openai
+
+# Create agno.vectordb.base module
+agno_vectordb_base = types.ModuleType('agno.vectordb.base')
+class VectorDb:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_vectordb_base.VectorDb = VectorDb
+
+# Create agno.vectordb.pgvector module
+agno_vectordb_pgvector = types.ModuleType('agno.vectordb.pgvector')
+class PgVector:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class HNSW:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class SearchType:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+agno_vectordb_pgvector.PgVector = PgVector
+agno_vectordb_pgvector.HNSW = HNSW
+agno_vectordb_pgvector.SearchType = SearchType
+
+# Create agno.vectordb module
+agno_vectordb = types.ModuleType('agno.vectordb')
+agno_vectordb.base = agno_vectordb_base
+agno_vectordb.pgvector = agno_vectordb_pgvector
+
+# Create agno.db.base module
+agno_db_base = types.ModuleType('agno.db.base')
+class BaseDb:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_db_base.BaseDb = BaseDb
+
+# Create agno.db.postgres module
+agno_db_postgres = types.ModuleType('agno.db.postgres')
+class PostgresDb:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_db_postgres.PostgresDb = PostgresDb
+
+# Create agno.db module
+agno_db = types.ModuleType('agno.db')
+agno_db.base = agno_db_base
+agno_db.postgres = agno_db_postgres
+
+# Create agno.memory.manager module
+agno_memory_manager = types.ModuleType('agno.memory.manager')
+class MemoryManager:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_memory_manager.MemoryManager = MemoryManager
+
+# Create agno.memory module
+agno_memory = types.ModuleType('agno.memory')
+agno_memory.manager = agno_memory_manager
+
+# Create agno.utils.log module
+agno_utils_log = types.ModuleType('agno.utils.log')
+class Logger:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+    def info(self, *args, **kwargs): pass
+    def debug(self, *args, **kwargs): pass
+    def warning(self, *args, **kwargs): pass
+    def error(self, *args, **kwargs): pass
+    def setLevel(self, level): pass
+
+# Create logger instances that can be used as both functions and objects
+agent_logger_instance = Logger()
+team_logger_instance = Logger()
+workflow_logger_instance = Logger()
+
+def agent_logger(*args, **kwargs): return agent_logger_instance
+def team_logger(*args, **kwargs): return team_logger_instance
+def workflow_logger(*args, **kwargs): return workflow_logger_instance
+
+# Set the logger instances as attributes so they can be accessed directly
+agent_logger.setLevel = agent_logger_instance.setLevel
+team_logger.setLevel = team_logger_instance.setLevel
+workflow_logger.setLevel = workflow_logger_instance.setLevel
+
+agno_utils_log.logger = Logger()
+agno_utils_log.agent_logger = agent_logger
+agno_utils_log.team_logger = team_logger
+agno_utils_log.workflow_logger = workflow_logger
+
+# Create agno.utils.string module
+agno_utils_string = types.ModuleType('agno.utils.string')
+def generate_id(*args, **kwargs): return "test-id"
+agno_utils_string.generate_id = generate_id
+
+# Create agno.utils.mcp module
+agno_utils_mcp = types.ModuleType('agno.utils.mcp')
+class MCPUtils:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_utils_mcp.MCPUtils = MCPUtils
+
+# Create agno.utils module
+agno_utils = types.ModuleType('agno.utils')
+agno_utils.log = agno_utils_log
+agno_utils.string = agno_utils_string
+agno_utils.mcp = agno_utils_mcp
+
+# Create agno.models module
+agno_models = types.ModuleType('agno.models')
+class ModelRegistry:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_models.ModelRegistry = ModelRegistry
+
+# Create agno.playground module
+agno_playground = types.ModuleType('agno.playground')
+class Playground:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+agno_playground.Playground = Playground
+
+# Create agno.document module
+agno_document = types.ModuleType('agno.document')
+agno_document.base = agno_knowledge_document_base
+
+# Create main agno module
+agno = types.ModuleType('agno')
+agno.os = agno_os
+agno.team = agno_team
+agno.workflow = agno_workflow
+agno.agent = agno_agent
+agno.tools = agno_tools
+agno.knowledge = agno_knowledge
+agno.vectordb = agno_vectordb
+agno.db = agno_db
+agno.memory = agno_memory
+agno.utils = agno_utils
+agno.models = agno_models
+agno.playground = agno_playground
+agno.document = agno_document
+
 # Mock MCP modules that have pydantic issues
 mcp_mock = MagicMock()
+
 with patch.dict('sys.modules', {
-    'agno': agno_mock,
-    'agno.playground': MagicMock(),
-    'agno.tools': MagicMock(),
-    'agno.tools.mcp': MagicMock(),
-    'agno.knowledge': MagicMock(),
-    'agno.knowledge.document': MagicMock(),
-    'agno.vectordb': MagicMock(),
-    'agno.vectordb.base': MagicMock(),
-    'agno.document': MagicMock(),
-    'agno.document.base': MagicMock(),
-    'agno.utils': MagicMock(),
-    'agno.utils.log': MagicMock(),
-    'agno.team': MagicMock(),
-    'agno.workflow': MagicMock(),
-    'agno.agent': MagicMock(),
+    'agno': agno,
+    'agno.os': agno_os,
+    'agno.os.config': agno_os_config,
+    'agno.os.schema': agno_os_schema,
+    'agno.team': agno_team,
+    'agno.workflow': agno_workflow,
+    'agno.agent': agno_agent,
+    'agno.tools': agno_tools,
+    'agno.tools.mcp': agno_tools_mcp,
+    'agno.tools.shell': agno_tools_shell,
+    'agno.knowledge': agno_knowledge,
+    'agno.knowledge.document': agno_knowledge_document,
+    'agno.knowledge.document.base': agno_knowledge_document_base,
+    'agno.knowledge.embedder': agno_knowledge_embedder,
+    'agno.knowledge.embedder.openai': agno_knowledge_embedder_openai,
+    'agno.vectordb': agno_vectordb,
+    'agno.vectordb.base': agno_vectordb_base,
+    'agno.vectordb.pgvector': agno_vectordb_pgvector,
+    'agno.db': agno_db,
+    'agno.db.base': agno_db_base,
+    'agno.db.postgres': agno_db_postgres,
+    'agno.memory': agno_memory,
+    'agno.memory.manager': agno_memory_manager,
+    'agno.utils': agno_utils,
+    'agno.utils.log': agno_utils_log,
+    'agno.utils.string': agno_utils_string,
+    'agno.utils.mcp': agno_utils_mcp,
+    'agno.models': agno_models,
+    'agno.playground': agno_playground,
+    'agno.document': agno_document,
+    'agno.document.base': agno_knowledge_document_base,
     # Mock MCP modules to avoid pydantic version conflicts
     'mcp': mcp_mock,
     'mcp.client': MagicMock(),
     'mcp.client.session': MagicMock(),
     'mcp.types': MagicMock(),
-    'agno.utils.mcp': MagicMock()
 }):
     # Mock database migrations during import to prevent connection attempts
     with patch("lib.utils.db_migration.check_and_run_migrations", return_value=True):
