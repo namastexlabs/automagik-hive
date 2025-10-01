@@ -117,8 +117,17 @@ Use --help for detailed options or see documentation.
     uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Genie subcommand
-    genie_parser = subparsers.add_parser("genie", help="Launch claude with AGENTS.md as system prompt")
-    genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
+    genie_parser = subparsers.add_parser("genie", help="Genie orchestration commands")
+    genie_subparsers = genie_parser.add_subparsers(dest="genie_command", help="Genie subcommands")
+
+    # genie claude - launch claude with AGENTS.md
+    genie_claude_parser = genie_subparsers.add_parser("claude", help="Launch claude with AGENTS.md as system prompt")
+    genie_claude_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
+
+    # genie wishes - list wishes from API
+    genie_wishes_parser = genie_subparsers.add_parser("wishes", help="List available Genie wishes from the API")
+    genie_wishes_parser.add_argument("--api-base", help="API base URL (default: http://localhost:8886)")
+    genie_wishes_parser.add_argument("--api-key", help="API key for authentication")
 
     # AgentOS configuration inspection (feature flagged)
     agentos_parser = subparsers.add_parser(
@@ -185,11 +194,23 @@ def main() -> int:
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
         
-        # Launch claude with AGENTS.md
+        # Genie commands (with subcommands)
         if args.command == "genie":
             from .commands.genie import GenieCommands
             genie_cmd = GenieCommands()
-            return 0 if genie_cmd.launch_claude(args.args) else 1
+
+            # Handle genie subcommands
+            if hasattr(args, 'genie_command') and args.genie_command == "wishes":
+                return 0 if genie_cmd.list_wishes(
+                    api_base=getattr(args, 'api_base', None),
+                    api_key=getattr(args, 'api_key', None)
+                ) else 1
+            elif hasattr(args, 'genie_command') and args.genie_command == "claude":
+                return 0 if genie_cmd.launch_claude(getattr(args, 'args', None)) else 1
+            else:
+                # Fallback for legacy "genie" without subcommand - show help
+                parser.parse_args(['genie', '--help'])
+                return 1
         
         # Development server (subcommand)
         if args.command == "dev":
