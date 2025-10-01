@@ -471,7 +471,9 @@ async def _async_create_automagik_api():
         logger.debug("🔧 Workflow registry check completed", error=str(e))
 
     unified_router = None
-    if Playground is None:
+    if not settings().hive_embed_playground:
+        logger.info("Agno Playground embedding disabled by configuration")
+    elif Playground is None:
         logger.warning(
             "Agno Playground not available in current Agno distribution; "
             "starting API without playground routes."

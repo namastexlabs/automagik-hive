@@ -7,6 +7,7 @@ from api.routes.agentos_router import agentos_router, legacy_agentos_router
 from api.routes.health import health_check_router
 from api.routes.mcp_router import router as mcp_router
 from api.routes.version_router import version_router
+from api.routes.wish_router import wish_router
 from api.settings import api_settings
 from lib.auth.dependencies import get_auth_service, require_api_key
 from lib.logging import logger
@@ -62,6 +63,7 @@ def create_app() -> FastAPI:
     protected_v1_router.include_router(version_router)
     protected_v1_router.include_router(mcp_router)
     protected_v1_router.include_router(agentos_router)
+    protected_v1_router.include_router(wish_router)
 
     protected_router.include_router(protected_v1_router)
     protected_router.include_router(legacy_agentos_router)
