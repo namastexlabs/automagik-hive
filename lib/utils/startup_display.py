@@ -253,27 +253,28 @@ class StartupDisplay:
 
         console.print(table)
 
-        if self.surfaces:
-            surface_table = Table(
-                title="🗺️ Runtime Surfaces",
-                show_header=True,
-                header_style="bold cyan",
-            )
-            surface_table.add_column("Surface", style="magenta", width=22)
-            surface_table.add_column("Status", style="green", width=18)
-            surface_table.add_column("URL", style="yellow", overflow="fold")
-            surface_table.add_column("Notes", style="white", overflow="fold")
-
-            for surface in self.surfaces.values():
-                surface_table.add_row(
-                    surface.get("name", "—"),
-                    surface.get("status", "—"),
-                    surface.get("url", "—"),
-                    surface.get("note", "—"),
-                )
-
-            console.print("\n")
-            console.print(surface_table)
+        # Runtime Surfaces table removed - AgentOS endpoints are auto-discovered via /config
+        # if self.surfaces:
+        #     surface_table = Table(
+        #         title="🗺️ Runtime Surfaces",
+        #         show_header=True,
+        #         header_style="bold cyan",
+        #     )
+        #     surface_table.add_column("Surface", style="magenta", width=22)
+        #     surface_table.add_column("Status", style="green", width=18)
+        #     surface_table.add_column("URL", style="yellow", overflow="fold")
+        #     surface_table.add_column("Notes", style="white", overflow="fold")
+        #
+        #     for surface in self.surfaces.values():
+        #         surface_table.add_row(
+        #             surface.get("name", "—"),
+        #             surface.get("status", "—"),
+        #             surface.get("url", "—"),
+        #             surface.get("note", "—"),
+        #         )
+        #
+        #     console.print("\n")
+        #     console.print(surface_table)
 
         # Display errors if any
         if self.errors:
