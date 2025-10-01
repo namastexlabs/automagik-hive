@@ -49,3 +49,20 @@ class TestAgentOSConfigEndpoints:
         quick_prompts = versioned_payload.get("chat", {}).get("quick_prompts", {})
         assert quick_prompts
         assert all(len(entries) <= 3 for entries in quick_prompts.values())
+
+        raw_host = os.environ.get("HIVE_API_HOST", "0.0.0.0")
+        host = "localhost" if raw_host in {"0.0.0.0", "::"} else raw_host
+        expected_base = f"http://{host}:{os.environ['HIVE_API_PORT']}"
+        routes = {entry["type"]: entry["route"] for entry in versioned_payload["interfaces"]}
+
+        assert routes["agentos-config"] == f"{expected_base}/api/v1/agentos/config"
+        assert routes["wish-catalog"] == f"{expected_base}/api/v1/wishes"
+        assert routes["control-pane"] == expected_base
+
+        embed_playground = os.environ.get("HIVE_EMBED_PLAYGROUND", "1").lower() not in {
+            "0",
+            "false",
+        }
+        if embed_playground:
+            mount_path = os.environ.get("HIVE_PLAYGROUND_MOUNT_PATH", "/playground")
+            assert routes["playground"] == f"{expected_base}{mount_path}"

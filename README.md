@@ -184,6 +184,15 @@ Give operators full control over runtime behaviour without touching Python:
    curl -H "x-api-key: $HIVE_API_KEY" http://localhost:8887/config
    ```
    Expect matching JSON plus quick prompts capped at three entries per category.
+5. **Wire up the Control Pane**: Use the `interfaces` section in the `/api/v1/agentos/config` payload to connect Agno’s Control Pane and Playground. A minimal configuration looks like:
+   ```json
+   {
+     "config_url": "https://your-hive-host/api/v1/agentos/config",
+     "playground_url": "https://your-hive-host/playground",
+     "wish_catalog_url": "https://your-hive-host/api/v1/wishes"
+   }
+   ```
+   Override `HIVE_CONTROL_PANE_BASE_URL` or `HIVE_PLAYGROUND_MOUNT_PATH` when Hive runs behind a proxy; the `interfaces` values update automatically.
 
 If either call fails, re-run the CLI command for immediate diagnostics before redeploying.
 

@@ -180,7 +180,52 @@ class AgentOSService:
         return workflows
 
     def _build_interfaces(self) -> list[InterfaceResponse]:
-        return []
+        base_url = self._resolve_control_pane_base()
+
+        interfaces: list[InterfaceResponse] = [
+            InterfaceResponse(
+                type="agentos-config",
+                version="v1",
+                route=f"{base_url}/api/v1/agentos/config",
+            )
+        ]
+
+        playground_route = self._resolve_playground_route(base_url)
+        if playground_route is not None:
+            interfaces.append(
+                InterfaceResponse(type="playground", version="v1", route=playground_route)
+            )
+
+        interfaces.append(
+            InterfaceResponse(
+                type="wish-catalog",
+                version="v1",
+                route=f"{base_url}/api/v1/wishes",
+            )
+        )
+
+        interfaces.append(
+            InterfaceResponse(type="control-pane", version="v1", route=base_url)
+        )
+
+        return interfaces
+
+    def _resolve_control_pane_base(self) -> str:
+        if self._settings.hive_control_pane_base_url:
+            return str(self._settings.hive_control_pane_base_url).rstrip("/")
+
+        host = self._settings.hive_api_host
+        display_host = "localhost" if host in {"0.0.0.0", "::"} else host
+        return f"http://{display_host}:{self._settings.hive_api_port}"
+
+    def _resolve_playground_route(self, base_url: str) -> str | None:
+        if not self._settings.hive_embed_playground:
+            return None
+
+        mount_path = self._settings.hive_playground_mount_path or "/playground"
+        if not mount_path.startswith("/"):
+            mount_path = f"/{mount_path}"
+        return f"{base_url}{mount_path}"
 
     def _resolve_os_id(self) -> str:
         if self._explicit_os_id:

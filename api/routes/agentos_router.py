@@ -37,3 +37,12 @@ legacy_agentos_router.add_api_route(
     response_model_exclude_none=True,
     summary="Retrieve AgentOS configuration (legacy alias)",
 )
+
+legacy_agentos_router.add_api_route(
+    "/config",
+    get_agentos_config,
+    methods=["GET"],
+    response_model=ConfigResponse,
+    response_model_exclude_none=True,
+    summary="Retrieve AgentOS configuration (legacy control pane alias)",
+)
