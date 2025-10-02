@@ -348,15 +348,24 @@ async def _async_create_automagik_api():
     team_registry = startup_results.registries.teams
 
     # Load team instances from registry
+    # Create two versions: one with metrics for internal use, one without for AgentOS serialization
     loaded_teams = []
+    teams_for_agentos = []
+
     for team_id in team_registry:
         try:
+            # Team with metrics for internal use
             team = await create_team(
                 team_id, metrics_service=startup_results.services.metrics_service
             )
             if team:
                 loaded_teams.append(team)
                 logger.debug("Team instance created", team_id=team_id)
+
+                # Create clean team instance for AgentOS (no metrics_service)
+                # This prevents Pydantic serialization errors with DualPathMetricsCoordinator
+                team_for_agentos = await create_team(team_id)
+                teams_for_agentos.append(team_for_agentos)
         except Exception as e:
             logger.warning(
                 "Team instance creation failed",
@@ -386,7 +395,8 @@ async def _async_create_automagik_api():
     # startup_display already contains all component details from get_startup_display_with_results()
 
     # Create FastAPI app components from orchestrated startup results
-    teams_list = loaded_teams if loaded_teams else []
+    # Use clean teams without metrics_service for AgentOS to avoid serialization errors
+    teams_list = teams_for_agentos if teams_for_agentos else []
 
     # ORCHESTRATION FIX: Reuse agents from orchestrated startup to prevent duplicate loading
     # Agents were already loaded with proper metrics configuration during startup orchestration
@@ -511,7 +521,7 @@ async def _async_create_automagik_api():
                 workflows=workflows_list,
                 fastapi_app=app,  # Pass our existing FastAPI app
                 settings=agentos_settings,
-                telemetry=True,  # Enable telemetry for monitoring
+                telemetry=False,  # Disable AgentOS telemetry - using our own metrics service
                 replace_routes=False,  # Don't replace our existing routes
             )
 
