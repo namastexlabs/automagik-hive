@@ -172,6 +172,7 @@ def create_knowledge_base(
             db_url=db_url,
             db_schema=resolved_schema,
             knowledge_table=knowledge_table,
+            id="knowledge-base",  # ID for AgentOS discovery
         )
     except Exception as exc:  # pragma: no cover - defensive for tests without DB
         logger.warning(
@@ -289,5 +290,24 @@ def get_knowledge_base(
     num_documents: int = 10,
     csv_path: str | None = None,
 ) -> RowBasedCSVKnowledgeBase:
-    """Get the shared knowledge base"""
+    """Get the shared knowledge base (CSV wrapper)"""
     return create_knowledge_base(config, db_url, num_documents, csv_path)
+
+
+def get_agentos_knowledge_base(
+    config: dict[str, Any] | None = None,
+    db_url: str | None = None,
+    num_documents: int = 10,
+    csv_path: str | None = None,
+):
+    """
+    Get the inner Agno Knowledge instance for AgentOS integration.
+
+    This returns the pure Agno Knowledge object that AgentOS expects,
+    not the CSV wrapper. Use this when registering knowledge with AgentOS
+    for URL/PDF/file upload functionality.
+    """
+    csv_wrapper = create_knowledge_base(config, db_url, num_documents, csv_path)
+    if csv_wrapper.knowledge is None:
+        raise RuntimeError("No Agno Knowledge instance available - vector_db may not be configured")
+    return csv_wrapper.knowledge

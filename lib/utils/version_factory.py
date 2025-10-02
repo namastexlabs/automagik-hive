@@ -221,6 +221,28 @@ class VersionFactory:
             metrics_service=metrics_service,
         )
 
+        # Attach knowledge base if agent needs it (for AgentOS knowledge discovery)
+        # Check if knowledge should be enabled for this agent
+        knowledge_enabled = inherited_config.get("enable_knowledge", False)
+        if knowledge_enabled:
+            try:
+                from lib.knowledge import get_knowledge_base
+
+                # Get shared knowledge base (thread-safe singleton)
+                knowledge = get_knowledge_base(
+                    num_documents=inherited_config.get("knowledge_results", 5),
+                    csv_path=inherited_config.get("csv_file_path"),
+                )
+                # Attach knowledge to agent for AgentOS discovery
+                agent.knowledge = knowledge
+                logger.debug(
+                    f"📚 Knowledge base attached to agent {component_id} for AgentOS discovery"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to attach knowledge to agent {component_id}: {e}"
+                )
+
         # Get supported parameters count safely
         try:
             supported_params = proxy.get_supported_parameters()

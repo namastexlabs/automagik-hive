@@ -30,13 +30,11 @@ memory:
   add_session_summary_references: true
   memory_retention_days: 180
 
-# Knowledge base is attached programmatically in agent.py factory function
-# This ensures proper object initialization (not dict from YAML parsing)
-# Configuration reference for documentation:
-#   - CSV path: lib/knowledge/data/knowledge_rag.csv
-#   - Documents retrieved: 5 per query
-#   - Vector DB: PgVector with HNSW indexing, hybrid search
-#   - Embedder: text-embedding-3-small
+# Knowledge base integration (attached during agent creation in version_factory)
+# AgentOS discovers knowledge via agent.knowledge attribute
+enable_knowledge: true
+knowledge_results: 5
+csv_file_path: "lib/knowledge/data/knowledge_rag.csv"
 
 display:
   markdown: false

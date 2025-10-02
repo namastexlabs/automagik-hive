@@ -4,7 +4,7 @@ Template Agent - Foundational agent template for specialized agent development
 
 from agno.agent import Agent
 
-from lib.knowledge import get_knowledge_base
+from lib.knowledge import get_agentos_knowledge_base
 
 
 def get_template_agent(**kwargs) -> Agent:
@@ -18,9 +18,10 @@ def get_template_agent(**kwargs) -> Agent:
     Returns:
         Agent: Configured template agent instance with knowledge
     """
-    # Get shared knowledge base (thread-safe singleton)
-    # This makes the agent visible in AgentOS Knowledge screen
-    knowledge = get_knowledge_base(
+    # Get AgentOS-compatible knowledge base (pure Agno Knowledge instance)
+    # This makes URL/PDF uploads via AgentOS UI work correctly
+    # For CSV search functionality, the knowledge base still processes CSV data
+    knowledge = get_agentos_knowledge_base(
         num_documents=5,  # Number of relevant documents to retrieve
         csv_path="lib/knowledge/data/knowledge_rag.csv",
     )
