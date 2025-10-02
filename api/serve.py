@@ -325,9 +325,11 @@ async def _async_create_automagik_api():
     # Replace scattered initialization with orchestrated startup sequence
     startup_results = await orchestrated_startup(quiet_mode=is_reloader_context)
 
+    # Extract auth service for all environments (used later for AgentOS configuration)
+    auth_service = startup_results.services.auth_service
+
     # Show environment info in development mode
     if is_development:
-        auth_service = startup_results.services.auth_service
         logger.debug(
             "Environment configuration",
             environment=environment,
