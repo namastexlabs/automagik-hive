@@ -19,13 +19,10 @@ except ImportError:
 
 
 # Import command classes for test compatibility
-from .commands.init import InitCommands
 from .commands.postgres import PostgreSQLCommands
 from .commands.service import ServiceManager
 from .commands.uninstall import UninstallCommands
-from .commands.workspace import WorkspaceCommands
 from .docker_manager import DockerManager
-from .workspace import WorkspaceManager
 
 def _is_agentos_cli_enabled() -> bool:
     """Feature flag gate for AgentOS CLI surfaces."""
@@ -176,12 +173,12 @@ def main() -> int:
         return 0
 
     try:
-        # Init workspace
+        # Init workspace - removed, use 'install' command instead
         if args.init:
-            init_cmd = InitCommands()
-            workspace_name = None if args.init == "__DEFAULT__" else args.init
-            return 0 if init_cmd.init_workspace(workspace_name) else 1
-        
+            print("❌ --init command has been removed. Use 'install' command instead:")
+            print("   automagik-hive install")
+            return 1
+
         # Production server (Docker)
         if args.serve:
             service_manager = ServiceManager()
@@ -239,14 +236,13 @@ def main() -> int:
             success = service_manager.agentos_config(json_output=getattr(args, "json", False))
             return 0 if success else 1
 
-        # Start workspace server (positional argument)
+        # Start workspace server (positional argument) - removed, use 'dev' or 'serve' instead
         if args.workspace:
-            if not Path(args.workspace).is_dir():
-                print(f"❌ Directory not found: {args.workspace}")
-                return 1
-            workspace_cmd = WorkspaceCommands()
-            return 0 if workspace_cmd.start_workspace(args.workspace) else 1
-        
+            print("❌ Workspace positional argument has been removed. Use one of:")
+            print("   automagik-hive dev    # Development server")
+            print("   automagik-hive serve  # Production server")
+            return 1
+
         # PostgreSQL commands
         postgres_cmd = PostgreSQLCommands()
         if args.postgres_status:
