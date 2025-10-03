@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import yaml
 
@@ -13,12 +13,20 @@ from lib.auth.credential_service import CredentialService
 
 
 class DockerManager:
-    """Simple Docker operations manager."""
-    
+    """Simple Docker operations manager focused on the workspace stack."""
+
     # Container definitions (must match Docker Compose naming)
-    POSTGRES_CONTAINER = "hive-postgres"    # Matches docker/main/docker-compose.yml
-    API_CONTAINER = "hive-api"              # API container from docker-compose.yml
-    NETWORK_NAME = "hive_network"           # Docker network name
+    POSTGRES_CONTAINER = "hive-postgres"  # Matches docker/main/docker-compose.yml
+    API_CONTAINER = "hive-api"  # API container from docker/main/docker-compose.yml
+    NETWORK_NAME = "hive_network"  # Docker network name
+
+    # Supported component-to-container mapping (workspace-only contract)
+    CONTAINERS: Dict[str, List[str]] = {
+        "workspace": [POSTGRES_CONTAINER, API_CONTAINER],
+        "postgres": [POSTGRES_CONTAINER],
+        "api": [API_CONTAINER],
+        "all": [POSTGRES_CONTAINER, API_CONTAINER],
+    }
     
     # Port mappings - read from environment with no hardcoded fallbacks
     @property
@@ -95,16 +103,16 @@ class DockerManager:
         return True
     
     def _get_containers(self, component: str) -> list[str]:
-        """Get container names for component."""
-        if component == "all" or component == "workspace":
-            return [self.POSTGRES_CONTAINER, self.API_CONTAINER]
-        elif component == "postgres":
-            return [self.POSTGRES_CONTAINER]
-        elif component == "api":
-            return [self.API_CONTAINER]
-        else:
-            print(f"❌ Unknown component: {component}")
+        """Return container names for a supported component."""
+
+        normalized = component.lower()
+        containers = self.CONTAINERS.get(normalized)
+        if not containers:
+            print(f"❌ Unsupported component: {component}")
             return []
+
+        # Return a copy to avoid accidental mutation by callers/tests
+        return list(containers)
     
     def _container_exists(self, container: str) -> bool:
         """Check if container exists."""
@@ -149,11 +157,35 @@ class DockerManager:
         }
         
         return dockerfile_mapping.get(component, self.project_root / "docker" / "main" / "Dockerfile")
+
+    def _get_postgres_image(self, component: str) -> str:
+        """Determine the postgres image for the requested component."""
+
+        default_image = "agnohq/pgvector:16"
+        compose_path = self.template_files.get(component)
+        if not compose_path or not compose_path.exists():
+            return default_image
+
+        try:
+            compose_data = yaml.safe_load(compose_path.read_text()) or {}
+        except Exception:
+            return default_image
+
+        services = compose_data.get("services", {})
+        postgres_service = services.get(self.POSTGRES_CONTAINER) or services.get("postgres")
+        if isinstance(postgres_service, dict):
+            return postgres_service.get("image", default_image)
+
+        return default_image
     
     def _create_containers_via_compose(self, component: str, credentials: dict) -> bool:
         """Create containers using Docker Compose for consistency with Makefile."""
-        compose_file = self.template_files.get(component)
-        if not compose_file or not compose_file.exists():
+        if component not in self.template_files:
+            print(f"❌ Docker Compose unsupported for component: {component}")
+            return False
+
+        compose_file = self.template_files[component]
+        if not compose_file.exists():
             print(f"❌ Docker Compose file not found: {compose_file}")
             return False
             
@@ -349,26 +381,26 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
             return self._interactive_install()
         
         print(f"🚀 Installing {component}...")
-        
-        # Generate unified credentials ONCE for all modes
-        components = ["agent", "workspace"] if component == "all" else [component]
-        
-        print("🔐 Generating unified credentials for all deployment modes...")
+
+        normalized = component.lower()
+        components = ["workspace"] if normalized == "all" else [normalized]
+
+        unsupported = [comp for comp in components if comp != "workspace"]
+        if unsupported:
+            print(f"❌ Unsupported install target: {unsupported[0]}")
+            return False
+
+        print("🔐 Generating unified credentials for workspace deployment...")
         try:
             all_credentials = self.credential_service.install_all_modes(components)
             print("✅ Unified credentials generated successfully")
         except Exception as e:
             print(f"❌ Failed to generate credentials: {e}")
             return False
-        
+
         self._create_network()
-        
-        # Since we only have one "workspace" mode now, just proceed
+
         for comp in components:
-            if comp not in ["workspace", "all"]:
-                print(f"❌ Unknown component: {comp}")
-                return False
-            
             print(f"\n📦 Setting up {comp} component...")
             comp_credentials = all_credentials[comp]
             
@@ -555,61 +587,56 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         return success
 
     def _interactive_install(self) -> bool:
-        """Interactive installation with user choices."""
+        """Interactive installation with workspace-only choices."""
+
         print("🚀 Automagik Hive Interactive Installation")
         print("=" * 50)
-        
-        # 1. Main Hive installation
+
         print("\n🏠 Automagik Hive Core (Main Application)")
-        print("This includes the workspace server and web interface")
+        print("This installs the workspace server and API components")
         while True:
             hive_choice = input("Would you like to install Hive Core? (Y/n): ").strip().lower()
             if hive_choice in ["y", "yes", "n", "no", ""]:
                 break
             print("❌ Please enter y/yes or n/no.")
-        
+
         install_hive = hive_choice not in ["n", "no"]
-        
         if not install_hive:
             print("👋 Skipping Hive installation")
             return True
-        
-        # Database setup for Hive
+
         print("\n📦 Database Setup for Hive:")
-        print("1. Use our PostgreSQL + pgvector container (recommended)")
-        print("   → PostgreSQL 15 with pgvector extension for AI/RAG capabilities")
-        print("2. Use existing PostgreSQL database")
-        print("   → Connect to your own PostgreSQL instance")
-        
+        print("1. Use the Automagik PostgreSQL + pgvector container (recommended)")
+        print("2. Connect to an existing PostgreSQL database")
+
         while True:
             db_choice = input("\nSelect database option (1-2): ").strip()
             if db_choice in ["1", "2"]:
                 break
             print("❌ Invalid choice. Please enter 1 or 2.")
-        
-        if db_choice == "1":
-            print("✅ Using PostgreSQL + pgvector container for Hive")
-            use_container = True
-            
-            # Check if database already exists and prompt for reuse/recreate
+
+        use_container = db_choice == "1"
+        if use_container:
+            print("✅ Using bundled PostgreSQL + pgvector container")
             postgres_container = self.POSTGRES_CONTAINER
             if self._container_exists(postgres_container):
                 print(f"\n🗄️ Found existing database container: {postgres_container}")
                 while True:
-                    db_action = input("Do you want to (r)euse existing database or (c)recreate it? (r/c): ").strip().lower()
+                    db_action = input("Do you want to (r)euse or (c)recreate it? (r/c): ").strip().lower()
                     if db_action in ["r", "reuse", "c", "create", "recreate"]:
                         break
                     print("❌ Please enter r/reuse or c/create.")
-                
+
                 if db_action in ["c", "create", "recreate"]:
                     print("🗑️ Recreating database container...")
-                    # Stop and remove existing container
                     if self._container_running(postgres_container):
                         self._run_command(["docker", "stop", postgres_container])
                     self._run_command(["docker", "rm", postgres_container])
-                    # Remove volume to ensure clean slate
                     volume_name = "hive_workspace_data"
-                    volumes = self._run_command(["docker", "volume", "ls", "--filter", f"name={volume_name}", "--format", "{{.Name}}"], capture_output=True)
+                    volumes = self._run_command(
+                        ["docker", "volume", "ls", "--filter", f"name={volume_name}", "--format", "{{.Name}}"],
+                        capture_output=True,
+                    )
                     if volume_name in (volumes or ""):
                         print("🗑️ Removing existing database volume...")
                         self._run_command(["docker", "volume", "rm", volume_name])
@@ -617,72 +644,27 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
                     print("♻️ Reusing existing database container")
         else:
             print("📝 Custom database setup for Hive")
-            use_container = False
-            
-            # Ask for credentials
             print("\nEnter your PostgreSQL connection details:")
             host = input("Host (localhost): ").strip() or "localhost"
             port = input("Port (5432): ").strip() or "5432"
             database = input("Database name (automagik_hive): ").strip() or "automagik_hive"
             username = input("Username: ").strip()
             password = input("Password: ").strip()
-            
+
             if not username or not password:
                 print("❌ Username and password are required")
                 return False
-        
-        # Get input for additional components only if Hive is being installed
-        install_genie = False
-        install_agent = False
-        
-        if install_hive:
-            # 2. Genie installation
-            print("\n🧞 Genie (AI Agent Assistant)")
-            while True:
-                genie_choice = input("Would you like to install Genie? (y/N): ").strip().lower()
-                if genie_choice in ["y", "yes", "n", "no", ""]:
-                    break
-                print("❌ Please enter y/yes or n/no.")
-            
-            install_genie = genie_choice in ["y", "yes"]
-            
-            # 3. Agent Workspace installation
-            print("\n🤖 Agent Workspace (Optional)")
-            print("Separate isolated testing environment for agents (different from main Hive)")
-            while True:
-                agent_choice = input("Would you like to install Agent Workspace? (y/N): ").strip().lower()
-                if agent_choice in ["y", "yes", "n", "no", ""]:
-                    break
-                print("❌ Please enter y/yes or n/no.")
-            
-            install_agent = agent_choice in ["y", "yes"]
-        
-        # Determine what to install
-        components_to_install = []
-        if install_hive:
-            components_to_install.append("workspace")
-        if install_agent:
-            components_to_install.append("agent")
-        
-        if not components_to_install:
+
+            print("🔧 Custom database installation is not automated yet")
+            print("💡 Please follow manual instructions in the README")
+
+        if not install_hive:
             print("👋 No components selected for installation")
             return True
-        
-        # Install selected components
-        success = True
-        for component in components_to_install:
-            print(f"\n🚀 Installing {component}...")
-            if use_container:
-                if not self.install(component):
-                    success = False
-                    break
-            else:
-                # Custom database installation (simplified for now)
-                print("🔧 Custom database installation not fully implemented yet")
-                print(f"💡 For now, please use: uv run python -m cli.main --install {component}")
-        
-        if install_genie:
-            print("\n🧞 Genie installation not yet implemented")
-            print("💡 Coming soon in future updates!")
-        
-        return success
+
+        if not use_container:
+            # For manual database installs we stop here with guidance above
+            return True
+
+        print("\n🚀 Installing workspace...")
+        return self.install("workspace")

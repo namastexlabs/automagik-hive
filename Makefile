@@ -266,7 +266,6 @@ help: ## 🐝 Show this help message
 	@echo ""
 	@echo -e "$(FONT_CYAN)🚀 Getting Started:$(FONT_RESET)"
 	@echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install environment with optional PostgreSQL setup"
-	@echo -e "  $(FONT_PURPLE)init$(FONT_RESET)            Initialize workspace (mirrors --init)"
 	@echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Start local development server (with hot-reload)"
 	@echo -e "  $(FONT_PURPLE)serve$(FONT_RESET)           Start workspace server (mirrors --serve)"
 	@echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Start production stack via Docker"
@@ -346,7 +345,7 @@ dev: ## 🛠️ Start development server with hot reload
 	fi
 	@echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
 	@echo -e "$(FONT_PURPLE)🚀 Starting server...$(FONT_RESET)"
-	@HIVE_DEV_GRACEFUL=1 uv run automagik-hive --dev
+	@HIVE_DEV_GRACEFUL=1 uv run automagik-hive dev
 
 .PHONY: serve
 serve: ## 🚀 Start production server (Docker) - mirrors CLI --serve
@@ -391,14 +390,6 @@ postgres-health: ## 💊 Check PostgreSQL health - mirrors CLI --postgres-health
 # ===========================================
 # 🚀 Core Development Commands (UV Integration)
 # ===========================================
-.PHONY: init
-init: ## 🛠️ Initialize workspace - mirrors CLI --init
-	@$(call print_status,Initializing workspace...)
-	@$(call check_prerequisites)
-	@$(call setup_python_env)
-	@uv run automagik-hive --init
-	@$(call print_success,Workspace initialized!)
-
 
 .PHONY: version
 version: ## 📄 Show version - mirrors CLI --version
@@ -612,7 +603,7 @@ publish: ## 📦 Build and publish beta release to PyPI
 # ===========================================
 # 🧹 Phony Targets  
 # ===========================================
-.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall init serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================

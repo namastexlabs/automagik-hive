@@ -39,22 +39,25 @@ from lib.config.settings import settings
 from lib.exceptions import ComponentLoadingError
 
 # Configure unified logging system AFTER environment variables are loaded
-from lib.logging import logger, setup_logging
+from lib.logging import initialize_logging, logger
 from lib.utils.startup_display import create_startup_display
 from lib.utils.version_reader import get_api_version
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
 
-# Setup logging immediately
-setup_logging()
+# Setup logging immediately via unified bootstrap helper
+initialized_now = initialize_logging(surface="api.serve")
 
 # Log startup message at INFO level (replaces old demo mode print)
-log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
-agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
-logger.info(
-    "Automagik Hive logging initialized", log_level=log_level, agno_level=agno_log_level
-)
+if initialized_now:
+    log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
+    agno_log_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
+    logger.info(
+        "Automagik Hive logging initialized",
+        log_level=log_level,
+        agno_level=agno_log_level,
+    )
 
 # CRITICAL: Run database migrations FIRST before any imports that trigger component loading
 # This ensures the database schema is ready before agents/teams are registered
@@ -318,9 +321,28 @@ async def _async_create_automagik_api():
     if is_reloader_context and is_development:
         logger.debug("Reloader worker process - reducing log verbosity")
 
+    logger.debug(
+        "Reloader environment snapshot",
+        run_main=os.getenv("RUN_MAIN"),
+        is_reloader_context=is_reloader_context,
+        process_id=os.getpid(),
+        working_directory=os.getcwd(),
+    )
+
     # PERFORMANCE-OPTIMIZED SEQUENTIAL STARTUP
     # Replace scattered initialization with orchestrated startup sequence
     startup_results = await orchestrated_startup(quiet_mode=is_reloader_context)
+
+    logger.debug(
+        "Startup orchestration snapshot",
+        result_type=type(startup_results).__name__,
+        registries_type=type(startup_results.registries).__name__,
+        agents_registry=startup_results.registries.agents,
+        agent_keys=list(startup_results.registries.agents.keys())
+        if startup_results.registries.agents
+        else [],
+        has_agents=bool(startup_results.registries.agents),
+    )
 
     # Show environment info in development mode
     if is_development:
@@ -343,6 +365,21 @@ async def _async_create_automagik_api():
     available_agents = startup_results.registries.agents
     workflow_registry = startup_results.registries.workflows
     team_registry = startup_results.registries.teams
+
+    try:
+        logger.debug(
+            "Agent registry snapshot",
+            startup_type=type(startup_results).__name__,
+            registries_type=type(startup_results.registries).__name__,
+            has_agents_registry=hasattr(startup_results.registries, "agents"),
+            available_agents_type=type(available_agents).__name__,
+            has_available_agents=bool(available_agents),
+            available_agents_count=len(available_agents) if available_agents else 0,
+            available_agent_keys=list(available_agents.keys()) if available_agents else [],
+            available_agents=available_agents,
+        )
+    except Exception:
+        logger.exception("Agent registry introspection failed during startup")
 
     # Load team instances from registry
     loaded_teams = []
@@ -369,6 +406,12 @@ async def _async_create_automagik_api():
 
     if not available_agents:
         logger.error("Critical: No agents loaded from registry")
+        logger.error(
+            "DEBUG: Agent validation failed",
+            available_agents=available_agents,
+            type_check=type(available_agents).__name__,
+            bool_check=bool(available_agents),
+        )
         raise ComponentLoadingError(
             "At least one agent is required but none were loaded"
         )

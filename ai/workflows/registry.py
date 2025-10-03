@@ -7,12 +7,16 @@ from typing import Any
 
 from agno.workflow import Workflow
 
+from lib.config.settings import get_settings
 from lib.logging import logger
+from lib.utils.ai_root import resolve_ai_root
 
 
 def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
     """Dynamically discover workflows from filesystem"""
-    workflows_dir = Path("ai/workflows")
+    # Use dynamic AI root resolution
+    ai_root = resolve_ai_root(settings=get_settings())
+    workflows_dir = ai_root / "workflows"
     registry: dict[str, Callable[..., Workflow]] = {}
 
     if not workflows_dir.exists():

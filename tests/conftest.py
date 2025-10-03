@@ -765,7 +765,7 @@ def mock_external_dependencies():
     patch_specs = [
         ("lib.knowledge.csv_hot_reload.CSVHotReloadManager", None),
         ("lib.metrics.langwatch_integration.LangWatchManager", None),
-        ("lib.logging.setup_logging", None),
+        ("lib.logging.initialize_logging", None),
         ("lib.logging.set_runtime_mode", None),
         ("api.serve.orchestrated_startup", AsyncMock),
         ("api.serve.create_startup_display", None),

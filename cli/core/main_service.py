@@ -404,8 +404,8 @@ class MainService:
             
             # Check both containers using Docker Compose
             for service_name, display_name in [
-                ("postgres", "hive-postgres"),
-                ("app", "hive-api")
+                ("hive-postgres", "hive-postgres"),
+                ("app", "hive-api"),
             ]:
                 try:
                     # Use docker compose ps to check if service is running with cross-platform paths

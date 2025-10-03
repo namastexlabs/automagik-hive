@@ -42,9 +42,8 @@ events:
 
 # MCP servers configuration for unified tool access
 mcp_servers:
-  - "ask-repo-agent:*"
+  - "agno-docs:*"
   - "search-repo-docs:*"
-  - "mcp-server-chart:*"
 
 streaming:
   stream: true

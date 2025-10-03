@@ -16,6 +16,7 @@ import yaml
 
 from lib.config.settings import get_settings
 from lib.logging import logger
+from lib.utils.ai_root import resolve_ai_root
 from lib.versioning import AgnoVersionService
 
 
@@ -38,6 +39,9 @@ class AgnoVersionSyncService:
         self._db_service = db_service  # For testing injection
         self.version_service = AgnoVersionService(self.db_url) if self.db_url else None
 
+        # Store resolved AI root for consistent usage
+        self.ai_root = resolve_ai_root(settings=get_settings())
+
         try:
             settings = get_settings()
             if getattr(settings, "hive_agno_v2_migration_enabled", False):
@@ -49,11 +53,11 @@ class AgnoVersionSyncService:
         except Exception:  # pragma: no cover - settings loader should not break the service
             pass
 
-        # Component type mappings
+        # Component type mappings - now dynamic
         self.config_paths = {
-            "agent": "ai/agents/*/config.yaml",
-            "team": "ai/teams/*/config.yaml",
-            "workflow": "ai/workflows/*/config.yaml",
+            "agent": str(self.ai_root / "agents" / "*" / "config.yaml"),
+            "team": str(self.ai_root / "teams" / "*" / "config.yaml"),
+            "workflow": str(self.ai_root / "workflows" / "*" / "config.yaml"),
         }
 
         self.sync_results = {"agents": [], "teams": [], "workflows": []}
@@ -81,13 +85,13 @@ class AgnoVersionSyncService:
         
         for comp_type in component_types:
             try:
-                # Get the directory path for this component type
+                # Get the directory path for this component type using resolved AI root
                 if comp_type == "agent":
-                    base_dir = Path("ai/agents")
+                    base_dir = self.ai_root / "agents"
                 elif comp_type == "team":
-                    base_dir = Path("ai/teams")
+                    base_dir = self.ai_root / "teams"
                 elif comp_type == "workflow":
-                    base_dir = Path("ai/workflows")
+                    base_dir = self.ai_root / "workflows"
                 else:
                     continue
                 

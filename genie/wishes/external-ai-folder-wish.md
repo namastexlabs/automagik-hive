@@ -44,7 +44,7 @@ The previous attempt to retrofit external support stalled. We need a clean slate
 1. Update `cli/main.py` to accept an optional positional `ai_root` argument (`uvx automagik-hive /path/to/ai`).
 2. When provided, set/override `HIVE_AI_ROOT` for the current invocation and pass the resolved path into downstream services (propagate via `Settings` or explicit parameter when instantiating `ServiceManager`).
 3. Replace the ad-hoc server start logic with `ServiceManager.serve_local(...)`, ensuring it receives the resolved AI root (environment injection or constructor argument).
-4. Ensure `--dev` and other existing flags still work; document how they interact with external paths.
+4. Ensure `dev` subcommand and other existing flags still work; document how they interact with external paths.
 
 ### Phase 3 – Registry & Service Integration (hive-coder)
 1. Update `ai/agents/registry.py`, `ai/teams/registry.py`, and `ai/workflows/registry.py` to derive their base directories from the new resolver instead of hardcoded `Path("ai/...")` constants.
@@ -80,8 +80,8 @@ The previous attempt to retrofit external support stalled. We need a clean slate
 
 ## Acceptance Criteria
 - `uvx automagik-hive /tmp/demo-ai` boots successfully, loading agents/teams/workflows from that directory.
-- `HIVE_AI_ROOT=/tmp/demo-ai uvx automagik-hive --dev` honors the env var without additional arguments.
-- Default invocation (`uvx automagik-hive --dev`) uses the repo’s bundled `ai/` directory.
+- `HIVE_AI_ROOT=/tmp/demo-ai uvx automagik-hive dev` honors the env var without additional arguments.
+- Default invocation (`uvx automagik-hive dev`) uses the repo’s bundled `ai/` directory.
 - All registries and services source definitions via the centralized resolver.
 - The codebase contains **zero** references to workspace scaffolding.
 - README and Makefile reflect the new runtime workflow.
@@ -92,9 +92,9 @@ The previous attempt to retrofit external support stalled. We need a clean slate
    ```bash
    mkdir -p /tmp/hive-external/{agents,teams,workflows}
    echo "name: cli-smoke" > /tmp/hive-external/agents/cli-smoke.yaml
-   HIVE_AI_ROOT=/tmp/hive-external uvx automagik-hive --dev --check-config
+   HIVE_AI_ROOT=/tmp/hive-external uvx automagik-hive dev --check-config
    ```
-3. **Default Regression:** `uvx automagik-hive --dev --check-config` inside the repo should still succeed.
+3. **Default Regression:** `uvx automagik-hive dev --check-config` inside the repo should still succeed.
 4. **Static Analysis:** `uv run ruff check` and `uv run mypy` if the repo requires them pre-commit.
 
 ## Rollback Plan
