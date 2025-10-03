@@ -643,9 +643,11 @@ def simple_fastapi_app(
     app.include_router(health_check_router)
 
     # Add the v1_router which includes all sub-routers with proper /api/v1 prefix
+    from api.routes.agentos_router import legacy_agentos_router
     from api.routes.v1_router import v1_router
 
     app.include_router(v1_router)
+    app.include_router(legacy_agentos_router)
 
     # Add CORS middleware
     app.add_middleware(

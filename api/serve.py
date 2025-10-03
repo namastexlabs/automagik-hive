@@ -13,10 +13,13 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
+# Agno v2 uses AgentOS instead of deprecated Playground
 try:
-    from agno.playground import Playground
-except ImportError:  # pragma: no cover - optional dependency in Agno v2
-    Playground = None  # type: ignore[assignment]
+    from agno.os.app import AgentOS
+    from agno.os.settings import AgnoAPISettings
+except ImportError:  # pragma: no cover - optional dependency
+    AgentOS = None  # type: ignore[assignment]
+    AgnoAPISettings = None  # type: ignore[assignment]
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -344,9 +347,11 @@ async def _async_create_automagik_api():
         has_agents=bool(startup_results.registries.agents),
     )
 
+    # Extract auth service for all environments (used later for AgentOS configuration)
+    auth_service = startup_results.services.auth_service
+
     # Show environment info in development mode
     if is_development:
-        auth_service = startup_results.services.auth_service
         logger.debug(
             "Environment configuration",
             environment=environment,
@@ -357,7 +362,7 @@ async def _async_create_automagik_api():
             logger.debug(
                 "API authentication details",
                 api_key=auth_service.get_current_key(),
-                usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:{settings().hive_api_port}/playground/status',
+                usage_example=f'curl -H "x-api-key: {auth_service.get_current_key()}" http://localhost:{settings().hive_api_port}/agents',
             )
         logger.debug("Development features status", enabled=is_development)
 
@@ -382,15 +387,24 @@ async def _async_create_automagik_api():
         logger.exception("Agent registry introspection failed during startup")
 
     # Load team instances from registry
+    # Create two versions: one with metrics for internal use, one without for AgentOS serialization
     loaded_teams = []
+    teams_for_agentos = []
+
     for team_id in team_registry:
         try:
+            # Team with metrics for internal use
             team = await create_team(
                 team_id, metrics_service=startup_results.services.metrics_service
             )
             if team:
                 loaded_teams.append(team)
                 logger.debug("Team instance created", team_id=team_id)
+
+                # Create clean team instance for AgentOS (no metrics_service)
+                # This prevents Pydantic serialization errors with DualPathMetricsCoordinator
+                team_for_agentos = await create_team(team_id)
+                teams_for_agentos.append(team_for_agentos)
         except Exception as e:
             logger.warning(
                 "Team instance creation failed",
@@ -426,7 +440,8 @@ async def _async_create_automagik_api():
     # startup_display already contains all component details from get_startup_display_with_results()
 
     # Create FastAPI app components from orchestrated startup results
-    teams_list = loaded_teams if loaded_teams else []
+    # Use clean teams without metrics_service for AgentOS to avoid serialization errors
+    teams_list = teams_for_agentos if teams_for_agentos else []
 
     # ORCHESTRATION FIX: Reuse agents from orchestrated startup to prevent duplicate loading
     # Agents were already loaded with proper metrics configuration during startup orchestration
@@ -513,32 +528,70 @@ async def _async_create_automagik_api():
     except Exception as e:
         logger.debug("🔧 Workflow registry check completed", error=str(e))
 
-    unified_router = None
-    if Playground is None:
+    # ============================================================================
+    # AGNO V2 AGENTOS INTEGRATION
+    # ============================================================================
+    # AgentOS replaces the deprecated Playground and provides all agent/team/workflow endpoints
+    # Automatically creates: /agents, /teams, /workflows, /knowledge, /sessions, /memories, etc.
+
+    agent_os_enabled = False
+    if not settings().hive_embed_playground:
+        logger.info("Agno AgentOS embedding disabled by configuration")
+    elif AgentOS is None or AgnoAPISettings is None:
         logger.warning(
-            "Agno Playground not available in current Agno distribution; "
-            "starting API without playground routes."
+            "Agno AgentOS not available in current Agno distribution; "
+            "starting API without AgentOS routes."
         )
         startup_display.add_version_sync_log(
-            "⚠️ Agno Playground not installed — running API without playground UI"
+            "⚠️ Agno AgentOS not installed — running API without agent management UI"
         )
     else:
         try:
-            playground = Playground(
+            # Configure AgentOS settings
+            agentos_settings = AgnoAPISettings(
+                env=environment,
+                docs_enabled=is_development or api_settings.docs_enabled,
+                os_security_key=auth_service.get_current_key() if auth_service.is_auth_enabled() else None,
+                cors_origin_list=api_settings.cors_origin_list,
+            )
+
+            # Initialize AgentOS with our agents, teams, and workflows
+            agent_os = AgentOS(
+                os_id="automagik_hive",
+                name="Automagik Hive Multi-Agent System",
+                description="Production-ready multi-agent system with dynamic agent loading",
+                version=get_api_version(),
                 agents=agents_list,
                 teams=teams_list,
                 workflows=workflows_list,
-                name="Automagik Hive Multi-Agent System",
-                app_id="automagik_hive",
+                fastapi_app=app,  # Pass our existing FastAPI app
+                settings=agentos_settings,
+                telemetry=False,  # Disable AgentOS telemetry - using our own metrics service
+                replace_routes=False,  # Don't replace our existing routes
             )
 
-            # Get the unified router - this provides all endpoints including workflows
-            unified_router = playground.get_async_router()
+            # CRITICAL: Call get_app() to actually register the routes
+            # Even though we passed fastapi_app=app, the routes are only registered in get_app()
+            _ = agent_os.get_app()
+
+            agent_os_enabled = True
+            logger.info(
+                "AgentOS initialized successfully",
+                agents=len(agents_list),
+                teams=len(teams_list),
+                workflows=len(workflows_list)
+            )
+            startup_display.add_version_sync_log(
+                f"✅ Agno AgentOS enabled — {len(agents_list)} agents, {len(teams_list)} teams, {len(workflows_list)} workflows"
+            )
+
         except Exception as exc:
-            logger.error(f"Failed to initialize Agno Playground: {exc}")
+            logger.error(f"Failed to initialize Agno AgentOS: {exc}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             startup_display.add_error(
-                "Agno Playground",
-                f"Playground could not start: {exc}",
+                "Agno AgentOS",
+                f"AgentOS could not start: {exc}",
             )
     
     # Add AGUI support if enabled
@@ -587,25 +640,12 @@ async def _async_create_automagik_api():
         agui_fastapi_app = agui_app.get_app()
         app.mount("/agui", agui_fastapi_app)
 
-    # Add authentication protection to playground routes if auth is enabled
-    auth_service = startup_results.services.auth_service
-    if unified_router is not None:
-        if auth_service.is_auth_enabled():
-            from fastapi import APIRouter, Depends
-
-            from lib.auth.dependencies import require_api_key
-
-            # Create protected wrapper for playground routes
-            protected_router = APIRouter(dependencies=[Depends(require_api_key)])
-            protected_router.include_router(unified_router)
-            app.include_router(protected_router)
-        else:
-            # Development mode - no auth protection
-            app.include_router(unified_router)
-
-        logger.debug("Unified API endpoints registered successfully")
+    # AgentOS handles authentication internally via os_security_key
+    # No need to wrap routes - they're already registered in the app by AgentOS.__init__
+    if agent_os_enabled:
+        logger.debug("AgentOS routes registered successfully with built-in authentication")
     else:
-        logger.debug("Skipping Playground router registration (not available)")
+        logger.debug("Skipping AgentOS router registration (not available)")
 
     # Configure docs based on settings and environment
     if is_development or api_settings.docs_enabled:
