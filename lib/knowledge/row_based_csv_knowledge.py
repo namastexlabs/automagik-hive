@@ -71,12 +71,9 @@ class RowBasedCSVKnowledgeBase:
         knowledge: Knowledge | None = None,
     ) -> None:
         self._csv_path = Path(csv_path)
-        self.vector_db: VectorDb | None = vector_db
-        self.contents_db: BaseDb | None = contents_db
         self.num_documents = 10
         self.valid_metadata_filters: set[str] | None = None
         self._signatures: dict[str, DocumentSignature] = {}
-        self.knowledge: Knowledge | None
 
         if vector_db is not None:
             self.knowledge = knowledge or Knowledge(
@@ -571,6 +568,181 @@ class RowBasedCSVKnowledgeBase:
         if self.valid_metadata_filters is None:
             self.valid_metadata_filters = set()
         self.valid_metadata_filters.update(metadata.keys())
+
+    # ------------------------------------------------------------------
+    # AgentOS Compatibility - Proxy methods to inner Knowledge instance
+    # ------------------------------------------------------------------
+    @property
+    def max_results(self) -> int:
+        """
+        Get max_results from inner Knowledge instance.
+        Used by agent when searching knowledge base.
+        """
+        if self.knowledge is None:
+            return 10  # Default value
+        return self.knowledge.max_results
+
+    @property
+    def readers(self) -> dict[str, Any] | None:
+        """
+        Get readers from inner Knowledge instance.
+        Used when processing uploaded content.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.readers
+
+    @property
+    def vector_db(self) -> Any | None:
+        """
+        Get vector_db from inner Knowledge instance.
+        Used when searching and storing embeddings.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.vector_db
+
+    @vector_db.setter
+    def vector_db(self, value: Any) -> None:
+        """
+        Set vector_db on inner Knowledge instance.
+        Required during knowledge base initialization.
+        """
+        if self.knowledge is not None:
+            self.knowledge.vector_db = value
+
+    @property
+    def contents_db(self) -> Any | None:
+        """
+        Get contents_db from inner Knowledge instance.
+        Used for storing content metadata.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.contents_db
+
+    @contents_db.setter
+    def contents_db(self, value: Any) -> None:
+        """
+        Set contents_db on inner Knowledge instance.
+        Required during knowledge base initialization.
+        """
+        if self.knowledge is not None:
+            self.knowledge.contents_db = value
+
+    def get_content(
+        self,
+        limit: int | None = None,
+        page: int | None = None,
+        sort_by: str | None = None,
+        sort_order: str | None = None,
+    ) -> tuple[list[Any], int]:
+        """
+        Get knowledge content for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge.get_content(
+            limit=limit, page=page, sort_by=sort_by, sort_order=sort_order
+        )
+
+    def get_readers(self) -> dict[str, Any]:
+        """
+        Get configured readers for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return {}
+        return self.knowledge.get_readers()
+
+    def get_content_by_id(self, content_id: str) -> Any | None:
+        """
+        Get specific content by ID for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.get_content_by_id(content_id)
+
+    def get_content_status(self, content_id: str) -> tuple[Any | None, str | None]:
+        """
+        Get content status for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return None, "No knowledge instance available"
+        return self.knowledge.get_content_status(content_id)
+
+    def get_filters(self) -> list[str]:
+        """
+        Get available filters for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return []
+        return self.knowledge.get_filters()
+
+    def _build_content_hash(self, content) -> str:
+        """
+        Build the content hash from the content.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when uploading content.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge._build_content_hash(content)
+
+    async def _load_content(
+        self,
+        content,
+        upsert: bool,
+        skip_if_exists: bool,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> None:
+        """
+        Load content into the knowledge base.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when processing uploaded content.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        await self.knowledge._load_content(
+            content, upsert, skip_if_exists, include, exclude
+        )
+
+    def patch_content(self, content) -> dict[str, Any] | None:
+        """
+        Update (patch) existing content in the knowledge base.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when updating content via UI.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge.patch_content(content)
+
+    def remove_content_by_id(self, content_id: str) -> None:
+        """
+        Delete content from the knowledge base by ID.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when deleting content via UI.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge.remove_content_by_id(content_id)
+
+    async def async_search(
+        self, query: str, max_results: int | None = None, filters: dict[str, Any] | None = None
+    ) -> list:
+        """
+        Asynchronously search for relevant documents matching a query.
+        Delegates to the inner Knowledge instance.
+        Required by agents when searching knowledge base.
+        """
+        if self.knowledge is None:
+            return []
+        return await self.knowledge.async_search(query=query, max_results=max_results, filters=filters)
 
 
 __all__ = ["RowBasedCSVKnowledgeBase", "DocumentSignature"]

@@ -6,6 +6,7 @@ No over-engineering. No abstract patterns. Just working CLI.
 """
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -25,6 +26,11 @@ from .commands.uninstall import UninstallCommands
 from .commands.workspace import WorkspaceCommands
 from .docker_manager import DockerManager
 from .workspace import WorkspaceManager
+
+def _is_agentos_cli_enabled() -> bool:
+    """Feature flag gate for AgentOS CLI surfaces."""
+
+    return os.getenv("HIVE_FEATURE_AGENTOS_CLI", "").lower() in {"1", "true", "yes", "on"}
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -111,9 +117,29 @@ Use --help for detailed options or see documentation.
     uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     
     # Genie subcommand
-    genie_parser = subparsers.add_parser("genie", help="Launch claude with AGENTS.md as system prompt")
-    genie_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
-    
+    genie_parser = subparsers.add_parser("genie", help="Genie orchestration commands")
+    genie_subparsers = genie_parser.add_subparsers(dest="genie_command", help="Genie subcommands")
+
+    # genie claude - launch claude with AGENTS.md
+    genie_claude_parser = genie_subparsers.add_parser("claude", help="Launch claude with AGENTS.md as system prompt")
+    genie_claude_parser.add_argument("args", nargs="*", help="Additional arguments to pass to claude")
+
+    # genie wishes - list wishes from API
+    genie_wishes_parser = genie_subparsers.add_parser("wishes", help="List available Genie wishes from the API")
+    genie_wishes_parser.add_argument("--api-base", help="API base URL (default: http://localhost:8886)")
+    genie_wishes_parser.add_argument("--api-key", help="API key for authentication")
+
+    # AgentOS configuration inspection (feature flagged)
+    agentos_parser = subparsers.add_parser(
+        "agentos-config",
+        help="Inspect AgentOS configuration (feature flagged)",
+    )
+    agentos_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Display raw AgentOS configuration as JSON",
+    )
+
     # Dev subcommand
     dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
@@ -135,6 +161,7 @@ def main() -> int:
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
         args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
+        args.command == "agentos-config",
         args.stop, args.restart, args.status, args.logs,
         args.workspace
     ]
@@ -167,11 +194,23 @@ def main() -> int:
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
         
-        # Launch claude with AGENTS.md
+        # Genie commands (with subcommands)
         if args.command == "genie":
             from .commands.genie import GenieCommands
             genie_cmd = GenieCommands()
-            return 0 if genie_cmd.launch_claude(args.args) else 1
+
+            # Handle genie subcommands
+            if hasattr(args, 'genie_command') and args.genie_command == "wishes":
+                return 0 if genie_cmd.list_wishes(
+                    api_base=getattr(args, 'api_base', None),
+                    api_key=getattr(args, 'api_key', None)
+                ) else 1
+            elif hasattr(args, 'genie_command') and args.genie_command == "claude":
+                return 0 if genie_cmd.launch_claude(getattr(args, 'args', None)) else 1
+            else:
+                # Fallback for legacy "genie" without subcommand - show help
+                parser.parse_args(['genie', '--help'])
+                return 1
         
         # Development server (subcommand)
         if args.command == "dev":
@@ -190,7 +229,16 @@ def main() -> int:
             service_manager = ServiceManager()
             workspace = getattr(args, 'workspace', '.') or '.'
             return 0 if service_manager.uninstall_environment(workspace) else 1
-        
+
+        if args.command == "agentos-config":
+            if not _is_agentos_cli_enabled():
+                print("✨ AgentOS config command disabled. Set HIVE_FEATURE_AGENTOS_CLI=1 to enable.")
+                return 1
+
+            service_manager = ServiceManager()
+            success = service_manager.agentos_config(json_output=getattr(args, "json", False))
+            return 0 if success else 1
+
         # Start workspace server (positional argument)
         if args.workspace:
             if not Path(args.workspace).is_dir():

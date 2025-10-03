@@ -600,6 +600,8 @@ def get_startup_display_with_results(startup_results: StartupResults) -> Any:
     # Store sync results
     startup_display.set_sync_results(startup_results.sync_results)
 
+    _populate_surface_status(startup_display, startup_results)
+
     startup_results.startup_display = startup_display
 
     return startup_display
@@ -656,6 +658,15 @@ def build_runtime_summary(startup_results: StartupResults) -> dict[str, Any]:
 
     sync_status = "completed" if startup_results.sync_results else "skipped"
 
+    surfaces_summary = {
+        key: {
+            "status": info.get("status"),
+            "url": info.get("url"),
+            "note": info.get("note"),
+        }
+        for key, info in display.surfaces.items()
+    }
+
     return {
         "total_components": startup_results.registries.total_components,
         "summary": startup_results.registries.summary,
@@ -666,4 +677,78 @@ def build_runtime_summary(startup_results: StartupResults) -> dict[str, Any]:
         },
         "services": services_summary,
         "sync_status": sync_status,
+        "surfaces": surfaces_summary,
     }
+
+
+def _populate_surface_status(display: Any, startup_results: StartupResults) -> None:
+    """Enrich startup display with surface availability and URLs."""
+
+    from lib.config.settings import get_settings
+    from lib.config.server_config import get_server_config
+
+    settings = get_settings()
+    server_config = get_server_config()
+
+    auth_service = startup_results.services.auth_service
+    auth_enabled = False
+    if auth_service is not None and hasattr(auth_service, "is_auth_enabled"):
+        try:
+            auth_enabled = bool(auth_service.is_auth_enabled())
+        except Exception:
+            auth_enabled = False
+
+    playground_status = "⛔ Disabled via settings"
+    playground_note = "Set HIVE_EMBED_PLAYGROUND=true to enable"
+    playground_url = None
+    if getattr(settings, "hive_embed_playground", True):
+        url = server_config.get_playground_url()
+        playground_url = url
+        if url:
+            playground_status = "✅ Enabled"
+            playground_note = "Auth required" if auth_enabled else "Auth disabled"
+        else:
+            playground_status = "⚠️ Enabled (URL unavailable)"
+            playground_note = "Check HIVE_PLAYGROUND_MOUNT_PATH or PORT"
+
+    display.add_surface(
+        "playground",
+        "Agno Playground",
+        playground_status,
+        url=playground_url,
+        note=playground_note,
+    )
+
+    agentos_status: str
+    agentos_note: str
+
+    config_path = getattr(settings, "hive_agentos_config_path", None)
+    enable_defaults = getattr(settings, "hive_agentos_enable_defaults", True)
+
+    if config_path:
+        from pathlib import Path
+
+        config_file = Path(config_path)
+        if config_file.is_file():
+            agentos_status = "✅ Configured"
+            agentos_note = f"Config path: {config_file}"
+        else:
+            agentos_status = "⚠️ Missing config"
+            agentos_note = f"Expected at {config_file}"
+    elif enable_defaults:
+        agentos_status = "✅ Defaults"
+        agentos_note = "Using built-in AgentOS defaults"
+    else:
+        agentos_status = "⛔ Disabled"
+        agentos_note = "Provide HIVE_AGENTOS_CONFIG_PATH or enable defaults"
+
+    control_pane_base = server_config.get_control_pane_url()
+    agentos_endpoint = f"{server_config.get_base_url()}/api/v1/agentos/config"
+
+    display.add_surface(
+        "agentos_control_pane",
+        "AgentOS Control Pane",
+        agentos_status,
+        url=control_pane_base,
+        note=f"Config endpoint: {agentos_endpoint} — {agentos_note}",
+    )
