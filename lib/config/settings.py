@@ -300,9 +300,9 @@ class HiveSettings(BaseSettings):
     @field_validator('hive_database_url')
     @classmethod
     def validate_database_url(cls, v):
-        """Validate database URL format."""
-        if not v.startswith(('postgresql://', 'postgresql+psycopg://')):
-            raise ValueError(f'Database URL must start with postgresql:// or postgresql+psycopg://, got {v[:20]}...')
+        """Validate database URL format - PostgreSQL for production, SQLite for tests."""
+        if not v.startswith(('postgresql://', 'postgresql+psycopg://', 'sqlite://')):
+            raise ValueError(f'Database URL must start with postgresql://, postgresql+psycopg://, or sqlite://, got {v[:20]}...')
         return v
     
     @field_validator('hive_api_key')

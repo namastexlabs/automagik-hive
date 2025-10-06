@@ -16,6 +16,9 @@ import sys
 import os
 import importlib.util
 
+# Set test database URL BEFORE loading any modules
+os.environ['HIVE_DATABASE_URL'] = 'sqlite:///test.db'
+
 # Load the template-agent module
 template_agent_path = os.path.join(os.path.dirname(__file__), '../../../../ai/agents/template-agent/agent.py')
 spec = importlib.util.spec_from_file_location("template_agent_module", template_agent_path)
