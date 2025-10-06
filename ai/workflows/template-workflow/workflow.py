@@ -79,7 +79,7 @@ def create_finalizer_agent() -> Agent:
 # Step executor functions
 def execute_validation_step(step_input: StepInput) -> StepOutput:
     """Execute input validation step"""
-    input_message = step_input.message
+    input_message = step_input.input
     if not input_message:
         raise ValueError("Input message is required for validation")
 
