@@ -142,19 +142,19 @@ class TestTemplateAgentBehavior:
 
     def test_template_agent_should_be_synchronous_function(self):
         """
-        FAILING TEST: Should verify template agent factory is synchronous.
-        
-        RED phase: Tests function signature requirements.
+        Should verify template agent factory is synchronous.
+
+        Tests function signature requirements for Agno v2.
         """
         import asyncio
         import inspect
-        
+
         # Template agent should NOT be async (unlike dev/quality agents)
         assert not asyncio.iscoroutinefunction(get_template_agent), "Template agent factory should be synchronous"
-        
-        # Verify function signature has no parameters
+
+        # Verify function signature accepts **kwargs (Agno v2 pattern)
         sig = inspect.signature(get_template_agent)
-        assert len(sig.parameters) == 0, "Template agent should accept no parameters"
+        assert 'kwargs' in sig.parameters, "Template agent should accept **kwargs for Agno v2 flexibility"
 
     def test_template_agent_should_provide_foundational_pattern(self):
         """
@@ -282,20 +282,23 @@ class TestTemplateAgentIntegration:
 
     def test_template_agent_config_loading_should_use_agent_from_yaml_correctly(self):
         """
-        FAILING TEST: Should use Agent.from_yaml with correct path construction.
-        
-        RED phase: Tests proper integration with Agno Agent.from_yaml method.
+        Should use Agent.from_yaml with correct path construction.
+
+        Tests proper integration with Agno v2 Agent.from_yaml method.
         """
         with patch.object(template_agent_module, 'Agent') as mock_agent_class, \
              patch.object(template_agent_module, '__file__', '/test/template/agent.py'):
-            
+
             mock_agent_instance = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
+
             result = get_template_agent()
-            
-            # Verify correct usage of Agent.from_yaml
-            mock_agent_class.from_yaml.assert_called_once_with('/test/template/config.yaml')
+
+            # Verify correct usage of Agent.from_yaml (Agno v2 includes knowledge parameter)
+            mock_agent_class.from_yaml.assert_called_once()
+            call_args = mock_agent_class.from_yaml.call_args
+            assert call_args[0][0] == '/test/template/config.yaml', "Should use correct config path"
+            assert 'knowledge' in call_args[1], "Should pass knowledge parameter (Agno v2)"
             assert result == mock_agent_instance
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from unittest.mock import patch
 
 import pytest
 from fastapi import status
@@ -13,11 +14,19 @@ from api.main import create_app
 
 @pytest.fixture
 def agentos_client() -> TestClient:
-    """Return TestClient bound to the full FastAPI app."""
+    """Return TestClient bound to the full FastAPI app with auth enabled."""
+    # Enable authentication for these tests by setting HIVE_AUTH_DISABLED=false
+    with patch.dict(os.environ, {"HIVE_AUTH_DISABLED": "false", "HIVE_ENVIRONMENT": "development"}, clear=False):
+        # Force reload of global auth_service singleton to pick up new environment
+        import lib.auth.dependencies
+        from lib.auth.service import AuthService
 
-    app = create_app()
-    with TestClient(app) as client:
-        yield client
+        # Create a new auth service instance with the patched environment
+        lib.auth.dependencies.auth_service = AuthService()
+
+        app = create_app()
+        with TestClient(app) as client:
+            yield client
 
 
 class TestAgentOSConfigEndpoints:

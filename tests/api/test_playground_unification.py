@@ -86,11 +86,22 @@ class TestPlaygroundUnification:
 
     def test_unified_router_auth_enforcement(self, test_client, mock_auth_service):
         """Verify unified router enforces authentication when enabled."""
-        mock_auth_service.validate_api_key.return_value = False
+        # Enable authentication in environment for this test
+        with patch.dict(os.environ, {"HIVE_AUTH_DISABLED": "false", "HIVE_ENVIRONMENT": "development"}, clear=False):
+            # Re-create the app with auth enabled
+            from api.main import create_app
+            from starlette.testclient import TestClient
+            import lib.auth.dependencies
+            from lib.auth.service import AuthService
 
-        # Attempt to access protected endpoint without auth
-        response = test_client.get("/api/v1/agentos/config")
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+            # Force reload of global auth_service singleton to pick up new environment
+            lib.auth.dependencies.auth_service = AuthService()
+
+            app = create_app()
+            with TestClient(app) as auth_client:
+                # Attempt to access protected endpoint without auth
+                response = auth_client.get("/api/v1/agentos/config")
+                assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_health_endpoint_remains_public(self, test_client):
         """Ensure health check endpoint remains publicly accessible."""

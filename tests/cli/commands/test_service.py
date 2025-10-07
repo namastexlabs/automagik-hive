@@ -105,15 +105,22 @@ class TestServiceManagerLocalServe:
             # Should be called at least once for uvicorn startup
             assert mock_run.call_count >= 1
 
-            # Check that the final call is the uvicorn command
-            final_call_args = mock_run.call_args[0][0]
-            assert "uv" in final_call_args
-            assert "run" in final_call_args
-            assert "uvicorn" in final_call_args
-            assert "--host" in final_call_args
-            assert "127.0.0.1" in final_call_args
-            assert "--port" in final_call_args
-            assert "8080" in final_call_args
+            # Find the uvicorn call (not necessarily the last call due to Docker checks)
+            uvicorn_call_found = False
+            for call in mock_run.call_args_list:
+                call_args = call[0][0]
+                if isinstance(call_args, list) and "uvicorn" in call_args:
+                    assert "uv" in call_args
+                    assert "run" in call_args
+                    assert "uvicorn" in call_args
+                    assert "--host" in call_args
+                    assert "127.0.0.1" in call_args
+                    assert "--port" in call_args
+                    assert "8080" in call_args
+                    uvicorn_call_found = True
+                    break
+
+            assert uvicorn_call_found, "No uvicorn call found in subprocess.run calls"
             mock_stop.assert_not_called()
 
     def test_serve_local_with_reload(self):
@@ -125,8 +132,17 @@ class TestServiceManagerLocalServe:
             result = manager.serve_local(reload=True)
 
             assert result is True
-            call_args = mock_run.call_args[0][0]
-            assert "--reload" in call_args
+
+            # Find the uvicorn call with reload flag
+            reload_call_found = False
+            for call in mock_run.call_args_list:
+                call_args = call[0][0]
+                if isinstance(call_args, list) and "uvicorn" in call_args:
+                    assert "--reload" in call_args
+                    reload_call_found = True
+                    break
+
+            assert reload_call_found, "No uvicorn call with --reload found in subprocess.run calls"
             mock_stop.assert_not_called()
 
     def test_serve_local_keyboard_interrupt(self):
