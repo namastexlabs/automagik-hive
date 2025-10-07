@@ -864,7 +864,14 @@ class TestServeDatabaseMigrations:
 
 class TestServeErrorHandling:
     """Test error handling scenarios in serve module."""
-    
+
+    @pytest.fixture(autouse=True)
+    def clear_app_cache_per_test(self):
+        """Ensure app cache is cleared before and after each test."""
+        api.serve._app_instance = None
+        yield
+        api.serve._app_instance = None
+
     @pytest.mark.skip(reason="Blocked by task-725e5f0c - Source code issue preventing ComponentLoadingError")
     def test_component_loading_error_handling(self):
         """Test handling of component loading errors."""
@@ -941,7 +948,7 @@ class TestServeErrorHandling:
 
     def test_workflow_creation_failure_handling(self):
         """Test handling of workflow creation failures."""
-        with mock_serve_startup(workflows={"test_workflow": "test"}, clear_app_cache=False):
+        with mock_serve_startup(workflows={"test_workflow": "test"}, clear_app_cache=True):
             with patch("api.serve.get_workflow", side_effect=Exception("Workflow error")):
                 # Should handle workflow creation failures gracefully
                 result = asyncio.run(api.serve._async_create_automagik_api())
@@ -949,7 +956,7 @@ class TestServeErrorHandling:
 
     def test_business_endpoints_error_handling(self):
         """Test handling of business endpoints registration errors."""
-        with mock_serve_startup(teams={}, workflows={}, clear_app_cache=False):
+        with mock_serve_startup(teams={}, workflows={}, clear_app_cache=True):
             # Just verify the function completes - the actual router import happens at module level
             # and is difficult to mock without causing pydantic internal errors
             result = asyncio.run(api.serve._async_create_automagik_api())
@@ -969,6 +976,15 @@ class TestServeErrorHandling:
 
 class TestServeIntegration:
     """Integration tests for serve module with other components."""
+
+    @pytest.fixture(autouse=True)
+    def clear_app_cache_per_test(self):
+        """Ensure app cache is cleared before and after each test."""
+        # Clear before test
+        api.serve._app_instance = None
+        yield
+        # Clear after test
+        api.serve._app_instance = None
 
     def test_app_with_actual_dependencies(self):
         """Test app creation with actual dependencies."""
@@ -1010,39 +1026,39 @@ class TestServeIntegration:
         """Test _async_create_automagik_api complex scenarios for missing coverage."""
         # Mock reloader context scenario (line 240)
         with patch.dict(os.environ, {"RUN_MAIN": "true", "HIVE_ENVIRONMENT": "development"}):
-            with mock_serve_startup(teams={"test_team": "test"}, workflows={}, clear_app_cache=False):
+            with mock_serve_startup(teams={"test_team": "test"}, workflows={}, clear_app_cache=True):
                 result = asyncio.run(api.serve._async_create_automagik_api())
                 assert isinstance(result, FastAPI)
-    
+
     def test_async_create_auth_enabled_scenarios(self):
         """Test auth enabled scenarios (lines 256, 420-427)."""
         with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}):
-            with mock_serve_startup(teams={}, workflows={}, auth_enabled=True, clear_app_cache=False):
+            with mock_serve_startup(teams={}, workflows={}, auth_enabled=True, clear_app_cache=True):
                 result = asyncio.run(api.serve._async_create_automagik_api())
                 assert isinstance(result, FastAPI)
-    
+
     def test_async_create_team_creation_failures(self):
         """Test team creation failure handling (lines 278-285)."""
-        with mock_serve_startup(teams={"test_team": "test"}, workflows={}, clear_app_cache=False):
+        with mock_serve_startup(teams={"test_team": "test"}, workflows={}, clear_app_cache=True):
             with patch("api.serve.create_team", side_effect=Exception("Team creation failed")):
                 # Should handle team creation failures gracefully
                 result = asyncio.run(api.serve._async_create_automagik_api())
                 assert isinstance(result, FastAPI)
-    
+
     def test_async_create_agent_metrics_failures(self):
         """Test agent metrics enhancement failures (lines 328-334)."""
         # Create agent instance that raises exception when metrics_service is set
         mock_agent = MagicMock()
         type(mock_agent).metrics_service = PropertyMock(side_effect=Exception("Metrics failed"))
 
-        with mock_serve_startup(agents={"test_agent": mock_agent}, teams={}, workflows={}, clear_app_cache=False):
+        with mock_serve_startup(agents={"test_agent": mock_agent}, teams={}, workflows={}, clear_app_cache=True):
             # Should handle agent metrics enhancement failures gracefully
             result = asyncio.run(api.serve._async_create_automagik_api())
             assert isinstance(result, FastAPI)
-    
+
     def test_async_create_workflow_failures(self):
         """Test workflow creation failures (lines 343-344)."""
-        with mock_serve_startup(teams={}, workflows={"test_workflow": "test"}, clear_app_cache=False):
+        with mock_serve_startup(teams={}, workflows={"test_workflow": "test"}, clear_app_cache=True):
             with patch("api.serve.get_workflow", side_effect=Exception("Workflow failed")):
                 result = asyncio.run(api.serve._async_create_automagik_api())
                 assert isinstance(result, FastAPI)
@@ -1056,17 +1072,18 @@ class TestServeIntegration:
     
     def test_async_create_workflow_registry_check(self):
         """Test workflow registry check scenarios (lines 395, 402-403)."""
-        with mock_serve_startup(teams={}, workflows={}, clear_app_cache=False):
-            # Test workflow registered scenario (line 395)
+        # Test workflow registered scenario (line 395)
+        with mock_serve_startup(teams={}, workflows={}, clear_app_cache=True):
             with patch("ai.workflows.registry.is_workflow_registered", return_value=True):
                 result = asyncio.run(api.serve._async_create_automagik_api())
                 assert isinstance(result, FastAPI)
 
-            # Test workflow registry exception (lines 402-403)
+        # Test workflow registry exception (lines 402-403) - separate context to clear cache
+        with mock_serve_startup(teams={}, workflows={}, clear_app_cache=True):
             with patch("ai.workflows.registry.is_workflow_registered", side_effect=Exception("Registry error")):
                 result = asyncio.run(api.serve._async_create_automagik_api())
                 assert isinstance(result, FastAPI)
-    
+
     def test_async_create_docs_disabled_scenario(self):
         """Test docs disabled scenario (lines 440-442)."""
         with patch("api.settings.api_settings") as mock_settings:
@@ -1074,7 +1091,7 @@ class TestServeIntegration:
                 # Configure settings to disable docs
                 mock_settings.docs_enabled = False
 
-                with mock_serve_startup(teams={}, workflows={}, clear_app_cache=False):
+                with mock_serve_startup(teams={}, workflows={}, clear_app_cache=True):
                     result = asyncio.run(api.serve._async_create_automagik_api())
                     assert isinstance(result, FastAPI)
                     # Docs should be disabled
@@ -1313,7 +1330,14 @@ class TestPerformance:
 
 class TestStartupDisplayErrorHandling:
     """Test startup display error handling scenarios."""
-    
+
+    @pytest.fixture(autouse=True)
+    def clear_app_cache_per_test(self):
+        """Ensure app cache is cleared before and after each test."""
+        api.serve._app_instance = None
+        yield
+        api.serve._app_instance = None
+
     def test_async_create_display_summary_error(self):
         """Test startup display summary error handling (lines 455-480)."""
         from tests.api.conftest import create_mock_startup_results
@@ -1353,7 +1377,7 @@ class TestStartupDisplayErrorHandling:
     
     def test_async_create_fallback_display_error(self):
         """Test fallback display error scenario (lines 474-478)."""
-        with mock_serve_startup(teams={}, workflows={}, clear_app_cache=False):
+        with mock_serve_startup(teams={}, workflows={}, clear_app_cache=True):
             # Mock startup display with error in display_summary
             mock_startup_display = MagicMock()
             mock_startup_display.display_summary.side_effect = Exception("Display error")
@@ -1371,11 +1395,18 @@ class TestStartupDisplayErrorHandling:
 
 class TestDevelopmentModeFeatures:
     """Test development mode specific features and error paths."""
-    
+
+    @pytest.fixture(autouse=True)
+    def clear_app_cache_per_test(self):
+        """Ensure app cache is cleared before and after each test."""
+        api.serve._app_instance = None
+        yield
+        api.serve._app_instance = None
+
     def test_async_create_development_urls_display(self):
         """Test development URLs display (lines 495-516)."""
         with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development", "RUN_MAIN": "false"}):
-            with mock_serve_startup(teams={}, workflows={}, clear_app_cache=False):
+            with mock_serve_startup(teams={}, workflows={}, clear_app_cache=True):
                 mock_display_obj = MagicMock()
                 mock_display_obj.teams = []
                 mock_display_obj.agents = []
@@ -1518,6 +1549,44 @@ def mock_serve_startup(
 # ============================================================================
 # PYTEST FIXTURES
 # ============================================================================
+
+@pytest.fixture(scope="function", autouse=True)
+def clear_app_instance_globally():
+    """
+    Global autouse fixture to ensure app instance is cleared before/after EVERY test.
+    This prevents test pollution from shared state in api.serve._app_instance.
+
+    Also stops the global mock_external_dependencies fixture's AsyncMock patches
+    to prevent coroutine pollution between tests.
+    """
+    # Stop the global orchestrated_startup patch from conftest if it exists
+    # This prevents AsyncMock pollution across tests
+    import unittest.mock
+
+    # Clear before test
+    api.serve._app_instance = None
+
+    # Reset all mock.AsyncMock instances to prevent unawaited coroutine warnings
+    # The global conftest patches api.serve.orchestrated_startup with AsyncMock
+    # and it can leak state between tests
+    try:
+        if hasattr(api.serve, 'orchestrated_startup') and isinstance(api.serve.orchestrated_startup, AsyncMock):
+            api.serve.orchestrated_startup.reset_mock()
+    except:
+        pass
+
+    yield
+
+    # Clear after test
+    api.serve._app_instance = None
+
+    # Reset mocks again after test
+    try:
+        if hasattr(api.serve, 'orchestrated_startup') and isinstance(api.serve.orchestrated_startup, AsyncMock):
+            api.serve.orchestrated_startup.reset_mock()
+    except:
+        pass
+
 
 @pytest.fixture(scope="function", autouse=False)
 def prevent_database_connections():
