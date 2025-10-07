@@ -18,15 +18,15 @@ from ai.workflows.registry import (
 class TestWorkflowDiscovery:
     """Test workflow discovery functionality."""
 
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_directory(self, mock_path) -> None:
+    def test_discover_workflows_no_directory(self, tmp_path) -> None:
         """Test discovery when workflows directory doesn't exist."""
-        mock_workflows_dir = Mock()
-        mock_workflows_dir.exists.return_value = False
-        mock_path.return_value = mock_workflows_dir
+        # Create AI root without workflows directory
+        ai_root = tmp_path / "ai"
+        ai_root.mkdir(parents=True)
 
-        result = _discover_workflows()
-        assert result == {}
+        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
     def test_discover_workflows_success_integration(self) -> None:
         """Test successful workflow discovery using integration approach."""
@@ -35,86 +35,64 @@ class TestWorkflowDiscovery:
         assert isinstance(result, dict)
         # The result could be empty or contain actual workflows
 
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_skips_files(self, mock_path) -> None:
+    def test_discover_workflows_skips_files(self, tmp_path) -> None:
         """Test that discovery skips files and only processes directories."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflows directory containing a file
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflows_dir.mkdir(parents=True)
 
-        mock_file = MagicMock()
-        mock_file.is_dir.return_value = False
+        # Create a file (not a directory)
+        (workflows_dir / "file.py").write_text("# Not a workflow directory")
 
-        mock_workflows_dir.iterdir.return_value = [mock_file]
-        mock_path.return_value = mock_workflows_dir
+        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
-        result = _discover_workflows()
-        assert result == {}
-
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_skips_underscore_dirs(self, mock_path) -> None:
+    def test_discover_workflows_skips_underscore_dirs(self, tmp_path) -> None:
         """Test that discovery skips directories starting with underscore."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflows directory containing a private directory
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflows_dir.mkdir(parents=True)
 
-        mock_private_dir = MagicMock()
-        mock_private_dir.is_dir.return_value = True
-        mock_private_dir.name = "_private-workflow"
+        # Create a directory starting with underscore
+        private_dir = workflows_dir / "_private-workflow"
+        private_dir.mkdir()
 
-        mock_workflows_dir.iterdir.return_value = [mock_private_dir]
-        mock_path.return_value = mock_workflows_dir
+        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
-        result = _discover_workflows()
-        assert result == {}
-
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_missing_config(self, mock_path) -> None:
+    def test_discover_workflows_missing_config(self, tmp_path) -> None:
         """Test workflow discovery when config.yaml is missing."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory but no config.yaml
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "incomplete-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "incomplete-workflow"
+        # Create workflow.py but not config.yaml
+        (workflow_dir / "workflow.py").write_text("# Workflow without config")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = False  # Missing config
-        mock_workflow_file.exists.return_value = True
+        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
-
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        result = _discover_workflows()
-        assert result == {}
-
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_missing_workflow_file(self, mock_path) -> None:
+    def test_discover_workflows_missing_workflow_file(self, tmp_path) -> None:
         """Test workflow discovery when workflow.py is missing."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory but no workflow.py
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "incomplete-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "incomplete-workflow"
+        # Create config.yaml but not workflow.py
+        (workflow_dir / "config.yaml").write_text("workflow:\n  workflow_id: incomplete-workflow\n")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = True
-        mock_workflow_file.exists.return_value = False  # Missing workflow.py
-
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
-
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        result = _discover_workflows()
-        assert result == {}
+        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
     @patch("ai.workflows.registry.importlib.util")
     @patch("ai.workflows.registry.Path")

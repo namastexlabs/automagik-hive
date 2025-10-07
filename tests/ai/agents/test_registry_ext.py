@@ -47,43 +47,25 @@ class TestAgentDiscovery:
             result = _discover_agents()
             assert result == []
     
-    def test_discover_agents_valid_configs(self):
+    def test_discover_agents_valid_configs(self, tmp_path):
         """Test agent discovery with valid config files."""
-        mock_config1 = {'agent': {'agent_id': 'test-agent-1'}}
-        mock_config2 = {'agent': {'agent_id': 'test-agent-2'}}
-        
-        with patch('ai.agents.registry.Path') as mock_path_class:
-            # Mock the main agents directory
-            mock_agents_dir = Mock()
-            mock_agents_dir.exists.return_value = True
-            
-            # Mock agent subdirectories with __truediv__ support
-            mock_agent_dir1 = MagicMock()
-            mock_agent_dir1.is_dir.return_value = True
-            mock_agent_dir1.name = 'test-agent-1'
-            
-            mock_agent_dir2 = MagicMock()
-            mock_agent_dir2.is_dir.return_value = True
-            mock_agent_dir2.name = 'test-agent-2'
-            
-            mock_agents_dir.iterdir.return_value = [mock_agent_dir1, mock_agent_dir2]
-            
-            # Mock config files
-            mock_config_file1 = Mock()
-            mock_config_file1.exists.return_value = True
-            mock_config_file2 = Mock()
-            mock_config_file2.exists.return_value = True
-            
-            mock_agent_dir1.__truediv__.return_value = mock_config_file1
-            mock_agent_dir2.__truediv__.return_value = mock_config_file2
-            
-            mock_path_class.return_value = mock_agents_dir
-            
-            with patch('builtins.open', mock_open()), \
-                 patch('yaml.safe_load', side_effect=[mock_config1, mock_config2]):
-                
-                result = _discover_agents()
-                assert sorted(result) == ['test-agent-1', 'test-agent-2']
+        # Create AI root with agents directory
+        ai_root = tmp_path / "ai"
+        agents_dir = ai_root / "agents"
+        agents_dir.mkdir(parents=True)
+
+        # Create test agent directories with config files
+        agent1_dir = agents_dir / "test-agent-1"
+        agent1_dir.mkdir()
+        (agent1_dir / "config.yaml").write_text("agent:\n  agent_id: test-agent-1\n")
+
+        agent2_dir = agents_dir / "test-agent-2"
+        agent2_dir.mkdir()
+        (agent2_dir / "config.yaml").write_text("agent:\n  agent_id: test-agent-2\n")
+
+        with patch('ai.agents.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_agents()
+            assert sorted(result) == ['test-agent-1', 'test-agent-2']
     
     def test_discover_agents_malformed_config(self):
         """Test agent discovery with malformed config file."""
@@ -143,25 +125,17 @@ class TestAgentDiscovery:
                 result = _discover_agents()
                 assert result == []
     
-    def test_discover_agents_file_not_directory(self):
+    def test_discover_agents_file_not_directory(self, tmp_path):
         """Test agent discovery with files instead of directories."""
-        with patch('ai.agents.registry.Path') as mock_path_class:
-            # Mock the main agents directory
-            mock_agents_dir = Mock()
-            mock_agents_dir.exists.return_value = True
-            
-            # Mock file (not directory) - needs MagicMock for __truediv__ support
-            # because _discover_agents() calls agent_path / "config.yaml" BEFORE checking is_dir()
-            mock_file = MagicMock()
-            mock_file.is_dir.return_value = False  # Not a directory
-            
-            # Mock the config file path for the division operation
-            mock_config_file = Mock()
-            mock_file.__truediv__.return_value = mock_config_file
-            
-            mock_agents_dir.iterdir.return_value = [mock_file]
-            mock_path_class.return_value = mock_agents_dir
-            
+        # Create AI root with agents directory
+        ai_root = tmp_path / "ai"
+        agents_dir = ai_root / "agents"
+        agents_dir.mkdir(parents=True)
+
+        # Create a file (not directory) in agents dir
+        (agents_dir / "not_a_directory.txt").write_text("some content")
+
+        with patch('ai.agents.registry.resolve_ai_root', return_value=ai_root):
             result = _discover_agents()
             assert result == []
 
@@ -530,7 +504,12 @@ class TestIntegrationScenarios:
         mock_config = {
             'agent': {'agent_id': 'integration-test-agent'},
             'model': {'provider': 'test', 'id': 'test-model'},
-            'storage': {'table_name': 'test_agent_storage'}
+            # Align to Agno v2 schema: unified db + dependencies
+            'db': {
+                'type': 'postgres',
+                'table_name': 'test_agent_storage'
+            },
+            'dependencies': {}
         }
         
         mock_agent = Mock()

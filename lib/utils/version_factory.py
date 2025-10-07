@@ -16,6 +16,7 @@ from agno.workflow import Workflow
 from dotenv import load_dotenv
 
 from lib.logging import logger
+from lib.utils.user_context_helper import create_user_context_state
 
 # Load environment variables
 load_dotenv()
@@ -199,12 +200,15 @@ class VersionFactory:
         if tools:
             inherited_config["tools"] = tools
 
-        # Add AGNO native context parameters - direct pass-through
-        inherited_config["context"] = context_kwargs  # Direct context data
-        inherited_config["add_context"] = (
-            True  # Automatically inject context into messages
-        )
-        inherited_config["resolve_context"] = True  # Resolve context at runtime
+        # Build session state for Agno v2 runtime instead of legacy context kwargs
+        session_state = create_user_context_state(user_id=user_id, **context_kwargs)
+        session_keys = sorted(session_state.get("user_context", {}).keys())
+        if session_keys:
+            inherited_config["session_state"] = session_state
+        # Ensure legacy context parameters are not forwarded
+        inherited_config.pop("context", None)
+        inherited_config.pop("add_context", None)
+        inherited_config.pop("resolve_context", None)
 
         # Create agent using dynamic proxy with native context
         agent = await proxy.create_agent(
@@ -216,6 +220,28 @@ class VersionFactory:
             db_url=self.db_url,
             metrics_service=metrics_service,
         )
+
+        # Attach knowledge base if agent needs it (for AgentOS knowledge discovery)
+        # Check if knowledge should be enabled for this agent
+        knowledge_enabled = inherited_config.get("enable_knowledge", False)
+        if knowledge_enabled:
+            try:
+                from lib.knowledge import get_knowledge_base
+
+                # Get shared knowledge base (thread-safe singleton)
+                knowledge = get_knowledge_base(
+                    num_documents=inherited_config.get("knowledge_results", 5),
+                    csv_path=inherited_config.get("csv_file_path"),
+                )
+                # Attach knowledge to agent for AgentOS discovery
+                agent.knowledge = knowledge
+                logger.debug(
+                    f"📚 Knowledge base attached to agent {component_id} for AgentOS discovery"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to attach knowledge to agent {component_id}: {e}"
+                )
 
         # Get supported parameters count safely
         try:
@@ -231,6 +257,12 @@ class VersionFactory:
         logger.debug(
             f"🤖 Agent {component_id} created with inheritance and {param_count} available parameters"
         )
+
+        # Stash runtime context metadata for startup summaries
+        if session_keys:
+            metadata = getattr(agent, "metadata", {}) or {}
+            metadata.setdefault("runtime_context_keys", session_keys)
+            agent.metadata = metadata
 
         return agent
 
@@ -641,5 +673,4 @@ async def create_versioned_workflow(
     return await get_version_factory().create_versioned_component(
         workflow_id, "workflow", version, **kwargs
     )
-
 

@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "automagik-forge": {
-      "type": "sse",
-      "url": "http://localhost:8889/sse"
-    },
     "ask-repo-agent": {
       "type": "sse",
       "url": "https://mcp.deepwiki.com/sse"

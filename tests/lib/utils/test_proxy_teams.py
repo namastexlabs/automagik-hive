@@ -113,7 +113,7 @@ class TestAgnoTeamProxyInitialization:
             assert param in fallback_params
 
         # Test categories are represented
-        assert "storage" in fallback_params  # Storage category
+        assert "db" in fallback_params  # Database category
         assert "memory" in fallback_params  # Memory category
         assert "tools" in fallback_params  # Tools category
 
@@ -123,7 +123,7 @@ class TestAgnoTeamProxyInitialization:
 
         expected_handlers = {
             "model",
-            "storage",
+            "db",
             "memory",
             "team",
             "members",
@@ -156,7 +156,7 @@ class TestAgnoTeamProxyTeamCreation:
             "model": {"id": "claude-3-sonnet", "temperature": 0.7, "max_tokens": 1000},
             "members": ["agent1", "agent2"],
             "instructions": "Follow the routing protocol",
-            "storage": {"type": "postgres", "host": "localhost", "port": 5432},
+            "db": {"type": "postgres", "host": "localhost", "port": 5432},
             "memory": {"enable_user_memories": True},
             "suggested_actions": ["escalate", "route"],
             "metrics_enabled": True,
@@ -317,7 +317,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
         """Test processing of custom parameters."""
         config = {
             "model": {"id": "claude-3-sonnet"},
-            "storage": {"type": "postgres"},
+            "db": {"type": "postgres"},
             "team": {"name": "Custom Team"},
         }
 
@@ -326,9 +326,12 @@ class TestAgnoTeamProxyConfigurationProcessing:
             patch('lib.config.provider_registry.get_provider_registry') as mock_registry,
             patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter,
         ):
-            # Mock storage creation to avoid database connection
-            mock_storage_instance = MagicMock()
-            mock_create_storage.return_value = mock_storage_instance
+            # Mock db creation to avoid real database connection
+            mock_db_instance = MagicMock()
+            mock_create_storage.return_value = {
+                "db": mock_db_instance,
+                "dependencies": {"db": mock_db_instance},
+            }
             
             # Mock provider registry for model handling
             mock_provider_registry = MagicMock()
@@ -346,7 +349,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
 
             result = await proxy._process_config(config, "test-team", "postgresql://test_db")
 
-            # Verify storage creation was called properly
+            # Verify db creation was called properly
             mock_create_storage.assert_called_once_with(
                 storage_config={"type": "postgres"},
                 component_id="test-team",
@@ -358,16 +361,19 @@ class TestAgnoTeamProxyConfigurationProcessing:
             mock_provider_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
             mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
             mock_filter.assert_called_once_with(mock_model_class, {"id": "claude-3-sonnet"})
+
+            assert result["db"] is mock_db_instance
+            assert result["dependencies"]["db"] is mock_db_instance
             # Note: model_class is NOT called due to lazy instantiation (returns config dict instead)
             
             # Verify result contains expected processed config 
-            assert "storage" in result
+            assert "db" in result
+            assert "dependencies" in result
             # Model config gets spread into top-level (lazy instantiation)
             assert "id" in result  # model id should be in top-level
             assert result["id"] == "claude-3-sonnet"
             assert "name" in result  # team metadata gets spread
             assert result["name"] == "Custom Team"
-            assert result["storage"] == mock_storage_instance
 
     @pytest.mark.asyncio
     async def test_process_config_async_members_handler(self, proxy):
@@ -512,21 +518,24 @@ class TestAgnoTeamProxyParameterHandlers:
             # The result should be the filtered configuration for lazy instantiation
             assert result == {"id": "claude-3-sonnet", **model_config}
 
-    def test_handle_storage_config(self, proxy):
-        """Test storage configuration handler."""
-        storage_config = {"type": "postgres", "host": "localhost", "port": 5432}
+    def test_handle_db_config(self, proxy):
+        """Test db configuration handler."""
+        db_config = {"type": "postgres", "host": "localhost", "port": 5432}
 
         with patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create:
-            mock_storage = MagicMock()
-            mock_create.return_value = mock_storage
+            mock_db = MagicMock()
+            mock_create.return_value = {
+                "db": mock_db,
+                "dependencies": {"db": mock_db},
+            }
 
-            result = proxy._handle_storage_config(
-                storage_config, {}, "test-team", "db_url"
+            result = proxy._handle_db_config(
+                db_config, {}, "test-team", "db_url"
             )
 
-            assert result == mock_storage
+            assert result == {"db": mock_db, "dependencies": {"db": mock_db}}
             mock_create.assert_called_once_with(
-                storage_config=storage_config,
+                storage_config=db_config,
                 component_id="test-team",
                 component_mode="team",
                 db_url="db_url",
@@ -534,18 +543,33 @@ class TestAgnoTeamProxyParameterHandlers:
 
     def test_handle_memory_config_enabled(self, proxy):
         """Test memory configuration when enabled."""
-        memory_config = {"enable_user_memories": True}
+        memory_config = {
+            "enable_user_memories": True,
+            "add_history_to_messages": True,
+            "add_memory_references": True,
+            "add_session_summary_references": True,
+        }
 
         with patch("lib.memory.memory_factory.create_team_memory") as mock_create:
-            mock_memory = MagicMock()
-            mock_create.return_value = mock_memory
+            mock_memory_manager = MagicMock()
+            mock_create.return_value = mock_memory_manager
 
             result = proxy._handle_memory_config(
                 memory_config, {}, "test-team", "db_url"
             )
 
-            assert result == mock_memory
-            mock_create.assert_called_once_with("test-team", "db_url")
+            assert result["memory_manager"] is mock_memory_manager
+            mock_create.assert_called_once_with(
+                "test-team",
+                "db_url",
+                db=None,
+            )
+            assert result["add_history_to_context"] is True
+            assert result["add_memories_to_context"] is True
+            assert result["add_session_summary_to_context"] is True
+            assert "add_history_to_messages" not in result
+            assert "add_memory_references" not in result
+            assert "add_session_summary_references" not in result
 
     def test_handle_memory_config_disabled(self, proxy):
         """Test memory configuration when disabled."""
@@ -553,13 +577,13 @@ class TestAgnoTeamProxyParameterHandlers:
 
         result = proxy._handle_memory_config(memory_config, {}, "test-team", "db_url")
 
-        assert result is None
+        assert result == {}
 
     def test_handle_memory_config_none(self, proxy):
         """Test memory configuration when None."""
         result = proxy._handle_memory_config(None, {}, "test-team", "db_url")
 
-        assert result is None
+        assert result == {}
 
     def test_handle_memory_config_exception_bubbles(self, proxy):
         """Test memory configuration exception handling."""
@@ -861,7 +885,7 @@ class TestAgnoTeamProxyUtilityMethods:
         """Test config validation with all supported parameters."""
         # MagicMock supported parameters for predictable testing
         proxy._supported_params = {"name", "mode", "description"}
-        proxy._custom_params = {"model", "storage"}
+        proxy._custom_params = {"model", "db"}
 
         config = {
             "name": "Test Team",
@@ -880,7 +904,7 @@ class TestAgnoTeamProxyUtilityMethods:
     def test_validate_config_mixed_parameters(self, proxy):
         """Test config validation with mixed parameter types."""
         proxy._supported_params = {"name", "mode"}
-        proxy._custom_params = {"model", "storage"}
+        proxy._custom_params = {"model", "db"}
 
         config = {
             "name": "Test Team",  # supported
@@ -907,21 +931,21 @@ class TestAgnoTeamProxyUtilityMethods:
     def test_validate_config_only_custom_params(self, proxy):
         """Test config validation with only custom parameters."""
         proxy._supported_params = {"name", "mode"}
-        proxy._custom_params = {"model", "storage"}
+        proxy._custom_params = {"model", "db"}
 
-        config = {"model": {"id": "claude"}, "storage": {"type": "postgres"}}
+        config = {"model": {"id": "claude"}, "db": {"type": "postgres"}}
 
         result = proxy.validate_config(config)
 
         assert result["supported_agno_params"] == []
-        assert result["custom_params"] == ["model", "storage"]
+        assert result["custom_params"] == ["model", "db"]
         assert result["unknown_params"] == []
         assert result["coverage_percentage"] == 0.0
 
     def test_validate_config_only_unknown_params(self, proxy):
         """Test config validation with only unknown parameters."""
         proxy._supported_params = {"name", "mode"}
-        proxy._custom_params = {"model", "storage"}
+        proxy._custom_params = {"model", "db"}
 
         config = {"unknown1": "value1", "unknown2": "value2"}
 
@@ -1038,15 +1062,15 @@ class TestAgnoTeamProxyEdgeCases:
             # Verify resolve_model was called as fallback
             mock_resolve.assert_called_once_with(model_id="unknown-model-id", id="unknown-model-id")
 
-    def test_handle_storage_config_creation_failure(self, proxy):
-        """Test storage config handler when creation fails."""
-        storage_config = {"type": "invalid"}
+    def test_handle_db_config_creation_failure(self, proxy):
+        """Test db config handler when creation fails."""
+        db_config = {"type": "invalid"}
 
         with patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create:
-            mock_create.side_effect = Exception("Storage creation failed")
+            mock_create.side_effect = Exception("Db creation failed")
 
-            with pytest.raises(Exception, match="Storage creation failed"):
-                proxy._handle_storage_config(storage_config, {}, "test-team", None)
+            with pytest.raises(Exception, match="Db creation failed"):
+                proxy._handle_db_config(db_config, {}, "test-team", None)
 
     @pytest.mark.asyncio
     async def test_handle_members_import_failure(self, proxy):
@@ -1092,7 +1116,7 @@ class TestAgnoTeamProxyEdgeCases:
     @pytest.mark.asyncio
     async def test_process_config_handler_exception_propagation(self, proxy):
         """Test that handler exceptions are properly propagated."""
-        config = {"storage": {"type": "invalid"}}
+        config = {"db": {"type": "invalid"}}
 
         # Test with storage config which is easier to mock and still tests exception propagation
         with patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create_storage:
@@ -1111,8 +1135,9 @@ class TestAgnoTeamProxyEdgeCases:
             "mode",
             "model",
             "name",  # Core team
-            "storage",
-            "memory",  # Persistence
+            "db",
+            "dependencies",
+            "memory_manager",  # Persistence
             "tools",
             "instructions",  # Functionality
             "session_id",
@@ -1154,7 +1179,7 @@ class TestAgnoTeamProxyIntegration:
                 "top_p": 0.9,
             },
             "members": ["strategist-agent", "executor-agent", "reviewer-agent"],
-            "storage": {
+            "db": {
                 "type": "postgres",
                 "host": "localhost",
                 "port": 5432,
@@ -1176,7 +1201,7 @@ class TestAgnoTeamProxyIntegration:
         """Test complete team creation workflow with all features."""
         mock_agents = [MagicMock(), MagicMock(), MagicMock()]
         mock_model = MagicMock()
-        mock_storage = MagicMock()
+        mock_db = MagicMock()
         mock_memory = MagicMock()
         mock_metrics_service = MagicMock()
         mock_metrics_service.collect_from_response = MagicMock(return_value=True)
@@ -1190,9 +1215,7 @@ class TestAgnoTeamProxyIntegration:
             patch(
                 "lib.utils.agno_storage_utils.create_dynamic_storage"
             ) as mock_create_storage,
-            patch(
-                "agno.storage.postgres.PostgresStorage"
-            ) as mock_postgres_storage,
+            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch("lib.utils.proxy_teams.logger") as mock_logger,
@@ -1209,7 +1232,7 @@ class TestAgnoTeamProxyIntegration:
             # Mock model parameter filtering
             mock_filter.return_value = {"id": "claude-3-sonnet", "temperature": 0.8}
             
-            mock_create_storage.return_value = mock_storage
+            mock_create_storage.return_value = mock_db
             mock_create_memory.return_value = mock_memory
 
             mock_team = MagicMock()
@@ -1269,9 +1292,7 @@ class TestAgnoTeamProxyIntegration:
             patch(
                 "lib.utils.agno_storage_utils.create_dynamic_storage"
             ) as mock_create_storage,
-            patch(
-                "agno.storage.postgres.PostgresStorage"
-            ) as mock_postgres_storage,
+            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
         ):

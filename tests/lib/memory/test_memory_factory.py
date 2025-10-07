@@ -1,45 +1,52 @@
-"""Tests for lib.memory.memory_factory module."""
+"""Tests for the memory factory helpers."""
 
-import pytest
+from __future__ import annotations
+
+import os
 from unittest.mock import MagicMock, patch
 
-# Import the module under test
-try:
-    import lib.memory.memory_factory
-except ImportError:
-    pytest.skip(f"Module lib.memory.memory_factory not available", allow_module_level=True)
+import pytest
+
+from lib.exceptions import MemoryFactoryError
+from lib.memory.memory_factory import create_agent_memory, create_memory_instance
 
 
 class TestMemoryFactory:
-    """Test memory_factory module functionality."""
+    """Validate MemoryManager creation flows."""
 
-    def test_module_imports(self):
-        """Test that the module can be imported without errors."""
-        import lib.memory.memory_factory
-        assert lib.memory.memory_factory is not None
+    @patch("lib.memory.memory_factory.resolve_model")
+    def test_create_agent_memory_reuses_shared_db(self, mock_resolve_model: MagicMock) -> None:
+        mock_model = MagicMock()
+        mock_resolve_model.return_value = mock_model
+        shared_db = MagicMock(name="shared_db")
 
-    @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")
-    def test_placeholder_functionality(self):
-        """Placeholder test for main functionality."""
-        # TODO: Implement actual tests based on module functionality
-        pass
+        manager = create_agent_memory("alpha", db=shared_db)
 
+        assert manager.db is shared_db
+        mock_resolve_model.assert_called_once()
 
-class TestMemoryFactoryEdgeCases:
-    """Test edge cases and error conditions."""
+    @patch("lib.memory.memory_factory._build_memory_db")
+    @patch("lib.memory.memory_factory.resolve_model")
+    def test_create_agent_memory_builds_db_when_missing(
+        self,
+        mock_resolve_model: MagicMock,
+        mock_build_db: MagicMock,
+    ) -> None:
+        mock_db = MagicMock(name="db_instance")
+        mock_build_db.return_value = mock_db
+        mock_resolve_model.return_value = MagicMock()
 
-    @pytest.mark.skip(reason="Placeholder test - implement based on error conditions")
-    def test_error_handling(self):
-        """Test error handling scenarios."""
-        # TODO: Implement error condition tests
-        pass
+        manager = create_agent_memory("beta", db_url="postgresql://localhost/hive")
 
+        mock_build_db.assert_called_once()
+        assert manager.db is mock_db
 
-class TestMemoryFactoryIntegration:
-    """Test integration scenarios."""
+    @patch("lib.memory.memory_factory.resolve_model")
+    def test_create_memory_instance_requires_db_url_when_not_provided(
+        self, mock_resolve_model: MagicMock
+    ) -> None:
+        mock_resolve_model.return_value = MagicMock()
 
-    @pytest.mark.skip(reason="Placeholder test - implement based on integration needs")
-    def test_integration_scenarios(self):
-        """Test integration with other components."""
-        # TODO: Implement integration tests
-        pass
+        with patch.dict(os.environ, {"HIVE_DATABASE_URL": ""}):
+            with pytest.raises(MemoryFactoryError):
+                create_memory_instance("demo", db_url=None, db=None)

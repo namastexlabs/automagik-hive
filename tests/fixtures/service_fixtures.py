@@ -334,3 +334,41 @@ def mock_component_discovery():
         mock_exists.return_value = True
 
         yield mock_components
+
+
+@pytest.fixture
+def mock_startup_results():
+    """Mock orchestrated_startup results with proper structure for API tests."""
+    # Create mock agent
+    mock_agent = MagicMock()
+    mock_agent.name = "Test Agent"
+    mock_agent.agent_id = "test-agent"
+
+    # Create mock auth service
+    mock_auth_service = MagicMock()
+    mock_auth_service.is_auth_enabled.return_value = False
+    mock_auth_service.get_current_key.return_value = "test-key"
+
+    # Create mock metrics service
+    mock_metrics_service = MagicMock()
+
+    # Create mock registries
+    mock_registries = MagicMock()
+    # IMPORTANT: Set as dict, not MagicMock, so `bool(available_agents)` works correctly
+    mock_registries.agents = {"test-agent": mock_agent}
+    mock_registries.teams = {}
+    mock_registries.workflows = {}
+
+    # Create mock services
+    mock_services = MagicMock()
+    mock_services.auth_service = mock_auth_service
+    mock_services.metrics_service = mock_metrics_service
+
+    # Create startup results
+    mock_results = MagicMock()
+    mock_results.registries = mock_registries
+    mock_results.services = mock_services
+    mock_results.sync_results = {}
+    mock_results.startup_display = MagicMock()
+
+    return mock_results

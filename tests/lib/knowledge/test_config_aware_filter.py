@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter
+from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter, test_config_filter
 
 
 class TestBusinessUnitFilter:

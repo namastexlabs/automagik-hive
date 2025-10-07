@@ -5,7 +5,7 @@ Extracted from SmartIncrementalLoader for better separation of concerns.
 """
 
 import hashlib
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 
@@ -13,7 +13,7 @@ import pandas as pd
 class HashManager:
     """Service for managing content hashes and hash-based comparisons."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         
     def hash_row(self, row: pd.Series) -> str:
@@ -42,7 +42,9 @@ class HashManager:
         
         # Create deterministic hash from all configured columns
         content = "".join(content_parts)
-        hash_val = hashlib.md5(content.encode("utf-8")).hexdigest()
+        hash_val = hashlib.md5(  # noqa: S324 - MD5 kept for legacy hash stability across CSV rows
+            content.encode("utf-8")
+        ).hexdigest()
         
         # Debug first row at DEBUG level only
         if row.name == 0:  # row.name is the index in pandas

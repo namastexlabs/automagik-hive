@@ -16,10 +16,12 @@ mcp_servers:
   - "postgres:query"
   - "claude-mcp:*"
   - "automagik-hive:*"
-storage:
+db:
   type: postgres
   table_name: template_agents
   auto_upgrade_schema: true
+
+dependencies: {}
 memory:
   num_history_runs: 10
   enable_user_memories: true
@@ -32,10 +34,6 @@ display:
   markdown: false
   show_tool_calls: true
   add_datetime_to_instructions: true
-context:
-  add_state_in_messages: true
-  enable_agentic_context: true
-  share_member_interactions: true
 events:
   store_events: true
   events_to_skip: []

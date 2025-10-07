@@ -643,9 +643,11 @@ def simple_fastapi_app(
     app.include_router(health_check_router)
 
     # Add the v1_router which includes all sub-routers with proper /api/v1 prefix
+    from api.routes.agentos_router import legacy_agentos_router
     from api.routes.v1_router import v1_router
 
     app.include_router(v1_router)
+    app.include_router(legacy_agentos_router)
 
     # Add CORS middleware
     app.add_middleware(
@@ -761,13 +763,37 @@ def setup_test_environment():
 @pytest.fixture(autouse=True)
 def mock_external_dependencies():
     """Mock external dependencies to prevent real network calls."""
+
+    # Create proper mock structure for orchestrated_startup return value
+    # This prevents AsyncMock pollution when .keys() and other dict methods are called
+    class DictLikeMock(dict[str, Any]):
+        """Dict that behaves like a real dict, not an AsyncMock."""
+        def __init__(self, items: dict[str, Any] | None = None) -> None:
+            super().__init__(items or {})
+
+    def create_mock_startup_results():
+        """Create a proper Mock structure for orchestrated_startup."""
+        mock_results = Mock()
+        mock_results.registries = Mock()
+        # Use real dicts, not AsyncMock, to prevent unawaited coroutine warnings
+        mock_results.registries.agents = DictLikeMock({"test-agent": Mock()})
+        mock_results.registries.workflows = DictLikeMock({"test-workflow": Mock()})
+        mock_results.registries.teams = DictLikeMock()
+        mock_results.services = Mock()
+        mock_results.services.auth_service = Mock()
+        mock_results.services.auth_service.is_auth_enabled.return_value = False
+        mock_results.services.auth_service.get_current_key.return_value = "test-key"
+        mock_results.services.metrics_service = Mock()
+        mock_results.sync_results = {}
+        return mock_results
+
     # Define patches with error handling for missing modules
     patch_specs = [
         ("lib.knowledge.csv_hot_reload.CSVHotReloadManager", None),
         ("lib.metrics.langwatch_integration.LangWatchManager", None),
         ("lib.logging.initialize_logging", None),
         ("lib.logging.set_runtime_mode", None),
-        ("api.serve.orchestrated_startup", AsyncMock),
+        ("api.serve.orchestrated_startup", "async_with_return"),  # Special handling
         ("api.serve.create_startup_display", None),
         ("common.startup_notifications.send_startup_notification", AsyncMock),
         ("common.startup_notifications.send_shutdown_notification", AsyncMock),
@@ -777,7 +803,11 @@ def mock_external_dependencies():
     patches = []
     for target, new_callable in patch_specs:
         try:
-            if new_callable == AsyncMock:
+            if new_callable == "async_with_return":
+                # Special case: AsyncMock with proper return_value structure
+                async_mock = AsyncMock(return_value=create_mock_startup_results())
+                patches.append(patch(target, new=async_mock))
+            elif new_callable == AsyncMock:
                 patches.append(patch(target, new_callable=AsyncMock))
             elif callable(new_callable):
                 patches.append(patch(target, side_effect=new_callable))

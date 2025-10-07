@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import lib.logging.config as logging_config
 from cli.commands.service import ServiceManager
@@ -44,13 +44,38 @@ class TestServiceManagerInitialization:
     
     def test_status(self):
         """Test status method."""
-        with patch.object(ServiceManager, 'docker_status', return_value={"test": "running"}):
+        with patch.object(ServiceManager, 'docker_status', return_value={"test": "running"}), \
+             patch.object(ServiceManager, '_runtime_snapshot', return_value={"status": "unavailable"}):
             manager = ServiceManager()
             status = manager.status()
             assert isinstance(status, dict)
             assert "status" in status
             assert "healthy" in status
             assert "docker_services" in status
+            assert status["runtime"]["status"] == "unavailable"
+
+    @patch("cli.commands.service._gather_runtime_snapshot", new_callable=AsyncMock)
+    def test_runtime_snapshot_success(self, mock_gather):
+        """_runtime_snapshot should return ready status when snapshot succeeds."""
+        mock_gather.return_value = {"total_components": 1}
+        manager = ServiceManager()
+
+        result = manager._runtime_snapshot()
+
+        assert result["status"] == "ready"
+        assert result["summary"] == {"total_components": 1}
+        mock_gather.assert_awaited_once()
+
+    @patch("cli.commands.service._gather_runtime_snapshot", new_callable=AsyncMock)
+    def test_runtime_snapshot_failure(self, mock_gather):
+        """_runtime_snapshot should surface error details when snapshot fails."""
+        mock_gather.side_effect = RuntimeError("boom")
+        manager = ServiceManager()
+
+        result = manager._runtime_snapshot()
+
+        assert result["status"] == "unavailable"
+        assert "boom" in result["error"]
 
     def test_manage_service_exception_handling(self):
         """Test manage_service handles exceptions gracefully."""
@@ -80,15 +105,22 @@ class TestServiceManagerLocalServe:
             # Should be called at least once for uvicorn startup
             assert mock_run.call_count >= 1
 
-            # Check that the final call is the uvicorn command
-            final_call_args = mock_run.call_args[0][0]
-            assert "uv" in final_call_args
-            assert "run" in final_call_args
-            assert "uvicorn" in final_call_args
-            assert "--host" in final_call_args
-            assert "127.0.0.1" in final_call_args
-            assert "--port" in final_call_args
-            assert "8080" in final_call_args
+            # Find the uvicorn call (not necessarily the last call due to Docker checks)
+            uvicorn_call_found = False
+            for call in mock_run.call_args_list:
+                call_args = call[0][0]
+                if isinstance(call_args, list) and "uvicorn" in call_args:
+                    assert "uv" in call_args
+                    assert "run" in call_args
+                    assert "uvicorn" in call_args
+                    assert "--host" in call_args
+                    assert "127.0.0.1" in call_args
+                    assert "--port" in call_args
+                    assert "8080" in call_args
+                    uvicorn_call_found = True
+                    break
+
+            assert uvicorn_call_found, "No uvicorn call found in subprocess.run calls"
             mock_stop.assert_not_called()
 
     def test_serve_local_with_reload(self):
@@ -100,8 +132,17 @@ class TestServiceManagerLocalServe:
             result = manager.serve_local(reload=True)
 
             assert result is True
-            call_args = mock_run.call_args[0][0]
-            assert "--reload" in call_args
+
+            # Find the uvicorn call with reload flag
+            reload_call_found = False
+            for call in mock_run.call_args_list:
+                call_args = call[0][0]
+                if isinstance(call_args, list) and "uvicorn" in call_args:
+                    assert "--reload" in call_args
+                    reload_call_found = True
+                    break
+
+            assert reload_call_found, "No uvicorn call with --reload found in subprocess.run calls"
             mock_stop.assert_not_called()
 
     def test_serve_local_keyboard_interrupt(self):

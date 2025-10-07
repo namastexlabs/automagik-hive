@@ -39,6 +39,16 @@ docker compose -f docker/main/docker-compose.yml up -d
 bash docker/scripts/validate.sh
 ```
 
+## Runtime Surfaces
+
+- **Agno Playground**: Enabled by default inside the Hive API when `HIVE_EMBED_PLAYGROUND=true` (default). Access it at `http://<HIVE_API_HOST>:<HIVE_API_PORT>/playground` (defaults to `http://localhost:8886/playground`).
+- **AgentOS Control Pane**: Point control pane tooling at the Hive server base URL (`HIVE_CONTROL_PANE_BASE_URL`, default is the API base). The AgentOS config endpoint lives at `/api/v1/agentos/config`.
+- **Authentication**: Playground honours the API key guard; disable authentication only for local development.
+
+Set `HIVE_EMBED_PLAYGROUND=false` to run the API without mounting the Playground. Override the mount path with `HIVE_PLAYGROUND_MOUNT_PATH` when reverse proxies require a different location.
+
+> Compose deployments should now proxy the Hive API directly instead of exposing a separate `localhost:8000` Playground stack. The optional compose services remain available for local infrastructure, but the authoritative routes live inside the Hive server.
+
 ## Migration Notes
 
 This structure was created by consolidating Docker files from the root directory:

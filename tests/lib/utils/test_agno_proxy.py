@@ -85,7 +85,7 @@ class TestAgnoProxyCore:
         info = agno_proxy.get_proxy_module_info()
         
         # Check required top-level keys
-        required_keys = ["system", "modules", "features", "supported_storage_types", "proxy_instances"]
+        required_keys = ["system", "modules", "features", "supported_db_types", "proxy_instances"]
         for key in required_keys:
             assert key in info
         
@@ -243,10 +243,10 @@ class TestErrorHandling:
 class TestProxySystemIntegration:
     """Integration tests for the complete proxy system."""
 
-    def test_supported_storage_types_completeness(self):
-        """Test that all expected storage types are supported."""
+    def test_supported_db_types_completeness(self):
+        """Test that all expected database types are exposed."""
         info = agno_proxy.get_proxy_module_info()
-        storage_types = info["supported_storage_types"]
+        storage_types = info["supported_db_types"]
         
         expected_types = [
             "postgres", "sqlite", "mongodb", "redis", "dynamodb",
@@ -281,7 +281,7 @@ class TestProxySystemIntegration:
         
         expected_features = [
             "Dynamic parameter discovery via introspection",
-            "Shared storage utilities (zero duplication)",
+            "Shared db utilities (zero duplication)",
             "Component-specific processing logic",
             "Lazy loading for performance",
             "Backward compatibility preserved"

@@ -5,21 +5,27 @@ Extracted from SmartIncrementalLoader for better separation of concerns.
 Keeps orphan detection exactly as-is from the original implementation.
 """
 
-from typing import Any, Dict, List
+from typing import Any, cast
+
 from sqlalchemy import text
+from sqlalchemy.engine import Connection
 
 
 class ChangeAnalyzer:
     """Service for analyzing changes between CSV data and database state."""
     
-    def __init__(self, config: Dict[str, Any], repository):
+    def __init__(self, config: dict[str, Any], repository: Any) -> None:
         self.config = config
         self.repository = repository
-    
-    def analyze_changes(self, csv_rows: List[Dict[str, Any]], db_connection) -> Dict[str, Any]:
+
+    def analyze_changes(
+        self,
+        csv_rows: list[dict[str, Any]],
+        db_connection: Connection,
+    ) -> dict[str, Any]:
         """Analyze what needs to be loaded by checking specific content vs PostgreSQL - EXTRACTED from SmartIncrementalLoader.analyze_changes"""
         try:
-            csv_hashes = {row["hash"] for row in csv_rows}
+            _csv_hashes = {row["hash"] for row in csv_rows}
 
             # Check which CSV rows are new or changed
             new_rows = []
@@ -45,13 +51,13 @@ class ChangeAnalyzer:
                 })
                 
                 db_row = result.fetchone()
-                
+
                 if db_row is None:
                     # Row doesn't exist - it's new
                     new_rows.append(row)
                 else:
                     # Row exists - check if hash matches
-                    db_hash = db_row[0]
+                    db_hash = cast(str, db_row[0])
                     csv_hash = row["hash"]
                     
                     # Debug: Show first row comparison at DEBUG level only
@@ -105,7 +111,7 @@ class ChangeAnalyzer:
                     content = result.fetchone()
                     
                     if content:
-                        content_text = content[0]
+                        content_text = cast(str, content[0])
                         # Check if this content matches any CSV row
                         found_match = False
                         for csv_row in csv_rows:
@@ -125,7 +131,31 @@ class ChangeAnalyzer:
 
             from lib.logging import logger
             logger.debug("Analysis complete", new_rows=len(new_rows), changed_rows=len(changed_rows), removed_rows=removed_count)
-            
+
+            # Build structured status payload with Agno v2 metadata
+            csv_config = self.config.get("knowledge", {}).get("csv_reader", {})
+            status_payload: dict[str, Any] = {
+                "component": "change_analyzer",
+                "mode": "agno_native_incremental",
+                "config": {
+                    "csv_reader": {
+                        "content_column": csv_config.get("content_column", "answer"),
+                        "metadata_columns": csv_config.get("metadata_columns", ["question"]),
+                    }
+                },
+                "db": {
+                    "schema": "agno",
+                    "table_name": "knowledge_base",
+                },
+                "results": {
+                    "csv_total_rows": len(csv_rows),
+                    "existing_vector_rows": existing_count,
+                    "new_rows_count": len(new_rows),
+                    "changed_rows_count": len(changed_rows),
+                    "removed_rows_count": removed_count,
+                },
+            }
+
             return {
                 "csv_total_rows": len(csv_rows),
                 "existing_vector_rows": existing_count,
@@ -135,10 +165,12 @@ class ChangeAnalyzer:
                 "new_rows": new_rows,
                 "changed_rows": changed_rows,
                 "removed_hashes": orphaned_ids,
+                "potential_removals": orphaned_ids,  # alias for observability consumers
                 "needs_processing": needs_processing,
                 "status": "up_to_date"
                 if not needs_processing
                 else "incremental_update_required",
+                "status_payload": status_payload,
             }
 
         except Exception as e:

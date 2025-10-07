@@ -42,6 +42,17 @@ class AgnoVersionSyncService:
         # Store resolved AI root for consistent usage
         self.ai_root = resolve_ai_root(settings=get_settings())
 
+        try:
+            settings = get_settings()
+            if getattr(settings, "hive_agno_v2_migration_enabled", False):
+                logger.debug(
+                    "Agno v2 migration flag detected in version sync",
+                    dry_run_command="uv run python scripts/agno_db_migrate_v2.py --dry-run",
+                    v2_sessions=settings.hive_agno_v2_sessions_table,
+                )
+        except Exception:  # pragma: no cover - settings loader should not break the service
+            pass
+
         # Component type mappings - now dynamic
         self.config_paths = {
             "agent": str(self.ai_root / "agents" / "*" / "config.yaml"),

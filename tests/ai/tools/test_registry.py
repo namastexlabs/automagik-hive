@@ -16,55 +16,38 @@ from ai.tools.registry import (
 
 class TestToolsRegistry:
     """Test suite for Tools Registry functionality."""
-    
-    @patch('ai.tools.registry.Path')
-    def test_discover_tools_no_directory(self, mock_path):
+
+    def test_discover_tools_no_directory(self, tmp_path):
         """Test tool discovery when tools directory doesn't exist."""
-        mock_tools_dir = Mock()
-        mock_tools_dir.exists.return_value = False
-        mock_path.return_value = mock_tools_dir
-        
-        result = _discover_tools()
-        assert result == []
-        mock_tools_dir.exists.assert_called_once()
+        # Create AI root without tools directory
+        ai_root = tmp_path / "ai"
+        ai_root.mkdir(parents=True)
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_tools()
+            assert result == []
     
-    @patch('ai.tools.registry.Path')
-    def test_discover_tools_with_valid_tools(self, mock_path):
+    def test_discover_tools_with_valid_tools(self, tmp_path):
         """Test discovering valid tools from filesystem."""
-        # Setup mock directory structure
-        mock_tools_dir = Mock()
-        mock_tools_dir.exists.return_value = True
-        
-        # Create mock tool directories
-        mock_tool1 = MagicMock()
-        mock_tool1.is_dir.return_value = True
-        mock_tool1.name = "test-tool-1"
-        mock_config1 = MagicMock()
-        mock_config1.exists.return_value = True
-        # Use MagicMock to handle __truediv__ automatically
-        mock_tool1.__truediv__.return_value = mock_config1
-        
-        mock_tool2 = MagicMock()
-        mock_tool2.is_dir.return_value = True
-        mock_tool2.name = "test-tool-2"
-        mock_config2 = MagicMock()
-        mock_config2.exists.return_value = True
-        mock_tool2.__truediv__.return_value = mock_config2
-        
-        mock_tools_dir.iterdir.return_value = [mock_tool1, mock_tool2]
-        mock_path.return_value = mock_tools_dir
-        
-        # Mock the file opening and YAML loading
-        with patch('builtins.open', mock_open(read_data='tool:\n  tool_id: test-tool-1\n')):
-            with patch('yaml.safe_load') as mock_yaml:
-                mock_yaml.side_effect = [
-                    {"tool": {"tool_id": "test-tool-1"}},
-                    {"tool": {"tool_id": "test-tool-2"}}
-                ]
-                
-                result = _discover_tools()
-                assert result == ["test-tool-1", "test-tool-2"]
-                assert mock_yaml.call_count == 2
+        # Create AI root with tools directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tools_dir.mkdir(parents=True)
+
+        # Create mock tool directories with config files
+        tool1_dir = tools_dir / "test-tool-1"
+        tool1_dir.mkdir()
+        (tool1_dir / "config.yaml").write_text("tool:\n  tool_id: test-tool-1\n")
+
+        tool2_dir = tools_dir / "test-tool-2"
+        tool2_dir.mkdir()
+        (tool2_dir / "config.yaml").write_text("tool:\n  tool_id: test-tool-2\n")
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            result = _discover_tools()
+            assert len(result) == 2
+            assert "test-tool-1" in result
+            assert "test-tool-2" in result
     
     @patch('ai.tools.registry._discover_tools')
     def test_get_available_tools(self, mock_discover):
@@ -86,54 +69,44 @@ class TestToolsRegistry:
         assert "Tool 'non-existent-tool' not found" in str(exc_info.value)
         assert "Available: ['tool1', 'tool2']" in str(exc_info.value)
     
-    @patch('ai.tools.registry.Path')
     @patch('ai.tools.registry.ToolRegistry._get_available_tools')
-    def test_get_tool_module_not_found(self, mock_get_available, mock_path):
+    def test_get_tool_module_not_found(self, mock_get_available, tmp_path):
         """Test error when tool module file doesn't exist."""
         mock_get_available.return_value = ["test-tool"]
-        
-        # Setup paths using MagicMock for proper __truediv__ handling
-        mock_tool_path = MagicMock()
-        mock_tool_file = MagicMock()
-        mock_tool_file.exists.return_value = False
-        
-        # Configure the path to return our mock objects
-        def truediv_side_effect(arg):
-            if arg == "config.yaml":
-                return MagicMock(exists=lambda: True)
-            elif arg == "tool.py":
-                return mock_tool_file
-            return MagicMock()
-        
-        mock_tool_path.__truediv__.side_effect = truediv_side_effect
-        mock_path.return_value = mock_tool_path
-        
-        with pytest.raises(ImportError) as exc_info:
-            ToolRegistry.get_tool("test-tool")
-        
-        assert "Tool module not found" in str(exc_info.value)
+
+        # Create AI root with tool directory but no tool.py file
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+
+        # Create config.yaml but not tool.py
+        (tool_dir / "config.yaml").write_text("tool:\n  tool_id: test-tool\n")
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            with pytest.raises(ImportError) as exc_info:
+                ToolRegistry.get_tool("test-tool")
+
+            assert "Tool module not found" in str(exc_info.value)
     
-    @patch('ai.tools.registry.Path')
-    def test_get_tool_info_success(self, mock_path):
+    def test_get_tool_info_success(self, tmp_path):
         """Test getting tool information without instantiation."""
-        # Setup path mocks using MagicMock
-        mock_config_file = MagicMock()
-        mock_config_file.exists.return_value = True
-        mock_tool_path = MagicMock()
-        mock_tool_path.__truediv__.return_value = mock_config_file
-        mock_path.return_value = mock_tool_path
-        
-        # Mock file opening and YAML loading
-        with patch('builtins.open', mock_open(read_data='tool:\n  tool_id: test-tool\n  name: Test Tool\n  description: A test tool\n')):
-            with patch('yaml.safe_load') as mock_yaml:
-                mock_yaml.return_value = {
-                    "tool": {
-                        "tool_id": "test-tool",
-                        "name": "Test Tool",
-                        "description": "A test tool"
-                    }
-                }
-                
+        # Create AI root with tool directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+
+        # Create config file
+        config_content = """tool:
+  tool_id: test-tool
+  name: Test Tool
+  description: A test tool
+"""
+        (tool_dir / "config.yaml").write_text(config_content)
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            with patch('ai.tools.registry.ToolRegistry._get_available_tools', return_value=["test-tool"]):
                 result = ToolRegistry.get_tool_info("test-tool")
                 
                 assert result == {
@@ -142,20 +115,17 @@ class TestToolsRegistry:
                     "description": "A test tool"
                 }
     
-    @patch('ai.tools.registry.Path')
-    def test_get_tool_info_missing_config(self, mock_path):
+    def test_get_tool_info_missing_config(self, tmp_path):
         """Test getting tool info when config doesn't exist."""
-        # Setup path mocks using MagicMock
-        mock_config_file = MagicMock()
-        mock_config_file.exists.return_value = False
-        mock_tool_path = MagicMock()
-        mock_tool_path.__truediv__.return_value = mock_config_file
-        mock_path.return_value = mock_tool_path
-        
-        result = ToolRegistry.get_tool_info("missing-tool")
-        
-        assert "error" in result
-        assert "Tool config not found" in result["error"]
+        # Create AI root without tool directory
+        ai_root = tmp_path / "ai"
+        ai_root.mkdir(parents=True)
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            result = ToolRegistry.get_tool_info("missing-tool")
+
+            assert "error" in result
+            assert "Tool config not found" in result["error"]
     
     @patch('ai.tools.registry.ToolRegistry.get_tool_info')
     @patch('ai.tools.registry.ToolRegistry._get_available_tools')

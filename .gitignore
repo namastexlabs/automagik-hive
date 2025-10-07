@@ -67,6 +67,7 @@ data/
 
 # MacOS
 .DS_Store
+.coverage
 
 # Environment variables - CRITICAL SECURITY
 .env
