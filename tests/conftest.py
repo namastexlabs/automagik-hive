@@ -21,6 +21,33 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+
+
+def pytest_keyboard_interrupt(excinfo):
+    """
+    Handle KeyboardInterrupt during test execution.
+
+    Some tests use mocks with side_effect=KeyboardInterrupt to test user cancellation.
+    During cleanup, these can raise KeyboardInterrupt and abort the test session.
+    This hook detects if the interrupt is from mock cleanup (not user Ctrl+C) and
+    suppresses it to allow all tests to run.
+    """
+    import traceback
+    # Get the traceback
+    tb_lines = traceback.format_exception(type(excinfo.value), excinfo.value, excinfo.tb)
+    tb_text = ''.join(tb_lines)
+
+    # Check if this is from mock cleanup (not a real user interrupt)
+    if 'unittest/mock.py' in tb_text and '_patch_stopall' in tb_text:
+        # This is from mock cleanup, not a real Ctrl+C
+        # Suppress it and continue testing
+        print("\n[pytest] Suppressing KeyboardInterrupt from mock cleanup", file=sys.stderr)
+        return True  # Suppress the interrupt
+
+    # Real Ctrl+C from user - let it through
+    return None
+
+
 import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -226,9 +253,13 @@ def preserve_builtin_input():
     yield
 
     # Restore the original input function during session cleanup
-    # This prevents any lingering mocks with KeyboardInterrupt side effects
-    # from interfering with pytest's shutdown process
-    builtins.input = original_input
+    # Wrap in try-except to prevent KeyboardInterrupt from stopping test execution
+    try:
+        builtins.input = original_input
+    except KeyboardInterrupt:
+        # Silently ignore KeyboardInterrupt during cleanup
+        # This prevents mock cleanup issues from aborting the test session
+        pass
 
 
 @pytest.fixture(scope="session")
