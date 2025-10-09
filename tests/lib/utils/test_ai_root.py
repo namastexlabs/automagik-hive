@@ -84,7 +84,8 @@ class TestAIRootResolution:
         settings.hive_ai_root = "/settings/should/be/ignored"
 
         result = resolve_ai_root(explicit_path=temp_ai_structure, settings=settings)
-        assert result == temp_ai_structure
+        # Both sides need to be resolved for comparison (handles macOS symlinks /var -> /private/var)
+        assert result.resolve() == temp_ai_structure.resolve()
 
     def test_resolve_with_hive_ai_root_env_var_when_no_explicit_path(self, temp_ai_structure, monkeypatch):
         """Test that HIVE_AI_ROOT environment variable is used when no explicit path."""
@@ -93,7 +94,7 @@ class TestAIRootResolution:
         settings.hive_ai_root = "/settings/should/be/ignored"
 
         result = resolve_ai_root(explicit_path=None, settings=settings)
-        assert result == temp_ai_structure
+        assert result.resolve() == temp_ai_structure.resolve()
 
     def test_resolve_with_settings_object_when_no_env_var(self, temp_ai_structure, monkeypatch):
         """Test that settings object hive_ai_root is used when no env var."""
@@ -102,7 +103,7 @@ class TestAIRootResolution:
         settings.hive_ai_root = str(temp_ai_structure)
 
         result = resolve_ai_root(explicit_path=None, settings=settings)
-        assert result == temp_ai_structure
+        assert result.resolve() == temp_ai_structure.resolve()
 
     def test_resolve_with_default_ai_when_no_other_sources(self, monkeypatch):
         """Test that default 'ai' directory is used when no other sources available."""
@@ -121,7 +122,7 @@ class TestAIRootResolution:
         monkeypatch.setenv("HIVE_AI_ROOT", str(env_dir))
 
         result = resolve_ai_root(explicit_path=explicit_dir, settings=None)
-        assert result == explicit_dir
+        assert result.resolve() == explicit_dir.resolve()
 
     def test_resolve_precedence_order_env_var_over_settings(self, temp_ai_structure, monkeypatch):
         """Test environment variable takes precedence over settings."""
@@ -135,7 +136,7 @@ class TestAIRootResolution:
         settings.hive_ai_root = str(settings_dir)
 
         result = resolve_ai_root(explicit_path=None, settings=settings)
-        assert result == env_dir
+        assert result.resolve() == env_dir.resolve()
 
     def test_resolve_precedence_order_settings_over_default(self, temp_ai_structure, monkeypatch):
         """Test settings takes precedence over default."""
@@ -144,7 +145,7 @@ class TestAIRootResolution:
         settings.hive_ai_root = str(temp_ai_structure)
 
         result = resolve_ai_root(explicit_path=None, settings=settings)
-        assert result == temp_ai_structure
+        assert result.resolve() == temp_ai_structure.resolve()
 
     def test_resolve_with_relative_path_converts_to_absolute(self, temp_ai_structure):
         """Test that relative paths are converted to absolute paths."""
@@ -193,7 +194,7 @@ class TestAIRootResolution:
         settings.hive_ai_root = str(temp_ai_structure)
 
         result = resolve_ai_root(explicit_path=None, settings=settings)
-        assert result == temp_ai_structure
+        assert result.resolve() == temp_ai_structure.resolve()
 
     def test_resolve_with_whitespace_only_env_var(self, temp_ai_structure, monkeypatch):
         """Test that whitespace-only environment variable is handled properly."""
@@ -202,7 +203,7 @@ class TestAIRootResolution:
         settings.hive_ai_root = str(temp_ai_structure)
 
         result = resolve_ai_root(explicit_path=None, settings=settings)
-        assert result == temp_ai_structure
+        assert result.resolve() == temp_ai_structure.resolve()
 
 
 class TestAIStructureValidation:
@@ -347,22 +348,22 @@ class TestAISubdirectoryHelper:
     def test_get_agents_subdirectory_with_valid_ai_root(self, temp_ai_structure):
         """Test getting agents subdirectory with valid AI root."""
         result = get_ai_subdirectory(temp_ai_structure, "agents")
-        assert result == temp_ai_structure / "agents"
+        assert result.resolve() == (temp_ai_structure / "agents").resolve()
 
     def test_get_teams_subdirectory_with_valid_ai_root(self, temp_ai_structure):
         """Test getting teams subdirectory with valid AI root."""
         result = get_ai_subdirectory(temp_ai_structure, "teams")
-        assert result == temp_ai_structure / "teams"
+        assert result.resolve() == (temp_ai_structure / "teams").resolve()
 
     def test_get_workflows_subdirectory_with_valid_ai_root(self, temp_ai_structure):
         """Test getting workflows subdirectory with valid AI root."""
         result = get_ai_subdirectory(temp_ai_structure, "workflows")
-        assert result == temp_ai_structure / "workflows"
+        assert result.resolve() == (temp_ai_structure / "workflows").resolve()
 
     def test_get_tools_subdirectory_with_valid_ai_root(self, temp_ai_structure):
         """Test getting tools subdirectory (optional) with valid AI root."""
         result = get_ai_subdirectory(temp_ai_structure, "tools")
-        assert result == temp_ai_structure / "tools"
+        assert result.resolve() == (temp_ai_structure / "tools").resolve()
 
     def test_get_subdirectory_with_nonexistent_ai_root_raises_error(self):
         """Test that non-existent AI root raises AIRootError."""
@@ -486,7 +487,7 @@ class TestAIRootIntegration:
 
         # Environment variable should take precedence
         resolved_root = resolve_ai_root(explicit_path=None, settings=settings)
-        assert resolved_root == env_ai_dir
+        assert resolved_root.resolve() == env_ai_dir.resolve()
 
         # Validate the resolved structure
         validation = validate_ai_structure(resolved_root)
@@ -534,7 +535,7 @@ class TestAIRootIntegration:
 
         # Should handle Unicode paths correctly
         resolved_root = resolve_ai_root(explicit_path=unicode_ai_dir, settings=None)
-        assert resolved_root == unicode_ai_dir
+        assert resolved_root.resolve() == unicode_ai_dir.resolve()
 
         validation = validate_ai_structure(resolved_root)
         assert validation["valid"] is True
@@ -585,9 +586,9 @@ class TestAIRootIntegration:
 
         # All results should be consistent
         for ai_root, is_valid, agents_dir in results:
-            assert ai_root == temp_ai_structure
+            assert ai_root.resolve() == temp_ai_structure.resolve()
             assert is_valid is True
-            assert agents_dir == temp_ai_structure / "agents"
+            assert agents_dir.resolve() == (temp_ai_structure / "agents").resolve()
 
     def test_integration_with_real_project_structure(self):
         """Test integration with actual project AI directory structure."""
@@ -623,7 +624,7 @@ class TestAIRootIntegration:
         end_time = time.time()
 
         assert validation["valid"] is True
-        assert agents_subdir == agents_dir
+        assert agents_subdir.resolve() == agents_dir.resolve()
         # Should complete in reasonable time (less than 1 second)
         assert end_time - start_time < 1.0
 
@@ -645,7 +646,7 @@ class TestAIRootEdgeCases:
             (deep_path / "workflows").mkdir()
 
             result = resolve_ai_root(explicit_path=deep_path, settings=None)
-            assert result == deep_path
+            assert result.resolve() == deep_path.resolve()
 
         except OSError:
             # Skip if filesystem doesn't support such long paths
@@ -662,7 +663,7 @@ class TestAIRootEdgeCases:
             (special_chars_dir / "workflows").mkdir()
 
             result = resolve_ai_root(explicit_path=special_chars_dir, settings=None)
-            assert result == special_chars_dir
+            assert result.resolve() == special_chars_dir.resolve()
 
         except OSError:
             # Skip if filesystem doesn't support special characters
