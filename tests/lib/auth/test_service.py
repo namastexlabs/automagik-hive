@@ -75,31 +75,33 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5433/hive
 
     def test_get_deployment_ports_dynamic(self, tmp_path):
         """Test that deployment ports are calculated dynamically from .env."""
-        # Create .env with custom base ports
+        # After refactoring, only workspace mode is supported
+        # This test verifies that base ports can be extracted and used for workspace
         env_file = tmp_path / ".env"
         env_file.write_text("""
 HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:6000/hive
 HIVE_API_PORT=9000
 """)
-        
+
         service = CredentialService(project_root=tmp_path)
-        
-        deployment_ports = service.get_deployment_ports()
-        
-        expected = {
-            "workspace": {"db": 6000, "api": 9000},
-            "agent": {"db": 36000, "api": 39000},
-            "genie": {"db": 46000, "api": 49000}
-        }
-        
-        assert deployment_ports == expected
+
+        # Extract base ports from .env
+        base_ports = service.extract_base_ports_from_env()
+
+        # Calculate workspace ports (should match base ports for workspace)
+        workspace_ports = service.calculate_ports("workspace", base_ports)
+
+        expected = {"db": 6000, "api": 9000}
+
+        assert workspace_ports == expected
 
     def test_invalid_mode_raises_error(self):
         """Test that invalid mode raises ValueError."""
         service = CredentialService()
         base_ports = {"db": 5532, "api": 8886}
-        
-        with pytest.raises(ValueError, match="Unknown mode: invalid"):
+
+        # After refactoring, error message changed
+        with pytest.raises(ValueError, match="Only 'workspace' mode is supported"):
             service.calculate_ports("invalid", base_ports)
 
     def test_save_master_credentials_uses_env_example(self, tmp_path):

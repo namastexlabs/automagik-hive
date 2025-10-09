@@ -189,7 +189,8 @@ class TestAgnoTeamProxyNativeToolsHandling:
             mock_logger.info.assert_called_once()
             log_message = mock_logger.info.call_args[0][0]
             assert "test-team" in log_message
-            assert "3" in log_message or "custom" in log_message
+            # Log includes the tool objects themselves (function, MagicMock, string)
+            assert "function" in log_message or "string_config" in log_message
 
 
 class TestAgnoTeamProxyModelConfigurationEdgeCases:
