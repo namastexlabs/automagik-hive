@@ -44,6 +44,7 @@ dependencies = [
  "xlrd>=2.0.2",
  "odfpy>=1.4.1",
  "python-dateutil>=2.8.0",
+ "pypdf>=6.1.1",
 ]
 [[project.authors]]
 name = "Automagik"
