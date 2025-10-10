@@ -500,10 +500,11 @@ class TestCliExecutionValidation:
     def test_subprocess_cli_module_validation(self):
         """Test CLI module validation via subprocess."""
         # Test that the module can be imported via subprocess
+        project_root = Path(__file__).parent.parent.parent.parent.absolute()
         result = subprocess.run([
             sys.executable, '-c',
             'import lib.auth.cli; print("CLI module validation successful")'
-        ], capture_output=True, text=True, cwd='/Users/caiorod/Documents/Namastex/automagik-hive')
+        ], capture_output=True, text=True, cwd=str(project_root))
 
         # Debug information for troubleshooting intermittent failures
         if result.returncode != 0:

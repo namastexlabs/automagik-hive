@@ -16,6 +16,7 @@ This test suite validates that the make uninstall command properly cleans up:
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -101,7 +102,9 @@ uninstall-purge-comprehensive:
     def test_uninstall_containers_only_comprehensive_stops_all_services(self):
         """Test that containers-only uninstall stops workspace infrastructure"""
         # Check that the actual project Makefile has comprehensive container cleanup
-        with open("/Users/caiorod/Documents/Namastex/automagik-hive/Makefile") as f:
+        project_root = Path(__file__).parent.parent.parent.parent.absolute()
+        makefile_path = project_root / "Makefile"
+        with open(makefile_path) as f:
             makefile_content = f.read()
 
         # Verify the comprehensive uninstall target exists and includes workspace cleanup
@@ -111,7 +114,9 @@ uninstall-purge-comprehensive:
     def test_uninstall_clean_comprehensive_removes_workspace_infrastructure(self):
         """Test that clean uninstall removes workspace infrastructure"""
         # Check that the actual project Makefile has comprehensive clean uninstall
-        with open("/Users/caiorod/Documents/Namastex/automagik-hive/Makefile") as f:
+        project_root = Path(__file__).parent.parent.parent.parent.absolute()
+        makefile_path = project_root / "Makefile"
+        with open(makefile_path) as f:
             makefile_content = f.read()
 
         # Verify the comprehensive uninstall-clean target includes workspace cleanup
@@ -122,7 +127,9 @@ uninstall-purge-comprehensive:
     def test_uninstall_purge_comprehensive_removes_all_data(self):
         """Test that uninstall removes all data including workspace data"""
         # Check that the actual project Makefile has comprehensive uninstall
-        with open("/Users/caiorod/Documents/Namastex/automagik-hive/Makefile") as f:
+        project_root = Path(__file__).parent.parent.parent.parent.absolute()
+        makefile_path = project_root / "Makefile"
+        with open(makefile_path) as f:
             makefile_content = f.read()
 
         # Verify uninstall includes comprehensive cleanup
@@ -132,9 +139,8 @@ uninstall-purge-comprehensive:
         assert ("hive-api" in makefile_content or "postgres" in makefile_content)
 
         # Check purge script exists and has cleanup logic
-        import os
-        purge_script_path = "/Users/caiorod/Documents/Namastex/automagik-hive/scripts/purge.sh"
-        if os.path.exists(purge_script_path):
+        purge_script_path = project_root / "scripts" / "purge.sh"
+        if purge_script_path.exists():
             with open(purge_script_path) as f:
                 purge_content = f.read()
 

@@ -878,10 +878,11 @@ class TestCliRealExecution:
         """Test CLI help execution."""
         # Test that the CLI module can be executed with --help
         # This tests the actual __main__ block execution
+        project_root = Path(__file__).parent.parent.parent.parent.absolute()
         result = subprocess.run([
             sys.executable, '-c',
             'import lib.auth.cli'
-        ], capture_output=True, text=True, cwd='/Users/caiorod/Documents/Namastex/automagik-hive')
+        ], capture_output=True, text=True, cwd=str(project_root))
 
         # Should execute cleanly
         assert result.returncode == 0
@@ -890,11 +891,12 @@ class TestCliRealExecution:
         """Test CLI module import execution."""
         # Test that the module can be imported and executed
         # Use a unique identifier to avoid interference from other processes
+        project_root = Path(__file__).parent.parent.parent.parent.absolute()
         unique_message = "CLI_MODULE_IMPORT_SUCCESS_123456"
         result = subprocess.run([
             sys.executable, '-c',
             f'import lib.auth.cli; print("{unique_message}")'
-        ], capture_output=True, text=True, cwd='/Users/caiorod/Documents/Namastex/automagik-hive')
+        ], capture_output=True, text=True, cwd=str(project_root))
 
         assert result.returncode == 0
         assert unique_message in result.stdout
