@@ -214,8 +214,8 @@ class TestInitializeKnowledgeBase:
         mock_csv_manager = Mock()
 
         with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
-            
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
+
             result = await initialize_knowledge_base()
 
             assert result == mock_csv_manager
@@ -232,8 +232,8 @@ class TestInitializeKnowledgeBase:
         mock_csv_manager = Mock()
 
         with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
-            
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
+
             result = await initialize_knowledge_base()
 
             assert result == mock_csv_manager
@@ -255,8 +255,8 @@ class TestInitializeKnowledgeBase:
         mock_config = {"csv_file_path": "test.csv"}
 
         with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV manager failed")):
-            
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV manager failed")):
+
             result = await initialize_knowledge_base()
 
             assert result is None
@@ -697,25 +697,28 @@ class TestIntegrationScenarios:
         """Test complete startup flow with minimal configuration."""
         with patch('lib.utils.db_migration.check_and_run_migrations', return_value=False), \
              patch('lib.utils.version_factory.load_global_knowledge_config', return_value={}), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV failed")), \
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV failed")), \
              patch('ai.workflows.registry.get_workflow_registry', return_value={}), \
              patch('ai.teams.registry.get_team_registry', return_value={}), \
              patch('ai.agents.registry.AgentRegistry') as mock_agent_registry_class, \
              patch('lib.auth.dependencies.get_auth_service') as mock_auth, \
              patch('lib.mcp.MCPCatalog', side_effect=Exception("No MCP")), \
-             patch('lib.config.settings.settings') as mock_settings, \
+             patch('lib.config.settings.get_settings') as mock_settings_getter, \
              patch('lib.versioning.dev_mode.DevMode') as mock_dev_mode:
 
             # Setup mocks
             mock_agent_registry = AsyncMock()
             mock_agent_registry.get_all_agents.return_value = {}
             mock_agent_registry_class.return_value = mock_agent_registry
-            
+
             mock_auth_service = Mock()
             mock_auth_service.is_auth_enabled.return_value = False
             mock_auth.return_value = mock_auth_service
-            
+
+            mock_settings = Mock()
             mock_settings.enable_metrics = False
+            mock_settings_getter.return_value = mock_settings
+
             mock_dev_mode.is_enabled.return_value = True
 
             result = await orchestrated_startup(quiet_mode=True)

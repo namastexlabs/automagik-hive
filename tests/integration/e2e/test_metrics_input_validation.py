@@ -248,8 +248,8 @@ class TestMetricsInputValidation:
 
             # All should use defaults from Field definitions
             assert settings.hive_enable_metrics is True  # Default from Field
-            assert settings.hive_metrics_batch_size == 50  # Default from Field
-            assert settings.hive_metrics_flush_interval == 5.0  # Default from Field
+            assert settings.hive_metrics_batch_size == 5  # Default from Field
+            assert settings.hive_metrics_flush_interval == 1.0  # Default from Field
             assert settings.hive_metrics_queue_size == 1000  # Default from Field
 
 

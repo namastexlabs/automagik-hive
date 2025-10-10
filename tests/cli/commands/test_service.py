@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 import lib.logging.config as logging_config
 from cli.commands.service import ServiceManager
 
@@ -147,16 +149,19 @@ class TestServiceManagerLocalServe:
 
     def test_serve_local_keyboard_interrupt(self):
         """Test handling of KeyboardInterrupt during local serve."""
-        # Use SystemExit instead of KeyboardInterrupt to avoid pytest cleanup issues
-        # SystemExit also represents user cancellation but doesn't break test execution
         with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
             patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
-            patch('subprocess.run', side_effect=SystemExit(0)):
+            patch.object(ServiceManager, '_is_postgres_dependency_active', return_value=False):
             manager = ServiceManager()
-            result = manager.serve_local()
 
-            assert result is True  # Should handle gracefully
-            mock_stop.assert_not_called()
+            with patch('subprocess.run', side_effect=KeyboardInterrupt()):
+                try:
+                    result = manager.serve_local()
+                    # If we get here, KeyboardInterrupt was handled
+                    assert result is True
+                    mock_stop.assert_not_called()
+                except KeyboardInterrupt:
+                    pytest.fail("KeyboardInterrupt was not handled properly")
 
     def test_serve_local_os_error(self):
         """Test handling of OSError during local serve."""
@@ -186,14 +191,16 @@ class TestServiceManagerDockerOperations:
 
     def test_serve_docker_keyboard_interrupt(self):
         """Test Docker startup with KeyboardInterrupt."""
-        # Use SystemExit instead of KeyboardInterrupt to avoid pytest cleanup issues
         manager = ServiceManager()
         with patch.object(manager, 'main_service') as mock_main:
-            mock_main.serve_main.side_effect = SystemExit(0)
+            mock_main.serve_main.side_effect = KeyboardInterrupt()
 
-            result = manager.serve_docker()
-
-            assert result is True  # Should handle gracefully
+            try:
+                result = manager.serve_docker()
+                # If we get here, KeyboardInterrupt was handled
+                assert result is True
+            except KeyboardInterrupt:
+                pytest.fail("KeyboardInterrupt was not handled properly")
 
     def test_serve_docker_exception(self):
         """Test Docker startup with generic exception."""
@@ -503,12 +510,16 @@ class TestServiceManagerEnvFileSetup:
 class TestServiceManagerPostgreSQLSetup:
     """Test PostgreSQL setup functionality."""
     
-    def test_setup_postgresql_interactive_yes(self):
+    def test_setup_postgresql_interactive_yes(self, tmp_path):
         """Test PostgreSQL setup with 'yes' response."""
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
+
         with patch('builtins.input', return_value='y'):
             manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
-            
+            result = manager._setup_postgresql_interactive(str(tmp_path))
+
             assert result is True
 
     def test_setup_postgresql_interactive_no(self):
@@ -519,32 +530,46 @@ class TestServiceManagerPostgreSQLSetup:
             
             assert result is True
 
-    def test_setup_postgresql_interactive_eof(self):
+    def test_setup_postgresql_interactive_eof(self, tmp_path):
         """Test PostgreSQL setup with EOF (defaults to yes)."""
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
+
         with patch('builtins.input', side_effect=EOFError()):
             manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
-            
+            result = manager._setup_postgresql_interactive(str(tmp_path))
+
             assert result is True
 
-    def test_setup_postgresql_interactive_keyboard_interrupt(self):
+    def test_setup_postgresql_interactive_keyboard_interrupt(self, tmp_path):
         """Test PostgreSQL setup with KeyboardInterrupt (defaults to yes)."""
-        # Use EOFError instead of KeyboardInterrupt to avoid pytest cleanup issues
-        # EOFError also represents user cancellation/interrupt but doesn't break test execution
-        with patch('builtins.input', side_effect=EOFError()):
-            manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
 
-            assert result is True
+        # KeyboardInterrupt is handled as EOF (defaults to yes)
+        manager = ServiceManager()
+        with patch('builtins.input', side_effect=KeyboardInterrupt()):
+            try:
+                result = manager._setup_postgresql_interactive(str(tmp_path))
+                # If we get here, KeyboardInterrupt was handled
+                assert result is True
+            except KeyboardInterrupt:
+                pytest.fail("KeyboardInterrupt was not handled properly")
 
-    def test_setup_postgresql_interactive_credentials_fail(self):
+    def test_setup_postgresql_interactive_credentials_fail(self, tmp_path):
         """Test PostgreSQL setup when credential generation fails."""
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
+
         with patch('builtins.input', return_value='y'):
             # The current implementation handles credential generation via CredentialService
             # and always returns True, so this test now validates the updated behavior
             manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
-            
+            result = manager._setup_postgresql_interactive(str(tmp_path))
+
             # The method now always returns True as credential generation
             # is handled by CredentialService.install_all_modes() in install_full_environment
             assert result is True
@@ -567,30 +592,20 @@ class TestServiceManagerUninstall:
         manager = ServiceManager()
         with patch('builtins.input', return_value='WIPE ALL'):
             with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
-                        mock_agent_cmd.uninstall.return_value = True
-                        
-                        mock_genie_cmd = mock_genie_cmd_class.return_value
-                        mock_genie_cmd.uninstall.return_value = True
-                        
-                        result = manager.uninstall_environment("./test")
-                        
-                        assert result is True
-                        mock_uninstall_main.assert_called_once_with("./test")
+                result = manager.uninstall_environment("./test")
+
+                assert result is True
+                mock_uninstall_main.assert_called_once_with("./test")
 
     def test_uninstall_environment_wipe_data_confirmed(self):
         """Test environment uninstall with data wipe (confirmed)."""
         manager = ServiceManager()
         with patch('builtins.input', return_value='WIPE ALL'):
             with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
-                        mock_agent_cmd.uninstall.return_value = True
-                        
-                        mock_genie_cmd = mock_genie_cmd_class.return_value
-                        mock_genie_cmd.uninstall.return_value = True
-                        
-                        result = manager.uninstall_environment("./test")
-                        
-                        assert result is True
-                        mock_uninstall_main.assert_called_once_with("./test")
+                result = manager.uninstall_environment("./test")
+
+                assert result is True
+                mock_uninstall_main.assert_called_once_with("./test")
 
     def test_uninstall_environment_wipe_data_cancelled(self):
         """Test environment uninstall with data wipe (cancelled)."""

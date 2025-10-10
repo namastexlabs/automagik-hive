@@ -30,111 +30,113 @@ class WorkflowStructureError(Exception):
 def get_workflow_version_from_init(workflow_dir: Path) -> str:
     """
     Extract version from workflow __init__.py using AST parsing.
-    
+
     Args:
         workflow_dir: Path to workflow directory (e.g., ai/workflows/template-workflow)
-        
+
     Returns:
         Version string (defaults to "1.0.0" if not found)
-        
+
     Raises:
         WorkflowVersionError: If critical error occurs during version extraction
     """
+    # Validate workflow_dir
+    if not workflow_dir.exists():
+        raise WorkflowVersionError(f"Workflow directory does not exist: {workflow_dir}")
+
+    if not workflow_dir.is_dir():
+        raise WorkflowVersionError(f"Path is not a directory: {workflow_dir}")
+
     init_file = workflow_dir / "__init__.py"
-    
+
     if not init_file.exists():
         logger.debug(
             "No __init__.py found in workflow directory",
             workflow_dir=str(workflow_dir)
         )
-        return "1"  # Default version
-    
+        return "1.0.0"  # Default version
+
     try:
         with open(init_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            
+
         tree = ast.parse(content)
-        
+
         # Add parent references for proper module-level detection
         for parent in ast.walk(tree):
             for child in ast.iter_child_nodes(parent):
                 child.parent = parent
-        
+
         for node in ast.walk(tree):
-            if (isinstance(node, ast.Assign) and 
+            if (isinstance(node, ast.Assign) and
                 len(node.targets) == 1 and
                 isinstance(node.targets[0], ast.Name) and
                 node.targets[0].id == '__version__'):
-                
+
                 # Only accept module-level assignments (not in functions/classes)
                 if hasattr(node, 'parent') and isinstance(node.parent, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)):
                     continue
-                
+
+                # Check if it's a complex expression (f-string, function call, etc.)
+                if isinstance(node.value, (ast.JoinedStr, ast.Call, ast.BinOp)):
+                    raise WorkflowVersionError("Complex version assignment not supported - use simple literals only")
+
                 try:
                     # Extract the version value
                     version = ast.literal_eval(node.value)
                     return str(version)  # Convert to string for consistency
                 except (ValueError, TypeError):
-                    # Skip non-literal expressions for security
-                    continue
-                
+                    # Non-literal expressions
+                    raise WorkflowVersionError("Complex version assignment not supported - use simple literals only")
+
     except SyntaxError as e:
         logger.warning(
             "Syntax error in workflow __init__.py",
             workflow_dir=str(workflow_dir),
             error=str(e)
         )
-        return "1"  # Fallback on syntax errors
-    except (OSError, UnicodeDecodeError) as e:
+        raise WorkflowVersionError(f"Failed to parse {init_file}: {e}")
+    except (OSError, UnicodeDecodeError, PermissionError) as e:
         logger.error(
             "Failed to read workflow __init__.py",
             workflow_dir=str(workflow_dir),
             error=str(e)
         )
         raise WorkflowVersionError(f"Cannot read {init_file}: {e}")
-    
-    return "1"  # Fallback version if no __version__ found
+
+    return "1.0.0"  # Fallback version if no __version__ found
 
 
 def get_workflow_metadata_from_init(workflow_dir: Path) -> dict[str, Any]:
     """
     Extract all metadata from workflow __init__.py using AST parsing.
-    
+
     Args:
         workflow_dir: Path to workflow directory
-        
+
     Returns:
         Dictionary containing extracted metadata (version, description, etc.)
-        
+
     Raises:
         WorkflowMetadataError: If critical error occurs during metadata extraction
     """
     init_file = workflow_dir / "__init__.py"
-    metadata = {
-        'version': '1',
-        'description': None,
-        'author': None,
-    }
-    
+    metadata = {}
+
     if not init_file.exists():
-        return metadata
-    
+        return {"__version__": "1.0.0"}
+
     try:
         with open(init_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            
+
         tree = ast.parse(content)
-        
+
         # Add parent references for module-level detection
         for parent in ast.walk(tree):
             for child in ast.iter_child_nodes(parent):
                 child.parent = parent
-        
-        # Extract docstring if present
-        docstring = ast.get_docstring(tree)
-        if docstring:
-            metadata['description'] = docstring
-        
+
         # Extract module-level assignments
         for node in ast.walk(tree):
             if isinstance(node, ast.Assign) and len(node.targets) == 1:
@@ -143,26 +145,28 @@ def get_workflow_metadata_from_init(workflow_dir: Path) -> dict[str, Any]:
                     # Only accept module-level assignments
                     if hasattr(node, 'parent') and isinstance(node.parent, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)):
                         continue
-                        
-                    try:
-                        value = ast.literal_eval(node.value)
-                        # Handle special metadata fields
-                        if target.id.startswith('__') and target.id.endswith('__'):
-                            metadata[target.id[2:-2]] = value  # Remove __ prefix/suffix
-                        else:
-                            metadata[target.id] = value
-                    except (ValueError, TypeError):
-                        # Skip non-literal values for security
-                        pass
-                        
+
+                    # Only extract metadata fields (those starting and ending with __)
+                    if target.id.startswith('__') and target.id.endswith('__'):
+                        # Check if it's a complex expression
+                        if isinstance(node.value, (ast.JoinedStr, ast.Call, ast.BinOp)):
+                            raise WorkflowMetadataError("Complex assignment not supported for metadata fields - use simple literals only")
+
+                        try:
+                            value = ast.literal_eval(node.value)
+                            # Keep the full __key__ format
+                            metadata[target.id] = str(value) if not isinstance(value, (list, dict)) else value
+                        except (ValueError, TypeError):
+                            # Non-literal expressions
+                            raise WorkflowMetadataError("Complex assignment not supported for metadata fields - use simple literals only")
+
     except SyntaxError as e:
         logger.warning(
             "Syntax error in workflow __init__.py during metadata extraction",
             workflow_dir=str(workflow_dir),
             error=str(e)
         )
-        # Return default metadata on syntax errors
-        return metadata
+        raise WorkflowMetadataError(f"Failed to parse {init_file}: {e}")
     except (OSError, UnicodeDecodeError) as e:
         logger.error(
             "Failed to read workflow __init__.py for metadata",
@@ -170,80 +174,103 @@ def get_workflow_metadata_from_init(workflow_dir: Path) -> dict[str, Any]:
             error=str(e)
         )
         raise WorkflowMetadataError(f"Cannot read {init_file}: {e}")
-    
+
+    # Return default if no metadata found
+    if not metadata:
+        return {"__version__": "1.0.0"}
+
     return metadata
 
 
 def validate_workflow_structure(workflow_dir: Path) -> dict[str, Any]:
     """
     Validate that workflow directory has required structure for pure Python discovery.
-    
+
     Args:
         workflow_dir: Path to workflow directory
-        
+
     Returns:
         Dictionary with validation results and details
-        
+
     Raises:
         WorkflowStructureError: If critical validation error occurs
     """
+    if not workflow_dir.exists():
+        raise WorkflowStructureError(f"Workflow directory does not exist: {workflow_dir}")
+
+    if not workflow_dir.is_dir():
+        raise WorkflowStructureError(f"Path is not a directory: {workflow_dir}")
+
     validation = {
+        'valid': False,
         'has_init': False,
-        'has_workflow_py': False,
-        'has_version': False,
-        'valid_structure': False,
-        'extra_files': [],
+        'has_workflow': False,
+        'has_config': False,
+        'init_version': "1.0.0",
         'missing_files': [],
+        'extra_files': [],
         'errors': []
     }
-    
-    if not workflow_dir.exists() or not workflow_dir.is_dir():
-        raise WorkflowStructureError(f"Workflow directory does not exist or is not a directory: {workflow_dir}")
-    
+
     try:
         # Check for __init__.py
         init_file = workflow_dir / "__init__.py"
         validation['has_init'] = init_file.exists()
         if not validation['has_init']:
             validation['missing_files'].append('__init__.py')
-        
+            validation['errors'].append('Missing required file: __init__.py')
+
         # Check for workflow.py
         workflow_file = workflow_dir / "workflow.py"
-        validation['has_workflow_py'] = workflow_file.exists()
-        if not validation['has_workflow_py']:
+        validation['has_workflow'] = workflow_file.exists()
+        if not validation['has_workflow']:
             validation['missing_files'].append('workflow.py')
-        
-        # Check for version in __init__.py
+            validation['errors'].append('Missing required file: workflow.py')
+
+        # Check for config.yaml
+        config_file = workflow_dir / "config.yaml"
+        validation['has_config'] = config_file.exists()
+        if not validation['has_config']:
+            validation['missing_files'].append('config.yaml')
+            validation['errors'].append('Missing required file: config.yaml')
+
+        # Extract version from __init__.py
         if validation['has_init']:
             try:
                 version = get_workflow_version_from_init(workflow_dir)
-                validation['has_version'] = version != "1" or _has_version_constant(init_file)
-            except WorkflowVersionError:
-                validation['has_version'] = False
-                validation['errors'].append('Failed to extract version from __init__.py')
-        else:
-            validation['has_version'] = False
-        
-        # Find extra files (beyond required __init__.py, workflow.py, optional config.yaml)
-        required_files = {'__init__.py', 'workflow.py'}
-        optional_files = {'config.yaml'}
-        
-        for file_path in workflow_dir.iterdir():
-            if file_path.is_file():
-                filename = file_path.name
-                if filename not in required_files and filename not in optional_files:
-                    # Skip common development files
-                    if not filename.startswith('.') and not filename.endswith('.pyc'):
-                        validation['extra_files'].append(filename)
-        
-        # Overall structure validity
-        validation['valid_structure'] = (
-            validation['has_init'] and 
-            validation['has_workflow_py'] and 
-            validation['has_version'] and
-            len(validation['errors']) == 0
+                validation['init_version'] = version
+            except WorkflowVersionError as e:
+                # Keep default version but don't fail validation
+                # Structure validation only checks file presence
+                validation['errors'].append('Failed to parse version from __init__.py')
+
+        # Find extra files (beyond required __init__.py, workflow.py, config.yaml)
+        required_files = {'__init__.py', 'workflow.py', 'config.yaml'}
+
+        for file_path in sorted(workflow_dir.iterdir()):
+            filename = file_path.name
+            # Skip hidden files and __pycache__
+            if filename.startswith('.') or filename == '__pycache__':
+                continue
+
+            if filename not in required_files:
+                validation['extra_files'].append(filename)
+
+        # Overall structure validity - all required files must exist
+        # Version parsing errors don't invalidate structure
+        validation['valid'] = (
+            validation['has_init'] and
+            validation['has_workflow'] and
+            validation['has_config']
         )
-        
+
+    except PermissionError as e:
+        logger.error(
+            "Permission error during workflow structure validation",
+            workflow_dir=str(workflow_dir),
+            error=str(e)
+        )
+        raise WorkflowStructureError(f"Permission denied: {e}")
     except Exception as e:
         logger.error(
             "Unexpected error during workflow structure validation",
@@ -251,7 +278,7 @@ def validate_workflow_structure(workflow_dir: Path) -> dict[str, Any]:
             error=str(e)
         )
         raise WorkflowStructureError(f"Validation failed for {workflow_dir}: {e}")
-    
+
     return validation
 
 
@@ -289,52 +316,77 @@ def _has_version_constant(init_file: Path) -> bool:
 def discover_workflows_with_versions(workflows_dir: Path) -> dict[str, dict[str, Any]]:
     """
     Discover all workflows with their version information.
-    
+
     Args:
         workflows_dir: Path to workflows directory (e.g., ai/workflows)
-        
+
     Returns:
         Dictionary mapping workflow names to their metadata
+
+    Raises:
+        WorkflowStructureError: If workflows directory doesn't exist or is not a directory
     """
-    workflows = {}
-    
     if not workflows_dir.exists():
-        logger.warning(f"Workflows directory does not exist: {workflows_dir}")
-        return workflows
-    
-    for workflow_path in workflows_dir.iterdir():
-        if not workflow_path.is_dir() or workflow_path.name.startswith("_"):
-            continue
-            
-        workflow_name = workflow_path.name
-        
-        try:
-            validation = validate_workflow_structure(workflow_path)
-            
-            if validation['has_workflow_py']:  # Minimum requirement
+        raise WorkflowStructureError(f"Workflows directory does not exist: {workflows_dir}")
+
+    if not workflows_dir.is_dir():
+        raise WorkflowStructureError(f"Path is not a directory: {workflows_dir}")
+
+    workflows = {}
+
+    try:
+        for workflow_path in sorted(workflows_dir.iterdir()):
+            # Skip non-directories and hidden directories
+            if not workflow_path.is_dir() or workflow_path.name.startswith((".", "_")):
+                continue
+
+            workflow_name = workflow_path.name
+
+            try:
+                # Validate structure
+                structure = validate_workflow_structure(workflow_path)
+
+                # Extract metadata
                 metadata = get_workflow_metadata_from_init(workflow_path)
-                metadata.update({
-                    'workflow_name': workflow_name,
-                    'workflow_path': str(workflow_path),
-                    'structure_valid': validation['valid_structure'],
-                    'validation_details': validation
-                })
-                workflows[workflow_name] = metadata
-                
-        except (WorkflowStructureError, WorkflowMetadataError) as e:
-            logger.warning(
-                "Failed to process workflow",
-                workflow_name=workflow_name,
-                error=str(e)
-            )
-            # Include failed workflow with error info
-            workflows[workflow_name] = {
-                'workflow_name': workflow_name,
-                'workflow_path': str(workflow_path),
-                'version': '1',
-                'structure_valid': False,
-                'error': str(e)
-            }
-            continue
-            
-    return dict(sorted(workflows.items()))  # Sort by workflow name
+
+                # Build workflow info
+                workflow_info = {
+                    'path': str(workflow_path),
+                    'version': metadata.get('__version__', '1.0.0'),
+                    'valid': structure['valid'],
+                    'metadata': metadata,
+                    'structure': structure
+                }
+
+                workflows[workflow_name] = workflow_info
+
+            except (WorkflowStructureError, WorkflowMetadataError) as e:
+                logger.warning(
+                    "Failed to process workflow",
+                    workflow_name=workflow_name,
+                    error=str(e)
+                )
+                # Include failed workflow with error info
+                workflows[workflow_name] = {
+                    'path': str(workflow_path),
+                    'version': '1.0.0',
+                    'valid': False,
+                    'error': str(e)
+                }
+
+    except PermissionError as e:
+        logger.error(
+            "Permission error during workflow discovery",
+            workflows_dir=str(workflows_dir),
+            error=str(e)
+        )
+        raise WorkflowStructureError(f"Permission denied: {e}")
+    except Exception as e:
+        logger.error(
+            "Unexpected error during workflow discovery",
+            workflows_dir=str(workflows_dir),
+            error=str(e)
+        )
+        raise WorkflowStructureError(f"Discovery failed for {workflows_dir}: {e}")
+
+    return workflows

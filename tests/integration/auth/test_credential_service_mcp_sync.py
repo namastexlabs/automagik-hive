@@ -143,79 +143,78 @@ class TestCredentialServiceMcpSync:
 
     def test_agent_installation_triggers_mcp_sync_when_requested(self, tmp_path):
         """
-        FAILING TEST: Agent installations should trigger MCP sync when requested.
-        
-        Expected behavior: install_all_modes() for agent with sync_mcp=True should sync MCP.
+        UPDATED TEST: Workspace installations should trigger MCP sync when requested.
+
+        Expected behavior: install_all_modes() for workspace with sync_mcp=True should sync MCP.
         Current behavior: Method signature doesn't support sync_mcp parameter (will fail).
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
-        
+
         # Mock the sync_mcp_config_with_credentials method
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             # Mock master credential extraction to avoid file dependencies
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
                 # This call will fail because sync_mcp parameter doesn't exist yet
-                result = service.install_all_modes(modes=["agent"], sync_mcp=True)
-                
-                # ASSERTION: MCP sync should be called for agent installation when requested
+                result = service.install_all_modes(modes=["workspace"], sync_mcp=True)
+
+                # ASSERTION: MCP sync should be called for workspace installation when requested
                 mock_sync.assert_called_once()
-                
+
                 # Verify installation succeeded
                 assert result is not None
-                assert "agent" in result
+                assert "workspace" in result
 
     def test_agent_installation_no_mcp_sync_by_default(self, tmp_path):
         """
-        FAILING TEST: Agent installations should not trigger MCP sync by default.
-        
-        Expected behavior: install_all_modes() for agent should not sync MCP by default.
+        UPDATED TEST: Workspace installations should not trigger MCP sync by default.
+
+        Expected behavior: install_all_modes() for workspace should not sync MCP by default.
         Current behavior: Will need implementation of sync control (will fail).
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
-        
+
         # Mock the sync_mcp_config_with_credentials method
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             # Mock master credential extraction to avoid file dependencies
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
-                # Install agent mode only without explicit sync_mcp
-                result = service.install_all_modes(modes=["agent"])
-                
+                # Install workspace mode only without explicit sync_mcp
+                result = service.install_all_modes(modes=["workspace"])
+
                 # ASSERTION THAT WILL FAIL: MCP sync should not be called by default
                 mock_sync.assert_not_called()
-                
+
                 # Verify installation succeeded
                 assert result is not None
-                assert "agent" in result
+                assert "workspace" in result
 
     def test_mixed_mode_installation_sync_mcp_behavior(self, tmp_path):
         """
-        FAILING TEST: Mixed mode installations should respect sync_mcp parameter.
-        
-        Expected behavior: install_all_modes() for multiple modes should sync once when requested.
+        UPDATED TEST: Workspace installation should respect sync_mcp parameter.
+
+        Expected behavior: install_all_modes() for workspace should sync when requested.
         Current behavior: Method signature doesn't support sync_mcp parameter (will fail).
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
-        
+
         # Mock the sync_mcp_config_with_credentials method
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             # Mock master credential extraction to avoid file dependencies
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
                 # This call will fail because sync_mcp parameter doesn't exist yet
                 result = service.install_all_modes(
-                    modes=["workspace", "agent"], 
+                    modes=["workspace"],
                     sync_mcp=True
                 )
-                
-                # ASSERTION: MCP sync should be called once regardless of number of modes
+
+                # ASSERTION: MCP sync should be called when requested
                 mock_sync.assert_called_once()
-                
-                # Verify installation succeeded for all modes
+
+                # Verify installation succeeded
                 assert result is not None
                 assert "workspace" in result
-                assert "agent" in result
 
     def test_install_all_modes_sync_mcp_parameter_signature(self, tmp_path):
         """
@@ -319,35 +318,35 @@ class TestCredentialServiceMcpSync:
 
     def test_integration_existing_makefile_behavior(self, tmp_path):
         """
-        FAILING TEST: Ensure Makefile integration continues to work with proper MCP sync control.
-        
+        UPDATED TEST: Ensure Makefile integration continues to work with proper MCP sync control.
+
         Expected behavior: Makefile calls should be able to control MCP sync behavior.
         Current behavior: No control mechanism exists (will fail).
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
-        
+
         # Mock the sync_mcp_config_with_credentials method
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             # Mock master credential extraction
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
-                
+
                 # Simulate Makefile calling install_all_modes for workspace (no MCP sync)
                 workspace_result = service.install_all_modes(modes=["workspace"])
-                
-                # Simulate Makefile calling install_all_modes for agent (with MCP sync)
+
+                # Simulate Makefile calling install_all_modes for workspace (with MCP sync)
                 # This will fail due to missing sync_mcp parameter
-                agent_result = service.install_all_modes(modes=["agent"], sync_mcp=True)
-                
+                workspace_sync_result = service.install_all_modes(modes=["workspace"], sync_mcp=True)
+
                 # ASSERTIONS:
-                # MCP sync should be called once (only for agent installation)
+                # MCP sync should be called once (only for second installation)
                 mock_sync.assert_called_once()
-                
+
                 # Both installations should succeed
                 assert workspace_result is not None
-                assert agent_result is not None
-                assert "workspace" in workspace_result  
-                assert "agent" in agent_result
+                assert workspace_sync_result is not None
+                assert "workspace" in workspace_result
+                assert "workspace" in workspace_sync_result
 
 
 class TestCredentialServiceMcpSyncEdgeCases:
@@ -401,16 +400,16 @@ class TestCredentialServiceMcpSyncEdgeCases:
     def test_multiple_mcp_syncs_idempotent(self, tmp_path):
         """
         Test that multiple MCP syncs are idempotent and don't cause issues.
-        
+
         Expected behavior: Multiple sync calls should not cause problems.
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
-        
+
         # Create ai directory and MCP file (respecting HIVE_MCP_CONFIG_PATH=ai/.mcp.json)
         ai_dir = tmp_path / "ai"
         ai_dir.mkdir(exist_ok=True)
-        mcp_file = ai_dir / ".mcp.json" 
+        mcp_file = ai_dir / ".mcp.json"
         mcp_file.write_text('''
 {
   "mcpServers": {
@@ -424,18 +423,21 @@ class TestCredentialServiceMcpSyncEdgeCases:
   }
 }
 ''')
-        
-        # Generate credentials
-        result = service.setup_complete_credentials(sync_mcp=True)
-        
-        # Call sync multiple times - should be idempotent
-        service.sync_mcp_config_with_credentials()
-        service.sync_mcp_config_with_credentials()
-        service.sync_mcp_config_with_credentials()
-        
+
+        # Patch HIVE_MCP_CONFIG_PATH to point to temp directory
+        import os
+        with patch.dict(os.environ, {'HIVE_MCP_CONFIG_PATH': str(ai_dir / ".mcp.json")}):
+            # Generate credentials
+            result = service.setup_complete_credentials(sync_mcp=True)
+
+            # Call sync multiple times - should be idempotent
+            service.sync_mcp_config_with_credentials()
+            service.sync_mcp_config_with_credentials()
+            service.sync_mcp_config_with_credentials()
+
         # Verify final state is consistent
         mcp_content = mcp_file.read_text()
-        
+
         # Should contain the new credentials (not old ones)
         assert "old-user:old-pass" not in mcp_content
         assert result['postgres_user'] in mcp_content
@@ -491,33 +493,33 @@ class TestCredentialServiceMcpSyncValidation:
 
     def test_install_all_modes_sync_mcp_applies_to_all_modes(self, tmp_path):
         """
-        Test that sync_mcp parameter in install_all_modes applies correctly.
-        
-        Expected behavior: sync_mcp=True should sync MCP once regardless of mode count.
+        UPDATED TEST: Test that sync_mcp parameter in install_all_modes applies correctly.
+
+        Expected behavior: sync_mcp=True should sync MCP once for workspace mode.
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
-        
+
         # Mock the sync_mcp_config_with_credentials method to count calls
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             # Mock master credential extraction
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
-                
-                # Install all modes with sync_mcp=True
+
+                # Install workspace mode with sync_mcp=True
                 service.install_all_modes(
-                    modes=["workspace", "agent", "genie"], 
+                    modes=["workspace"],
                     sync_mcp=True
                 )
-                
-                # Should call sync exactly once, not once per mode
+
+                # Should call sync exactly once
                 assert mock_sync.call_count == 1
-                
+
                 # Reset mock
                 mock_sync.reset_mock()
-                
-                # Install all modes with sync_mcp=False (default)
-                service.install_all_modes(modes=["workspace", "agent", "genie"])
-                
+
+                # Install workspace mode with sync_mcp=False (default)
+                service.install_all_modes(modes=["workspace"])
+
                 # Should not call sync at all
                 mock_sync.assert_not_called()
 

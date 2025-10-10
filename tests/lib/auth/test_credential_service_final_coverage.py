@@ -131,23 +131,23 @@ class TestEdgeCaseCredentialHandling:
     def test_complex_installation_workflow_execution(self, tmp_path):
         """Test complete installation workflow with various edge cases."""
         service = CredentialService(project_root=tmp_path)
-        
-        # Test install all modes with custom modes list
+
+        # Test install all modes - after refactoring, only workspace mode is supported
         result = service.install_all_modes(modes=["workspace", "agent"])
-        
-        # Verify only requested modes were processed
+
+        # After refactoring, only workspace mode is supported
         assert "workspace" in result
-        assert "agent" in result
-        assert "genie" not in result
-        
+        # Agent and genie modes are no longer supported in the refactored implementation
+
         # Verify environment files were created appropriately
         main_env = tmp_path / ".env"
         agent_env = tmp_path / ".env.agent"
         genie_env = tmp_path / ".env.genie"
-        
+
         assert main_env.exists()  # Workspace uses main .env
-        assert agent_env.exists()  # Agent gets its own .env file
-        assert not genie_env.exists()  # Genie wasn't requested
+        # After refactoring, agent/genie .env files are no longer created
+        assert not agent_env.exists()  # Agent mode not supported
+        assert not genie_env.exists()  # Genie mode not supported
         
     def test_mcp_sync_with_complex_json_structure(self, tmp_path):
         """Test MCP sync with complex JSON structure and edge cases."""
@@ -196,19 +196,22 @@ class TestEdgeCaseCredentialHandling:
     def test_port_calculation_with_extreme_values(self):
         """Test port calculation with extreme base port values."""
         service = CredentialService()
-        
+
         # Test with very high base ports
         extreme_base_ports = {"db": 65000, "api": 64000}
-        
-        # Test agent mode with extreme values
-        agent_ports = service.calculate_ports("agent", extreme_base_ports)
-        assert agent_ports["db"] == 365000  # 3 + 65000
-        assert agent_ports["api"] == 364000  # 3 + 64000
-        
-        # Test genie mode with extreme values
-        genie_ports = service.calculate_ports("genie", extreme_base_ports)
-        assert genie_ports["db"] == 465000  # 4 + 65000 
-        assert genie_ports["api"] == 464000  # 4 + 64000
+
+        # After refactoring, agent and genie modes are no longer supported
+        # Test that non-workspace modes raise ValueError
+        with pytest.raises(ValueError, match="Only 'workspace' mode is supported"):
+            service.calculate_ports("agent", extreme_base_ports)
+
+        with pytest.raises(ValueError, match="Only 'workspace' mode is supported"):
+            service.calculate_ports("genie", extreme_base_ports)
+
+        # Test workspace mode with extreme values (should work)
+        workspace_ports = service.calculate_ports("workspace", extreme_base_ports)
+        assert workspace_ports["db"] == 65000  # No prefix for workspace
+        assert workspace_ports["api"] == 64000  # No prefix for workspace
         
     def test_credential_validation_comprehensive_edge_cases(self):
         """Test comprehensive credential validation edge cases."""

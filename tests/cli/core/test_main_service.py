@@ -25,8 +25,9 @@ class TestMainServiceInitialization:
     def test_init_with_workspace_path(self, temp_workspace):
         """Test MainService initializes correctly with provided workspace path."""
         service = MainService(temp_workspace)
-        
-        assert service.workspace_path == temp_workspace
+
+        # Use resolve() to normalize symlinks (macOS /var -> /private/var)
+        assert service.workspace_path.resolve() == temp_workspace.resolve()
 
     def test_init_with_default_workspace(self):
         """Test MainService initializes with current directory when no path provided."""
@@ -39,8 +40,9 @@ class TestMainServiceInitialization:
     def test_init_with_string_workspace_path(self, temp_workspace):
         """Test MainService handles string workspace paths correctly."""
         service = MainService(str(temp_workspace))
-        
-        assert service.workspace_path == temp_workspace
+
+        # Use resolve() to normalize symlinks (macOS /var -> /private/var)
+        assert service.workspace_path.resolve() == temp_workspace.resolve()
 
     def test_init_with_windows_style_path(self):
         """Test MainService handles Windows-style paths correctly."""
@@ -234,17 +236,19 @@ services:
       - "8886:8886"
 """
         (docker_main_dir / "docker-compose.yml").write_text(compose_content)
-        
+
         # Mock successful subprocess run
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
-        
+
         service = MainService(temp_workspace)
         result = service._setup_main_containers(str(temp_workspace))
-        
+
         assert result is True
+        # Implementation uses os.fspath() which resolves symlinks, so we need to resolve the expected path
+        expected_compose_path = str((docker_main_dir / "docker-compose.yml").resolve())
         mock_run.assert_called_once_with(
-            ["docker", "compose", "-f", str(docker_main_dir / "docker-compose.yml"), "up", "-d"],
+            ["docker", "compose", "-f", expected_compose_path, "up", "-d"],
             check=False,
             capture_output=True,
             text=True,
@@ -257,13 +261,15 @@ services:
         # Mock successful subprocess run
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
-        
+
         service = MainService(temp_workspace)
         result = service._setup_main_containers(str(temp_workspace))
-        
+
         assert result is True
+        # Implementation uses os.fspath() which resolves symlinks, so we need to resolve the expected path
+        expected_compose_path = str((temp_workspace / "docker-compose.yml").resolve())
         mock_run.assert_called_once_with(
-            ["docker", "compose", "-f", str(temp_workspace / "docker-compose.yml"), "up", "-d"],
+            ["docker", "compose", "-f", expected_compose_path, "up", "-d"],
             check=False,
             capture_output=True,
             text=True,
@@ -388,13 +394,13 @@ class TestMainServiceOperations:
         """Test serve main detects already running containers."""
         with patch.object(MainService, '_validate_main_environment', return_value=True), \
              patch.object(MainService, 'get_main_status', return_value={
-                 "hive-postgres": "✅ Running (Port: 5532)",
-                 "main-app": "✅ Running (Port: 8886)"
+                 "hive-postgres": "✅ Running",
+                 "hive-api": "✅ Running"
              }):
-            
+
             service = MainService(temp_workspace)
             result = service.serve_main(str(temp_workspace))
-            
+
             assert result is True
 
     def test_serve_main_starts_containers(self, temp_workspace):
@@ -402,13 +408,13 @@ class TestMainServiceOperations:
         with patch.object(MainService, '_validate_main_environment', return_value=True), \
              patch.object(MainService, 'get_main_status', return_value={
                  "hive-postgres": "🛑 Stopped",
-                 "main-app": "🛑 Stopped"
+                 "hive-api": "🛑 Stopped"
              }), \
              patch.object(MainService, '_setup_main_containers', return_value=True):
-            
+
             service = MainService(temp_workspace)
             result = service.serve_main(str(temp_workspace))
-            
+
             assert result is True
 
 
@@ -421,13 +427,15 @@ class TestMainServiceStopRestart:
         # Mock successful subprocess run
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
-        
+
         service = MainService(temp_workspace)
         result = service.stop_main(str(temp_workspace))
-        
+
         assert result is True
+        # Implementation uses os.fspath() which resolves symlinks, so we need to resolve the expected path
+        expected_compose_path = str((temp_workspace / "docker-compose.yml").resolve())
         mock_run.assert_called_once_with(
-            ["docker", "compose", "-f", str(temp_workspace / "docker-compose.yml"), "stop"],
+            ["docker", "compose", "-f", expected_compose_path, "stop"],
             check=False,
             capture_output=True,
             text=True,
@@ -507,13 +515,15 @@ class TestMainServiceStopRestart:
         # Mock successful subprocess run
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
-        
+
         service = MainService(temp_workspace)
         result = service.restart_main(str(temp_workspace))
-        
+
         assert result is True
+        # Implementation uses os.fspath() which resolves symlinks, so we need to resolve the expected path
+        expected_compose_path = str((temp_workspace / "docker-compose.yml").resolve())
         mock_run.assert_called_once_with(
-            ["docker", "compose", "-f", str(temp_workspace / "docker-compose.yml"), "restart"],
+            ["docker", "compose", "-f", expected_compose_path, "restart"],
             check=False,
             capture_output=True,
             text=True,
@@ -580,12 +590,12 @@ class TestMainServiceStatus:
             Mock(returncode=0, stdout="container_id_app\n"),
             Mock(returncode=0, stdout="true\n"),  # inspect app
         ]
-        
+
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
-        
+
         assert status["hive-postgres"] == "✅ Running"
-        assert status["main-app"] == "✅ Running"
+        assert status["hive-api"] == "✅ Running"
 
     @patch('subprocess.run')
     def test_get_main_status_both_stopped(self, mock_run, temp_workspace):
@@ -595,12 +605,12 @@ class TestMainServiceStatus:
             Mock(returncode=1, stdout=""),  # postgres not found
             Mock(returncode=1, stdout=""),  # app not found
         ]
-        
+
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
-        
+
         assert status["hive-postgres"] == "🛑 Stopped"
-        assert status["main-app"] == "🛑 Stopped"
+        assert status["hive-api"] == "🛑 Stopped"
 
     @patch('subprocess.run')
     def test_get_main_status_containers_not_running(self, mock_run, temp_workspace):
@@ -612,36 +622,36 @@ class TestMainServiceStatus:
             Mock(returncode=0, stdout="container_id_app\n"),
             Mock(returncode=0, stdout="false\n"),  # inspect app - not running
         ]
-        
+
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
-        
+
         assert status["hive-postgres"] == "🛑 Stopped"
-        assert status["main-app"] == "🛑 Stopped"
+        assert status["hive-api"] == "🛑 Stopped"
 
     def test_get_main_status_no_compose_file(self, temp_workspace):
         """Test get main status handles missing compose file gracefully."""
         # Remove docker-compose.yml from fixture
         (temp_workspace / "docker-compose.yml").unlink()
-        
+
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
-        
+
         assert status["hive-postgres"] == "🛑 Stopped"
-        assert status["main-app"] == "🛑 Stopped"
+        assert status["hive-api"] == "🛑 Stopped"
 
     @patch('subprocess.run')
     def test_get_main_status_with_exceptions(self, mock_run, temp_workspace):
         """Test get main status handles subprocess exceptions gracefully."""
         # Mock subprocess exceptions
         mock_run.side_effect = subprocess.TimeoutExpired(["docker"], timeout=10)
-        
+
         service = MainService(temp_workspace)
         status = service.get_main_status(str(temp_workspace))
-        
+
         # Should fallback to stopped status
         assert status["hive-postgres"] == "🛑 Stopped"
-        assert status["main-app"] == "🛑 Stopped"
+        assert status["hive-api"] == "🛑 Stopped"
 
     @patch('subprocess.run')
     def test_get_main_status_uses_docker_main_compose(self, mock_run, temp_workspace):
@@ -828,13 +838,15 @@ class TestMainServiceUninstall:
         """Test successful container-only cleanup."""
         # Mock successful docker compose down
         mock_run.return_value.returncode = 0
-        
+
         service = MainService(temp_workspace)
         result = service._cleanup_containers_only(str(temp_workspace))
-        
+
         assert result is True
+        # Implementation uses os.fspath() which resolves symlinks, so we need to resolve the expected path
+        expected_compose_path = str((temp_workspace / "docker-compose.yml").resolve())
         mock_run.assert_called_once_with(
-            ["docker", "compose", "-f", str(temp_workspace / "docker-compose.yml"), "down"],
+            ["docker", "compose", "-f", expected_compose_path, "down"],
             check=False,
             capture_output=True,
             timeout=60
@@ -872,23 +884,27 @@ class TestMainServiceUninstall:
         postgres_data_dir = temp_workspace / "data" / "postgres"
         postgres_data_dir.mkdir(parents=True, exist_ok=True)
         (postgres_data_dir / "test_data.sql").write_text("test data")
-        
+
         # Mock successful docker compose down
         mock_run.return_value.returncode = 0
-        
+
         service = MainService(temp_workspace)
         result = service._cleanup_main_environment(str(temp_workspace))
-        
+
         assert result is True
+        # Implementation uses os.fspath() which resolves symlinks, so we need to resolve the expected path
+        expected_compose_path = str((temp_workspace / "docker-compose.yml").resolve())
         # Should call docker compose down with -v flag for volumes
         mock_run.assert_called_once_with(
-            ["docker", "compose", "-f", str(temp_workspace / "docker-compose.yml"), "down", "-v"],
+            ["docker", "compose", "-f", expected_compose_path, "down", "-v"],
             check=False,
             capture_output=True,
             timeout=60
         )
+        # Implementation resolves workspace path, so data_dir is also resolved - need to match that
+        expected_data_dir = (temp_workspace.resolve() / "data" / "postgres")
         # Should attempt to remove data directory
-        mock_rmtree.assert_called_once_with(postgres_data_dir)
+        mock_rmtree.assert_called_once_with(expected_data_dir)
 
     @patch('subprocess.run')
     @patch('shutil.rmtree')
@@ -988,13 +1004,13 @@ class TestMainServiceEdgeCases:
     def test_concurrent_operations_safety(self, temp_workspace):
         """Test service handles potential concurrent operation scenarios."""
         service = MainService(temp_workspace)
-        
+
         # Mock concurrent status checks
-        with patch.object(MainService, 'get_main_status', return_value={"hive-postgres": "✅ Running", "main-app": "✅ Running"}):
+        with patch.object(MainService, 'get_main_status', return_value={"hive-postgres": "✅ Running", "hive-api": "✅ Running"}):
             # Multiple status checks should work
             status1 = service.get_main_status(str(temp_workspace))
             status2 = service.get_main_status(str(temp_workspace))
-            
+
             assert status1 == status2
 
     def test_path_resolution_edge_cases(self, temp_workspace):
@@ -1111,7 +1127,7 @@ class TestMainServiceIntegration:
         # Create docker/main directory structure
         docker_main_dir = temp_workspace / "docker" / "main"
         docker_main_dir.mkdir(parents=True, exist_ok=True)
-        
+
         compose_content = """
 version: '3.8'
 services:
@@ -1144,19 +1160,19 @@ volumes:
   postgres_data:
 """
         (docker_main_dir / "docker-compose.yml").write_text(compose_content)
-        
+
         # Mock successful Docker operations
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
-        
+
         service = MainService(temp_workspace)
-        
+
         # Test various operations use the correct compose file
         result = service._setup_main_containers(str(temp_workspace))
         assert result is True
-        
-        # Verify it used the docker/main compose file
-        expected_compose_file = str(docker_main_dir / "docker-compose.yml")
+
+        # Implementation uses os.fspath() which resolves symlinks, so we need to resolve the expected path
+        expected_compose_file = str((docker_main_dir / "docker-compose.yml").resolve())
         mock_run.assert_called_with(
             ["docker", "compose", "-f", expected_compose_file, "up", "-d"],
             check=False,
