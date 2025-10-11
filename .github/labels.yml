@@ -1,4 +1,4 @@
-# Automagik Genie - Unified Label Taxonomy
+# Automagik Hive - Unified Label Taxonomy
 # Synced automatically via .github/workflows/label-sync.yml
 # Based on automagik-roadmap taxonomy, adapted for project repos
 
@@ -55,7 +55,7 @@
   description: 'Low - Nice to have'
 
 # ============================================
-# AREA DIMENSION (15 base + genie-specific)
+# AREA DIMENSION (15 base + hive-specific)
 # ============================================
 
 - name: area:api
@@ -118,18 +118,18 @@
   color: '006B75'
   description: 'Knowledge - RAG, embeddings, vector DB'
 
-# Genie-specific areas
-- name: area:wishes
+# Hive-specific areas
+- name: area:orchestration
   color: '006B75'
-  description: 'Wishes - Wish system and workflow'
+  description: 'Orchestration - Multi-agent coordination'
 
-- name: area:forge
+- name: area:swarm
   color: '006B75'
-  description: 'Forge - Forge agent and task breakdown'
+  description: 'Swarm - Swarm intelligence and coordination'
 
-- name: area:templates
+- name: area:teams
   color: '006B75'
-  description: 'Templates - Template management and init'
+  description: 'Teams - Team management and collaboration'
 
 # ============================================
 # ROADMAP LINKING (3 labels)
@@ -213,17 +213,17 @@
 # WISH WORKFLOW (3 labels)
 # ============================================
 
+- name: wish:triage
+  color: 'E1BEE7'
+  description: 'Wish Triage - User-submitted wish pending team review'
+
 - name: wish:active
   color: '1D76DB'
-  description: 'Wish Active - Wish currently being implemented'
+  description: 'Wish Active - Currently being worked on'
 
 - name: wish:archived
   color: '6C757D'
-  description: 'Wish Archived - Wish archived to roadmap'
-
-- name: wish:implementation
-  color: '9C27B0'
-  description: 'Wish Implementation - Wish in active implementation'
+  description: 'Wish Archived - Completed and moved to roadmap archive'
 
 # ============================================
 # ADMINISTRATIVE (4 labels)
