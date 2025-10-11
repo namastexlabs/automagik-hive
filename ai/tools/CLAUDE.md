@@ -1,6 +1,49 @@
-# AI TOOLS - CLAUDE.md
+# CLAUDE.md - AI Tools
 
-This document provides guidance for AI Tools development within the Automagik Hive ecosystem.
+## Context & Scope
+
+[CONTEXT]
+- Describes how to design, configure, and register reusable AI tools.
+- Tools extend agents/teams/workflows through `BaseTool` inheritance and YAML metadata.
+- Follow this with `/ai/CLAUDE.md` and `/CLAUDE.md` for orchestration and tooling rules.
+
+[CONTEXT MAP]
+@ai/tools/
+@ai/tools/base_tool.py
+@ai/tools/registry.py
+@ai/tools/template-tool/
+
+[SUCCESS CRITERIA]
+✅ Each tool ships with a config YAML, implementation, and passing tests.
+✅ Registry discovery lists new tools without import errors.
+✅ Tool execution returns standardized `{status, result, metadata}` responses.
+✅ Version numbers reflect breaking vs additive changes.
+
+[NEVER DO]
+❌ Hardcode credentials or environment-specific values inside tools.
+❌ Modify registry logic to bypass dynamic discovery.
+❌ Skip pytest coverage (unit + integration) for new tools.
+❌ Diverge from template layout or forget to update documentation.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Understand tool impact
+   - Review existing tool directory (config.yaml, tool.py).
+   - Inspect registry usage and consumer agents/workflows.
+   - Check related tests in `tests/ai/tools/` and integration suites.
+
+2. [Implementation] Build or modify tool
+   - Copy `template-tool/` for new tools or edit existing files.
+   - Update YAML metadata, implement logic, and bump version.
+   - Ensure execute() returns standardized payloads and handles errors.
+
+3. [Verification] Validate tool stability
+   - Run `uv run pytest tests/ai/tools/` (or equivalent) plus integration paths.
+   - Manual smoke test via a consumer agent/workflow if applicable.
+   - Log outcomes inside the active wish or Forge record.
+</task_breakdown>
+```
 
 ## 🔧 TOOLS ARCHITECTURE
 

@@ -304,20 +304,20 @@ class TestContainerDetectionExecution:
     def test_detect_existing_containers_execution(self):
         """EXECUTE container detection with subprocess calls - line 767."""
         service = CredentialService()
-        
+
         # Mock subprocess.run to simulate docker command execution
         mock_result = Mock()
-        mock_result.stdout = "hive-postgres-shared\nhive-agent-dev-server\n"
-        
+        mock_result.stdout = "hive-postgres\nhive-api\n"  # Updated container name
+
         with patch("subprocess.run", return_value=mock_result) as mock_subprocess:
             # EXECUTE detect_existing_containers - line 767
             containers = service.detect_existing_containers()
-            
+
             # Verify subprocess was called
             assert mock_subprocess.called
             # Verify container detection worked
-            assert "hive-postgres-shared" in containers
-            assert "hive-agent-dev-server" in containers
+            assert "hive-postgres" in containers  # Updated from hive-postgres-shared
+            assert "hive-api" in containers
 
 
 class TestMigrationDetectionExecution:
@@ -367,16 +367,15 @@ class TestInstallAllModesExceptionHandling:
     def test_install_all_modes_mcp_sync_exception_execution(self, tmp_path):
         """EXECUTE MCP sync exception handling in install_all_modes - lines 880-883."""
         service = CredentialService(project_root=tmp_path)
-        
+
         # Mock sync_mcp_config_with_credentials to raise exception
         with patch.object(service, "sync_mcp_config_with_credentials", side_effect=Exception("MCP error")):
             # EXECUTE install with MCP sync that fails - lines 880-883
             result = service.install_all_modes(sync_mcp=True)
-            
+
             # Should complete successfully despite MCP sync failure
+            # After refactoring, only workspace mode is supported
             assert "workspace" in result
-            assert "agent" in result
-            assert "genie" in result
 
 
 class TestMasterCredentialExtractionExecution:
@@ -551,33 +550,13 @@ class TestPortCalculationEdgeCases:
         """EXECUTE port calculation with empty prefix (workspace)."""
         service = CredentialService()
         base_ports = {"db": 9999, "api": 7777}
-        
+
         # EXECUTE calculate_ports for workspace (empty prefix)
         calculated = service.calculate_ports("workspace", base_ports)
-        
+
         # Should return copy of base ports
         assert calculated == base_ports
         assert calculated is not base_ports  # Should be a copy
-        
-    def test_get_deployment_ports_custom_base_execution(self, tmp_path):
-        """EXECUTE deployment ports with custom base ports."""
-        # Create .env with custom ports
-        env_file = tmp_path / ".env"
-        env_file.write_text(
-            "HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:9999/hive\n"
-            "HIVE_API_PORT=7777\n"
-        )
-        
-        service = CredentialService(project_root=tmp_path)
-        
-        # EXECUTE get_deployment_ports with custom base
-        deployment_ports = service.get_deployment_ports()
-        
-        # Should use custom base ports
-        assert deployment_ports["workspace"]["db"] == 9999
-        assert deployment_ports["workspace"]["api"] == 7777
-        assert deployment_ports["agent"]["db"] == 39999  # Prefixed
-        assert deployment_ports["agent"]["api"] == 37777  # Prefixed
 
 
 class TestAdvancedMCPSyncScenarios:

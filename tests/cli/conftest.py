@@ -800,8 +800,12 @@ def pytest_configure(config):
 
 # Configure test collection and execution
 def pytest_collection_modifyitems(config, items):
-    """Modify test collection to add markers and configure execution."""
+    """Modify test collection to add markers and configure execution - CLI tests only."""
     for item in items:
+        # Only process CLI tests to avoid interfering with other test suites
+        if "tests/cli" not in str(item.fspath):
+            continue
+
         # Add markers based on test names and paths
         if "test_real_" in item.name or "real_server" in item.name:
             item.add_marker(pytest.mark.real_server)
@@ -830,38 +834,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 # Configure pytest reporting
-def pytest_terminal_summary(terminalreporter, exitstatus, config):
-    """Add custom terminal summary information."""
-    terminalreporter.write_line("")
-    terminalreporter.write_line("🧪 CLI Comprehensive Test Suite Summary", bold=True)
-    terminalreporter.write_line("=" * 50)
-
-    # Get test statistics
-    stats = terminalreporter.stats
-    passed = len(stats.get("passed", []))
-    failed = len(stats.get("failed", []))
-    skipped = len(stats.get("skipped", []))
-    errors = len(stats.get("error", []))
-
-    total = passed + failed + skipped + errors
-
-    if total > 0:
-        terminalreporter.write_line("📊 Test Results:")
-        terminalreporter.write_line(f"   ✅ Passed: {passed}")
-        terminalreporter.write_line(f"   ❌ Failed: {failed}")
-        terminalreporter.write_line(f"   ⏭️  Skipped: {skipped}")
-        terminalreporter.write_line(f"   🚨 Errors: {errors}")
-        terminalreporter.write_line(f"   📈 Total: {total}")
-
-        success_rate = (passed / total) * 100 if total > 0 else 0
-        terminalreporter.write_line(f"   🎯 Success Rate: {success_rate:.1f}%")
-
-    terminalreporter.write_line("")
-    terminalreporter.write_line("🎯 Coverage Target: >95% for CLI components")
-    terminalreporter.write_line(
-        "🔒 SECURITY: Real server/database connections DISABLED for safety"
-    )
-    terminalreporter.write_line(
-        "✅ All tests use mocked connections for complete isolation"
-    )
-    terminalreporter.write_line("")
+# Note: Removed pytest_terminal_summary hook as it was causing KeyboardInterrupt
+# and stopping the full test suite execution after CLI tests.
+# The hook was printing summary too early and interfering with pytest's
+# global test collection/execution flow.

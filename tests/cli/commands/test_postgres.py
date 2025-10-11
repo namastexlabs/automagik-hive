@@ -65,10 +65,7 @@ class TestPostgreSQLServiceLifecycle:
         mock_docker_manager_class.return_value = mock_docker_manager
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -80,7 +77,7 @@ class TestPostgreSQLServiceLifecycle:
         # Verify the expected print calls were made
         expected_calls = [
             call("🚀 Starting PostgreSQL for: /test/workspace"),
-            call("✅ PostgreSQL container 'hive-main-postgres' is already running")
+            call("✅ PostgreSQL container 'hive-postgres' is already running")
         ]
         mock_print.assert_has_calls(expected_calls)
 
@@ -94,10 +91,7 @@ class TestPostgreSQLServiceLifecycle:
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success (no output)
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -109,8 +103,8 @@ class TestPostgreSQLServiceLifecycle:
         # Verify the expected print calls were made
         expected_calls = [
             call("🛑 Stopping PostgreSQL for: /test/workspace"),
-            call("⏹️ Stopping PostgreSQL container 'hive-main-postgres'..."),
-            call("✅ PostgreSQL container 'hive-main-postgres' stopped successfully")
+            call("⏹️ Stopping PostgreSQL container 'hive-postgres'..."),
+            call("✅ PostgreSQL container 'hive-postgres' stopped successfully")
         ]
         mock_print.assert_has_calls(expected_calls)
 
@@ -125,10 +119,7 @@ class TestPostgreSQLServiceLifecycle:
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -140,8 +131,8 @@ class TestPostgreSQLServiceLifecycle:
         # Verify the expected print calls were made
         expected_calls = [
             call("🔄 Restarting PostgreSQL for: /test/workspace"),
-            call("🔄 Restarting PostgreSQL container 'hive-main-postgres'..."),
-            call("✅ PostgreSQL container 'hive-main-postgres' restarted successfully"),
+            call("🔄 Restarting PostgreSQL container 'hive-postgres'..."),
+            call("✅ PostgreSQL container 'hive-postgres' restarted successfully"),
             call("✅ PostgreSQL is now accepting connections")
         ]
         mock_print.assert_has_calls(expected_calls)
@@ -169,10 +160,7 @@ class TestPostgreSQLServiceStatus:
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = "5432/tcp -> 0.0.0.0:5532\n5432/tcp -> [::]:5532"
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -185,7 +173,7 @@ class TestPostgreSQLServiceStatus:
         # The actual implementation prints "for:" not "in:"
         expected_calls = [
             call("🔍 Checking PostgreSQL status for: /test/workspace"),
-            call("✅ PostgreSQL container 'hive-main-postgres' is running"),
+            call("✅ PostgreSQL container 'hive-postgres' is running"),
             call("   Port mapping: 5432/tcp -> 0.0.0.0:5532\n5432/tcp -> [::]:5532")
         ]
         mock_print.assert_has_calls(expected_calls)
@@ -205,10 +193,7 @@ class TestPostgreSQLServiceStatus:
             "0.0.0.0:5432",  # port mapping
             "accepting connections"  # pg_isready result
         ]
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -239,10 +224,7 @@ class TestPostgreSQLLogsManagement:
         mock_docker_manager_class.return_value = mock_docker_manager
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success (no output for logs command)
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -251,7 +233,7 @@ class TestPostgreSQLLogsManagement:
         # Implementation now complete - check for actual print calls
         assert result is True
         # Check that the logs header with default tail (50) is shown
-        mock_print.assert_any_call("📋 PostgreSQL logs for 'hive-main-postgres' (last 50 lines):")
+        mock_print.assert_any_call("📋 PostgreSQL logs for 'hive-postgres' (last 50 lines):")
 
     @patch('builtins.print')
     @patch('cli.commands.postgres.DockerManager')
@@ -262,10 +244,7 @@ class TestPostgreSQLLogsManagement:
         mock_docker_manager_class.return_value = mock_docker_manager
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success (no output for logs command)
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -274,7 +253,7 @@ class TestPostgreSQLLogsManagement:
         # Implementation now complete - check for actual print calls with custom tail
         assert result is True
         # Check that the logs header with custom tail (100) is shown
-        mock_print.assert_any_call("📋 PostgreSQL logs for 'hive-main-postgres' (last 100 lines):")
+        mock_print.assert_any_call("📋 PostgreSQL logs for 'hive-postgres' (last 100 lines):")
 
     def test_postgres_logs_exception_handling(self):
         """Test PostgreSQL logs method handles exceptions."""
@@ -297,10 +276,7 @@ class TestPostgreSQLDuplicateMethods:
         mock_docker_manager_class.return_value = mock_docker_manager
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -324,10 +300,7 @@ class TestPostgreSQLDuplicateMethods:
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success (no output)
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -352,10 +325,7 @@ class TestPostgreSQLDuplicateMethods:
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -379,10 +349,7 @@ class TestPostgreSQLDuplicateMethods:
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = "5432/tcp -> 0.0.0.0:5532\n5432/tcp -> [::]:5532"
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -415,10 +382,7 @@ class TestPostgreSQLDuplicateMethods:
             "0.0.0.0:5432",  # port mapping for second call
             "accepting connections"  # pg_isready result for second call
         ]
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -441,10 +405,7 @@ class TestPostgreSQLDuplicateMethods:
         mock_docker_manager_class.return_value = mock_docker_manager
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success (no output)
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -553,31 +514,49 @@ class TestPostgreSQLCommandsCLIIntegration:
 class TestPostgreSQLCommandsEdgeCases:
     """Test edge cases and error scenarios."""
 
-    def test_postgres_commands_with_empty_workspace(self):
+    @patch('cli.commands.postgres.DockerManager')
+    def test_postgres_commands_with_empty_workspace(self, mock_docker_manager_class):
         """Test PostgreSQL commands with empty workspace path."""
+        # Mock DockerManager instance to simulate container not found
+        mock_docker_manager = Mock()
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
+        mock_docker_manager._container_exists.return_value = False
+        mock_docker_manager_class.return_value = mock_docker_manager
+
         postgres_cmd = PostgreSQLCommands()
-        
         result = postgres_cmd.postgres_start("")
-        
+
         # Empty workspace should return False - container not found
         assert result is False  # Correctly handles empty workspace
 
-    def test_postgres_commands_with_nonexistent_workspace(self):
+    @patch('cli.commands.postgres.DockerManager')
+    def test_postgres_commands_with_nonexistent_workspace(self, mock_docker_manager_class):
         """Test PostgreSQL commands with nonexistent workspace path."""
+        # Mock DockerManager instance to simulate container not found
+        mock_docker_manager = Mock()
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
+        mock_docker_manager._container_exists.return_value = False
+        mock_docker_manager_class.return_value = mock_docker_manager
+
         postgres_cmd = PostgreSQLCommands()
-        
         result = postgres_cmd.postgres_status("/nonexistent/workspace")
-        
+
         # Nonexistent workspace should return False - container not found
         assert result is False  # Correctly handles nonexistent workspace
 
-    def test_postgres_commands_with_unicode_workspace(self):
+    @patch('cli.commands.postgres.DockerManager')
+    def test_postgres_commands_with_unicode_workspace(self, mock_docker_manager_class):
         """Test PostgreSQL commands with Unicode workspace paths."""
+        # Mock DockerManager instance to simulate container not found
+        mock_docker_manager = Mock()
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
+        mock_docker_manager._container_exists.return_value = False
+        mock_docker_manager_class.return_value = mock_docker_manager
+
         postgres_cmd = PostgreSQLCommands()
-        
         result = postgres_cmd.postgres_health("/测试/workspace")
-        
-        # Unicode workspace should return False - container not found  
+
+        # Unicode workspace should return False - container not found
         assert result is False  # Correctly handles Unicode workspace paths
 
     def test_all_methods_return_consistent_types(self):
@@ -623,10 +602,7 @@ class TestPostgreSQLCommandsParameterValidation:
         mock_docker_manager_class.return_value = mock_docker_manager
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -647,10 +623,7 @@ class TestPostgreSQLCommandsParameterValidation:
         mock_docker_manager_class.return_value = mock_docker_manager
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success (no output for logs command)
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         
@@ -677,10 +650,7 @@ class TestPostgreSQLCommandsParameterValidation:
         mock_docker_manager._container_exists.return_value = True
         mock_docker_manager._container_running.return_value = True
         mock_docker_manager._run_command.return_value = None  # Success for all operations
-        mock_docker_manager.CONTAINERS = {
-            "workspace": {"postgres": "hive-main-postgres"},
-            "agent": {"postgres": "hive-agent-postgres"}
-        }
+        mock_docker_manager.POSTGRES_CONTAINER = "hive-postgres"
         
         postgres_cmd = PostgreSQLCommands()
         

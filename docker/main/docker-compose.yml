@@ -1,15 +1,18 @@
 # =============================================================================
 # Main Application Container - PostgreSQL + FastAPI with Persistent Storage
+# NOTE: Playground and Control Pane now ride on the Hive API surface. Use this
+# stack when you need local infrastructure (Postgres, containerized API), but
+# prefer `http://localhost:${HIVE_API_PORT:-8886}` as the primary access point.
 # =============================================================================
 
 services:
-  # Main PostgreSQL with persistent storage
-  main-postgres:
+  # PostgreSQL with persistent storage
+  hive-postgres:
     image: agnohq/pgvector:16
-    container_name: hive-main-postgres
+    container_name: hive-postgres
     restart: unless-stopped
     ports:
-      - "${HIVE_WORKSPACE_POSTGRES_PORT:-5532}:5432"
+      - "${HIVE_POSTGRES_PORT:-5532}:5432"
     env_file:
       - ../../.env
     environment:
@@ -30,7 +33,7 @@ services:
       -c shared_buffers=256MB
       -c effective_cache_size=1GB
     networks:
-      - main_network
+      - hive_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -44,7 +47,7 @@ services:
       context: ../../
       dockerfile: docker/main/Dockerfile
       target: production
-    container_name: hive-main-app
+    container_name: hive-api
     restart: unless-stopped
     ports:
       - "${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"
@@ -52,17 +55,17 @@ services:
       - ../../.env
     environment:
       # Override just the host part of database URL for Docker service discovery
-      - HIVE_DATABASE_HOST=main-postgres
+      - HIVE_DATABASE_HOST=hive-postgres
       - HIVE_DATABASE_PORT=5432
     volumes:
-      - main_app_logs:/app/logs
-      - main_app_data:/app/data
+      - hive_logs:/app/logs
+      - hive_data:/app/data
       - ../../data:/app/shared_data
     depends_on:
-      main-postgres:
+      hive-postgres:
         condition: service_healthy
     networks:
-      - main_network
+      - hive_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health"]
       interval: 30s
@@ -71,14 +74,14 @@ services:
       start_period: 60s
 
 networks:
-  main_network:
+  hive_network:
     driver: bridge
-    name: hive_main_network
+    name: hive_network
 
 volumes:
-  main_app_logs:
+  hive_logs:
     driver: local
-    name: hive_main_app_logs
-  main_app_data:
+    name: hive_logs
+  hive_data:
     driver: local
-    name: hive_main_app_data
+    name: hive_data

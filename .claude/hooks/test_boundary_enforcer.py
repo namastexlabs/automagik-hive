@@ -78,7 +78,6 @@ FORBIDDEN: Using testing agents for source code modifications
 For SOURCE CODE work, use:
 • hive-dev-fixer - Debug and fix source code
 • hive-dev-coder - Implement new features
-• hive-dev-planner - Plan implementations
 
 For TEST work, use:
 • hive-testing-fixer - Fix failing tests

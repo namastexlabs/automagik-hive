@@ -5,7 +5,7 @@ This directory contains the Docker configuration for the main Automagik Hive wor
 ## Environment Details
 - **API Port**: 8886
 - **Database Port**: 5532
-- **Container Names**: `hive-agents`, `hive-postgres`
+- **Container Names**: `hive-api`, `hive-postgres`
 - **Network**: `automagik-hive_default`
 
 ## Files

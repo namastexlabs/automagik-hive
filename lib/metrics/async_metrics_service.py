@@ -362,10 +362,11 @@ class AsyncMetricsService:
 
         DROP-IN REPLACEMENT: Now uses AgnoMetricsBridge for superior metrics collection.
         Provides comprehensive coverage of AGNO native metrics including:
-        - Token metrics: input_tokens, output_tokens, total_tokens, prompt_tokens, completion_tokens
-        - Advanced tokens: audio_tokens, cached_tokens, reasoning_tokens, cache_write_tokens
-        - Timing metrics: time, time_to_first_token
-        - Content metrics: prompt_tokens_details, completion_tokens_details
+        - Token metrics: input_tokens, output_tokens, total_tokens
+        - Advanced tokens: audio_total_tokens, audio_input_tokens, audio_output_tokens,
+          cache_read_tokens, cache_write_tokens, reasoning_tokens
+        - Timing metrics: duration, time_to_first_token
+        - Content metrics: additional_metrics (provider breakdowns, prompt/completion details)
         - Additional metrics: model-specific metrics
 
         Args:
@@ -423,10 +424,17 @@ class AsyncMetricsService:
 
         if self.processing_task:
             try:
-                await asyncio.wait_for(self.processing_task, timeout=5.0)
+                await asyncio.wait_for(self.processing_task, timeout=2.0)
             except TimeoutError:
                 logger.warning("Processing task did not shut down within timeout")
                 self.processing_task.cancel()
+                # Wait for cancellation to complete
+                try:
+                    await asyncio.wait_for(self.processing_task, timeout=1.0)
+                except (asyncio.TimeoutError, asyncio.CancelledError):
+                    pass
+            except asyncio.CancelledError:
+                logger.debug("Processing task was cancelled during shutdown")
 
         self._initialized = False
         logger.info("AsyncMetricsService closed")

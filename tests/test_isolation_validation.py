@@ -5,7 +5,7 @@ This test suite validates that the test isolation infrastructure works correctly
 to prevent project directory pollution during test runs. It tests both the
 isolated_workspace fixture and global enforcement mechanisms.
 
-Created by: hive-testing-maker
+Created by: hive-tests
 Purpose: Validate zero project pollution during test execution
 Coverage: Isolation fixtures, global enforcement, cleanup mechanisms
 """
@@ -30,7 +30,9 @@ class TestIsolatedWorkspaceFixture:
         assert isolated_workspace.exists()
         assert isolated_workspace.is_dir()
         assert "test_workspace" in str(isolated_workspace)
-        assert "tmp" in str(isolated_workspace).lower()
+        # Check for tmp or var (macOS uses /private/var/folders/)
+        path_lower = str(isolated_workspace).lower()
+        assert "tmp" in path_lower or "var" in path_lower
 
     def test_isolated_workspace_changes_working_directory(self, isolated_workspace):
         """Verify isolated_workspace fixture changes current working directory."""

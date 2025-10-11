@@ -6,8 +6,10 @@ from typing import Any
 
 from agno.agent import Agent
 
+from lib.config.settings import get_settings
 from lib.logging import logger
 from lib.mcp.catalog import MCPCatalog
+from lib.utils.ai_root import AIRootError, resolve_ai_root
 from lib.utils.version_factory import create_agent
 
 
@@ -15,18 +17,49 @@ def _discover_agents() -> list[str]:
     """Dynamically discover available agents from filesystem"""
     import yaml
 
-    agents_dir = Path("ai/agents")
+    # Use dynamic AI root resolution
+    try:
+        ai_root = resolve_ai_root(settings=get_settings())
+    except AIRootError as error:
+        logger.warning(
+            "Agent discovery skipped",
+            reason="ai_root_unavailable",
+            error=str(error),
+        )
+        return []
+    agents_dir = ai_root / "agents"
+
+    logger.debug(
+        "Agent discovery context",
+        ai_root=ai_root,
+        agents_dir=agents_dir,
+        agents_dir_exists=agents_dir.exists(),
+    )
+
     if not agents_dir.exists():
+        logger.warning("Agent discovery directory missing", agents_dir=agents_dir)
         return []
 
     agent_ids = []
     for agent_path in agents_dir.iterdir():
         config_file = agent_path / "config.yaml"
+        logger.debug(
+            "Agent discovery candidate",
+            agent_path=agent_path,
+            is_directory=agent_path.is_dir(),
+            config_exists=config_file.exists(),
+        )
+
         if agent_path.is_dir() and config_file.exists():
             try:
                 with open(config_file) as f:
                     config = yaml.safe_load(f)
                     agent_id = config.get("agent", {}).get("agent_id")
+                    logger.debug(
+                        "Agent config loaded",
+                        agent_path=agent_path.name,
+                        agent_id=agent_id,
+                    )
                     if agent_id:
                         agent_ids.append(agent_id)
             except Exception as e:
@@ -37,6 +70,7 @@ def _discover_agents() -> list[str]:
                 )
                 continue
 
+    logger.debug("Agent discovery complete", agent_ids=agent_ids)
     return sorted(agent_ids)
 
 
@@ -258,3 +292,8 @@ def get_mcp_server_info(server_name: str) -> dict[str, Any]:
 def reload_mcp_catalog() -> None:
     """Reload the MCP catalog from configuration."""
     AgentRegistry.reload_mcp_catalog()
+
+
+def list_available_agents() -> list[str]:
+    """Get list of available agent IDs."""
+    return AgentRegistry.list_available_agents()

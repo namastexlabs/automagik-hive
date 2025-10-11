@@ -1,16 +1,17 @@
 [project]
 name = "automagik-hive"
-version = "0.1.1b1"
+version = "0.1.1b2"
 description = "Automagik Hive"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "ag-ui-protocol>=0.1.8",
-    "agno>=1.7.12",
+    "agno==2.0.8",
     "alembic>=1.16.4",
     "anthropic>=0.64.0",
     "docker>=7.1.0",
     "fastapi>=0.116.1",
+    "greenlet>=3.2.4",
     "httpx>=0.28.1",
     "langwatch>=0.2.11",
     "loguru>=0.7.3",
@@ -19,19 +20,22 @@ dependencies = [
     "openinference-instrumentation-agno>=0.1.13",
     "pandas>=2.3.2",
     "pgvector>=0.4.1",
-    "psycopg[c,pool]>=3.2.9",
     "psycopg-pool>=3.2.6",
     "psycopg2-binary>=2.9.10",
+    "psycopg[binary,pool]>=3.2.9",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
+    "pypdf>=6.1.1",
     "python-dotenv>=1.1.1",
     "pyyaml>=6.0.2",
     "rich>=14.1.0",
     "sqlalchemy>=2.0.43",
     "starlette>=0.47.2",
     "tqdm>=4.67.1",
-    "uvicorn>=0.35.0",
+    "uvicorn[standard]>=0.35.0",
     "watchdog>=6.0.0",
+    "websockets>=15.0.1",
+    "wsproto>=1.2.0",
 ]
 
 [project.scripts]
@@ -57,6 +61,10 @@ dev = [
     "pytest-mock>=3.14.1",
     "psutil>=7.0.0",
     "twine>=6.1.0",
+    "pytest-cov>=6.2.1",
+    "pandas-stubs>=2.3.2.250827",
+    "types-pyyaml>=6.0.12.20250915",
+    "types-tqdm>=4.67.0.20250809",
 ]
 
 [tool.ruff]

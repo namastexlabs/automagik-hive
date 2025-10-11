@@ -67,31 +67,55 @@ class ApiSettings(BaseSettings):
     def set_cors_origin_list(
         cls, _cors_origin_list: Any, info: FieldValidationInfo
     ) -> list[str]:
-        """Simplified CORS: dev='*', prod=HIVE_CORS_ORIGINS"""
-        environment = info.data.get(
+        """Derive CORS origins from environment with safe defaults per mode."""
+
+        def _parse_origins(raw_origins: Any) -> list[str]:
+            """Normalize origin input into a trimmed list, ignoring empties."""
+
+            if raw_origins is None:
+                return []
+
+            if isinstance(raw_origins, str):
+                candidates = raw_origins.split(",")
+            elif isinstance(raw_origins, (list, tuple, set)):
+                candidates = list(raw_origins)
+            else:
+                candidates = [raw_origins]
+
+            return [
+                str(origin).strip()
+                for origin in candidates
+                if str(origin).strip()
+            ]
+
+        environment_raw = info.data.get(
             "environment", os.getenv("HIVE_ENVIRONMENT", "development")
         )
+        environment = str(environment_raw).strip().lower()
 
+        # Development stays wide open for local workflows regardless of env override
         if environment == "development":
-            # Development: Allow all origins for convenience
             return ["*"]
-        # Production: Use environment variable
-        origins_str = os.getenv("HIVE_CORS_ORIGINS", "")
-        if not origins_str:
-            raise ValueError(
-                "HIVE_CORS_ORIGINS must be set in production environment. "
-                "Add comma-separated domain list to environment variables."
-            )
 
-        # Parse and clean origins
-        origins = [
-            origin.strip() for origin in origins_str.split(",") if origin.strip()
-        ]
+        # Prefer explicit validator input when provided (e.g. direct initialization)
+        explicit_origins = _parse_origins(_cors_origin_list)
+        if explicit_origins:
+            return explicit_origins
 
-        if not origins:
+        # Fallback to environment variable for staging/production
+        origins_source = os.getenv("HIVE_CORS_ORIGINS", "")
+        env_origins = _parse_origins(origins_source)
+
+        if env_origins:
+            return env_origins
+
+        if origins_source.strip():
             raise ValueError("HIVE_CORS_ORIGINS contains no valid origins")
 
-        return origins
+        raise ValueError(
+            "HIVE_CORS_ORIGINS must be set in production environment. "
+            "Add comma-separated domain list to environment variables."
+        )
 
 
 # Create ApiSettings object

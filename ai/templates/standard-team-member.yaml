@@ -13,11 +13,14 @@ memory:
   add_memory_references: true
   add_session_summary_references: true
 
-# STANDARD STORAGE CONFIGURATION  
-storage:
+# STANDARD DATABASE CONFIGURATION
+db:
   type: postgres
   auto_upgrade_schema: true
   # table_name: MUST BE UNIQUE - agents_[agent_id]
+
+# STANDARD DEPENDENCIES CONFIGURATION
+dependencies: {}
 
 # STANDARD DISPLAY CONFIGURATION
 markdown: false

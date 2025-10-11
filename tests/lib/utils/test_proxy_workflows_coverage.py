@@ -14,14 +14,24 @@ from lib.utils.proxy_workflows import AgnoWorkflowProxy
 
 class MockWorkflow:
     """Mock Agno Workflow class for testing."""
-    
-    def __init__(self, workflow_id: str = None, name: str = None, description: str = None, 
-                 storage=None, steps=None, session_id: str = None, 
-                 debug_mode: bool = False, user_id: str = None, **kwargs):
-        self.workflow_id = workflow_id
+
+    def __init__(
+        self,
+        id: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        db=None,
+        steps=None,
+        session_id: str | None = None,
+        debug_mode: bool = False,
+        user_id: str | None = None,
+        **kwargs,
+    ):
+        self.id = id
+        self.workflow_id = id
         self.name = name
         self.description = description
-        self.storage = storage
+        self.db = db
         self.steps = steps
         self.session_id = session_id
         self.debug_mode = debug_mode
@@ -30,8 +40,8 @@ class MockWorkflow:
         self.kwargs = kwargs
 
 
-class MockStorage:
-    """Mock storage for testing."""
+class MockDb:
+    """Mock db for testing."""
     
     def __init__(self, **kwargs):
         self.config = kwargs
@@ -44,16 +54,16 @@ def mock_workflow():
 
 
 @pytest.fixture
-def mock_storage():
-    """Fixture providing mock storage."""
-    return MockStorage()
+def mock_db():
+    """Fixture providing mock db."""
+    return MockDb()
 
 
 @pytest.fixture
 def proxy():
     """Fixture providing AgnoWorkflowProxy with mocked dependencies."""
     with patch('lib.utils.proxy_workflows.Workflow', MockWorkflow):
-        return AgnoWorkflowProxy()
+        yield AgnoWorkflowProxy()
 
 
 class TestAgnoWorkflowProxyInit:
@@ -82,7 +92,7 @@ class TestAgnoWorkflowProxyInit:
             
             # Should discover parameters from MockWorkflow.__init__
             expected_params = {
-                "workflow_id", "name", "description", "storage", "steps",
+                "id", "name", "description", "db", "steps",
                 "session_id", "debug_mode", "user_id", "kwargs"
             }
             
@@ -94,7 +104,7 @@ class TestAgnoWorkflowProxyInit:
             proxy = AgnoWorkflowProxy()
             
             expected_custom_params = {
-                "storage", "workflow", "steps", "suggested_actions",
+                "db", "workflow", "steps", "suggested_actions",
                 "escalation_triggers", "streaming_config", "events_config",
                 "context_config", "display_config"
             }
@@ -131,9 +141,9 @@ class TestDiscoverWorkflowParameters:
             
             # Should exclude 'self' and include all other parameters
             assert "self" not in params
-            assert "workflow_id" in params
+            assert "id" in params
             assert "name" in params
-            assert "storage" in params
+            assert "db" in params
             assert len(params) > 0
 
     def test_discover_workflow_parameters_logs_discovery(self):
@@ -171,7 +181,7 @@ class TestGetFallbackParameters:
         
         # Should include core workflow parameters
         expected_params = {
-            "workflow_id", "name", "description", "storage", "steps",
+            "id", "name", "description", "db", "steps",
             "session_id", "session_name", "workflow_session_state",
             "user_id", "debug_mode", "stream", "stream_intermediate_steps",
             "store_events", "events_to_skip"
@@ -204,7 +214,7 @@ class TestGetCustomParameterHandlers:
         handlers = proxy._get_custom_parameter_handlers()
         
         required_handlers = [
-            "storage", "workflow", "steps", "suggested_actions",
+            "db", "workflow", "steps", "suggested_actions",
             "escalation_triggers", "streaming_config", "events_config",
             "context_config", "display_config"
         ]
@@ -218,7 +228,7 @@ class TestGetCustomParameterHandlers:
         handlers = proxy._get_custom_parameter_handlers()
         
         # Test a few key handlers
-        assert handlers["storage"].__self__ is proxy
+        assert handlers["db"].__self__ is proxy
         assert handlers["workflow"].__self__ is proxy
         assert handlers["steps"].__self__ is proxy
 
@@ -353,18 +363,18 @@ class TestProcessConfig:
             "workflow": {
                 "name": "Custom Workflow"
             },
-            "storage": {
+            "db": {
                 "type": "postgres"
             }
         }
         
         with patch.object(proxy, '_handle_workflow_metadata', return_value={"name": "Handled"}):
-            with patch('lib.utils.proxy_workflows.create_dynamic_storage', return_value={"storage": "handled"}):
+            with patch('lib.utils.proxy_workflows.create_dynamic_storage', return_value={"db": "handled"}):
                 processed = proxy._process_config(config, "test-id", "postgres://localhost/test")
                 
                 # Custom handlers should be called
                 assert "name" in processed
-                assert "storage" in processed
+                assert "db" in processed
 
     def test_process_config_logs_unknown_parameters(self, proxy):
         """Test that unknown parameters are logged."""
@@ -425,20 +435,20 @@ class TestProcessConfig:
 class TestCustomParameterHandlers:
     """Test individual custom parameter handlers."""
     
-    def test_handle_storage_config(self, proxy):
-        """Test storage configuration handler."""
+    def test_handle_db_config(self, proxy):
+        """Test db configuration handler."""
         with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_create:
-            mock_storage = Mock()
-            mock_create.return_value = mock_storage
+            mock_db = Mock()
+            mock_create.return_value = mock_db
             
-            storage_config = {"type": "postgres", "url": "postgres://test"}
-            result = proxy._handle_storage_config(
-                storage_config, {}, "test-id", "db-url"
+            db_config = {"type": "postgres", "url": "postgres://test"}
+            result = proxy._handle_db_config(
+                db_config, {}, "test-id", "db-url"
             )
             
-            assert result is mock_storage
+            assert result is mock_db
             mock_create.assert_called_once_with(
-                storage_config=storage_config,
+                storage_config=db_config,
                 component_id="test-id",
                 component_mode="workflow",
                 db_url="db-url"
@@ -626,9 +636,9 @@ class TestValidateConfig:
     def test_validate_config_categorizes_parameters(self, proxy):
         """Test config validation properly categorizes parameters."""
         config = {
-            "workflow_id": "supported_agno_param",
+            "id": "supported_agno_param",
             "name": "another_supported_param",
-            "storage": "custom_param",
+            "db": "custom_param",
             "workflow": "another_custom_param",
             "completely_unknown": "unknown_param"
         }
@@ -640,7 +650,7 @@ class TestValidateConfig:
         assert "unknown_params" in validation
         
         # Check categorization
-        assert "workflow_id" in validation["supported_agno_params"]
+        assert "id" in validation["supported_agno_params"]
         assert "name" in validation["supported_agno_params"]
         assert "workflow" in validation["custom_params"]
         assert "completely_unknown" in validation["unknown_params"]
@@ -648,7 +658,7 @@ class TestValidateConfig:
     def test_validate_config_calculates_coverage(self, proxy):
         """Test config validation calculates coverage percentage."""
         config = {
-            "workflow_id": "value1",
+            "id": "value1",
             "name": "value2", 
             "description": "value3"
         }
@@ -669,10 +679,10 @@ class TestValidateConfig:
     def test_validate_config_mixed_parameter_types(self, proxy):
         """Test validation with all parameter types mixed."""
         config = {
-            "workflow_id": "supported1",
+            "id": "supported1",
             "name": "supported2",
             "description": "supported3",
-            "storage": "custom1",
+            "db": "custom1",
             "workflow": "custom2",
             "steps": "custom3",
             "unknown_param_1": "unknown1",
@@ -681,13 +691,13 @@ class TestValidateConfig:
         
         validation = proxy.validate_config(config)
         
-        # Note: storage and steps are both supported Agno params AND have custom handlers
+        # Note: db and steps are both supported Agno params AND have custom handlers
         # They should be counted in supported_agno_params, not custom_params
         supported_count = len(validation["supported_agno_params"])
         custom_count = len(validation["custom_params"])
         unknown_count = len(validation["unknown_params"])
         
-        assert supported_count >= 3  # At least workflow_id, name, description
+        assert supported_count >= 3  # At least id, name, description
         assert custom_count >= 1    # At least workflow
         assert unknown_count == 2   # The two unknown params
         
@@ -764,7 +774,7 @@ class TestEdgeCasesAndErrorHandling:
         config = {
             "name": "Test Workflow",
             "unsupported_param": "should_be_filtered",
-            "workflow_id": "test-id"  # This would be overridden by component_id
+            "id": "test-id"  # This would be overridden by component_id
         }
         
         # Mock to capture the actual parameters passed
@@ -779,7 +789,7 @@ class TestEdgeCasesAndErrorHandling:
             
             # Should have filtered parameters properly
             assert "unsupported_param" not in call_kwargs
-            assert call_kwargs.get("workflow_id") == "test"  # Should be component_id, not from config
+            assert call_kwargs.get("id") == "test"  # Should be component_id, not from config
 
     def test_process_config_with_none_handler_result(self, proxy):
         """Test process_config when handler returns None."""
@@ -803,8 +813,8 @@ class TestIntegrationScenarios:
     async def test_full_workflow_creation_pipeline(self):
         """Test complete workflow creation from config to instance."""
         with patch('lib.utils.proxy_workflows.Workflow', MockWorkflow):
-            with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_storage:
-                mock_storage.return_value = {"type": "postgres", "configured": True}
+            with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_db:
+                mock_db.return_value = {"type": "postgres", "configured": True}
                 
                 proxy = AgnoWorkflowProxy()
                 
@@ -814,7 +824,7 @@ class TestIntegrationScenarios:
                         "description": "Complete integration test",
                         "version": 3
                     },
-                    "storage": {
+                    "db": {
                         "type": "postgres",
                         "url": "postgres://test:test@localhost/testdb"
                     },
@@ -889,9 +899,9 @@ class TestIntegrationScenarios:
         
         # Add some known parameters
         large_config.update({
-            "workflow_id": "test",
+            "id": "test",
             "name": "test",
-            "storage": {"type": "test"},
+            "db": {"type": "test"},
             "workflow": {"name": "test"}
         })
         
@@ -900,7 +910,7 @@ class TestIntegrationScenarios:
         # Should handle large config efficiently
         assert len(validation["unknown_params"]) == 100
         assert len(validation["supported_agno_params"]) >= 2
-        # Note: workflow is a custom param, but storage might be both supported and custom
+        # Note: workflow is a custom param, but db might be both supported and custom
         assert len(validation["custom_params"]) >= 1
         assert validation["coverage_percentage"] > 0
 

@@ -1,5 +1,5 @@
 """
-Comprehensive test suite for ConfigAwareFilter - Critical Coverage Batch 3
+Comprehensive test suite for BusinessUnitFilter - Critical Coverage Batch 3
 
 Tests business unit detection, keyword matching, configuration filtering,
 document filtering, and performance settings for the config-aware filter system.
@@ -11,11 +11,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from lib.knowledge.config_aware_filter import ConfigAwareFilter, test_config_filter
+from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter, test_config_filter
 
 
-class TestConfigAwareFilter:
-    """Comprehensive test suite for ConfigAwareFilter class."""
+class TestBusinessUnitFilter:
+    """Comprehensive test suite for BusinessUnitFilter class."""
 
     @pytest.fixture
     def mock_config(self):
@@ -56,17 +56,17 @@ class TestConfigAwareFilter:
 
     @pytest.fixture
     def filter_instance(self, mock_config):
-        """Provide ConfigAwareFilter instance with mock configuration."""
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        """Provide BusinessUnitFilter instance with mock configuration."""
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
-            return ConfigAwareFilter()
+            return BusinessUnitFilter()
 
     def test_init_loads_configuration(self, mock_config):
         """Test that initialization loads configuration properly."""
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = mock_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             assert filter_instance.config == mock_config
             assert filter_instance.business_units == mock_config["business_units"]
@@ -103,10 +103,10 @@ class TestConfigAwareFilter:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Should handle empty/missing keywords without crashing
             assert "empty" in filter_instance.business_unit_keywords
@@ -181,10 +181,10 @@ class TestConfigAwareFilter:
         """Test search params with default values when config missing."""
         config = {"business_units": {}, "search_config": {}, "performance": {}}
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             params = filter_instance.get_search_params()
             
             # Should return default values
@@ -205,10 +205,10 @@ class TestConfigAwareFilter:
         """Test performance settings with default values when config missing."""
         config = {"business_units": {}, "search_config": {}, "performance": {}}
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             settings = filter_instance.get_performance_settings()
             
             # Should return default values
@@ -333,9 +333,9 @@ class TestDocumentFilteringEdgeCases:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config
-            return ConfigAwareFilter()
+            return BusinessUnitFilter()
 
     def test_filter_documents_empty_list(self, simple_filter):
         """Test filtering empty document list."""
@@ -352,7 +352,7 @@ class TestDocumentFilteringEdgeCases:
             # Expected behavior for None input
             pass
 
-    @pytest.mark.skip(reason="Blocked by task-7c683705-5031-4d2c-97b2-fa229f22c6dc - ConfigAwareFilter needs type checking for non-string content")
+    @pytest.mark.skip(reason="Blocked by task-7c683705-5031-4d2c-97b2-fa229f22c6dc - BusinessUnitFilter needs type checking for non-string content")
     def test_filter_documents_mixed_content_types(self, simple_filter):
         """Test filtering documents with mixed content types.
         
@@ -402,12 +402,12 @@ class TestConfigurationErrorHandling:
 
     def test_init_with_config_loading_exception(self):
         """Test initialization handles configuration loading exceptions."""
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.side_effect = Exception("Config loading failed")
             
             # Should handle exception and initialize with empty/default config
             try:
-                filter_instance = ConfigAwareFilter()
+                filter_instance = BusinessUnitFilter()
                 # Verify it doesn't crash and has some default structure
                 assert hasattr(filter_instance, 'business_units')
                 assert hasattr(filter_instance, 'search_config')
@@ -425,10 +425,10 @@ class TestConfigurationErrorHandling:
             # Missing search_config and performance sections
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = partial_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Should handle missing sections gracefully
             assert filter_instance.business_units == partial_config["business_units"]
@@ -443,12 +443,12 @@ class TestConfigurationErrorHandling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = malformed_config
             
             # Should handle malformed config gracefully
             try:
-                filter_instance = ConfigAwareFilter()
+                filter_instance = BusinessUnitFilter()
                 # If it succeeds, check that it handled the error
                 assert hasattr(filter_instance, 'business_unit_keywords')
             except (TypeError, AttributeError):
@@ -475,10 +475,10 @@ class TestPerformanceAndScaling:
                 "keywords": [f"keyword_{i}_{j}" for j in range(50)]
             }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = large_config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Test detection performance
             text = "This contains keyword_50_25 for testing"
@@ -499,10 +499,10 @@ class TestPerformanceAndScaling:
             "performance": {}
         }
         
-        with patch('lib.knowledge.config_aware_filter.load_global_knowledge_config') as mock_load:
+        with patch('lib.knowledge.filters.business_unit_filter.load_global_knowledge_config') as mock_load:
             mock_load.return_value = config
             
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Create very long text with keyword at the end
             long_text = "haystack " * 10000 + " needle in the haystack"
@@ -514,7 +514,7 @@ class TestPerformanceAndScaling:
 class TestMainFunction:
     """Test the main test function."""
 
-    @patch('lib.knowledge.config_aware_filter.ConfigAwareFilter')
+    @patch('lib.knowledge.filters.business_unit_filter.BusinessUnitFilter')
     def test_config_filter_main_function(self, mock_filter_class):
         """Test the test_config_filter main function."""
         # Mock the filter instance and its methods
@@ -555,7 +555,7 @@ class TestIntegrationWithRealConfig:
         """Test with actual configuration loading (if available)."""
         try:
             # Try to create filter with real config
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Basic smoke test - should not crash
             assert hasattr(filter_instance, 'business_units')
@@ -578,7 +578,7 @@ class TestIntegrationWithRealConfig:
     def test_detect_with_real_config(self):
         """Test business unit detection with real configuration."""
         try:
-            filter_instance = ConfigAwareFilter()
+            filter_instance = BusinessUnitFilter()
             
             # Test with some generic text
             result = filter_instance.detect_business_unit_from_text("payment transfer")

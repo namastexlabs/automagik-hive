@@ -19,7 +19,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from lib.knowledge.csv_hot_reload import CSVHotReloadManager, main
+from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
 
 class TestCSVHotReloadManagerInitialization:
@@ -336,7 +336,7 @@ class TestCSVHotReloadManagerFileWatching:
 
     def test_event_handler_methods_directly(self):
         """Test the event handler methods directly to increase coverage."""
-        from lib.knowledge.csv_hot_reload import CSVHotReloadManager
+        from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
         # Create manager and mock the reload method
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
@@ -579,101 +579,9 @@ class TestCSVHotReloadManagerIntegration:
                 assert not manager.is_running
 
 
-class TestCSVHotReloadCLIInterface:
-    """Test command-line interface functionality."""
-
-    def setup_method(self):
-        """Set up test environment."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.csv_file = Path(self.temp_dir) / "test_knowledge.csv"
-        self.csv_file.write_text("test,content\n")
-
-    def teardown_method(self):
-        """Clean up test environment."""
-        import shutil
-
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    @patch("lib.knowledge.csv_hot_reload.CSVHotReloadManager")
-    @patch("argparse.ArgumentParser.parse_args")
-    def test_main_status_command(self, mock_parse_args, mock_manager_class):
-        """Test main function with status command."""
-        # Mock arguments
-        args = Mock()
-        args.csv = str(self.csv_file)
-        args.status = True
-        args.force_reload = False
-        mock_parse_args.return_value = args
-
-        # Mock manager
-        mock_manager = Mock()
-        mock_manager.get_status.return_value = {"status": "stopped"}
-        mock_manager_class.return_value = mock_manager
-
-        main()
-
-        mock_manager_class.assert_called_once_with(str(self.csv_file))
-        mock_manager.get_status.assert_called_once()
-
-    @patch("lib.knowledge.csv_hot_reload.CSVHotReloadManager")
-    @patch("argparse.ArgumentParser.parse_args")
-    def test_main_force_reload_command(self, mock_parse_args, mock_manager_class):
-        """Test main function with force reload command."""
-        # Mock arguments
-        args = Mock()
-        args.csv = str(self.csv_file)
-        args.status = False
-        args.force_reload = True
-        mock_parse_args.return_value = args
-
-        # Mock manager
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
-
-        main()
-
-        mock_manager_class.assert_called_once_with(str(self.csv_file))
-        mock_manager.force_reload.assert_called_once()
-
-    @patch("lib.knowledge.csv_hot_reload.CSVHotReloadManager")
-    @patch("argparse.ArgumentParser.parse_args")
-    def test_main_start_watching_command(self, mock_parse_args, mock_manager_class):
-        """Test main function with start watching (default) command."""
-        # Mock arguments
-        args = Mock()
-        args.csv = str(self.csv_file)
-        args.status = False
-        args.force_reload = False
-        mock_parse_args.return_value = args
-
-        # Mock manager
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
-
-        main()
-
-        mock_manager_class.assert_called_once_with(str(self.csv_file))
-        mock_manager.start_watching.assert_called_once()
-
-    @patch("lib.knowledge.csv_hot_reload.CSVHotReloadManager")
-    @patch("argparse.ArgumentParser.parse_args")
-    def test_main_default_csv_path(self, mock_parse_args, mock_manager_class):
-        """Test main function uses default CSV path when not specified."""
-        # Mock arguments with default CSV path
-        args = Mock()
-        args.csv = "knowledge/knowledge_rag.csv"  # Default value
-        args.status = True
-        args.force_reload = False
-        mock_parse_args.return_value = args
-
-        # Mock manager
-        mock_manager = Mock()
-        mock_manager.get_status.return_value = {"status": "stopped"}
-        mock_manager_class.return_value = mock_manager
-
-        main()
-
-        mock_manager_class.assert_called_once_with("knowledge/knowledge_rag.csv")
+# CLI Interface tests removed - main() function was deleted as dead code
+# The main() function was a standalone CLI that wasn't used in production
+# and has been removed from the csv_hot_reload module
 
 
 class TestCSVHotReloadErrorHandling:

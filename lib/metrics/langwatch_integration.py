@@ -102,7 +102,7 @@ class LangWatchManager:
             self.instrumentor.instrument()
 
             self._initialized = True
-            logger.info(
+            logger.debug(
                 "🚀 LangWatch AgnoInstrumentor initialized and instrumented successfully"
             )
             return True
@@ -444,7 +444,7 @@ async def _do_setup(config: dict[str, Any]) -> bool:
 
         langwatch.setup(**config)
         _setup_complete.set()
-        logger.info("🚀 LangWatch global async setup completed successfully")
+        logger.debug("🚀 LangWatch global async setup completed successfully")
         return True
     except ImportError as e:
         if "langwatch" in str(e):

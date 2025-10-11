@@ -18,7 +18,7 @@ from pathlib import Path
 import yaml
 
 from lib.auth.credential_service import CredentialService
-from lib.logging import logger
+from lib.logging import initialize_logging, logger
 
 
 class DockerComposeService:
@@ -30,6 +30,7 @@ class DockerComposeService:
         Args:
             workspace_path: Path to workspace directory
         """
+        initialize_logging(surface="docker.compose_service")
         self.workspace_path = workspace_path or Path.cwd()
         self.credential_service = CredentialService()
 
@@ -159,7 +160,7 @@ class DockerComposeService:
                 },
                 "target": "production",
             },
-            "container_name": "hive-agents",
+            "container_name": "hive-api",
             "restart": "unless-stopped",
             "ports": ["${HIVE_API_PORT}:${HIVE_API_PORT}"],
             "environment": [

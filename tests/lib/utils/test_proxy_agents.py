@@ -152,7 +152,7 @@ class TestAgnoAgentProxyInitialization:
         expected_handlers = {
             "knowledge_filter",
             "model",
-            "storage",
+            "db",
             "memory",
             "agent",
             "suggested_actions",
@@ -330,7 +330,7 @@ class TestConfigurationProcessing:
                 "name": MagicMock(name="name"),
                 "instructions": MagicMock(name="instructions"),
                 "knowledge": MagicMock(name="knowledge"),
-                "storage": MagicMock(name="storage"),
+                "db": MagicMock(name="db"),
                 "memory": MagicMock(name="memory"),
             }
             mock_sig.return_value.parameters.items.return_value = mock_params.items()
@@ -355,7 +355,7 @@ class TestConfigurationProcessing:
         config = {
             "model": {"id": "claude-sonnet-4-20250514", "temperature": 0.7},
             "agent": {"name": "Test Agent", "version": 1},
-            "storage": {"type": "sqlite"},
+            "db": {"type": "sqlite"},
         }
 
         # Test that _process_config handles all config sections
@@ -376,8 +376,9 @@ class TestConfigurationProcessing:
         assert "name" in result
         assert result["name"] == "Test Agent"
         
-        # The storage handler should return a storage object
-        assert "storage" in result
+        # Db handler now injects db + dependencies
+        assert "db" in result
+        assert "dependencies" in result
 
     def test_validate_config(self, proxy):
         """Test configuration validation."""
@@ -468,37 +469,57 @@ class TestCustomParameterHandlers:
         assert result == mock_model_instance
 
     @patch("lib.utils.proxy_agents.create_dynamic_storage")
-    def test_handle_storage_config(self, mock_create_storage, proxy):
-        """Test storage configuration handler."""
-        mock_create_storage.return_value = "mock_storage"
+    def test_handle_db_config(self, mock_create_db, proxy):
+        """Test db configuration handler."""
+        mock_db = MagicMock(name="db")
+        mock_create_db.return_value = {
+            "db": mock_db,
+            "dependencies": {"db": mock_db},
+        }
 
-        storage_config = {"type": "postgres", "url": "test://url"}
+        db_config = {"type": "postgres", "url": "test://url"}
 
-        result = proxy._handle_storage_config(
-            storage_config, {}, "test-agent", "test://db"
+        result = proxy._handle_db_config(
+            db_config, {}, "test-agent", "test://db"
         )
 
-        mock_create_storage.assert_called_once_with(
-            storage_config=storage_config,
+        mock_create_db.assert_called_once_with(
+            storage_config=db_config,
             component_id="test-agent",
             component_mode="agent",
             db_url="test://db",
         )
-        assert result == "mock_storage"
+        assert result == {"db": mock_db, "dependencies": {"db": mock_db}}
 
     @patch("lib.memory.memory_factory.create_agent_memory")
     def test_handle_memory_config_enabled(self, mock_create_memory, proxy):
         """Test memory configuration handler when enabled."""
-        mock_create_memory.return_value = "mock_memory"
+        mock_memory_manager = MagicMock(name="memory_manager")
+        mock_create_memory.return_value = mock_memory_manager
 
-        memory_config = {"enable_user_memories": True}
+        memory_config = {
+            "enable_user_memories": True,
+            "add_history_to_messages": True,
+            "add_memory_references": True,
+            "add_session_summary_references": True,
+        }
 
         result = proxy._handle_memory_config(
             memory_config, {}, "test-agent", "test://db"
         )
 
-        mock_create_memory.assert_called_once_with("test-agent", "test://db")
-        assert result == "mock_memory"
+        mock_create_memory.assert_called_once_with(
+            "test-agent",
+            "test://db",
+            db=None,
+        )
+        assert result["memory_manager"] is mock_memory_manager
+        assert result["add_history_to_context"] is True
+        assert result["add_memories_to_context"] is True
+        assert result["add_session_summary_to_context"] is True
+        assert "add_history_to_messages" not in result
+        assert "add_memory_references" not in result
+        assert "add_session_summary_references" not in result
 
     def test_handle_memory_config_disabled(self, proxy):
         """Test memory configuration handler when disabled."""
@@ -508,13 +529,13 @@ class TestCustomParameterHandlers:
             memory_config, {}, "test-agent", "test://db"
         )
 
-        assert result is None
+        assert result == {}
 
     def test_handle_memory_config_none(self, proxy):
         """Test memory configuration handler with None config."""
         result = proxy._handle_memory_config(None, {}, "test-agent", "test://db")
 
-        assert result is None
+        assert result == {}
 
     def test_handle_agent_metadata(self, proxy):
         """Test agent metadata handler."""
@@ -625,7 +646,10 @@ class TestCustomParameterHandlers:
 
         assert result is None
 
-    @patch("lib.knowledge.knowledge_factory.get_knowledge_base", return_value=None)
+    @patch(
+        "lib.knowledge.knowledge_factory.get_knowledge_base",
+        return_value=None,
+    )
     @patch("lib.utils.version_factory.load_global_knowledge_config")
     @patch("lib.utils.proxy_agents.logger")
     def test_handle_knowledge_filter_warns_agent_csv_path(
@@ -1051,7 +1075,7 @@ class TestEdgeCasesAndErrorHandling:
         assert result is None
 
     @patch(
-        "lib.knowledge.knowledge_factory.get_knowledge_base",
+                "lib.knowledge.knowledge_factory.get_knowledge_base",
         side_effect=Exception("KB creation failed"),
     )
     @patch("lib.utils.version_factory.load_global_knowledge_config")
@@ -1148,13 +1172,17 @@ class TestComprehensiveIntegration:
     @patch("lib.utils.proxy_agents.create_dynamic_storage")
     @patch("lib.memory.memory_factory.create_agent_memory")
     async def test_comprehensive_agent_creation(
-        self, mock_memory, mock_storage, mock_model, mock_agent_class, proxy
+        self, mock_memory, mock_db, mock_model, mock_agent_class, proxy
     ):
         """Test comprehensive agent creation with all features."""
         # Setup mocks
         mock_model.return_value = "mock_model"
-        mock_storage.return_value = "mock_storage"
-        mock_memory.return_value = "mock_memory"
+        mock_db_instance = MagicMock(name="db_instance")
+        mock_db.return_value = {
+            "db": mock_db_instance,
+            "dependencies": {"db": mock_db_instance},
+        }
+        mock_memory.return_value = MagicMock(name="memory_manager")
 
         mock_agent = MagicMock()
         mock_agent.metadata = {}
@@ -1174,8 +1202,8 @@ class TestComprehensiveIntegration:
                 "max_tokens": 4000,
                 "custom_model_param": "value",
             },
-            "storage": {
-                "type": "postgres",  # Use correct storage type name
+            "db": {
+                "type": "postgres",  # Use correct db type name
                 "connection_string": "test://connection",
             },
             "memory": {
@@ -1204,10 +1232,16 @@ class TestComprehensiveIntegration:
             db_url="sqlite:///:memory:",  # Use valid SQLAlchemy URL for in-memory SQLite
         )
 
-        # Verify storage and memory handlers were called
+        # Verify db and memory handlers were called
         # Note: resolve_model is NOT called when model_id is present (uses lazy instantiation)
-        mock_storage.assert_called_once()
+        mock_db.assert_called_once()
         mock_memory.assert_called_once()
+        _, memory_kwargs = mock_memory.call_args
+        assert memory_kwargs["db"] is mock_db_instance
+
+        agent_kwargs = mock_agent_class.call_args.kwargs
+        assert agent_kwargs["db"] is mock_db_instance
+        assert agent_kwargs["dependencies"]["db"] is mock_db_instance
 
         # Verify agent creation
         assert agent is not None

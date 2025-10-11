@@ -126,7 +126,7 @@ class TestDockerComposeService:
 
         # Check app service configuration
         app_service = compose_config["services"]["app"]
-        assert app_service["container_name"] == "hive-agents"
+        assert app_service["container_name"] == "hive-api"
         assert "build" in app_service
         assert "depends_on" in app_service
         assert app_service["depends_on"]["postgres"]["condition"] == "service_healthy"

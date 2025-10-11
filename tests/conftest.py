@@ -21,6 +21,33 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+
+
+def pytest_keyboard_interrupt(excinfo):
+    """
+    Handle KeyboardInterrupt during test execution.
+
+    Some tests use mocks with side_effect=KeyboardInterrupt to test user cancellation.
+    During cleanup, these can raise KeyboardInterrupt and abort the test session.
+    This hook detects if the interrupt is from mock cleanup (not user Ctrl+C) and
+    suppresses it to allow all tests to run.
+    """
+    import traceback
+    # Get the traceback
+    tb_lines = traceback.format_exception(type(excinfo.value), excinfo.value, excinfo.tb)
+    tb_text = ''.join(tb_lines)
+
+    # Check if this is from mock cleanup (not a real user interrupt)
+    if 'unittest/mock.py' in tb_text and '_patch_stopall' in tb_text:
+        # This is from mock cleanup, not a real Ctrl+C
+        # Suppress it and continue testing
+        print("\n[pytest] Suppressing KeyboardInterrupt from mock cleanup", file=sys.stderr)
+        return True  # Suppress the interrupt
+
+    # Real Ctrl+C from user - let it through
+    return None
+
+
 import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -226,9 +253,13 @@ def preserve_builtin_input():
     yield
 
     # Restore the original input function during session cleanup
-    # This prevents any lingering mocks with KeyboardInterrupt side effects
-    # from interfering with pytest's shutdown process
-    builtins.input = original_input
+    # Wrap in try-except to prevent KeyboardInterrupt from stopping test execution
+    try:
+        builtins.input = original_input
+    except KeyboardInterrupt:
+        # Silently ignore KeyboardInterrupt during cleanup
+        # This prevents mock cleanup issues from aborting the test session
+        pass
 
 
 @pytest.fixture(scope="session")
@@ -643,9 +674,11 @@ def simple_fastapi_app(
     app.include_router(health_check_router)
 
     # Add the v1_router which includes all sub-routers with proper /api/v1 prefix
+    from api.routes.agentos_router import legacy_agentos_router
     from api.routes.v1_router import v1_router
 
     app.include_router(v1_router)
+    app.include_router(legacy_agentos_router)
 
     # Add CORS middleware
     app.add_middleware(
@@ -761,13 +794,37 @@ def setup_test_environment():
 @pytest.fixture(autouse=True)
 def mock_external_dependencies():
     """Mock external dependencies to prevent real network calls."""
+
+    # Create proper mock structure for orchestrated_startup return value
+    # This prevents AsyncMock pollution when .keys() and other dict methods are called
+    class DictLikeMock(dict[str, Any]):
+        """Dict that behaves like a real dict, not an AsyncMock."""
+        def __init__(self, items: dict[str, Any] | None = None) -> None:
+            super().__init__(items or {})
+
+    def create_mock_startup_results():
+        """Create a proper Mock structure for orchestrated_startup."""
+        mock_results = Mock()
+        mock_results.registries = Mock()
+        # Use real dicts, not AsyncMock, to prevent unawaited coroutine warnings
+        mock_results.registries.agents = DictLikeMock({"test-agent": Mock()})
+        mock_results.registries.workflows = DictLikeMock({"test-workflow": Mock()})
+        mock_results.registries.teams = DictLikeMock()
+        mock_results.services = Mock()
+        mock_results.services.auth_service = Mock()
+        mock_results.services.auth_service.is_auth_enabled.return_value = False
+        mock_results.services.auth_service.get_current_key.return_value = "test-key"
+        mock_results.services.metrics_service = Mock()
+        mock_results.sync_results = {}
+        return mock_results
+
     # Define patches with error handling for missing modules
     patch_specs = [
         ("lib.knowledge.csv_hot_reload.CSVHotReloadManager", None),
         ("lib.metrics.langwatch_integration.LangWatchManager", None),
-        ("lib.logging.setup_logging", None),
+        ("lib.logging.initialize_logging", None),
         ("lib.logging.set_runtime_mode", None),
-        ("api.serve.orchestrated_startup", AsyncMock),
+        ("api.serve.orchestrated_startup", "async_with_return"),  # Special handling
         ("api.serve.create_startup_display", None),
         ("common.startup_notifications.send_startup_notification", AsyncMock),
         ("common.startup_notifications.send_shutdown_notification", AsyncMock),
@@ -777,7 +834,11 @@ def mock_external_dependencies():
     patches = []
     for target, new_callable in patch_specs:
         try:
-            if new_callable == AsyncMock:
+            if new_callable == "async_with_return":
+                # Special case: AsyncMock with proper return_value structure
+                async_mock = AsyncMock(return_value=create_mock_startup_results())
+                patches.append(patch(target, new=async_mock))
+            elif new_callable == AsyncMock:
                 patches.append(patch(target, new_callable=AsyncMock))
             elif callable(new_callable):
                 patches.append(patch(target, side_effect=new_callable))
@@ -808,3 +869,62 @@ def mock_external_dependencies():
             except Exception:
                 # Ignore cleanup errors to prevent test failures
                 pass
+
+
+# ============================================================================
+# Additional fixtures for agent registry testing
+# ============================================================================
+
+
+@pytest.fixture
+def mock_file_system_ops():
+    """Mock filesystem operations for agent discovery testing."""
+    mock_ops = {
+        "exists": Mock(return_value=True),
+        "iterdir": Mock(return_value=[]),
+        "is_dir": Mock(return_value=True),
+    }
+    
+    with patch("pathlib.Path.exists", mock_ops["exists"]):
+        with patch("pathlib.Path.iterdir", mock_ops["iterdir"]):
+            with patch("pathlib.Path.is_dir", mock_ops["is_dir"]):
+                yield mock_ops
+
+
+@pytest.fixture
+def sample_agent_config():
+    """Sample agent configuration for testing."""
+    return {
+        "agent": {
+            "agent_id": "test-agent",
+            "name": "Test Agent",
+            "version": "1.0.0",
+            "description": "Test agent for testing purposes",
+        }
+    }
+
+
+@pytest.fixture
+def mock_logger():
+    """Mock logger for testing warning/error logging."""
+    with patch("ai.agents.registry.logger") as mock_log:
+        yield mock_log
+
+
+@pytest.fixture
+def mock_database_layer():
+    """Mock database and agent creation layer."""
+    mock_agent = Mock()
+    mock_agent.run = AsyncMock(return_value="Test response")
+    mock_agent.metadata = {"test": True}
+    mock_agent.agent_id = "test-agent"
+    
+    # Create a callable that returns the agent
+    def create_agent(*args, **kwargs):
+        if kwargs.get("agent_id") == "non-existent":
+            raise KeyError("Agent not found")
+        return mock_agent
+    
+    with patch("lib.utils.version_factory.create_agent", new=AsyncMock(side_effect=create_agent)):
+        with patch("lib.services.database_service.get_db_service", return_value=AsyncMock()):
+            yield {"agent": mock_agent}

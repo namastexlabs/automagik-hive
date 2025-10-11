@@ -1,8 +1,12 @@
 """Comprehensive tests for CLI service commands."""
 
+import logging
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
+import pytest
+
+import lib.logging.config as logging_config
 from cli.commands.service import ServiceManager
 
 
@@ -42,13 +46,38 @@ class TestServiceManagerInitialization:
     
     def test_status(self):
         """Test status method."""
-        with patch.object(ServiceManager, 'docker_status', return_value={"test": "running"}):
+        with patch.object(ServiceManager, 'docker_status', return_value={"test": "running"}), \
+             patch.object(ServiceManager, '_runtime_snapshot', return_value={"status": "unavailable"}):
             manager = ServiceManager()
             status = manager.status()
             assert isinstance(status, dict)
             assert "status" in status
             assert "healthy" in status
             assert "docker_services" in status
+            assert status["runtime"]["status"] == "unavailable"
+
+    @patch("cli.commands.service._gather_runtime_snapshot", new_callable=AsyncMock)
+    def test_runtime_snapshot_success(self, mock_gather):
+        """_runtime_snapshot should return ready status when snapshot succeeds."""
+        mock_gather.return_value = {"total_components": 1}
+        manager = ServiceManager()
+
+        result = manager._runtime_snapshot()
+
+        assert result["status"] == "ready"
+        assert result["summary"] == {"total_components": 1}
+        mock_gather.assert_awaited_once()
+
+    @patch("cli.commands.service._gather_runtime_snapshot", new_callable=AsyncMock)
+    def test_runtime_snapshot_failure(self, mock_gather):
+        """_runtime_snapshot should surface error details when snapshot fails."""
+        mock_gather.side_effect = RuntimeError("boom")
+        manager = ServiceManager()
+
+        result = manager._runtime_snapshot()
+
+        assert result["status"] == "unavailable"
+        assert "boom" in result["error"]
 
     def test_manage_service_exception_handling(self):
         """Test manage_service handles exceptions gracefully."""
@@ -66,51 +95,84 @@ class TestServiceManagerLocalServe:
     
     def test_serve_local_success(self):
         """Test successful local server startup."""
-        with patch('subprocess.run') as mock_run:
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch('subprocess.run') as mock_run:
             mock_run.return_value = None
-            
+
             manager = ServiceManager()
             result = manager.serve_local(host="127.0.0.1", port=8080, reload=False)
-            
+
             assert result is True
-            # Should be called multiple times: postgres dependency checks + uvicorn startup
+            # Should be called at least once for uvicorn startup
             assert mock_run.call_count >= 1
-            
-            # Check that the final call is the uvicorn command
-            final_call_args = mock_run.call_args[0][0]
-            assert "uv" in final_call_args
-            assert "run" in final_call_args
-            assert "uvicorn" in final_call_args
-            assert "--host" in final_call_args
-            assert "127.0.0.1" in final_call_args
-            assert "--port" in final_call_args
-            assert "8080" in final_call_args
+
+            # Find the uvicorn call (not necessarily the last call due to Docker checks)
+            uvicorn_call_found = False
+            for call in mock_run.call_args_list:
+                call_args = call[0][0]
+                if isinstance(call_args, list) and "uvicorn" in call_args:
+                    assert "uv" in call_args
+                    assert "run" in call_args
+                    assert "uvicorn" in call_args
+                    assert "--host" in call_args
+                    assert "127.0.0.1" in call_args
+                    assert "--port" in call_args
+                    assert "8080" in call_args
+                    uvicorn_call_found = True
+                    break
+
+            assert uvicorn_call_found, "No uvicorn call found in subprocess.run calls"
+            mock_stop.assert_not_called()
 
     def test_serve_local_with_reload(self):
         """Test local server with reload enabled."""
-        with patch('subprocess.run') as mock_run:
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch('subprocess.run') as mock_run:
             manager = ServiceManager()
             result = manager.serve_local(reload=True)
-            
+
             assert result is True
-            call_args = mock_run.call_args[0][0]
-            assert "--reload" in call_args
+
+            # Find the uvicorn call with reload flag
+            reload_call_found = False
+            for call in mock_run.call_args_list:
+                call_args = call[0][0]
+                if isinstance(call_args, list) and "uvicorn" in call_args:
+                    assert "--reload" in call_args
+                    reload_call_found = True
+                    break
+
+            assert reload_call_found, "No uvicorn call with --reload found in subprocess.run calls"
+            mock_stop.assert_not_called()
 
     def test_serve_local_keyboard_interrupt(self):
         """Test handling of KeyboardInterrupt during local serve."""
-        with patch('subprocess.run', side_effect=KeyboardInterrupt()):
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch.object(ServiceManager, '_is_postgres_dependency_active', return_value=False):
             manager = ServiceManager()
-            result = manager.serve_local()
-            
-            assert result is True  # Should handle gracefully
+
+            with patch('subprocess.run', side_effect=KeyboardInterrupt()):
+                try:
+                    result = manager.serve_local()
+                    # If we get here, KeyboardInterrupt was handled
+                    assert result is True
+                    mock_stop.assert_not_called()
+                except KeyboardInterrupt:
+                    pytest.fail("KeyboardInterrupt was not handled properly")
 
     def test_serve_local_os_error(self):
         """Test handling of OSError during local serve."""
-        with patch('subprocess.run', side_effect=OSError("Port in use")):
+        with patch.object(ServiceManager, '_ensure_postgres_dependency', return_value=(True, False)), \
+            patch.object(ServiceManager, '_stop_postgres_dependency') as mock_stop, \
+            patch('subprocess.run', side_effect=OSError("Port in use")):
             manager = ServiceManager()
             result = manager.serve_local()
-            
+
             assert result is False
+            mock_stop.assert_not_called()
 
 
 class TestServiceManagerDockerOperations:
@@ -132,10 +194,13 @@ class TestServiceManagerDockerOperations:
         manager = ServiceManager()
         with patch.object(manager, 'main_service') as mock_main:
             mock_main.serve_main.side_effect = KeyboardInterrupt()
-            
-            result = manager.serve_docker()
-            
-            assert result is True  # Should handle gracefully
+
+            try:
+                result = manager.serve_docker()
+                # If we get here, KeyboardInterrupt was handled
+                assert result is True
+            except KeyboardInterrupt:
+                pytest.fail("KeyboardInterrupt was not handled properly")
 
     def test_serve_docker_exception(self):
         """Test Docker startup with generic exception."""
@@ -193,13 +258,79 @@ class TestServiceManagerDockerOperations:
         """Test successful Docker status retrieval."""
         manager = ServiceManager()
         with patch.object(manager, 'main_service') as mock_main:
-            expected_status = {"main-postgres": "🟢 Running", "main-app": "🟢 Running"}
+            expected_status = {"hive-postgres": "🟢 Running", "hive-api": "🟢 Running"}
             mock_main.get_main_status.return_value = expected_status
             
             result = manager.docker_status("./test")
             
             assert result == expected_status
             mock_main.get_main_status.assert_called_once_with("./test")
+
+
+class TestServiceManagerLoggingLevels:
+    """Ensure ServiceManager bootstraps logging with correct levels."""
+
+    @staticmethod
+    def _restore_real_initializer(monkeypatch):
+        monkeypatch.setattr("lib.logging.initialize_logging", logging_config.initialize_logging)
+        monkeypatch.setattr(
+            "cli.commands.service.initialize_logging",
+            logging_config.initialize_logging,
+        )
+
+    def test_initialization_respects_info_default(self, monkeypatch, capsys, tmp_path):
+        """INFO default should suppress the bootstrap debug breadcrumb."""
+        self._restore_real_initializer(monkeypatch)
+
+        original_initialized = logging_config._logging_initialized
+        original_level = logging.getLogger().getEffectiveLevel()
+
+        try:
+            monkeypatch.delenv("HIVE_LOG_LEVEL", raising=False)
+            monkeypatch.setenv("AGNO_LOG_LEVEL", "WARNING")
+
+            logging_config._logging_initialized = False
+            capsys.readouterr()  # Clear captured buffers before instantiation
+
+            ServiceManager()
+
+            captured = capsys.readouterr()
+            assert "Logging bootstrap complete" not in captured.err
+            assert logging.getLogger().getEffectiveLevel() == logging.INFO
+
+            sample_path = tmp_path / "cli_info_bootstrap.log"
+            sample_path.write_text(captured.err)
+            assert "Logging bootstrap complete" not in sample_path.read_text()
+        finally:
+            logging_config._logging_initialized = original_initialized
+            logging.getLogger().setLevel(original_level)
+
+    def test_initialization_emits_debug_when_opt_in(self, monkeypatch, capsys, tmp_path):
+        """DEBUG opt-in should emit the bootstrap breadcrumb."""
+        self._restore_real_initializer(monkeypatch)
+
+        original_initialized = logging_config._logging_initialized
+        original_level = logging.getLogger().getEffectiveLevel()
+
+        try:
+            monkeypatch.setenv("HIVE_LOG_LEVEL", "DEBUG")
+            monkeypatch.setenv("AGNO_LOG_LEVEL", "WARNING")
+
+            logging_config._logging_initialized = False
+            capsys.readouterr()
+
+            ServiceManager()
+
+            captured = capsys.readouterr()
+            assert "Logging bootstrap complete" in captured.err
+            assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
+
+            sample_path = tmp_path / "cli_debug_bootstrap.log"
+            sample_path.write_text(captured.err)
+            assert "Logging bootstrap complete" in sample_path.read_text()
+        finally:
+            logging_config._logging_initialized = original_initialized
+            logging.getLogger().setLevel(original_level)
 
     def test_docker_status_exception(self):
         """Test Docker status with exception."""
@@ -209,7 +340,7 @@ class TestServiceManagerDockerOperations:
             
             result = manager.docker_status()
             
-            expected_default = {"main-postgres": "🛑 Stopped", "main-app": "🛑 Stopped"}
+            expected_default = {"hive-postgres": "🛑 Stopped", "hive-api": "🛑 Stopped"}
             assert result == expected_default
 
     def test_docker_logs_success(self):
@@ -241,16 +372,48 @@ class TestServiceManagerEnvironmentSetup:
         """Test successful full environment installation."""
         manager = ServiceManager()
         with patch.object(manager, '_prompt_deployment_choice', return_value='full_docker'):
+            resolved_path = Path("/resolved/workspace")
             with patch('lib.auth.credential_service.CredentialService') as mock_credential_service_class:
                 mock_credential_service = mock_credential_service_class.return_value
                 mock_credential_service.install_all_modes.return_value = {}
                 with patch.object(manager, 'main_service') as mock_main:
                     mock_main.install_main_environment.return_value = True
-                    
-                    result = manager.install_full_environment("./test")
-                    
+                    with patch.object(manager, '_resolve_install_root', return_value=resolved_path):
+                        result = manager.install_full_environment("./test")
+
                     assert result is True
-                    mock_main.install_main_environment.assert_called_once_with("./test")
+                    mock_main.install_main_environment.assert_called_once_with(
+                        str(resolved_path)
+                    )
+                    mock_credential_service_class.assert_called_once()
+                    kwargs = mock_credential_service_class.call_args.kwargs
+                    assert kwargs.get("project_root") == resolved_path
+
+    def test_install_full_environment_uses_parent_workspace(self, tmp_path):
+        """Install should pivot to parent directory when AI bundle lacks markers."""
+        repo_root = tmp_path
+        ai_dir = repo_root / "ai"
+        ai_dir.mkdir()
+        (repo_root / ".env").write_text("HIVE_DATABASE_URL=postgresql://existing")
+        (repo_root / "docker").mkdir()
+        docker_main = repo_root / "docker" / "main"
+        docker_main.mkdir()
+        (docker_main / "docker-compose.yml").write_text("version: '3'")
+
+        manager = ServiceManager()
+        with patch.object(manager, '_prompt_deployment_choice', return_value='local_hybrid'):
+            with patch('lib.auth.credential_service.CredentialService') as mock_credential_service_class:
+                credential_instance = mock_credential_service_class.return_value
+                credential_instance.install_all_modes.return_value = {}
+                with patch.object(manager, 'main_service') as mock_main:
+                    with patch.object(manager, '_setup_local_hybrid_deployment', return_value=True) as mock_local:
+                        result = manager.install_full_environment(str(ai_dir))
+
+        assert result is True
+        mock_credential_service_class.assert_called_once()
+        called_kwargs = mock_credential_service_class.call_args.kwargs
+        assert called_kwargs.get("project_root") == repo_root
+        mock_local.assert_called_once_with(str(repo_root))
 
     def test_install_full_environment_env_setup_fails(self):
         """Test environment installation when env setup fails."""
@@ -347,12 +510,16 @@ class TestServiceManagerEnvFileSetup:
 class TestServiceManagerPostgreSQLSetup:
     """Test PostgreSQL setup functionality."""
     
-    def test_setup_postgresql_interactive_yes(self):
+    def test_setup_postgresql_interactive_yes(self, tmp_path):
         """Test PostgreSQL setup with 'yes' response."""
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
+
         with patch('builtins.input', return_value='y'):
             manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
-            
+            result = manager._setup_postgresql_interactive(str(tmp_path))
+
             assert result is True
 
     def test_setup_postgresql_interactive_no(self):
@@ -363,30 +530,46 @@ class TestServiceManagerPostgreSQLSetup:
             
             assert result is True
 
-    def test_setup_postgresql_interactive_eof(self):
+    def test_setup_postgresql_interactive_eof(self, tmp_path):
         """Test PostgreSQL setup with EOF (defaults to yes)."""
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
+
         with patch('builtins.input', side_effect=EOFError()):
             manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
-            
+            result = manager._setup_postgresql_interactive(str(tmp_path))
+
             assert result is True
 
-    def test_setup_postgresql_interactive_keyboard_interrupt(self):
+    def test_setup_postgresql_interactive_keyboard_interrupt(self, tmp_path):
         """Test PostgreSQL setup with KeyboardInterrupt (defaults to yes)."""
-        with patch('builtins.input', side_effect=KeyboardInterrupt()):
-            manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
-            
-            assert result is True
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
 
-    def test_setup_postgresql_interactive_credentials_fail(self):
+        # KeyboardInterrupt is handled as EOF (defaults to yes)
+        manager = ServiceManager()
+        with patch('builtins.input', side_effect=KeyboardInterrupt()):
+            try:
+                result = manager._setup_postgresql_interactive(str(tmp_path))
+                # If we get here, KeyboardInterrupt was handled
+                assert result is True
+            except KeyboardInterrupt:
+                pytest.fail("KeyboardInterrupt was not handled properly")
+
+    def test_setup_postgresql_interactive_credentials_fail(self, tmp_path):
         """Test PostgreSQL setup when credential generation fails."""
+        # Create a test .env file with valid database URL
+        env_file = tmp_path / ".env"
+        env_file.write_text("HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb")
+
         with patch('builtins.input', return_value='y'):
             # The current implementation handles credential generation via CredentialService
             # and always returns True, so this test now validates the updated behavior
             manager = ServiceManager()
-            result = manager._setup_postgresql_interactive("./test")
-            
+            result = manager._setup_postgresql_interactive(str(tmp_path))
+
             # The method now always returns True as credential generation
             # is handled by CredentialService.install_all_modes() in install_full_environment
             assert result is True
@@ -409,30 +592,20 @@ class TestServiceManagerUninstall:
         manager = ServiceManager()
         with patch('builtins.input', return_value='WIPE ALL'):
             with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
-                        mock_agent_cmd.uninstall.return_value = True
-                        
-                        mock_genie_cmd = mock_genie_cmd_class.return_value
-                        mock_genie_cmd.uninstall.return_value = True
-                        
-                        result = manager.uninstall_environment("./test")
-                        
-                        assert result is True
-                        mock_uninstall_main.assert_called_once_with("./test")
+                result = manager.uninstall_environment("./test")
+
+                assert result is True
+                mock_uninstall_main.assert_called_once_with("./test")
 
     def test_uninstall_environment_wipe_data_confirmed(self):
         """Test environment uninstall with data wipe (confirmed)."""
         manager = ServiceManager()
         with patch('builtins.input', return_value='WIPE ALL'):
             with patch.object(manager, 'uninstall_main_only', return_value=True) as mock_uninstall_main:
-                        mock_agent_cmd.uninstall.return_value = True
-                        
-                        mock_genie_cmd = mock_genie_cmd_class.return_value
-                        mock_genie_cmd.uninstall.return_value = True
-                        
-                        result = manager.uninstall_environment("./test")
-                        
-                        assert result is True
-                        mock_uninstall_main.assert_called_once_with("./test")
+                result = manager.uninstall_environment("./test")
+
+                assert result is True
+                mock_uninstall_main.assert_called_once_with("./test")
 
     def test_uninstall_environment_wipe_data_cancelled(self):
         """Test environment uninstall with data wipe (cancelled)."""

@@ -40,6 +40,13 @@ class ServerConfig:
         # Environment settings
         self.environment = os.getenv("HIVE_ENVIRONMENT", "development")
         self.log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
+        self.playground_enabled = self._get_bool(
+            "HIVE_EMBED_PLAYGROUND", default=True
+        )
+        self.playground_mount_path = self._normalize_path(
+            os.getenv("HIVE_PLAYGROUND_MOUNT_PATH", "/playground")
+        )
+        self.control_pane_base_url = os.getenv("HIVE_CONTROL_PANE_BASE_URL")
 
         # Validation
         self._validate_config()
@@ -81,6 +88,13 @@ class ServerConfig:
                 f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARNING, ERROR."
             )
 
+        if self.control_pane_base_url and not self.control_pane_base_url.startswith(
+            ("http://", "https://")
+        ):
+            raise ValueError(
+                "HIVE_CONTROL_PANE_BASE_URL must include http:// or https:// scheme"
+            )
+
     @classmethod
     def get_instance(cls) -> "ServerConfig":
         """Get singleton instance of ServerConfig."""
@@ -107,9 +121,34 @@ class ServerConfig:
         display_host = "localhost" if self.host in ["0.0.0.0", "::"] else self.host
         return f"http://{display_host}:{self.port}"
 
+    def get_playground_url(self) -> str | None:
+        """Return the full URL for the embedded Playground if enabled."""
+        if not self.playground_enabled:
+            return None
+        base_url = self.get_base_url()
+        return f"{base_url}{self.playground_mount_path}"
+
+    def get_control_pane_url(self) -> str:
+        """Return the base URL that the Control Pane should target."""
+        return self.control_pane_base_url or self.get_base_url()
+
     def __repr__(self) -> str:
         """String representation of configuration."""
         return f"ServerConfig(host={self.host}, port={self.port}, workers={self.workers}, environment={self.environment})"
+
+    @staticmethod
+    def _get_bool(var_name: str, default: bool) -> bool:
+        value = os.getenv(var_name)
+        if value is None:
+            return default
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+
+    @staticmethod
+    def _normalize_path(path_value: str) -> str:
+        if not path_value:
+            return "/"
+        normalized = path_value if path_value.startswith("/") else f"/{path_value}"
+        return normalized.rstrip("/") or "/"
 
 
 # Global server configuration instance

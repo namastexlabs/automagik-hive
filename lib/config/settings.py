@@ -24,6 +24,9 @@ from pydantic.networks import HttpUrl
 from lib.logging import logger
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
 class HiveSettings(BaseSettings):
     """
     Centralized configuration settings for Automagik Hive applications.
@@ -77,8 +80,25 @@ class HiveSettings(BaseSettings):
     hive_dev_mode: bool = Field(True, description="Development mode enabled")
     hive_enable_metrics: bool = Field(True, description="Metrics collection enabled")
     hive_agno_monitor: bool = Field(False, description="Agno monitoring enabled")
+    hive_ai_root: str = Field("ai", description="AI root directory path")
     hive_mcp_config_path: str = Field("ai/.mcp.json", description="MCP config file path")
     hive_enable_agui: bool = Field(False, description="Enable AGUI mode for UI interface")
+    hive_embed_playground: bool = Field(
+        True, description="Enable Agno Playground surface within Hive API"
+    )
+    hive_playground_mount_path: str = Field(
+        "/playground", description="Mount path for embedded Agno Playground"
+    )
+    hive_control_pane_base_url: HttpUrl | None = Field(
+        None,
+        description="Optional Control Pane base URL; defaults to Hive API base",
+    )
+    hive_agentos_config_path: Path | None = Field(
+        None, description="Path to AgentOS YAML configuration file"
+    )
+    hive_agentos_enable_defaults: bool = Field(
+        True, description="Enable fallback to built-in AgentOS defaults"
+    )
     
     # Optional settings with defaults
     hive_log_dir: Optional[str] = Field(None, description="Log directory path")
@@ -104,11 +124,57 @@ class HiveSettings(BaseSettings):
     hive_team_routing_timeout: int = Field(30, description="Team routing timeout")
     hive_max_team_switches: int = Field(3, description="Max team switches per session")
     
-    # Metrics configuration
-    hive_metrics_batch_size: int = Field(50, description="Metrics batch size")
-    hive_metrics_flush_interval: float = Field(5.0, description="Metrics flush interval")
+    # Metrics configuration - Optimized for responsiveness
+    hive_metrics_batch_size: int = Field(5, description="Metrics batch size - small batches for responsiveness")
+    hive_metrics_flush_interval: float = Field(1.0, description="Metrics flush interval - faster flush for immediate persistence")
     hive_metrics_queue_size: int = Field(1000, description="Metrics queue size")
-    
+
+    # =========================================================================
+    # AGNO MIGRATION & STORAGE SETTINGS
+    # =========================================================================
+    hive_agno_v2_migration_enabled: bool = Field(
+        False, description="Enable Agno v2 migration readiness checks"
+    )
+    hive_agno_v1_schema: str = Field(
+        "agno", description="Schema containing legacy Agno v1 tables"
+    )
+    hive_agno_v1_agent_sessions_table: str = Field(
+        "agent_sessions", description="Legacy agent session table name"
+    )
+    hive_agno_v1_team_sessions_table: str = Field(
+        "team_sessions", description="Legacy team session table name"
+    )
+    hive_agno_v1_workflow_sessions_table: str = Field(
+        "workflow_sessions", description="Legacy workflow session table name"
+    )
+    hive_agno_v1_memories_table: str = Field(
+        "memories", description="Legacy user memories table name"
+    )
+    hive_agno_v1_metrics_table: str | None = Field(
+        None, description="Legacy metrics table name (optional)"
+    )
+    hive_agno_v1_knowledge_table: str | None = Field(
+        None, description="Legacy knowledge table name (optional)"
+    )
+    hive_agno_v1_evals_table: str | None = Field(
+        None, description="Legacy eval table name (optional)"
+    )
+    hive_agno_v2_sessions_table: str = Field(
+        "hive_sessions", description="Target Agno v2 unified sessions table"
+    )
+    hive_agno_v2_memories_table: str = Field(
+        "hive_memories", description="Target Agno v2 memories table"
+    )
+    hive_agno_v2_metrics_table: str = Field(
+        "hive_metrics", description="Target Agno v2 metrics table"
+    )
+    hive_agno_v2_knowledge_table: str = Field(
+        "hive_knowledge", description="Target Agno v2 knowledge table"
+    )
+    hive_agno_v2_evals_table: str = Field(
+        "hive_evals", description="Target Agno v2 eval runs table"
+    )
+
     # =========================================================================
     # LEGACY COMPATIBILITY PROPERTIES
     # =========================================================================
@@ -183,6 +249,33 @@ class HiveSettings(BaseSettings):
     def metrics_queue_size(self) -> int:
         """Metrics queue size alias for legacy compatibility."""
         return self.hive_metrics_queue_size
+
+    @property
+    def agno_v1_tables(self) -> dict[str, str | None]:
+        """Expose Agno v1 table metadata for migration tooling."""
+
+        return {
+            "schema": self.hive_agno_v1_schema,
+            "agent_sessions": self.hive_agno_v1_agent_sessions_table,
+            "team_sessions": self.hive_agno_v1_team_sessions_table,
+            "workflow_sessions": self.hive_agno_v1_workflow_sessions_table,
+            "memories": self.hive_agno_v1_memories_table,
+            "metrics": self.hive_agno_v1_metrics_table,
+            "knowledge": self.hive_agno_v1_knowledge_table,
+            "evals": self.hive_agno_v1_evals_table,
+        }
+
+    @property
+    def agno_v2_tables(self) -> dict[str, str]:
+        """Expose Agno v2 table metadata for migration tooling."""
+
+        return {
+            "sessions": self.hive_agno_v2_sessions_table,
+            "memories": self.hive_agno_v2_memories_table,
+            "metrics": self.hive_agno_v2_metrics_table,
+            "knowledge": self.hive_agno_v2_knowledge_table,
+            "evals": self.hive_agno_v2_evals_table,
+        }
     
     @property
     def langwatch_config(self) -> dict:
@@ -207,9 +300,9 @@ class HiveSettings(BaseSettings):
     @field_validator('hive_database_url')
     @classmethod
     def validate_database_url(cls, v):
-        """Validate database URL format."""
-        if not v.startswith(('postgresql://', 'postgresql+psycopg://')):
-            raise ValueError(f'Database URL must start with postgresql:// or postgresql+psycopg://, got {v[:20]}...')
+        """Validate database URL format - PostgreSQL for production, SQLite for tests."""
+        if not v.startswith(('postgresql://', 'postgresql+psycopg://', 'sqlite://')):
+            raise ValueError(f'Database URL must start with postgresql://, postgresql+psycopg://, or sqlite://, got {v[:20]}...')
         return v
     
     @field_validator('hive_api_key')
@@ -273,6 +366,24 @@ class HiveSettings(BaseSettings):
         if not (10 <= v <= 100000):
             raise ValueError(f'Metrics queue size must be between 10-100000, got {v}')
         return v
+
+    @field_validator('hive_agentos_config_path')
+    @classmethod
+    def validate_agentos_config_path(cls, value):
+        """Ensure AgentOS config path exists and resolves properly."""
+        if value is None:
+            return None
+
+        candidate = Path(value).expanduser()
+        if not candidate.is_absolute():
+            candidate = (PROJECT_ROOT / candidate).resolve()
+
+        if not candidate.exists():
+            raise ValueError(f'AgentOS config path does not exist: {candidate}')
+        if not candidate.is_file():
+            raise ValueError(f'AgentOS config path must be a file: {candidate}')
+
+        return candidate
     
     # =========================================================================
     # SECURITY OVERRIDE (Production Environment)
@@ -296,7 +407,7 @@ class HiveSettings(BaseSettings):
             not self.langwatch_api_key or 
             self.langwatch_api_key.startswith('your-langwatch-api-key')
         )
-        
+
         if invalid_api_key and self.hive_enable_langwatch:
             logger.info(
                 "LangWatch automatically disabled - no valid API key provided",
@@ -304,6 +415,15 @@ class HiveSettings(BaseSettings):
                 api_key_provided=bool(self.langwatch_api_key)
             )
             self.hive_enable_langwatch = False
+        return self
+
+    @model_validator(mode='after')
+    def require_agentos_source(self):
+        """Ensure AgentOS configuration is available when defaults disabled."""
+        if not self.hive_agentos_enable_defaults and self.hive_agentos_config_path is None:
+            raise ValueError(
+                "HIVE_AGENTOS_CONFIG_PATH must be set when AgentOS defaults are disabled"
+            )
         return self
     
     # =========================================================================
@@ -362,7 +482,13 @@ class HiveSettings(BaseSettings):
         validations["valid_timeout"] = self.hive_session_timeout > 0
         
         return validations
-    
+
+    @property
+    def ai_root_path(self) -> Path:
+        """Get resolved AI root path using the centralized resolver."""
+        from lib.utils.ai_root import resolve_ai_root
+        return resolve_ai_root(settings=self)
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

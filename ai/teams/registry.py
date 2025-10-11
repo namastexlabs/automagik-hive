@@ -8,7 +8,9 @@ from typing import Any
 import yaml
 from agno.team import Team
 
+from lib.config.settings import get_settings
 from lib.logging import logger
+from lib.utils.ai_root import resolve_ai_root
 
 
 def _get_factory_function_patterns(
@@ -103,7 +105,9 @@ def _load_team_config(config_file: Path) -> dict[str, Any] | None:
 
 def _discover_teams() -> dict[str, Callable[..., Team]]:
     """Dynamically discover teams from filesystem"""
-    teams_dir = Path("ai/teams")
+    # Use dynamic AI root resolution
+    ai_root = resolve_ai_root(settings=get_settings())
+    teams_dir = ai_root / "teams"
     registry: dict[str, Callable[..., Team]] = {}
 
     if not teams_dir.exists():
@@ -151,7 +155,7 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
 
                 if factory_func:
                     registry[team_name] = factory_func
-                    logger.info(f"Registered team: {team_name}", factory=used_pattern)
+                    logger.debug(f"Registered team: {team_name}", factory=used_pattern)
                 else:
                     attempted_patterns = ", ".join(
                         factory_patterns[:5]
@@ -179,7 +183,7 @@ def get_team_registry() -> dict[str, Callable[..., Team]]:
     if _TEAM_REGISTRY is None:
         logger.debug("Initializing team registry (lazy)")
         _TEAM_REGISTRY = _discover_teams()
-        logger.info(
+        logger.debug(
             "Team registry initialized",
             team_count=len(_TEAM_REGISTRY),
             teams=list(_TEAM_REGISTRY.keys()),
