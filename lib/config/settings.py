@@ -402,11 +402,24 @@ class HiveSettings(BaseSettings):
     @model_validator(mode='after')
     def auto_disable_langwatch_without_api_key(self):
         """Auto-disable LangWatch when no API key is provided."""
-        # Check if langwatch_api_key is None, empty, or a placeholder value
-        invalid_api_key = (
-            not self.langwatch_api_key or 
-            self.langwatch_api_key.startswith('your-langwatch-api-key')
-        )
+        # Check if langwatch_api_key is None, empty, or an obvious placeholder value
+        invalid_api_key = False
+
+        if not self.langwatch_api_key:
+            # None or empty string
+            invalid_api_key = True
+        elif self.langwatch_api_key.strip() == '':
+            # Whitespace-only
+            invalid_api_key = True
+        elif len(self.langwatch_api_key.strip()) < 5:
+            # Too short to be any kind of key (even test keys)
+            invalid_api_key = True
+        elif self.langwatch_api_key.startswith('your-langwatch-api-key'):
+            # Exact placeholder from .env.example
+            invalid_api_key = True
+        elif self.langwatch_api_key in ('xxx', 'XXX', 'changeme', 'CHANGEME', 'placeholder', 'PLACEHOLDER'):
+            # Common obvious placeholder values
+            invalid_api_key = True
 
         if invalid_api_key and self.hive_enable_langwatch:
             logger.info(
