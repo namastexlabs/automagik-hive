@@ -3,27 +3,30 @@
 **Status:** READY_FOR_REVIEW
 
 ## Executive Summary
-Transform UI-uploaded documents from raw text chunks into semantically structured, searchable knowledge with rich metadata matching the quality of CSV-loaded content.
+Transform ALL knowledge API-inserted documents from raw text chunks into semantically structured, searchable knowledge with rich metadata matching the quality of CSV-loaded content. Process only new insertions going forward; no bulk reprocessing of existing documents.
 
 ## Current State Analysis
 
 **What exists:**
 - CSV-loaded knowledge with rich metadata (category, tags, business_unit, Q&A structure)
-- UI upload system producing arbitrary 100-char chunks with minimal metadata (page, chunk, chunk_size)
+- Knowledge API insertion system producing arbitrary 100-char chunks with minimal metadata (page, chunk, chunk_size)
 - `lib/knowledge/row_based_csv_knowledge.py` with overridable `_load_content` method
 
 **Gap identified:**
-- UI-uploaded documents lack semantic metadata and meaningful structure
+- Knowledge API-inserted documents lack semantic metadata and meaningful structure
 - Arbitrary chunking breaks sentences, tables, and context
 - No document type detection or entity extraction
 - Cannot filter by meaningful criteria (category, business unit, date ranges)
 - Poor searchability compared to CSV knowledge
+- All documents inserted via Knowledge API need intelligent processing
 
 **Solution approach:**
 - Create modular document processor for metadata enrichment and smart chunking
-- Override `_load_content` in RowBasedCSVKnowledgeBase to post-process UI uploads
-- Implement TDD-first document processor with entity extraction and type detection
-- Provide configuration via YAML for processing rules and chunking strategies
+- Override `_load_content` in RowBasedCSVKnowledgeBase to post-process ALL Knowledge API inserts
+- Implement TDD-first document processor with configurable entity extraction and type detection
+- Provide YAML configuration for processing rules, chunking strategies, and custom entity types
+- Enable parallel processing for speed while maintaining accuracy
+- Analyze entire document structure to extract LLM-optimized content representation
 
 ## Change Isolation Strategy
 
@@ -33,14 +36,19 @@ Transform UI-uploaded documents from raw text chunks into semantically structure
 
 ## Success Criteria
 
-✅ UI-uploaded documents have rich metadata matching CSV quality (category, tags, business_unit, extracted entities)
+✅ **PDF library A/B testing complete** with comparative analysis and selected library documented
+✅ ALL Knowledge API-inserted documents have rich metadata matching CSV quality (category, tags, business_unit, extracted entities)
 ✅ Smart semantic chunking preserves tables, paragraphs, and context with configurable sizes
 ✅ Document type detection from filename and content (financial, report, invoice, contract, manual)
-✅ Entity extraction for dates, amounts, people, organizations stored in metadata
-✅ Filtering capabilities: by document type, business unit, date ranges, categories
-✅ Configuration-driven processing rules in agent config YAML
+✅ **User-configurable entity extraction** via YAML (dates, amounts, people, organizations, custom types)
+✅ **Auto-detection of business_unit** from content keywords and patterns
+✅ Filtering capabilities: by document type, business unit, date ranges, categories, custom entities
+✅ **Parallel processing pipeline** balancing speed and accuracy
+✅ **LLM-optimized content structure** analyzing entire document for semantic meaning
+✅ Configuration-driven processing rules in agent config YAML with extensible entity types
 ✅ Comprehensive TDD coverage for all processor components
 ✅ Zero impact on existing CSV-loaded knowledge behavior
+✅ Forward-only processing: new documents enhanced automatically, no bulk reprocessing
 
 ## Never Do (Protection Boundaries)
 
@@ -59,7 +67,7 @@ Transform UI-uploaded documents from raw text chunks into semantically structure
 Knowledge System:
 ```
 lib/knowledge/
-├── row_based_csv_knowledge.py         # Override _load_content for UI uploads
+├── row_based_csv_knowledge.py         # Override _load_content for API uploads
 ├── processors/                         # NEW: Document processing modules
 │   ├── __init__.py                    # Processor exports
 │   ├── document_processor.py          # Main processor orchestrator
@@ -70,7 +78,7 @@ lib/knowledge/
 ├── factories/
 │   └── knowledge_factory.py           # Wire processor into factory
 └── config/
-    └── processing_rules.yaml          # NEW: Default processing configuration
+    └── knowledge_processing.yaml      # NEW: Dedicated knowledge processing config
 ```
 
 Testing:
@@ -83,31 +91,67 @@ tests/lib/knowledge/processors/
 └── test_semantic_chunker.py           # Chunking strategy tests
 ```
 
-Agent Configuration:
+Knowledge Configuration (Dedicated File):
+```yaml
+# lib/knowledge/config/knowledge_processing.yaml
+
+processing:
+  enabled: true
+  parallel: true  # Enable parallel processing for speed
+  accuracy_threshold: 0.7  # Balance speed vs accuracy
+
+type_detection:
+  use_filename: true
+  use_content: true
+  confidence_threshold: 0.7
+
+chunking:
+  method: "semantic"  # semantic | fixed
+  min_size: 500
+  max_size: 1500
+  overlap: 50
+  preserve_tables: true
+  preserve_code_blocks: true
+
+entity_extraction:
+  enabled: true
+  # Built-in entity types
+  extract_dates: true
+  extract_amounts: true
+  extract_names: true
+  extract_organizations: true
+
+  # User-configurable custom entity types
+  custom_entities:
+    - name: "products"
+      patterns: ["PIX", "Cartão", "Antecipação", "Boleto"]
+    - name: "locations"
+      patterns: ["São Paulo", "Rio de Janeiro", "Brasil"]
+    - name: "account_numbers"
+      regex: r'\d{4}-\d{4}-\d{4}-\d{4}'
+
+business_unit_detection:
+  enabled: true
+  auto_detect: true  # Detect from content keywords
+  keywords:
+    pagbank: ["pix", "conta", "app", "transferencia"]
+    adquirencia: ["antecipacao", "vendas", "maquina"]
+    emissao: ["cartao", "limite", "credito"]
+
+metadata:
+  auto_categorize: true
+  auto_tag: true
+  detect_urgency: true
+```
+
+Agent Configuration (References Knowledge Config):
 ```yaml
 # ai/agents/{agent}/config.yaml
 knowledge:
-  enhanced_processing:
-    enabled: true
-
-  type_detection:
-    use_filename: true
-    use_content: true
-    confidence_threshold: 0.7
-
-  chunking:
-    method: "semantic"  # semantic | fixed
-    min_size: 500
-    max_size: 1500
-    overlap: 50
-    preserve_tables: true
-
-  entity_extraction:
-    enabled: true
-    extract_dates: true
-    extract_amounts: true
-    extract_names: true
-    extract_organizations: true
+  enabled: true
+  csv_file_path: "lib/knowledge/data/knowledge_rag.csv"
+  # Knowledge processing config loaded from dedicated file
+  # No processing rules here - keep agent config clean
 ```
 
 ### Naming Conventions
@@ -123,10 +167,44 @@ knowledge:
 ### Dependency Graph
 ```
 A[Foundation Models] ---> B[Processors]
+A ---> A0[PDF Library A/B Testing]
 B ---> C[Integration]
 C ---> D[Configuration]
 D ---> E[Testing & Validation]
 ```
+
+### Group A0: PDF Extraction Library A/B Testing (Parallel with A)
+Dependencies: None | Execute simultaneously with Group A
+
+**A0-pdf-extraction-evaluation**: A/B test PDF extraction libraries
+@lib/knowledge/processors/ [new experimental directory]
+Creates: `lib/knowledge/processors/experimental/pdf_extraction_comparison.py`
+Exports: Comparative analysis report and recommended library selection
+Success: Side-by-side evaluation of docling vs alternative libraries with metrics
+
+**Test Criteria**:
+- **Accuracy**: Text extraction quality, table preservation, formatting retention
+- **Performance**: Processing speed for typical document sizes (1-20 pages)
+- **Structure Detection**: Ability to identify sections, tables, lists, code blocks
+- **Unicode Support**: Brazilian Portuguese characters and special symbols
+- **Memory Usage**: Peak memory consumption during extraction
+- **Error Handling**: Robustness with malformed or complex PDFs
+
+**Libraries to Test**:
+1. **docling** - Primary candidate (IBM Research)
+2. **pypdf** / **pypdf2** - Popular lightweight alternative
+3. **pdfplumber** - Table extraction specialist
+4. **pymupdf** (fitz) - Performance-focused option
+
+**Deliverables**:
+- Comparison test suite with sample PDFs (financial reports, invoices, manuals)
+- Performance benchmarks (speed, memory, accuracy metrics)
+- Recommendation report with pros/cons analysis
+- Selected library integrated into semantic chunker design
+
+**Integration Point**: Results inform B3-semantic-chunker implementation strategy
+
+Test file: `tests/lib/knowledge/processors/experimental/test_pdf_extraction_comparison.py`
 
 ### Group A: Foundation Models (Parallel Tasks)
 Dependencies: None | Execute simultaneously
@@ -153,32 +231,36 @@ Exports: `TypeDetector.detect(filename, content) -> DocumentType`
 Success: TDD tests cover filename patterns and content keywords
 Test file: `tests/lib/knowledge/processors/test_type_detector.py`
 
-**B2-entity-extractor**: Extract dates, amounts, entities
+**B2-entity-extractor**: Extract dates, amounts, entities + custom types
 @KNOWLEDGE_ENHANCEMENT_DESIGN.md [lines 187-207 for entity patterns]
 Creates: `lib/knowledge/processors/entity_extractor.py`
-Exports: `EntityExtractor.extract(content) -> ExtractedEntities`
-Success: TDD tests extract dates (multiple formats), amounts (R$), names, orgs
+Exports: `EntityExtractor.extract(content, config) -> ExtractedEntities`
+Success: TDD tests extract built-in entities + user-configured custom types (products, locations, account_numbers)
+Features: Extensible entity system via YAML config, regex + pattern-based extraction
 Test file: `tests/lib/knowledge/processors/test_entity_extractor.py`
 
-**B3-semantic-chunker**: Smart content chunking
+**B3-semantic-chunker**: Smart content chunking with LLM optimization
 @KNOWLEDGE_ENHANCEMENT_DESIGN.md [lines 164-184 for chunking strategy]
 Creates: `lib/knowledge/processors/semantic_chunker.py`
 Exports: `SemanticChunker.chunk(content, config) -> List[Chunk]`
-Success: TDD tests preserve tables, respect size limits, maintain context overlap
+Success: TDD tests preserve tables, analyze document structure for LLM-friendly chunks, respect size limits
+Features: Whole-document analysis, table preservation, semantic boundary detection, context overlap
 Test file: `tests/lib/knowledge/processors/test_semantic_chunker.py`
 
-**B4-metadata-enricher**: Generate rich metadata
+**B4-metadata-enricher**: Generate rich metadata with auto business_unit detection
 @KNOWLEDGE_ENHANCEMENT_DESIGN.md [lines 73-109 for metadata structure]
 Creates: `lib/knowledge/processors/metadata_enricher.py`
 Exports: `MetadataEnricher.enrich(document, entities, doc_type) -> EnhancedMetadata`
-Success: TDD tests generate category, tags, business_unit from content
+Success: TDD tests generate category, tags, auto-detect business_unit from keywords, include custom entities
+Features: Business unit auto-detection via keyword matching, extensible metadata fields
 Test file: `tests/lib/knowledge/processors/test_metadata_enricher.py`
 
-**B5-document-processor**: Orchestrate all processors
+**B5-document-processor**: Orchestrate all processors with parallel execution
 @lib/knowledge/processors/ [context from B1-B4]
 Creates: `lib/knowledge/processors/document_processor.py`
 Exports: `DocumentProcessor.process(document, config) -> ProcessedDocument`
-Success: Integration tests with real PDF-like content producing full metadata
+Success: Integration tests with real PDF-like content producing full metadata, parallel pipeline execution
+Features: Parallel processing of type detection + entity extraction, balanced speed/accuracy, async support
 Test file: `tests/lib/knowledge/processors/test_document_processor.py`
 
 ### Group C: Integration (After B)
@@ -206,23 +288,23 @@ Success: Filter tests cover new metadata fields
 ### Group D: Configuration (After C)
 Dependencies: C1-load-content-override, C2-factory-integration
 
-**D1-default-config**: Create default processing rules
+**D1-default-config**: Create dedicated knowledge processing configuration
 @lib/knowledge/config/ [new directory]
-Creates: `lib/knowledge/config/processing_rules.yaml`
-Exports: Default type patterns, chunking rules, entity extraction config
-Success: YAML loads without errors, all defaults documented
+Creates: `lib/knowledge/config/knowledge_processing.yaml`
+Exports: Default type patterns, chunking rules, entity extraction config, custom entities schema
+Success: YAML loads without errors, all defaults documented, separate from agent configs
 
-**D2-agent-config-schema**: Document agent config extensions
-@ai/agents/template-agent/config.yaml [pattern reference]
-Modifies: Add `knowledge.enhanced_processing` section to template
-Exports: Agent config schema for processing overrides
-Success: Agent config validates with enhanced processing section
+**D2-config-loader**: Create knowledge config loader utility
+@lib/knowledge/config/ [new directory]
+Creates: `lib/knowledge/config/config_loader.py`
+Exports: `load_knowledge_config()` function that reads from lib/knowledge/config/knowledge_processing.yaml
+Success: Loader reads YAML, returns ProcessingConfig, supports env variable override for custom path
 
-**D3-settings-integration**: Expose global toggle
+**D3-settings-integration**: Expose global toggle + config path
 @lib/config/settings.py [context]
-Modifies: Add `hive_enable_enhanced_knowledge` flag
-Exports: Global feature toggle for enhanced processing
-Success: Settings load with new flag, defaults to True
+Modifies: Add `hive_enable_enhanced_knowledge` flag + `hive_knowledge_config_path` optional override
+Exports: Global feature toggle + custom config path support
+Success: Settings load with new flags, defaults to True + auto-discover config file
 
 ### Group E: Testing & Validation (After D)
 Dependencies: Complete integration
@@ -503,6 +585,7 @@ class ExtractedEntities:
     people: List[str]
     organizations: List[str]
     period: str | None
+    custom: Dict[str, List[str]]  # User-defined custom entities
 
 
 class EntityExtractor:
@@ -525,6 +608,7 @@ class EntityExtractor:
         self.extract_amounts = config.get("extract_amounts", True)
         self.extract_names = config.get("extract_names", True)
         self.extract_organizations = config.get("extract_organizations", True)
+        self.custom_entities = config.get("custom_entities", [])  # User-defined entities
 
     def extract(self, content: str) -> ExtractedEntities:
         """
@@ -541,7 +625,8 @@ class EntityExtractor:
             amounts=self._extract_amounts(content) if self.extract_amounts else [],
             people=self._extract_names(content) if self.extract_names else [],
             organizations=self._extract_orgs(content) if self.extract_organizations else [],
-            period=self._extract_period(content) if self.extract_dates else None
+            period=self._extract_period(content) if self.extract_dates else None,
+            custom=self._extract_custom_entities(content)  # Extract user-defined entities
         )
 
     def _extract_dates(self, content: str) -> List[str]:
@@ -588,6 +673,33 @@ class EntityExtractor:
             return max(set(periods), key=periods.count)
 
         return None
+
+    def _extract_custom_entities(self, content: str) -> Dict[str, List[str]]:
+        """Extract user-defined custom entities."""
+        custom_results = {}
+
+        for entity_config in self.custom_entities:
+            entity_name = entity_config.get("name")
+            patterns = entity_config.get("patterns", [])
+            regex = entity_config.get("regex")
+
+            found = []
+
+            # Pattern-based matching
+            if patterns:
+                for pattern in patterns:
+                    if pattern.lower() in content.lower():
+                        found.append(pattern)
+
+            # Regex-based matching
+            if regex:
+                matches = re.findall(regex, content)
+                found.extend(matches)
+
+            if found:
+                custom_results[entity_name] = sorted(set(found))
+
+        return custom_results
 ```
 
 ### Semantic Chunker Pattern
@@ -746,6 +858,8 @@ uv run mypy lib/knowledge/processors/
 
 ## Validation Checklist
 
+- [ ] PDF library A/B testing complete with documented recommendation
+- [ ] Selected PDF library integrated into semantic chunker
 - [ ] All processor modules follow naming conventions (no "enhanced" prefixes)
 - [ ] TDD workflow followed: tests written before implementation
 - [ ] Configuration driven: all rules in YAML, no hardcoded logic
@@ -763,54 +877,104 @@ uv run mypy lib/knowledge/processors/
 
 ## Configuration Examples
 
-### Minimal Agent Config
+### Dedicated Knowledge Processing Config
+```yaml
+# lib/knowledge/config/knowledge_processing.yaml
+# OR config/knowledge_processing.yaml
+
+processing:
+  enabled: true
+  parallel: true
+  accuracy_threshold: 0.7
+
+type_detection:
+  use_filename: true
+  use_content: true
+  confidence_threshold: 0.7
+
+chunking:
+  method: "semantic"
+  min_size: 500
+  max_size: 1500
+  overlap: 50
+  preserve_tables: true
+  preserve_code_blocks: true
+
+entity_extraction:
+  enabled: true
+  extract_dates: true
+  extract_amounts: true
+  extract_names: true
+  extract_organizations: true
+
+  custom_entities:
+    - name: "products"
+      patterns: ["PIX", "Cartão", "Antecipação", "Boleto"]
+    - name: "locations"
+      patterns: ["São Paulo", "Rio de Janeiro", "Brasil"]
+    - name: "account_numbers"
+      regex: r'\d{4}-\d{4}-\d{4}-\d{4}'
+
+business_unit_detection:
+  enabled: true
+  auto_detect: true
+  keywords:
+    pagbank: ["pix", "conta", "app", "transferencia"]
+    adquirencia: ["antecipacao", "vendas", "maquina"]
+    emissao: ["cartao", "limite", "credito"]
+
+metadata:
+  auto_categorize: true
+  auto_tag: true
+  detect_urgency: true
+```
+
+### Agent Config (Clean - No Processing Rules)
 ```yaml
 # ai/agents/support-agent/config.yaml
 knowledge:
   enabled: true
-  enhanced_processing:
-    enabled: true  # Just enable with defaults
+  csv_file_path: "lib/knowledge/data/knowledge_rag.csv"
+  # Processing config loaded automatically from dedicated file
 ```
 
-### Full Agent Config
-```yaml
-# ai/agents/financial-agent/config.yaml
-knowledge:
-  enabled: true
-  enhanced_processing:
-    enabled: true
-
-    type_detection:
-      use_filename: true
-      use_content: true
-      confidence_threshold: 0.7
-
-    chunking:
-      method: "semantic"
-      min_size: 500
-      max_size: 1500
-      overlap: 50
-      preserve_tables: true
-      preserve_code_blocks: true
-
-    entity_extraction:
-      enabled: true
-      extract_dates: true
-      extract_amounts: true
-      extract_names: true
-      extract_organizations: true
-
-    metadata:
-      auto_categorize: true
-      auto_tag: true
-      detect_business_unit: true
-      detect_urgency: true
-```
-
-### Global Settings Override
-```yaml
+### Environment Variables
+```bash
 # .env
 HIVE_ENABLE_ENHANCED_KNOWLEDGE=true  # Global toggle
+HIVE_KNOWLEDGE_CONFIG_PATH=/path/to/custom/knowledge_processing.yaml  # Optional override
+```
+
+### Config Loader Usage
+```python
+# lib/knowledge/config/config_loader.py
+from pathlib import Path
+import yaml
+from typing import Optional
+
+def load_knowledge_config(custom_path: Optional[Path] = None) -> dict:
+    """
+    Load knowledge processing configuration from dedicated YAML file.
+
+    Search order:
+    1. Custom path from environment variable
+    2. lib/knowledge/config/knowledge_processing.yaml
+    3. config/knowledge_processing.yaml
+    4. Built-in defaults
+    """
+    search_paths = [
+        custom_path,
+        Path("lib/knowledge/config/knowledge_processing.yaml"),
+        Path("config/knowledge_processing.yaml"),
+    ]
+
+    for path in search_paths:
+        if path and path.exists():
+            with path.open() as f:
+                return yaml.safe_load(f)
+
+    # Return built-in defaults if no config found
+    return get_default_config()
 ```
 
 ## Before/After Examples
@@ -884,31 +1048,32 @@ Metadata: {"page": 1, "chunk": 1, "chunk_size": 100}
 - **Entity Extraction:** >85% accuracy for dates/amounts
 - **Search Quality:** >80% relevant results with filters
 
-## Migration Strategy (Optional)
+## Forward-Only Processing Strategy
 
-**Reprocess Existing UI Uploads:**
-```sql
--- Identify UI-uploaded documents
-SELECT id, name, meta_data
-FROM agno.knowledge_base
-WHERE meta_data->>'source' IS NULL
-  AND meta_data->>'chunk_size' IS NOT NULL;
+**No Bulk Reprocessing:**
+- Existing documents in database remain unchanged
+- Enhancement applies ONLY to new Knowledge API insertions
+- Clean separation: old data untouched, new data enhanced automatically
+- Zero risk to existing knowledge base
 
--- Strategy: On-demand reprocessing
--- 1. Keep existing documents as-is
--- 2. New uploads automatically enhanced
--- 3. Optional bulk reprocessing via API endpoint
-```
-
-**Bulk Reprocessing API Endpoint:**
+**Implementation:**
 ```python
-# api/routes/knowledge_router.py
-@router.post("/knowledge/reprocess")
-async def reprocess_documents(
-    authenticated: bool = Depends(require_api_key),
-    document_ids: List[str] = Body(...)
-):
-    """Reprocess UI-uploaded documents with enhanced pipeline."""
-    # Load documents, process through pipeline, update database
-    pass
+# lib/knowledge/row_based_csv_knowledge.py
+def _load_content(self) -> List[Document]:
+    """Process only new API insertions, leave existing documents as-is."""
+    documents = super()._load_content()
+
+    if not self.processor:
+        return documents
+
+    enhanced_docs = []
+    for doc in documents:
+        # Only process documents from Knowledge API (not CSV, not pre-existing)
+        if self._is_api_inserted_document(doc) and self._is_new_document(doc):
+            processed = self.processor.process(doc.to_dict())
+            # ... enhancement logic
+        else:
+            enhanced_docs.append(doc)  # Keep unchanged
+
+    return enhanced_docs
 ```

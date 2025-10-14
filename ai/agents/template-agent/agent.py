@@ -1,39 +1,35 @@
 """
 Template Agent - Foundational agent template for specialized agent development
+
+IMPORTANT: This agent uses the standard registry/proxy system for creation.
+Do NOT implement custom factory functions that bypass AgnoAgentProxy.
+
+The agent is created automatically via:
+  AgentRegistry.get_agent("template-agent")
+    → create_agent() (version_factory.py)
+      → VersionFactory._create_agent()
+        → AgnoAgentProxy.create_agent()
+          → Agent(**filtered_params)
+
+Configuration is loaded from config.yaml and processed through the proxy system
+which handles:
+  - Knowledge base attachment (via enable_knowledge: true in config)
+  - Memory configuration (via memory: section in config)
+  - Storage/database setup (via db: section in config)
+  - Model resolution (via model: section in config)
+  - All Agno-native parameters
+
+USAGE:
+  from ai.agents.registry import AgentRegistry
+
+  agent = await AgentRegistry.get_agent("template-agent", session_id="...")
+  response = await agent.arun(input="Hello", session_id="...")
+
+DO NOT create custom factory functions in this file - they will be ignored
+by the registry system and can cause message storage bugs.
 """
 
-from agno.agent import Agent
+# This file intentionally left minimal - agent creation handled by registry/proxy
+# No custom factory function needed - the registry auto-discovers from config.yaml
 
-from lib.knowledge import get_agentos_knowledge_base
-
-
-def get_template_agent(**kwargs) -> Agent:
-    """
-    Create and return a template agent instance with knowledge base.
-
-    This agent serves as a foundational template for creating
-    specialized domain-specific agents with standardized patterns.
-    Includes knowledge base integration for AgentOS discovery.
-
-    Returns:
-        Agent: Configured template agent instance with knowledge
-    """
-    # Get AgentOS-compatible knowledge base (pure Agno Knowledge instance)
-    # This makes URL/PDF uploads via AgentOS UI work correctly
-    # For CSV search functionality, the knowledge base still processes CSV data
-    knowledge = get_agentos_knowledge_base(
-        num_documents=5,  # Number of relevant documents to retrieve
-        csv_path="lib/knowledge/data/knowledge_rag.csv",
-    )
-
-    # Pass knowledge directly to Agent initialization (not via YAML)
-    # This ensures proper object type instead of dict from YAML parsing
-    agent = Agent.from_yaml(
-        __file__.replace("agent.py", "config.yaml"), knowledge=knowledge, **kwargs
-    )
-
-    return agent
-
-
-# Export the agent creation function
-__all__ = ["get_template_agent"]
+__all__ = []  # No exports - agent created via registry
