@@ -111,6 +111,12 @@ class HiveSettings(BaseSettings):
     # PERFORMANCE & LIMITS (Optional with defaults)
     # =========================================================================
     hive_max_knowledge_results: int = Field(10, description="Max knowledge search results")
+
+    # Knowledge enhancement settings
+    hive_enable_enhanced_knowledge: bool = Field(
+        True, description="Enable enhanced document processing for UI uploads"
+    )
+
     hive_memory_retention_days: int = Field(30, description="Memory retention period")
     hive_max_memory_entries: int = Field(1000, description="Max memory entries")
     hive_cache_ttl: int = Field(300, description="Cache TTL in seconds")

@@ -1,0 +1,33 @@
+# Knowledge Processing Configuration
+# Default configuration for enhanced document processing
+
+# Enable/disable the entire processing pipeline
+enabled: true
+
+# Document type detection configuration
+type_detection:
+  use_filename: true              # Use filename patterns for detection
+  use_content: true               # Use content keywords for detection
+  confidence_threshold: 0.7       # Minimum confidence (0.0-1.0)
+
+# Entity extraction configuration
+entity_extraction:
+  enabled: true                   # Enable entity extraction
+  extract_dates: true             # Extract dates (multiple formats)
+  extract_amounts: true           # Extract monetary amounts (R$)
+  extract_names: true             # Extract person names
+  extract_organizations: true     # Extract organization names
+
+# Semantic chunking configuration
+chunking:
+  method: "semantic"              # Chunking method: "semantic" or "fixed"
+  min_size: 500                   # Minimum chunk size (characters)
+  max_size: 1500                  # Maximum chunk size (characters)
+  overlap: 50                     # Overlap between chunks (characters)
+  preserve_tables: true           # Keep tables intact within chunks
+
+# Metadata enrichment configuration
+metadata:
+  auto_categorize: true           # Automatically categorize documents
+  auto_tag: true                  # Automatically generate tags
+  detect_business_unit: true      # Detect and assign business unit
