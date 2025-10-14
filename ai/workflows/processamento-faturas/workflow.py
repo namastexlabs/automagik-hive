@@ -4242,12 +4242,6 @@ async def execute_multi_hop_pipeline(
                 completed_steps += 1
                 continue
 
-        # Wait if needed (e.g., 3 minutes after main-minut-gen)
-        if step_config.get("wait_time_seconds"):
-            wait = step_config["wait_time_seconds"]
-            logger.info(f"⏳ Waiting {wait}s for processing...")
-            await asyncio.sleep(wait)
-
         # Execute pipeline action
         success, result = await execute_pipeline_action(
             action,
@@ -4300,6 +4294,13 @@ async def execute_multi_hop_pipeline(
         current_status_idx = _status_index(current_status)
         cnpj_group["status"] = next_status.value
         cnpj_entry["status"] = next_status.value
+
+        # Wait AFTER successful completion if configured (e.g., post-generation cool down)
+        if step_config.get("wait_time_seconds"):
+            wait = step_config["wait_time_seconds"]
+            if wait:
+                logger.info(f"⏳ Waiting {wait}s before proceeding to next step...")
+                await asyncio.sleep(wait)
 
     # Pipeline completed successfully!
     return {
