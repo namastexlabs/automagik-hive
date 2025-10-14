@@ -375,10 +375,10 @@ def test_content_format_variations(mock_vector_db):
     try:
         # The KB should adapt to different column names
         kb = RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
-        
+
         # Should still create documents
         assert len(kb.documents) >= 0
-        
+
         # Check that content is created from available columns
         if len(kb.documents) > 0:
             doc_content = kb.documents[0].content
@@ -386,3 +386,91 @@ def test_content_format_variations(mock_vector_db):
             assert len(doc_content) > 0
     finally:
         Path(csv_path).unlink(missing_ok=True)
+
+
+def test_docling_cpu_enforcement():
+    """Test that DocumentConverter initialization enforces CPU-only execution.
+
+    This regression test ensures Docling always uses CPU mode on macOS
+    to avoid MPS backend compatibility issues. The implementation uses
+    explicit pipeline configuration (not environment variables).
+
+    The test verifies that DocumentConverter is initialized with:
+    1. AcceleratorOptions(device=AcceleratorDevice.CPU)
+    2. Proper PdfPipelineOptions configuration
+    3. Format options passed to DocumentConverter constructor
+    """
+    from unittest.mock import patch, MagicMock, call
+
+    # Skip test if docling not available
+    try:
+        from docling.document_converter import DocumentConverter
+        from docling.datamodel.pipeline_options import AcceleratorDevice
+    except ImportError:
+        pytest.skip("Docling not available for testing")
+
+    # Create fake PDF bytes for testing
+    fake_pdf_bytes = b"%PDF-1.4 fake pdf content"
+
+    # Track DocumentConverter initialization arguments
+    captured_init_args = {}
+
+    # Original __init__ to capture arguments
+    original_init = DocumentConverter.__init__
+
+    def capturing_init(self, *args, **kwargs):
+        """Capture DocumentConverter initialization arguments."""
+        # Record format_options passed to DocumentConverter
+        captured_init_args['format_options'] = kwargs.get('format_options')
+        # Don't actually initialize to avoid heavy processing
+        return None
+
+    # Patch DocumentConverter to intercept initialization
+    with patch.object(DocumentConverter, '__init__', new=capturing_init):
+        # Also patch convert() to avoid execution
+        with patch.object(DocumentConverter, 'convert', return_value=MagicMock()):
+            # Import the function being tested
+            from lib.knowledge.row_based_csv_knowledge import extract_text_from_pdf_bytes
+
+            # Execute the PDF extraction (which should configure CPU enforcement)
+            try:
+                result = extract_text_from_pdf_bytes(fake_pdf_bytes)
+            except Exception:
+                # We expect some exceptions since we're mocking
+                pass
+
+    # CRITICAL ASSERTIONS
+
+    # 1. format_options must be provided
+    assert captured_init_args.get('format_options') is not None, (
+        "CPU enforcement not configured: format_options should be provided to DocumentConverter"
+    )
+
+    # 2. Verify PDF format options are present
+    format_options = captured_init_args['format_options']
+    from docling.datamodel.base_models import InputFormat
+    assert InputFormat.PDF in format_options, (
+        "PDF format options not found in DocumentConverter configuration"
+    )
+
+    # 3. Verify pipeline options with CPU acceleration are configured
+    pdf_format_option = format_options[InputFormat.PDF]
+    assert hasattr(pdf_format_option, 'pipeline_options'), (
+        "pipeline_options not configured in PdfFormatOption"
+    )
+
+    pipeline_options = pdf_format_option.pipeline_options
+    assert hasattr(pipeline_options, 'accelerator_options'), (
+        "accelerator_options not configured in PdfPipelineOptions"
+    )
+
+    # 4. Verify CPU device is explicitly set
+    accelerator_options = pipeline_options.accelerator_options
+    assert hasattr(accelerator_options, 'device'), (
+        "device not configured in AcceleratorOptions"
+    )
+
+    assert accelerator_options.device == AcceleratorDevice.CPU, (
+        f"CPU enforcement not set: device should be AcceleratorDevice.CPU "
+        f"but was {accelerator_options.device}"
+    )

@@ -6,7 +6,6 @@ semantic chunking, metadata enrichment) with parallel execution where possible.
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
 
@@ -178,6 +177,9 @@ class DocumentProcessor:
     ) -> tuple[Any, ExtractedEntities]:
         """Execute parallel analysis: type detection + entity extraction.
 
+        Uses ThreadPoolExecutor instead of asyncio to avoid event loop conflicts
+        when called from async contexts (FastAPI request handlers).
+
         Args:
             filename: Document filename for type detection
             content: Document content for analysis
@@ -185,28 +187,19 @@ class DocumentProcessor:
         Returns:
             Tuple of (detected_type, extracted_entities)
         """
-        # Create async tasks for parallel execution
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        from concurrent.futures import ThreadPoolExecutor
 
-        try:
-            # Run type detection and entity extraction in parallel
-            doc_type_task = loop.run_in_executor(
-                None, self.type_detector.detect, filename, content
-            )
-            entities_task = loop.run_in_executor(
-                None, self.entity_extractor.extract, content
-            )
+        # Use thread pool for parallel execution (no event loop needed)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            # Submit both tasks
+            type_future = executor.submit(self.type_detector.detect, filename, content)
+            entities_future = executor.submit(self.entity_extractor.extract, content)
 
-            # Wait for both tasks to complete
-            doc_type, entities = loop.run_until_complete(
-                asyncio.gather(doc_type_task, entities_task)
-            )
+            # Wait for both to complete
+            doc_type = type_future.result()
+            entities = entities_future.result()
 
             return doc_type, entities
-
-        finally:
-            loop.close()
 
     def _enrich_metadata(
         self,

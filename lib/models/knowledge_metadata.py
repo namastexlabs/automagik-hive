@@ -31,7 +31,7 @@ class ExtractedEntities(BaseModel):
     amounts: list[float] = Field(default_factory=list, description="Extracted monetary amounts")
     people: list[str] = Field(default_factory=list, description="Extracted person names")
     organizations: list[str] = Field(default_factory=list, description="Extracted organization names")
-    period: str | None = Field(None, description="Most common period derived from dates")
+    period: str | None = Field(default=None, description="Most common period derived from dates")
 
     @field_validator("amounts")
     @classmethod
@@ -52,7 +52,7 @@ class EnhancedMetadata(BaseModel):
 
     # Business context
     business_unit: str = Field(default="", description="Associated business unit")
-    period: str | None = Field(None, description="Document period (e.g., 2025-07)")
+    period: str | None = Field(default=None, description="Document period (e.g., 2025-07)")
 
     # Extracted entities
     extracted_entities: ExtractedEntities = Field(

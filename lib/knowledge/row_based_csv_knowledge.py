@@ -4,18 +4,32 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import io
+import json
 import logging
 from collections.abc import Awaitable, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
+from agno.db.schemas.knowledge import KnowledgeRow
 from agno.knowledge import Knowledge
 from agno.knowledge.document.base import Document
 from agno.utils import log as agno_log
 from agno.utils.string import generate_id
 from agno.vectordb.base import VectorDb
+from pypdf import PdfReader
+
+try:
+    from docling.document_converter import DocumentConverter, PdfFormatOption
+    from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.pipeline_options import PdfPipelineOptions, AcceleratorOptions, AcceleratorDevice
+    DOCLING_AVAILABLE = True
+except ImportError:
+    DOCLING_AVAILABLE = False
 from tqdm import tqdm
 
 from lib.logging import logger
@@ -59,6 +73,105 @@ def _temporary_agno_logger_filter() -> Iterator[None]:
         yield
     finally:  # pragma: no branch - symmetrical clean-up
         agno_logger.removeFilter(filter_instance)
+
+
+def extract_text_from_pdf_bytes(pdf_bytes: bytes) -> str:
+    """
+    Extract text from PDF bytes with automatic fallback strategy.
+
+    Strategy:
+    1. Try Docling first (if available) - best quality
+    2. Automatically fall back to pypdf if Docling fails
+    3. pypdf is reliable and works on all systems
+
+    Args:
+        pdf_bytes: Raw PDF file bytes
+
+    Returns:
+        Extracted text content
+    """
+    # Try Docling first (best quality but may have compatibility issues)
+    if DOCLING_AVAILABLE:
+        try:
+            import tempfile
+            import os
+
+            # Write bytes to temporary file (Docling needs file path)
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
+                tmp_file.write(pdf_bytes)
+                tmp_path = tmp_file.name
+
+            try:
+                logger.info("Attempting PDF extraction with Docling")
+
+                # Force CPU-only processing for Docling to avoid MPS/GPU issues
+                # Must configure pipeline options explicitly - environment variables don't work
+                pipeline_options = PdfPipelineOptions()
+                pipeline_options.accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CPU)
+
+                converter = DocumentConverter(
+                    format_options={
+                        InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+                    }
+                )
+                result = converter.convert(tmp_path)
+                extracted_text = result.document.export_to_markdown()
+
+                if extracted_text and len(extracted_text.strip()) > 0:
+                    logger.info(
+                        "PDF extraction successful with Docling",
+                        text_length=len(extracted_text),
+                        method="docling"
+                    )
+                    return extracted_text
+
+            finally:
+                # Clean up temporary file
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
+
+        except Exception as e:
+            logger.warning(
+                "Docling extraction failed, falling back to pypdf",
+                error_type=type(e).__name__,
+                error_message=str(e)[:100]  # Truncate long errors
+            )
+
+    # Fallback to pypdf (reliable, works everywhere)
+    try:
+        logger.info("Using pypdf for PDF extraction")
+        pdf_file = io.BytesIO(pdf_bytes)
+        pdf_reader = PdfReader(pdf_file)
+
+        text_parts = []
+        for page in pdf_reader.pages:
+            text = page.extract_text()
+            if text:
+                text_parts.append(text)
+
+        extracted_text = "\n\n".join(text_parts)
+
+        if extracted_text and len(extracted_text.strip()) > 0:
+            logger.info(
+                "PDF extraction successful with pypdf",
+                page_count=len(pdf_reader.pages),
+                text_length=len(extracted_text),
+                method="pypdf"
+            )
+            return extracted_text
+        else:
+            logger.error("pypdf returned empty text")
+            return ""
+
+    except Exception as e:
+        logger.error(
+            "pypdf extraction failed",
+            error=str(e),
+            error_type=type(e).__name__
+        )
+        return ""
 
 
 class RowBasedCSVKnowledgeBase:
@@ -435,6 +548,69 @@ class RowBasedCSVKnowledgeBase:
             return
         self._signatures[doc_id] = signature
 
+        # === NEW: Insert into contents_db FIRST (agno_knowledge) ===
+        contents_db = knowledge.contents_db
+        if contents_db is not None:
+            # Debug logging to understand contents_db interface
+            logger.info(
+                "Contents DB available for insertion",
+                contents_db_type=type(contents_db).__name__,
+                has_insert=hasattr(contents_db, 'insert'),
+                has_upsert=hasattr(contents_db, 'upsert'),
+                has_exists=hasattr(contents_db, 'exists'),
+                has_delete=hasattr(contents_db, 'delete'),
+                available_methods=[m for m in dir(contents_db) if not m.startswith('_') and callable(getattr(contents_db, m, None))][:15]
+            )
+
+            try:
+                # Serialize metadata for JSON storage (handle datetime, Enum, etc.)
+                serialized_metadata = self._serialize_metadata_for_db(document.meta_data or {})
+
+                # Create KnowledgeRow instance with required fields
+                knowledge_row = KnowledgeRow(
+                    id=doc_id,
+                    name=getattr(document, 'name', None) or doc_id,
+                    description=document.content[:500],  # Use first 500 chars as description
+                    metadata=serialized_metadata,  # Use serialized metadata
+                )
+
+                # Use the correct Agno method: upsert_knowledge_content
+                result = contents_db.upsert_knowledge_content(knowledge_row)
+
+                logger.info(
+                    "Content metadata inserted into agno_knowledge",
+                    document_id=doc_id,
+                    table="agno_knowledge",
+                    has_metadata=bool(serialized_metadata),
+                    upsert_result=result is not None
+                )
+            except Exception as exc:
+                # Enhanced error logging with full traceback
+                import traceback
+                error_traceback = traceback.format_exc()
+
+                logger.error(
+                    "Failed to insert into contents_db (agno_knowledge)",
+                    document_id=doc_id,
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    traceback=error_traceback[:500]  # First 500 chars
+                )
+
+                # Force print to console for visibility
+                print(f"\n{'='*60}")
+                print(f"CONTENTS_DB INSERTION ERROR")
+                print(f"{'='*60}")
+                print(f"Document ID: {doc_id}")
+                print(f"Error Type: {type(exc).__name__}")
+                print(f"Error Message: {str(exc)}")
+                print(f"\nFull Traceback:")
+                print(error_traceback)
+                print(f"{'='*60}\n")
+
+                # Don't fail the entire operation, continue to vector_db
+        # === END NEW CODE ===
+
         vector_db = knowledge.vector_db
         if vector_db is None:
             logger.warning("Cannot add document without vector database")
@@ -711,7 +887,7 @@ class RowBasedCSVKnowledgeBase:
             raise ValueError("No knowledge instance available")
         return self.knowledge._build_content_hash(content)
 
-    def _is_ui_uploaded_document(self, doc: Document) -> bool:
+    def _is_ui_uploaded_document(self, doc: Any) -> bool:
         """
         Detect if document came from UI upload vs CSV load.
 
@@ -719,16 +895,21 @@ class RowBasedCSVKnowledgeBase:
         CSV loads have rich markers: source, schema_type, row_index
 
         Args:
-            doc: Document to check
+            doc: Document or Content object to check
 
         Returns:
             True if UI upload, False if CSV load
         """
-        if not doc.meta_data:
+        # Get metadata - handle both Document (meta_data) and Content (metadata) objects
+        meta = None
+        if hasattr(doc, 'meta_data'):
+            meta = doc.meta_data
+        elif hasattr(doc, 'metadata'):
+            meta = doc.metadata
+
+        if not meta:
             # Default to UI upload if no metadata
             return True
-
-        meta = doc.meta_data
 
         # CSV markers take precedence (definitive identification)
         has_csv_markers = any([
@@ -746,94 +927,338 @@ class RowBasedCSVKnowledgeBase:
 
         return has_ui_markers
 
-    def _load_content(
+    def _serialize_metadata_for_db(self, metadata: dict[str, Any]) -> dict[str, Any]:
+        """
+        Convert metadata to JSON-serializable format for database storage.
+
+        Handles:
+        - datetime objects → ISO format strings
+        - Enum objects → string values
+        - Lists/dicts → recursive serialization
+
+        Args:
+            metadata: Raw metadata dictionary
+
+        Returns:
+            JSON-serializable metadata dictionary
+        """
+        serialized = {}
+        for key, value in metadata.items():
+            if isinstance(value, datetime):
+                serialized[key] = value.isoformat()
+            elif isinstance(value, Enum):
+                serialized[key] = value.value
+            elif isinstance(value, dict):
+                serialized[key] = self._serialize_metadata_for_db(value)
+            elif isinstance(value, list):
+                serialized[key] = [
+                    self._serialize_metadata_for_db({"item": item})["item"]
+                    if isinstance(item, dict)
+                    else item.isoformat() if isinstance(item, datetime)
+                    else item.value if isinstance(item, Enum)
+                    else item
+                    for item in value
+                ]
+            else:
+                serialized[key] = value
+
+        return serialized
+
+    async def _load_content(
         self,
-        content: list[Document] | Document,
+        content: list[Any] | Any,
         upsert: bool = False,
         skip_if_exists: bool = True,
         include: list[str] | None = None,
         exclude: list[str] | None = None,
-    ) -> list[Document]:
+    ) -> None:
         """
         Load content with optional processing for UI uploads.
 
-        - UI-uploaded documents: Enhanced with DocumentProcessor
-        - CSV-loaded documents: Preserved unchanged
+        - UI-uploaded documents: Enhanced with DocumentProcessor and persisted to database
+        - CSV-loaded documents: Preserved unchanged and persisted to database
 
         Args:
-            content: Documents to load (list or single document)
+            content: Content objects to load (list or single)
             upsert: Whether to upsert documents
             skip_if_exists: Skip existing documents
             include: Fields to include
             exclude: Fields to exclude
 
         Returns:
-            List of processed documents
+            None (persistence handled internally)
         """
         # Normalize input to list
-        documents = content if isinstance(content, list) else [content]
+        contents = content if isinstance(content, list) else [content]
 
-        # If no processor configured, return unchanged
+        # If no processor configured, delegate to base Knowledge for persistence
         if not self.processor:
-            return documents
+            if self.knowledge is not None:
+                for content_obj in contents:
+                    # Call base Knowledge._load_content for each content object
+                    await self.knowledge._load_content(
+                        content_obj, upsert, skip_if_exists, include, exclude
+                    )
+            return
 
         # Process documents through enhancement pipeline
-        enhanced_docs: list[Document] = []
+        enhanced_contents: list[Any] = []
 
-        for doc in documents:
+        for content_obj in contents:
             # Check if this is a UI upload
-            is_ui_upload = self._is_ui_uploaded_document(doc)
+            is_ui_upload = self._is_ui_uploaded_document(content_obj)
 
             if is_ui_upload:
                 try:
+                    logger.info(
+                        "Starting document processing",
+                        content_id=getattr(content_obj, 'id', 'unknown'),
+                        has_content_attr=hasattr(content_obj, 'content'),
+                        has_file_data=hasattr(content_obj, 'file_data'),
+                        has_metadata=hasattr(content_obj, 'metadata'),
+                        has_meta_data=hasattr(content_obj, 'meta_data')
+                    )
+
+                    # Get content text - handle both Document and Content objects
+                    content_text = None
+                    if hasattr(content_obj, 'content'):
+                        content_text = content_obj.content
+                        logger.info("Extracted content from .content attribute", content_length=len(content_text) if content_text else 0)
+                    elif hasattr(content_obj, 'file_data') and content_obj.file_data:
+                        # Content object with file_data (Pydantic dataclass)
+                        raw_content = content_obj.file_data.content
+
+                        # Check if content is bytes (PDF) or string (text file)
+                        if isinstance(raw_content, bytes):
+                            # Extract text from PDF bytes
+                            logger.info("Detected PDF bytes, extracting text...", byte_length=len(raw_content))
+                            content_text = extract_text_from_pdf_bytes(raw_content)
+                            logger.info("PDF text extracted", content_length=len(content_text) if content_text else 0)
+                        else:
+                            # Already text content
+                            content_text = raw_content
+                            logger.info("Extracted content from .file_data", content_length=len(content_text) if content_text else 0)
+
+                    if not content_text:
+                        logger.warning(
+                            "No content text found in object",
+                            object_id=getattr(content_obj, 'id', 'unknown')
+                        )
+                        enhanced_contents.append(content_obj)
+                        continue
+
                     # Process document through enhancement pipeline
+                    logger.info(
+                        "Calling document processor",
+                        content_id=getattr(content_obj, 'id', 'unknown'),
+                        content_length=len(content_text),
+                        processor_exists=self.processor is not None
+                    )
+
                     processed = self.processor.process({
-                        "id": doc.id,
-                        "name": doc.name or "unknown",
-                        "content": doc.content
+                        "id": getattr(content_obj, 'id', 'unknown'),
+                        "name": getattr(content_obj, 'name', None) or "unknown",
+                        "content": content_text
                     })
+
+                    logger.info(
+                        "Processor completed",
+                        content_id=getattr(content_obj, 'id', 'unknown'),
+                        chunks_created=len(processed.chunks) if processed and processed.chunks else 0
+                    )
+
+                    # Check for processing errors FIRST
+                    if processed.processing_errors:
+                        logger.error(
+                            "Document processing encountered errors",
+                            content_id=getattr(content_obj, 'id', 'unknown'),
+                            errors=processed.processing_errors,
+                            duration_ms=processed.processing_duration_ms,
+                            error_count=len(processed.processing_errors)
+                        )
+                        # Print errors to console for visibility
+                        print(f"\n{'='*60}")
+                        print(f"DOCUMENT PROCESSING ERRORS")
+                        print(f"{'='*60}")
+                        print(f"Content ID: {getattr(content_obj, 'id', 'unknown')}")
+                        print(f"Error count: {len(processed.processing_errors)}")
+                        print(f"\nErrors:")
+                        for idx, error in enumerate(processed.processing_errors, 1):
+                            print(f"  {idx}. {error}")
+                        print(f"{'='*60}\n")
+                        enhanced_contents.append(content_obj)
+                        continue
 
                     # If no chunks produced, keep original
                     if not processed.chunks:
                         logger.warning(
-                            "No chunks produced for document",
-                            document_id=doc.id
+                            "No chunks produced for content",
+                            content_id=getattr(content_obj, 'id', 'unknown')
                         )
-                        enhanced_docs.append(doc)
+                        enhanced_contents.append(content_obj)
                         continue
 
-                    # Create enhanced documents from semantic chunks
-                    original_meta = doc.meta_data or {}
+                    # Get original metadata
+                    original_meta = {}
+                    if hasattr(content_obj, 'meta_data'):
+                        original_meta = content_obj.meta_data or {}
+                    elif hasattr(content_obj, 'metadata'):
+                        original_meta = content_obj.metadata or {}
+
                     enriched_meta = processed.metadata.model_dump()
 
-                    for chunk in processed.chunks:
-                        # Merge original metadata with chunk metadata and enriched metadata
-                        chunk_meta = {**original_meta}  # Start with original
-                        if chunk.get("metadata"):
-                            chunk_meta.update(chunk["metadata"])  # Add chunk-specific
-                        chunk_meta.update(enriched_meta)  # Add enriched
+                    # For Content objects, update the existing object's metadata
+                    # For Document objects, create new Document instances
+                    if hasattr(content_obj, 'metadata'):  # Content object
+                        # Merge metadata for the first chunk
+                        first_chunk = processed.chunks[0]
+                        chunk_meta = {**original_meta}
+                        if first_chunk.get("metadata"):
+                            chunk_meta.update(first_chunk["metadata"])
+                        chunk_meta.update(enriched_meta)
 
-                        enhanced_doc = Document(
-                            id=f"{doc.id}_chunk_{chunk['index']}",
-                            name=doc.name,
-                            content=chunk["content"],
-                            meta_data=chunk_meta
+                        # Update the Content object's metadata
+                        content_obj.metadata = chunk_meta
+                        enhanced_contents.append(content_obj)
+
+                        logger.info(
+                            "Enhanced content with rich metadata",
+                            content_id=content_obj.id,
+                            document_type=enriched_meta.get('document_type'),
+                            business_unit=enriched_meta.get('business_unit'),
+                            chunks=len(processed.chunks)
                         )
-                        enhanced_docs.append(enhanced_doc)
+                    else:  # Document object
+                        # Create new Document for each chunk
+                        for chunk in processed.chunks:
+                            chunk_meta = {**original_meta}
+                            if chunk.get("metadata"):
+                                chunk_meta.update(chunk["metadata"])
+                            chunk_meta.update(enriched_meta)
+
+                            enhanced_doc = Document(
+                                id=f"{content_obj.id}_chunk_{chunk['index']}",
+                                name=getattr(content_obj, 'name', None),
+                                content=chunk["content"],
+                                meta_data=chunk_meta
+                            )
+                            enhanced_contents.append(enhanced_doc)
 
                 except Exception as e:
-                    # Log error and keep original document
+                    # Log error with ALL details - use print() to force console output
+                    import traceback
+
+                    error_details = f"""
+================================
+PROCESSING ERROR DETAILS
+================================
+Content ID: {getattr(content_obj, 'id', 'unknown')}
+Error Type: {type(e).__name__}
+Error Message: {str(e)}
+
+Stack Trace:
+{traceback.format_exc()}
+================================
+"""
+
+                    # Force print to console
+                    print(error_details)
+
+                    # Also log it
                     logger.error(
-                        "Processing failed for document",
-                        document_id=doc.id,
-                        error=str(e)
+                        "Processing failed for content",
+                        content_id=getattr(content_obj, 'id', 'unknown'),
+                        error_type=type(e).__name__,
+                        error_message=str(e)
                     )
-                    enhanced_docs.append(doc)
+
+                    enhanced_contents.append(content_obj)
             else:
                 # Keep CSV-loaded documents unchanged
-                enhanced_docs.append(doc)
+                enhanced_contents.append(content_obj)
 
-        return enhanced_docs
+        # Persist enhanced contents to database using base Knowledge persistence
+        if self.knowledge is not None and enhanced_contents:
+            logger.info(
+                "Persisting enhanced content to database",
+                content_count=len(enhanced_contents),
+                has_vector_db=self.knowledge.vector_db is not None
+            )
+
+            # Convert enhanced contents to Document objects for persistence
+            documents_to_persist: list[Document] = []
+
+            for enhanced_obj in enhanced_contents:
+                # Handle both Content and Document objects
+                if hasattr(enhanced_obj, 'file_data'):
+                    # Content object - convert to Document for persistence
+                    metadata_dict = enhanced_obj.metadata if hasattr(enhanced_obj, 'metadata') else {}
+
+                    # Get content text
+                    content_text = ""
+                    if hasattr(enhanced_obj, 'content'):
+                        content_text = enhanced_obj.content
+                    elif hasattr(enhanced_obj, 'file_data') and enhanced_obj.file_data:
+                        raw_content = enhanced_obj.file_data.content
+                        if isinstance(raw_content, bytes):
+                            content_text = extract_text_from_pdf_bytes(raw_content)
+                        else:
+                            content_text = raw_content
+
+                    if content_text:
+                        # Serialize metadata for JSON storage (handle datetime, Enum, etc.)
+                        serialized_metadata = self._serialize_metadata_for_db(metadata_dict)
+
+                        doc = Document(
+                            id=enhanced_obj.id,
+                            name=getattr(enhanced_obj, 'name', None),
+                            content=content_text,
+                            meta_data=serialized_metadata
+                        )
+                        documents_to_persist.append(doc)
+
+                        logger.debug(
+                            "Converted Content to Document for persistence",
+                            content_id=enhanced_obj.id,
+                            metadata_keys=list(metadata_dict.keys()) if metadata_dict else []
+                        )
+                else:
+                    # Already a Document object
+                    documents_to_persist.append(enhanced_obj)
+
+            # Persist all documents using the internal _add_document method
+            for doc in documents_to_persist:
+                try:
+                    self._add_document(doc, upsert=upsert, skip_if_exists=skip_if_exists)
+
+                    logger.info(
+                        "Document persisted successfully",
+                        document_id=doc.id,
+                        has_metadata=bool(doc.meta_data),
+                        metadata_keys=list(doc.meta_data.keys()) if doc.meta_data else []
+                    )
+                except Exception as persist_error:
+                    logger.error(
+                        "Failed to persist document",
+                        document_id=doc.id,
+                        error_type=type(persist_error).__name__,
+                        error_message=str(persist_error)
+                    )
+                    # Print to console for visibility
+                    print(f"\n{'='*60}")
+                    print(f"DATABASE PERSISTENCE ERROR")
+                    print(f"{'='*60}")
+                    print(f"Document ID: {doc.id}")
+                    print(f"Error: {type(persist_error).__name__}: {str(persist_error)}")
+                    print(f"{'='*60}\n")
+
+            logger.info(
+                "Database persistence completed",
+                persisted_count=len(documents_to_persist)
+            )
+
+        # Return None to match base Knowledge signature
+        return None
 
     def patch_content(self, content) -> dict[str, Any] | None:
         """
