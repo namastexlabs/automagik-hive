@@ -19,6 +19,8 @@ from agno.vectordb.base import VectorDb
 from tqdm import tqdm
 
 from lib.logging import logger
+from lib.knowledge.config.processing_config import ProcessingConfig
+from lib.knowledge.processors.document_processor import DocumentProcessor
 
 try:  # Optional import for typing without creating hard dependency at runtime
     from agno.db.base import BaseDb
@@ -65,15 +67,31 @@ class RowBasedCSVKnowledgeBase:
     def __init__(
         self,
         csv_path: str,
-        vector_db: VectorDb | None,
+        vector_db: VectorDb | None = None,
         contents_db: BaseDb | None = None,
         *,
         knowledge: Knowledge | None = None,
+        processing_config: ProcessingConfig | None = None,
     ) -> None:
         self._csv_path = Path(csv_path)
         self.num_documents = 10
         self.valid_metadata_filters: set[str] | None = None
         self._signatures: dict[str, DocumentSignature] = {}
+
+        # Store processing config and initialize processor if enabled
+        self.processing_config = processing_config
+        self.processor: DocumentProcessor | None = None
+
+        if processing_config is not None and processing_config.enabled:
+            # Initialize DocumentProcessor with config dicts
+            self.processor = DocumentProcessor(
+                type_detection_config=processing_config.type_detection.model_dump(),
+                entity_extraction_config=processing_config.entity_extraction.model_dump(),
+                chunking_config=processing_config.chunking.model_dump(),
+                metadata_config=processing_config.metadata.model_dump(),
+            )
+            # Store config reference on processor for tests
+            self.processor.config = processing_config
 
         if vector_db is not None:
             self.knowledge = knowledge or Knowledge(
@@ -693,24 +711,129 @@ class RowBasedCSVKnowledgeBase:
             raise ValueError("No knowledge instance available")
         return self.knowledge._build_content_hash(content)
 
-    async def _load_content(
+    def _is_ui_uploaded_document(self, doc: Document) -> bool:
+        """
+        Detect if document came from UI upload vs CSV load.
+
+        UI uploads have simple metadata: page, chunk, chunk_size
+        CSV loads have rich markers: source, schema_type, row_index
+
+        Args:
+            doc: Document to check
+
+        Returns:
+            True if UI upload, False if CSV load
+        """
+        if not doc.meta_data:
+            # Default to UI upload if no metadata
+            return True
+
+        meta = doc.meta_data
+
+        # CSV markers take precedence (definitive identification)
+        has_csv_markers = any([
+            meta.get("source") == "knowledge_rag_csv",
+            meta.get("schema_type") == "question_answer",
+            meta.get("schema_type") == "problem_solution",
+            meta.get("row_index") is not None
+        ])
+
+        if has_csv_markers:
+            return False
+
+        # UI uploads have minimal metadata with these specific fields
+        has_ui_markers = "page" in meta
+
+        return has_ui_markers
+
+    def _load_content(
         self,
-        content,
-        upsert: bool,
-        skip_if_exists: bool,
+        content: list[Document] | Document,
+        upsert: bool = False,
+        skip_if_exists: bool = True,
         include: list[str] | None = None,
         exclude: list[str] | None = None,
-    ) -> None:
+    ) -> list[Document]:
         """
-        Load content into the knowledge base.
-        Delegates to the inner Knowledge instance.
-        Required by AgentOS when processing uploaded content.
+        Load content with optional processing for UI uploads.
+
+        - UI-uploaded documents: Enhanced with DocumentProcessor
+        - CSV-loaded documents: Preserved unchanged
+
+        Args:
+            content: Documents to load (list or single document)
+            upsert: Whether to upsert documents
+            skip_if_exists: Skip existing documents
+            include: Fields to include
+            exclude: Fields to exclude
+
+        Returns:
+            List of processed documents
         """
-        if self.knowledge is None:
-            raise ValueError("No knowledge instance available")
-        await self.knowledge._load_content(
-            content, upsert, skip_if_exists, include, exclude
-        )
+        # Normalize input to list
+        documents = content if isinstance(content, list) else [content]
+
+        # If no processor configured, return unchanged
+        if not self.processor:
+            return documents
+
+        # Process documents through enhancement pipeline
+        enhanced_docs: list[Document] = []
+
+        for doc in documents:
+            # Check if this is a UI upload
+            is_ui_upload = self._is_ui_uploaded_document(doc)
+
+            if is_ui_upload:
+                try:
+                    # Process document through enhancement pipeline
+                    processed = self.processor.process({
+                        "id": doc.id,
+                        "name": doc.name or "unknown",
+                        "content": doc.content
+                    })
+
+                    # If no chunks produced, keep original
+                    if not processed.chunks:
+                        logger.warning(
+                            "No chunks produced for document",
+                            document_id=doc.id
+                        )
+                        enhanced_docs.append(doc)
+                        continue
+
+                    # Create enhanced documents from semantic chunks
+                    original_meta = doc.meta_data or {}
+                    enriched_meta = processed.metadata.model_dump()
+
+                    for chunk in processed.chunks:
+                        # Merge original metadata with chunk metadata and enriched metadata
+                        chunk_meta = {**original_meta}  # Start with original
+                        if chunk.get("metadata"):
+                            chunk_meta.update(chunk["metadata"])  # Add chunk-specific
+                        chunk_meta.update(enriched_meta)  # Add enriched
+
+                        enhanced_doc = Document(
+                            id=f"{doc.id}_chunk_{chunk['index']}",
+                            name=doc.name,
+                            content=chunk["content"],
+                            meta_data=chunk_meta
+                        )
+                        enhanced_docs.append(enhanced_doc)
+
+                except Exception as e:
+                    # Log error and keep original document
+                    logger.error(
+                        "Processing failed for document",
+                        document_id=doc.id,
+                        error=str(e)
+                    )
+                    enhanced_docs.append(doc)
+            else:
+                # Keep CSV-loaded documents unchanged
+                enhanced_docs.append(doc)
+
+        return enhanced_docs
 
     def patch_content(self, content) -> dict[str, Any] | None:
         """

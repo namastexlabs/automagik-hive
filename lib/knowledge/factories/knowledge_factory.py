@@ -4,6 +4,7 @@ Creates configurable shared knowledge base to prevent duplication
 """
 
 # Global shared instance with thread safety
+import os
 import re
 import threading
 from pathlib import Path
@@ -14,6 +15,7 @@ from agno.db.postgres import PostgresDb
 from agno.knowledge.embedder.openai import OpenAIEmbedder
 from agno.vectordb.pgvector import HNSW, PgVector, SearchType
 
+from lib.knowledge.config.config_loader import load_processing_config as load_knowledge_processing_config
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.logging import logger
 
@@ -103,10 +105,24 @@ def create_knowledge_base(
     if config is None:
         config = _load_knowledge_config()
 
+    # Load processing configuration before any database operations
+    processing_config = None
+    try:
+        custom_config_path = os.getenv("HIVE_KNOWLEDGE_CONFIG_PATH")
+        processing_config = load_knowledge_processing_config(custom_config_path)
+        if processing_config:
+            logger.debug(
+                "Loaded processing configuration",
+                enabled=processing_config.enabled,
+            )
+        else:
+            logger.debug("No processing configuration loaded")
+    except Exception as e:
+        logger.warning("Failed to load processing config, continuing without processor", error=str(e))
+        processing_config = None
+
     # Get database URL
     if db_url is None:
-        import os
-
         db_url = os.getenv("HIVE_DATABASE_URL")
         if not db_url:
             raise RuntimeError(
@@ -205,6 +221,7 @@ def create_knowledge_base(
             csv_path=str(csv_path_value),
             vector_db=vector_db,
             contents_db=contents_db,
+            processing_config=processing_config,
         )
         # Set num_documents for backward compatibility
         _shared_kb.num_documents = num_documents

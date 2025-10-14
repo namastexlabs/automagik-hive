@@ -247,7 +247,442 @@ def load_global_knowledge_config() -> dict[str, Any]:
     return cast(dict[str, Any], config if isinstance(config, dict) else {})
 
 
+def filter_by_document_type(
+    documents: list[Any],
+    document_type: str | list[str]
+) -> list[Any]:
+    """
+    Filter documents by document type.
+
+    Args:
+        documents: List of documents to filter
+        document_type: Single type or list of types to match
+            Valid types: financial, report, invoice, contract, manual
+
+    Returns:
+        Filtered list of documents matching specified type(s)
+    """
+    if not documents:
+        return []
+
+    # Normalize to list
+    target_types = [document_type] if isinstance(document_type, str) else document_type
+    target_types = [t.lower() for t in target_types]
+
+    filtered = []
+    for doc in documents:
+        meta = doc.meta_data or {}
+        doc_type = meta.get("document_type", "").lower()
+
+        if doc_type in target_types:
+            filtered.append(doc)
+
+    return filtered
+
+
+def filter_by_document_types(
+    documents: list[Any],
+    document_types: list[str]
+) -> list[Any]:
+    """
+    Filter documents by multiple document types.
+
+    Args:
+        documents: List of documents to filter
+        document_types: List of types to match
+
+    Returns:
+        Filtered list of documents matching any of the specified types
+    """
+    return filter_by_document_type(documents, document_types)
+
+
+def _normalize_date(date_str: str) -> str | None:
+    """Normalize date to YYYY-MM-DD format for comparison."""
+    if not date_str:
+        return None
+
+    try:
+        # Try MM/YYYY
+        if len(date_str) == 7 and "/" in date_str:
+            month, year = date_str.split("/")
+            return f"{year}-{month.zfill(2)}-01"
+
+        # Try DD/MM/YYYY
+        if len(date_str) == 10 and date_str.count("/") == 2:
+            day, month, year = date_str.split("/")
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+
+        # Try YYYY-MM-DD (already normalized)
+        if len(date_str) == 10 and "-" in date_str:
+            return date_str
+
+        # Try YYYY-MM (period format)
+        if len(date_str) == 7 and "-" in date_str:
+            return f"{date_str}-01"
+
+    except Exception:
+        return None
+
+    return None
+
+
+def _date_in_range(date_str: str, start: str | None, end: str | None, year: str | None) -> bool:
+    """Check if date falls within range."""
+    if not date_str:
+        return False
+
+    # Year filtering
+    if year and year in date_str:
+        return True
+
+    # Normalize date for comparison
+    normalized = _normalize_date(date_str)
+    if not normalized:
+        return False
+
+    # Range filtering
+    if start:
+        start_norm = _normalize_date(start)
+        if start_norm and normalized < start_norm:
+            return False
+
+    if end:
+        end_norm = _normalize_date(end)
+        if end_norm and normalized > end_norm:
+            return False
+
+    return True
+
+
+def filter_by_date_range(
+    documents: list[Any],
+    start: str | None = None,
+    end: str | None = None,
+    year: str | None = None
+) -> list[Any]:
+    """
+    Filter documents by date range.
+
+    Supports multiple date formats:
+    - MM/YYYY (e.g., "07/2025")
+    - DD/MM/YYYY (e.g., "15/07/2025")
+    - YYYY-MM-DD (e.g., "2025-07-15")
+    - YYYY-MM (e.g., "2025-07") via period field
+
+    Args:
+        documents: List of documents to filter
+        start: Start date (inclusive)
+        end: End date (inclusive)
+        year: Year to filter (e.g., "2025")
+
+    Returns:
+        Filtered list of documents within date range
+    """
+    if not documents:
+        return []
+
+    filtered = []
+    for doc in documents:
+        meta = doc.meta_data or {}
+
+        # Get dates from extracted_entities or period field
+        entities = meta.get("extracted_entities", {})
+        dates = entities.get("dates", [])
+        period = meta.get("period")
+
+        # Check period field first (YYYY-MM format)
+        if period and _date_in_range(period, start, end, year):
+            filtered.append(doc)
+            continue
+
+        # Check extracted dates
+        for date in dates:
+            if _date_in_range(date, start, end, year):
+                filtered.append(doc)
+                break
+
+    return filtered
+
+
+def filter_by_year(documents: list[Any], year: str) -> list[Any]:
+    """
+    Filter documents by year.
+
+    Args:
+        documents: List of documents to filter
+        year: Year to filter (e.g., "2025")
+
+    Returns:
+        Filtered list of documents from the specified year
+    """
+    return filter_by_date_range(documents, year=year)
+
+
+def filter_by_period(documents: list[Any], period: str) -> list[Any]:
+    """
+    Filter documents by period field (YYYY-MM format).
+
+    Args:
+        documents: List of documents to filter
+        period: Period to match (e.g., "2025-07")
+
+    Returns:
+        Filtered list of documents with matching period
+    """
+    if not documents:
+        return []
+
+    filtered = []
+    for doc in documents:
+        meta = doc.meta_data or {}
+        doc_period = meta.get("period")
+
+        if doc_period == period:
+            filtered.append(doc)
+
+    return filtered
+
+
+def filter_by_amount_range(
+    documents: list[Any],
+    min_amount: float | None = None,
+    max_amount: float | None = None
+) -> list[Any]:
+    """
+    Filter documents by amount range.
+
+    Includes documents that have at least one amount within the range
+    AND whose maximum amount does not exceed max_amount.
+
+    Args:
+        documents: List of documents to filter
+        min_amount: Minimum amount (inclusive)
+        max_amount: Maximum amount (inclusive)
+
+    Returns:
+        Filtered list of documents with amounts in range
+    """
+    if not documents:
+        return []
+
+    filtered = []
+    for doc in documents:
+        meta = doc.meta_data or {}
+        entities = meta.get("extracted_entities", {})
+        amounts = entities.get("amounts", [])
+
+        if not amounts:
+            continue
+
+        # Check if max amount exceeds the limit
+        if max_amount is not None and max(amounts) > max_amount:
+            continue
+
+        # Check if any amount is in range
+        has_amount_in_range = False
+        for amount in amounts:
+            in_range = True
+            if min_amount is not None and amount < min_amount:
+                in_range = False
+            if max_amount is not None and amount > max_amount:
+                in_range = False
+
+            if in_range:
+                has_amount_in_range = True
+                break
+
+        if has_amount_in_range:
+            filtered.append(doc)
+
+    return filtered
+
+
+def filter_by_minimum_amount(documents: list[Any], min_amount: float) -> list[Any]:
+    """
+    Filter documents by minimum amount.
+
+    Args:
+        documents: List of documents to filter
+        min_amount: Minimum amount (inclusive)
+
+    Returns:
+        Filtered list of documents with amounts >= min_amount
+    """
+    return filter_by_amount_range(documents, min_amount=min_amount)
+
+
+def filter_by_maximum_amount(documents: list[Any], max_amount: float) -> list[Any]:
+    """
+    Filter documents by maximum amount.
+
+    Returns documents where ALL amounts are <= max_amount.
+
+    Args:
+        documents: List of documents to filter
+        max_amount: Maximum amount (inclusive)
+
+    Returns:
+        Filtered list of documents with ALL amounts <= max_amount
+    """
+    if not documents:
+        return []
+
+    filtered = []
+    for doc in documents:
+        meta = doc.meta_data or {}
+        entities = meta.get("extracted_entities", {})
+        amounts = entities.get("amounts", [])
+
+        if not amounts:
+            continue
+
+        # Check if ALL amounts are <= max_amount
+        if all(amount <= max_amount for amount in amounts):
+            filtered.append(doc)
+
+    return filtered
+
+
+def filter_by_person(documents: list[Any], person_name: str) -> list[Any]:
+    """Filter documents mentioning specific person (case-insensitive partial match)."""
+    if not documents or not person_name:
+        return []
+
+    person_lower = person_name.lower()
+    filtered = []
+
+    for doc in documents:
+        meta = doc.meta_data or {}
+        entities = meta.get("extracted_entities", {})
+        people = entities.get("people", [])
+
+        for person in people:
+            if person_lower in person.lower():
+                filtered.append(doc)
+                break
+
+    return filtered
+
+
+def filter_by_organization(documents: list[Any], org_name: str) -> list[Any]:
+    """Filter documents mentioning specific organization (case-insensitive partial match)."""
+    if not documents or not org_name:
+        return []
+
+    org_lower = org_name.lower()
+    filtered = []
+
+    for doc in documents:
+        meta = doc.meta_data or {}
+        entities = meta.get("extracted_entities", {})
+        orgs = entities.get("organizations", [])
+
+        for org in orgs:
+            if org_lower in org.lower():
+                filtered.append(doc)
+                break
+
+    return filtered
+
+
+def filter_by_custom_entity(
+    documents: list[Any],
+    entity_type: str,
+    entity_value: str
+) -> list[Any]:
+    """
+    Filter documents by custom entity types.
+
+    Args:
+        documents: List of documents to filter
+        entity_type: Type of entity (e.g., "products", "locations")
+        entity_value: Value to match
+
+    Returns:
+        Filtered list of documents with matching custom entities
+    """
+    if not documents or not entity_type or not entity_value:
+        return []
+
+    entity_value_lower = entity_value.lower()
+    filtered = []
+
+    for doc in documents:
+        meta = doc.meta_data or {}
+        entities = meta.get("extracted_entities", {})
+        entity_list = entities.get(entity_type, [])
+
+        for entity in entity_list:
+            if entity_value_lower in str(entity).lower():
+                filtered.append(doc)
+                break
+
+    return filtered
+
+
+def apply_filters(
+    documents: list[Any],
+    document_type: str | list[str] | None = None,
+    date_range: tuple[str, str] | None = None,
+    year: str | None = None,
+    min_amount: float | None = None,
+    max_amount: float | None = None,
+    person: str | None = None,
+    organization: str | None = None
+) -> list[Any]:
+    """
+    Apply multiple filters to documents.
+
+    Args:
+        documents: List of documents to filter
+        document_type: Filter by type(s)
+        date_range: Tuple of (start, end) dates
+        year: Filter by year
+        min_amount: Minimum amount
+        max_amount: Maximum amount
+        person: Person name to match
+        organization: Organization name to match
+
+    Returns:
+        Filtered list of documents matching ALL criteria
+    """
+    filtered = documents
+
+    if document_type:
+        filtered = filter_by_document_type(filtered, document_type)
+
+    if date_range:
+        start, end = date_range
+        filtered = filter_by_date_range(filtered, start=start, end=end)
+    elif year:
+        filtered = filter_by_date_range(filtered, year=year)
+
+    if min_amount is not None or max_amount is not None:
+        filtered = filter_by_amount_range(filtered, min_amount, max_amount)
+
+    if person:
+        filtered = filter_by_person(filtered, person)
+
+    if organization:
+        filtered = filter_by_organization(filtered, organization)
+
+    return filtered
+
+
 __all__ = [
     "BusinessUnitFilter",
     "load_global_knowledge_config",
+    "filter_by_document_type",
+    "filter_by_document_types",
+    "filter_by_date_range",
+    "filter_by_year",
+    "filter_by_period",
+    "filter_by_amount_range",
+    "filter_by_minimum_amount",
+    "filter_by_maximum_amount",
+    "filter_by_person",
+    "filter_by_organization",
+    "filter_by_custom_entity",
+    "apply_filters",
 ]
