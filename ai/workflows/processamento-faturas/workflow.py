@@ -3727,10 +3727,19 @@ async def execute_minuta_json_analysis_step(step_input: StepInput) -> StepOutput
     data_extractor = create_data_extractor_agent()
     _ = data_extractor.run("ANALYZE MINUTA JSON FILES")
 
+    processing_categories = {
+        "pending_cnpjs": [],
+        "claro_generated_cnpjs": [],
+        "esl_generated_cnpjs": [],
+        "regional_pending_cnpjs": [],
+        "concatenation_pending_cnpjs": [],
+        "upload_pending_cnpjs": [],
+        "completed_cnpjs": [],
+        "failed_cnpjs": []
+    }
+
     analysis_results = {
-        "processing_categories": {
-            "pending_cnpjs": []
-        },
+        "processing_categories": processing_categories,
         "analysis_summary": {
             "total_cnpj_groups_found": 0
         },
@@ -3808,20 +3817,60 @@ async def execute_minuta_json_analysis_step(step_input: StepInput) -> StepOutput
     for cnpj_group in all_cnpj_groups:
         try:
             cnpj = cnpj_group.get("cnpj_claro")
-            status = cnpj_group.get("status", MinutaProcessingStatus.PENDING)
+            status_value = cnpj_group.get("status", MinutaProcessingStatus.PENDING)
             json_file_path = cnpj_group.get("json_file")
 
+            try:
+                status = MinutaProcessingStatus(status_value)
+            except ValueError:
+                logger.warning(f"⚠️ Unknown MINUTA status '{status_value}' for CNPJ {cnpj}")
+                status = MinutaProcessingStatus.PENDING
+
+            entry = {
+                "cnpj": cnpj,
+                "json_file": json_file_path,
+                "status": status.value,
+                "requires_regional": bool(cnpj_group.get("requires_regional")),
+                "uf": cnpj_group.get("uf")
+            }
+
             if status == MinutaProcessingStatus.PENDING:
-                analysis_results["processing_categories"]["pending_cnpjs"].append({
-                    "cnpj": cnpj,
-                    "json_file": json_file_path
-                })
+                processing_categories["pending_cnpjs"].append(entry)
+            elif status == MinutaProcessingStatus.CLARO_GENERATED:
+                processing_categories["claro_generated_cnpjs"].append(entry)
+            elif status == MinutaProcessingStatus.ESL_GENERATED:
+                processing_categories["esl_generated_cnpjs"].append(entry)
+            elif status == MinutaProcessingStatus.DOWNLOADED:
+                if entry["requires_regional"]:
+                    processing_categories["regional_pending_cnpjs"].append(entry)
+                else:
+                    processing_categories["concatenation_pending_cnpjs"].append(entry)
+            elif status == MinutaProcessingStatus.REGIONAL_DOWNLOADED:
+                processing_categories["concatenation_pending_cnpjs"].append(entry)
+            elif status == MinutaProcessingStatus.CONCATENATED:
+                processing_categories["upload_pending_cnpjs"].append(entry)
+            elif status in {MinutaProcessingStatus.UPLOADED, MinutaProcessingStatus.COMPLETED}:
+                processing_categories["completed_cnpjs"].append(entry)
+            elif status in {
+                MinutaProcessingStatus.FAILED_GENERATION,
+                MinutaProcessingStatus.FAILED_DOWNLOAD,
+                MinutaProcessingStatus.FAILED_REGIONAL,
+                MinutaProcessingStatus.FAILED_CONCATENATION,
+                MinutaProcessingStatus.FAILED_UPLOAD,
+            }:
+                processing_categories["failed_cnpjs"].append(entry)
+            else:
+                processing_categories["failed_cnpjs"].append(entry)
 
             analysis_results["analysis_summary"]["total_cnpj_groups_found"] += 1
 
         except Exception as e:
             logger.error(f"❌ Error analyzing CNPJ group {cnpj}: {e!s}")
             continue
+
+    # Enrich summary with per-category counts for downstream routing visibility
+    for category_name, items in processing_categories.items():
+        analysis_results["analysis_summary"][category_name] = len(items)
 
     set_session_state(step_input, "minuta_analysis_results", analysis_results)
     logger.info("🔍 MINUTA JSON analysis completed")
@@ -3838,334 +3887,721 @@ async def execute_minuta_status_routing_step(step_input: StepInput) -> StepOutpu
         return StepOutput(content=json.dumps({"status": "SKIPPED"}))
 
     analysis_results = json.loads(previous_output.content)
+    processing_categories = analysis_results.get("processing_categories", {})
+
     api_orchestrator = create_api_orchestrator_agent()
     _ = api_orchestrator.run("MINUTA ROUTING")
 
+    queue_definitions = [
+        (
+            "minuta_generation_queue",
+            "minutGen",
+            "pending_cnpjs",
+            [MinutaProcessingStatus.PENDING.value],
+            MinutaProcessingStatus.CLARO_GENERATED.value,
+        ),
+        (
+            "main_minut_gen_queue",
+            "main-minut-gen",
+            "claro_generated_cnpjs",
+            [MinutaProcessingStatus.CLARO_GENERATED.value],
+            MinutaProcessingStatus.ESL_GENERATED.value,
+        ),
+        (
+            "main_minut_download_queue",
+            "main-minut-download",
+            "esl_generated_cnpjs",
+            [MinutaProcessingStatus.ESL_GENERATED.value],
+            MinutaProcessingStatus.DOWNLOADED.value,
+        ),
+        (
+            "regional_download_queue",
+            "regional-download",
+            "regional_pending_cnpjs",
+            [MinutaProcessingStatus.DOWNLOADED.value],
+            MinutaProcessingStatus.REGIONAL_DOWNLOADED.value,
+        ),
+        (
+            "concatenation_queue",
+            "concatenate",
+            "concatenation_pending_cnpjs",
+            [
+                MinutaProcessingStatus.DOWNLOADED.value,
+                MinutaProcessingStatus.REGIONAL_DOWNLOADED.value,
+            ],
+            MinutaProcessingStatus.CONCATENATED.value,
+        ),
+        (
+            "upload_queue",
+            "invoiceUpload",
+            "upload_pending_cnpjs",
+            [MinutaProcessingStatus.CONCATENATED.value],
+            MinutaProcessingStatus.UPLOADED.value,
+        ),
+    ]
+
+    processing_queues: dict[str, dict[str, Any]] = {}
+    for queue_name, action, category_key, current_statuses, next_status in queue_definitions:
+        cnpjs = processing_categories.get(category_key, [])
+        processing_queues[queue_name] = {
+            "action": action,
+            "cnpjs": cnpjs,
+            "current_status": current_statuses,
+            "next_status": next_status,
+        }
+
+    actions_queued = sum(len(info.get("cnpjs", [])) for info in processing_queues.values())
+
     routing_results = {
-        "processing_queues": {
-            "minuta_generation_queue": {
-                "action": "minutGen",
-                "cnpjs": analysis_results["processing_categories"]["pending_cnpjs"]
-            }
-        },
-        "routing_timestamp": datetime.now(UTC).isoformat()
+        "processing_queues": processing_queues,
+        "analysis_summary": analysis_results.get("analysis_summary", {}),
+        "routing_timestamp": datetime.now(UTC).isoformat(),
+        "actions_queued": actions_queued
     }
 
     set_session_state(step_input, "minuta_routing_results", routing_results)
-    logger.info("🎯 MINUTA routing completed")
+    logger.info(
+        "🎯 MINUTA routing completed - %s actions queued across %s queues",
+        actions_queued,
+        len(processing_queues),
+    )
 
     return StepOutput(content=json.dumps(routing_results))
 
 
 async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutput:
-    """Execute REAL MINUTA processing: minutGen → main-minut-gen → download → regional → concatenate → upload"""
-    logger.info("⚙️ Starting REAL MINUTA CNPJ processing...")
+    """Process MINUTA CNPJ groups ensuring a single status hop per workflow run."""
+    logger.info("⚙️ Starting MINUTA CNPJ processing (single-step progression)...")
 
-    # Get routing results from previous step
     previous_output = step_input.get_step_output("minuta_status_routing")
+
+    def _empty_result(status: str, reason: str) -> StepOutput:
+        return StepOutput(content=json.dumps({
+            "status": status,
+            "reason": reason,
+            "execution_summary": {
+                "successful_actions": 0,
+                "cnpjs_updated": 0,
+                "cnpjs_failed": 0,
+                "minutas_generated": 0,
+                "regional_downloads": 0,
+                "total_value": 0.0
+            },
+            "cnpj_status_details": [],
+            "queue_results": {},
+            "failure_details": {},
+            "processing_timestamp": datetime.now(UTC).isoformat()
+        }))
+
     if not previous_output:
         logger.warning("⚠️ No routing results found - skipping MINUTA processing")
-        return StepOutput(content=json.dumps({
-            "execution_summary": {"successful_actions": 0, "cnpjs_updated": 0},
-            "processing_timestamp": datetime.now(UTC).isoformat(),
-            "status": "SKIPPED"
-        }))
+        return _empty_result("SKIPPED", "No routing results")
 
     routing_results = json.loads(previous_output.content)
     processing_queues = routing_results.get("processing_queues", {})
-    minuta_generation_queue = processing_queues.get("minuta_generation_queue", {})
-    cnpj_queue = minuta_generation_queue.get("cnpjs", [])
+    if not processing_queues:
+        logger.info("ℹ️ No MINUTA queues to process")
+        return _empty_result("NO_QUEUES", "No processing queues generated")
 
-    if not cnpj_queue:
-        logger.info("ℹ️ No CNPJs to process - all MINUTAs may already be completed")
-        return StepOutput(content=json.dumps({
-            "execution_summary": {"successful_actions": 0, "cnpjs_updated": 0},
-            "processing_timestamp": datetime.now(UTC).isoformat(),
-            "status": "NO_PENDING_CNPJS"
-        }))
+    total_cnpjs = sum(len(queue.get("cnpjs", [])) for queue in processing_queues.values())
+    if total_cnpjs == 0:
+        logger.info("ℹ️ No MINUTAs pending status transitions")
+        return _empty_result("NO_PENDING_CNPJS", "No CNPJs pending")
 
-    # Initialize API client
     api_client = BrowserAPIClient()
 
-    # Track processing results
-    cnpjs_uploaded = 0
-    cnpjs_failed = 0
-    total_minutas = 0
-    regional_count = 0
-    total_value = 0.0
-    cnpj_status_details = []
-
-    # Process each CNPJ group
-    for cnpj_data in cnpj_queue:
-        cnpj_claro = cnpj_data.get("cnpj")
-        json_file_path = cnpj_data.get("json_file")
-
-        if not cnpj_claro or not json_file_path:
-            logger.warning(f"⚠️ Skipping CNPJ with missing data: {cnpj_data}")
-            continue
-
-        logger.info(f"🔄 Processing CNPJ: {cnpj_claro}")
-
-        # Load full CNPJ group data from JSON
-        cnpj_group = load_cnpj_group_from_json(json_file_path, cnpj_claro)
-        if not cnpj_group:
-            logger.error(f"❌ Could not load CNPJ group {cnpj_claro} from {json_file_path}")
-            cnpjs_failed += 1
-            cnpj_status_details.append({
-                "cnpj": cnpj_claro,
-                "status": MinutaProcessingStatus.FAILED_GENERATION,
-                "error": "Failed to load CNPJ group data"
-            })
-            continue
-
-        try:
-            # Step 1: minutGen - batch all POs for this CNPJ (Bahia City Hall)
-            logger.info(f"📝 Step 1: minutGen for {len(cnpj_group['po_list'])} POs")
-            minutgen_payload = api_client.build_minut_gen_payload(cnpj_group)
-            minutgen_response = await api_client.execute_api_call("minutGen", minutgen_payload)
-
-            if not (minutgen_response.get("success") and minutgen_response.get("api_result", {}).get("success")):
-                logger.error(f"❌ minutGen failed for CNPJ {cnpj_claro}")
-                cnpjs_failed += 1
-                cnpj_status_details.append({
-                    "cnpj": cnpj_claro,
-                    "status": MinutaProcessingStatus.FAILED_GENERATION,
-                    "error": "minutGen API call failed"
-                })
-                # Update JSON status
-                await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.FAILED_GENERATION)
+    def group_minutas_by_po(cnpj_group: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        po_groups: dict[str, dict[str, Any]] = {}
+        for minuta in cnpj_group.get("minutas", []):
+            po_number = minuta.get("po")
+            if not po_number:
                 continue
-
-            logger.info(f"✅ minutGen successful for CNPJ {cnpj_claro}")
-
-            # Update status after minutGen
-            await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.CLARO_GENERATED)
-
-            # Step 2: Process each PO individually
-            base_pdfs = []
-            regional_pdfs = []
-            po_processing_failed = False
-
-            # Group minutas by PO to calculate total_value per PO
-            po_groups = {}
-            for minuta in cnpj_group["minutas"]:
-                po_num = minuta["po"]
-                if po_num not in po_groups:
-                    po_groups[po_num] = {"po": po_num, "minutas": [], "total_value": 0.0}
-                po_groups[po_num]["minutas"].append(minuta)
-                po_groups[po_num]["total_value"] += minuta["valor"]
-
-            for po_number, po_data in po_groups.items():
-                logger.info(f"🔄 Processing PO: {po_number} (Value: R$ {po_data['total_value']:.2f})")
-
-                # Step 2a: main-minut-gen (ESL System invoice generation)
-                logger.info(f"📄 Step 2a: main-minut-gen for PO {po_number}")
-                gen_payload = api_client.build_main_minut_gen_payload(po_data, cnpj_group)
-                gen_response = await api_client.execute_api_call("main-minut-gen", gen_payload)
-
-                if not gen_response.get("success"):
-                    logger.error(f"❌ main-minut-gen failed for PO {po_number}")
-                    po_processing_failed = True
-                    continue
-
-                logger.info(f"✅ main-minut-gen successful for PO {po_number}")
-
-                # Step 2b: Wait 3 minutes for city hall processing
-                logger.info(f"⏱️ Waiting 3 minutes for city hall to process invoice...")
-                await asyncio.sleep(180)  # 3 minutes
-
-                # Step 2c: main-minut-download (base PDF from ESL)
-                logger.info(f"📥 Step 2c: main-minut-download for PO {po_number}")
-                download_payload = api_client.build_main_minut_download_payload(
-                    po_data,
-                    cnpj_group["cnpj_claro"],
-                    cnpj_group
-                )
-                download_response = await api_client.execute_api_call("main-minut-download", download_payload)
-
-                if download_response.get("success"):
-                    # Save base PDF
-                    base_pdf_path = f"mctech/minutas/downloads/minuta_{cnpj_group['cnpj_claro']}_{po_number}.pdf"
-                    pdf_save_result = await api_client.save_pdf_response(download_response, base_pdf_path)
-
-                    if pdf_save_result.get("success"):
-                        base_pdfs.append({"po": po_number, "path": base_pdf_path})
-                        logger.info(f"✅ Base PDF saved: {base_pdf_path}")
-                    else:
-                        logger.error(f"❌ Failed to save base PDF for PO {po_number}")
-                        po_processing_failed = True
-                        continue
-                else:
-                    logger.error(f"❌ main-minut-download failed for PO {po_number}")
-                    po_processing_failed = True
-                    continue
-
-                # Step 2d: Regional downloads (if required)
-                if cnpj_group.get("requires_regional"):
-                    uf = cnpj_group.get("uf")
-                    logger.info(f"📍 Regional download required for UF: {uf}")
-
-                    if uf == "TO":
-                        # Tocantins - Palmas download
-                        logger.info(f"🏛️ Step 2d: main-minut-download-palmas for PO {po_number}")
-                        regional_payload = api_client.build_regional_download_payload(
-                            po_data,
-                            cnpj_group["cnpj_claro"],
-                            cnpj_group,
-                            "palmas"
-                        )
-                        regional_response = await api_client.execute_api_call("main-minut-download-palmas", regional_payload)
-
-                        if regional_response.get("success"):
-                            regional_path = f"mctech/minutas/additional/palmas_{cnpj_group['cnpj_claro']}_{po_number}.pdf"
-                            regional_save_result = await api_client.save_pdf_response(regional_response, regional_path)
-
-                            if regional_save_result.get("success"):
-                                regional_pdfs.append({"po": po_number, "path": regional_path})
-                                regional_count += 1
-                                logger.info(f"✅ Palmas PDF saved: {regional_path}")
-                            else:
-                                logger.warning(f"⚠️ Failed to save Palmas PDF for PO {po_number}")
-                        else:
-                            logger.warning(f"⚠️ Palmas download failed for PO {po_number}")
-
-                    elif uf == "SE":
-                        # Sergipe - Aracaju download
-                        logger.info(f"🏛️ Step 2d: main-minut-download-aracaju for PO {po_number}")
-                        regional_payload = api_client.build_regional_download_payload(
-                            po_data,
-                            cnpj_group["cnpj_claro"],
-                            cnpj_group,
-                            "aracaju"
-                        )
-                        regional_response = await api_client.execute_api_call("main-minut-download-aracaju", regional_payload)
-
-                        if regional_response.get("success"):
-                            regional_path = f"mctech/minutas/additional/aracaju_{cnpj_group['cnpj_claro']}_{po_number}.pdf"
-                            regional_save_result = await api_client.save_pdf_response(regional_response, regional_path)
-
-                            if regional_save_result.get("success"):
-                                regional_pdfs.append({"po": po_number, "path": regional_path})
-                                regional_count += 1
-                                logger.info(f"✅ Aracaju PDF saved: {regional_path}")
-                            else:
-                                logger.warning(f"⚠️ Failed to save Aracaju PDF for PO {po_number}")
-                        else:
-                            logger.warning(f"⚠️ Aracaju download failed for PO {po_number}")
-
-            if po_processing_failed:
-                logger.error(f"❌ Some POs failed processing for CNPJ {cnpj_claro}")
-                cnpjs_failed += 1
-                cnpj_status_details.append({
-                    "cnpj": cnpj_claro,
-                    "status": MinutaProcessingStatus.FAILED_DOWNLOAD,
-                    "error": "One or more PO downloads failed"
-                })
-                await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.FAILED_DOWNLOAD)
-                continue
-
-            # Update status after downloads
-            if regional_pdfs:
-                await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.REGIONAL_DOWNLOADED)
-            else:
-                await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.DOWNLOADED)
-
-            # Step 3: Concatenate all PDFs (base + regional)
-            logger.info(f"📑 Step 3: Concatenating {len(base_pdfs)} base + {len(regional_pdfs)} regional PDFs")
-            all_pdf_paths = [pdf["path"] for pdf in base_pdfs] + [pdf["path"] for pdf in regional_pdfs]
-            final_pdf_path = f"mctech/minutas/concatenated/final_{cnpj_group['cnpj_claro']}.pdf"
-
-            concat_result = await concatenate_pdfs(all_pdf_paths, final_pdf_path)
-
-            if not concat_result.get("success"):
-                logger.error(f"❌ PDF concatenation failed for CNPJ {cnpj_claro}")
-                cnpjs_failed += 1
-                cnpj_status_details.append({
-                    "cnpj": cnpj_claro,
-                    "status": MinutaProcessingStatus.FAILED_CONCATENATION,
-                    "error": concat_result.get("error", "Unknown concatenation error")
-                })
-                await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.FAILED_CONCATENATION)
-                continue
-
-            logger.info(f"✅ PDFs concatenated: {final_pdf_path}")
-            await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.CONCATENATED)
-
-            # Step 4: invoiceUpload (upload concatenated PDF)
-            logger.info(f"📤 Step 4: invoiceUpload for CNPJ {cnpj_claro}")
-            upload_payload = api_client.build_minuta_invoice_upload_payload(cnpj_group, final_pdf_path)
-            upload_response = await api_client.execute_api_call("invoiceUpload", upload_payload)
-
-            if upload_response.get("success") and upload_response.get("api_result", {}).get("success"):
-                # Extract protocol if available
-                protocol = upload_response.get("api_result", {}).get("protocol")
-
-                # Update JSON with UPLOADED status and protocol
-                await update_cnpj_status_in_json(
-                    json_file_path,
-                    cnpj_claro,
-                    MinutaProcessingStatus.UPLOADED,
-                    protocol_number=protocol
-                )
-
-                cnpjs_uploaded += 1
-                total_minutas += cnpj_group["minuta_count"]
-                total_value += cnpj_group["total_value"]
-
-                cnpj_status_details.append({
-                    "cnpj": cnpj_claro,
-                    "status": MinutaProcessingStatus.UPLOADED,
-                    "minutas_count": cnpj_group["minuta_count"],
-                    "total_value": cnpj_group["total_value"],
-                    "protocol": protocol
-                })
-
-                logger.info(f"✅ MINUTA uploaded successfully for CNPJ {cnpj_claro} (Protocol: {protocol})")
-
-            else:
-                logger.error(f"❌ invoiceUpload failed for CNPJ {cnpj_claro}")
-                cnpjs_failed += 1
-                cnpj_status_details.append({
-                    "cnpj": cnpj_claro,
-                    "status": MinutaProcessingStatus.FAILED_UPLOAD,
-                    "error": "invoiceUpload API call failed"
-                })
-                await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.FAILED_UPLOAD)
-
-        except Exception as e:
-            logger.error(f"❌ Unexpected error processing CNPJ {cnpj_claro}: {e!s}")
-            import traceback
-            logger.error(traceback.format_exc())
-            cnpjs_failed += 1
-            cnpj_status_details.append({
-                "cnpj": cnpj_claro,
-                "status": MinutaProcessingStatus.FAILED_GENERATION,
-                "error": str(e)
-            })
+            group = po_groups.setdefault(
+                po_number,
+                {
+                    "po": po_number,
+                    "minutas": [],
+                    "total_value": 0.0,
+                    "start_date": cnpj_group.get("start_date"),
+                    "end_date": cnpj_group.get("end_date")
+                }
+            )
+            group["minutas"].append(minuta)
             try:
-                await update_cnpj_status_in_json(json_file_path, cnpj_claro, MinutaProcessingStatus.FAILED_GENERATION)
-            except Exception as update_error:
-                logger.error(f"❌ Failed to update error status in JSON: {update_error!s}")
+                group["total_value"] += float(minuta.get("valor", 0.0))
+            except (TypeError, ValueError):
+                pass
+        return po_groups
 
-    # Close API client session
-    await api_client.close_session()
+    async def apply_status_update(
+        json_file_path: str,
+        cnpj_claro: str,
+        status: MinutaProcessingStatus,
+        protocol: str | None = None
+    ) -> None:
+        updated = await update_cnpj_status_in_json(
+            json_file_path,
+            cnpj_claro,
+            status,
+            protocol_number=protocol
+        )
+        if not updated:
+            logger.warning(
+                "⚠️ Unable to persist status %s for CNPJ %s in %s",
+                status.value,
+                cnpj_claro,
+                json_file_path,
+            )
 
-    # Build comprehensive processing results
+    queue_order = [
+        "minuta_generation_queue",
+        "main_minut_gen_queue",
+        "main_minut_download_queue",
+        "regional_download_queue",
+        "concatenation_queue",
+        "upload_queue",
+    ]
+
+    failure_details: dict[str, int] = {}
+    queue_results: dict[str, list[dict[str, Any]]] = {}
+    cnpj_status_details: list[dict[str, Any]] = []
+
+    execution_summary = {
+        "successful_actions": 0,
+        "cnpjs_updated": 0,
+        "cnpjs_failed": 0,
+        "minutas_generated": 0,
+        "regional_downloads": 0,
+        "total_value": 0.0
+    }
+
     processing_results = {
-        "execution_summary": {
-            "successful_actions": cnpjs_uploaded,
-            "cnpjs_updated": cnpjs_uploaded,
-            "cnpjs_failed": cnpjs_failed,
-            "minutas_generated": total_minutas,
-            "regional_downloads": regional_count,
-            "total_value": total_value
-        },
+        "execution_summary": execution_summary,
         "cnpj_status_details": cnpj_status_details,
+        "failure_details": failure_details,
+        "queue_results": queue_results,
         "processing_timestamp": datetime.now(UTC).isoformat()
     }
 
+    def record_failure_detail(key: str) -> None:
+        failure_details[key] = failure_details.get(key, 0) + 1
+
+    for queue_name in queue_order:
+        queue_info = processing_queues.get(queue_name)
+        if not queue_info:
+            continue
+
+        cnpj_entries = queue_info.get("cnpjs", [])
+        if not cnpj_entries:
+            continue
+
+        action = queue_info.get("action")
+        next_status_value = queue_info.get("next_status")
+        try:
+            next_status = MinutaProcessingStatus(next_status_value)
+        except ValueError:
+            logger.error(f"❌ Invalid next status '{next_status_value}' for queue {queue_name}")
+            record_failure_detail("invalid_next_status")
+            continue
+
+        queue_results[queue_name] = []
+
+        for entry in cnpj_entries:
+            cnpj_claro = entry.get("cnpj")
+            json_file_path = entry.get("json_file")
+            entry_result = {
+                "cnpj": cnpj_claro,
+                "action": action,
+                "current_status": entry.get("status"),
+                "target_status": next_status.value
+            }
+
+            if not cnpj_claro or not json_file_path:
+                entry_result.update({"success": False, "error": "missing_metadata"})
+                execution_summary["cnpjs_failed"] += 1
+                record_failure_detail("missing_metadata")
+                queue_results[queue_name].append(entry_result)
+                continue
+
+            cnpj_group = load_cnpj_group_from_json(json_file_path, cnpj_claro)
+            if not cnpj_group:
+                entry_result.update({"success": False, "error": "cnpj_not_found"})
+                execution_summary["cnpjs_failed"] += 1
+                record_failure_detail("cnpj_lookup_failed")
+                queue_results[queue_name].append(entry_result)
+                continue
+
+            minuta_count = cnpj_group.get("minuta_count", 0)
+            group_total_value = cnpj_group.get("total_value", 0.0)
+            cnpj_numeric = cnpj_group.get("cnpj_claro", cnpj_claro)
+
+            try:
+                if action == "minutGen":
+                    payload = api_client.build_minut_gen_payload(cnpj_group)
+                    api_response = await api_client.execute_api_call("minutGen", payload)
+                    http_success = api_response.get("success", False)
+                    browser_success = api_response.get("api_result", {}).get("success", http_success)
+
+                    if http_success and browser_success:
+                        await apply_status_update(json_file_path, cnpj_claro, next_status)
+                        entry_result.update({"success": True, "new_status": next_status.value})
+                        execution_summary["successful_actions"] += 1
+                        execution_summary["cnpjs_updated"] += 1
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": next_status.value,
+                            "action": action,
+                            "minutas_count": minuta_count,
+                            "total_value": group_total_value
+                        })
+                    else:
+                        failure_status = MinutaProcessingStatus.FAILED_GENERATION
+                        error_msg = api_response.get("api_result", {}).get("error") or api_response.get("error", "minutGen failed")
+                        await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                        entry_result.update({
+                            "success": False,
+                            "error": error_msg,
+                            "failure_status": failure_status.value
+                        })
+                        execution_summary["cnpjs_failed"] += 1
+                        record_failure_detail("minutgen_failed")
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": failure_status.value,
+                            "error": error_msg,
+                            "action": action
+                        })
+
+                elif action == "main-minut-gen":
+                    po_groups = group_minutas_by_po(cnpj_group)
+                    po_failures: list[dict[str, Any]] = []
+
+                    for po_number, po_data in po_groups.items():
+                        payload = api_client.build_main_minut_gen_payload(po_data, cnpj_group)
+                        api_response = await api_client.execute_api_call("main-minut-gen", payload)
+                        http_success = api_response.get("success", False)
+                        browser_success = api_response.get("api_result", {}).get("success", http_success)
+
+                        if not (http_success and browser_success):
+                            error_msg = api_response.get("api_result", {}).get("error") or api_response.get("error", "main-minut-gen failed")
+                            po_failures.append({"po": po_number, "error": error_msg})
+
+                    if po_failures:
+                        failure_status = MinutaProcessingStatus.FAILED_GENERATION
+                        await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                        entry_result.update({
+                            "success": False,
+                            "error": "main-minut-gen failed for some POs",
+                            "failure_status": failure_status.value,
+                            "details": po_failures
+                        })
+                        execution_summary["cnpjs_failed"] += 1
+                        record_failure_detail("main_minut_gen_failed")
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": failure_status.value,
+                            "error": "main-minut-gen failed",
+                            "action": action,
+                            "details": po_failures
+                        })
+                    else:
+                        await apply_status_update(json_file_path, cnpj_claro, next_status)
+                        entry_result.update({
+                            "success": True,
+                            "new_status": next_status.value,
+                            "details": {"pos_processed": list(po_groups.keys())}
+                        })
+                        execution_summary["successful_actions"] += 1
+                        execution_summary["cnpjs_updated"] += 1
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": next_status.value,
+                            "action": action,
+                            "minutas_count": minuta_count,
+                            "total_value": group_total_value
+                        })
+
+                elif action == "main-minut-download":
+                    po_groups = group_minutas_by_po(cnpj_group)
+                    download_failures: list[dict[str, Any]] = []
+                    saved_paths: list[str] = []
+
+                    for po_number, po_data in po_groups.items():
+                        payload = api_client.build_main_minut_download_payload(po_data, cnpj_group["cnpj_claro"], cnpj_group)
+                        api_response = await api_client.execute_api_call("main-minut-download", payload)
+                        http_success = api_response.get("success", False)
+                        browser_success = api_response.get("api_result", {}).get("success", http_success)
+
+                        if http_success and browser_success:
+                            base_pdf_path = f"mctech/minutas/downloads/minuta_{cnpj_numeric}_{po_number}.pdf"
+                            save_result = await api_client.save_pdf_response(api_response, base_pdf_path)
+                            if save_result.get("success"):
+                                saved_paths.append(base_pdf_path)
+                            else:
+                                download_failures.append({"po": po_number, "error": save_result.get("error", "Failed to save PDF")})
+                        else:
+                            error_msg = api_response.get("api_result", {}).get("error") or api_response.get("error", "main-minut-download failed")
+                            download_failures.append({"po": po_number, "error": error_msg})
+
+                    if download_failures:
+                        failure_status = MinutaProcessingStatus.FAILED_DOWNLOAD
+                        await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                        entry_result.update({
+                            "success": False,
+                            "error": "main-minut-download failed for some POs",
+                            "failure_status": failure_status.value,
+                            "details": download_failures
+                        })
+                        execution_summary["cnpjs_failed"] += 1
+                        record_failure_detail("base_download_failed")
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": failure_status.value,
+                            "error": "main-minut-download failed",
+                            "action": action,
+                            "details": download_failures
+                        })
+                    else:
+                        await apply_status_update(json_file_path, cnpj_claro, next_status)
+                        entry_result.update({
+                            "success": True,
+                            "new_status": next_status.value,
+                            "details": {"pdfs": saved_paths}
+                        })
+                        execution_summary["successful_actions"] += 1
+                        execution_summary["cnpjs_updated"] += 1
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": next_status.value,
+                            "action": action,
+                            "minutas_count": minuta_count,
+                            "total_value": group_total_value
+                        })
+
+                elif action == "regional-download":
+                    if not cnpj_group.get("requires_regional"):
+                        logger.info(f"ℹ️ Regional download not required for CNPJ {cnpj_claro} - skipping")
+                        await apply_status_update(json_file_path, cnpj_claro, next_status)
+                        entry_result.update({
+                            "success": True,
+                            "new_status": next_status.value,
+                            "details": {"skipped": True}
+                        })
+                        execution_summary["successful_actions"] += 1
+                        execution_summary["cnpjs_updated"] += 1
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": next_status.value,
+                            "action": action,
+                            "minutas_count": minuta_count,
+                            "total_value": group_total_value
+                        })
+                    else:
+                        region_type = cnpj_group.get("regional_type")
+                        if not region_type:
+                            uf_value = (cnpj_group.get("uf") or entry.get("uf") or "").upper()
+                            if uf_value == "TO":
+                                region_type = "palmas"
+                            elif uf_value == "SE":
+                                region_type = "aracaju"
+
+                        if not region_type:
+                            failure_status = MinutaProcessingStatus.FAILED_REGIONAL
+                            await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                            entry_result.update({
+                                "success": False,
+                                "error": "Unable to determine regional download flow",
+                                "failure_status": failure_status.value
+                            })
+                            execution_summary["cnpjs_failed"] += 1
+                            record_failure_detail("regional_type_missing")
+                            cnpj_status_details.append({
+                                "cnpj": cnpj_claro,
+                                "status": failure_status.value,
+                                "error": "Unable to determine regional flow",
+                                "action": action
+                            })
+                        else:
+                            region_type = region_type.lower()
+                            po_groups = group_minutas_by_po(cnpj_group)
+                            regional_failures: list[dict[str, Any]] = []
+                            saved_paths: list[str] = []
+                            flow_name = f"main-minut-download-{region_type}"
+
+                            for po_number, po_data in po_groups.items():
+                                payload = api_client.build_regional_download_payload(po_data, cnpj_group["cnpj_claro"], cnpj_group, region_type)
+                                api_response = await api_client.execute_api_call(flow_name, payload)
+                                http_success = api_response.get("success", False)
+                                browser_success = api_response.get("api_result", {}).get("success", http_success)
+
+                                if http_success and browser_success:
+                                    regional_path = f"mctech/minutas/additional/{region_type}_{cnpj_numeric}_{po_number}.pdf"
+                                    save_result = await api_client.save_pdf_response(api_response, regional_path)
+                                    if save_result.get("success"):
+                                        saved_paths.append(regional_path)
+                                    else:
+                                        regional_failures.append({"po": po_number, "error": save_result.get("error", "Failed to save PDF")})
+                                else:
+                                    error_msg = api_response.get("api_result", {}).get("error") or api_response.get("error", f"{flow_name} failed")
+                                    regional_failures.append({"po": po_number, "error": error_msg})
+
+                            if regional_failures:
+                                failure_status = MinutaProcessingStatus.FAILED_REGIONAL
+                                await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                                entry_result.update({
+                                    "success": False,
+                                    "error": "Regional download failed",
+                                    "failure_status": failure_status.value,
+                                    "details": regional_failures
+                                })
+                                execution_summary["cnpjs_failed"] += 1
+                                record_failure_detail("regional_download_failed")
+                                cnpj_status_details.append({
+                                    "cnpj": cnpj_claro,
+                                    "status": failure_status.value,
+                                    "error": "Regional download failed",
+                                    "action": action,
+                                    "details": regional_failures
+                                })
+                            else:
+                                await apply_status_update(json_file_path, cnpj_claro, next_status)
+                                entry_result.update({
+                                    "success": True,
+                                    "new_status": next_status.value,
+                                    "details": {"pdfs": saved_paths, "region": region_type}
+                                })
+                                execution_summary["successful_actions"] += 1
+                                execution_summary["cnpjs_updated"] += 1
+                                execution_summary["regional_downloads"] += len(saved_paths)
+                                cnpj_status_details.append({
+                                    "cnpj": cnpj_claro,
+                                    "status": next_status.value,
+                                    "action": action,
+                                    "minutas_count": minuta_count,
+                                    "total_value": group_total_value,
+                                    "region": region_type
+                                })
+
+                elif action == "concatenate":
+                    po_list = cnpj_group.get("po_list", [])
+                    base_paths = [
+                        f"mctech/minutas/downloads/minuta_{cnpj_numeric}_{po}.pdf"
+                        for po in po_list
+                    ]
+                    missing_base = [path for path in base_paths if not os.path.exists(path)]
+
+                    region_type = cnpj_group.get("regional_type")
+                    if not region_type:
+                        uf_value = (cnpj_group.get("uf") or entry.get("uf") or "").upper()
+                        if uf_value == "TO":
+                            region_type = "palmas"
+                        elif uf_value == "SE":
+                            region_type = "aracaju"
+
+                    additional_paths = []
+                    if region_type:
+                        region_type = region_type.lower()
+                        for po_number in po_list:
+                            candidate = f"mctech/minutas/additional/{region_type}_{cnpj_numeric}_{po_number}.pdf"
+                            if os.path.exists(candidate):
+                                additional_paths.append(candidate)
+
+                    pdf_paths = [path for path in base_paths if os.path.exists(path)] + additional_paths
+
+                    if missing_base:
+                        failure_status = MinutaProcessingStatus.FAILED_CONCATENATION
+                        await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                        entry_result.update({
+                            "success": False,
+                            "error": "Missing base PDFs for concatenation",
+                            "failure_status": failure_status.value,
+                            "details": {"missing_base": missing_base}
+                        })
+                        execution_summary["cnpjs_failed"] += 1
+                        record_failure_detail("pdf_missing")
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": failure_status.value,
+                            "error": "Missing base PDFs",
+                            "action": action,
+                            "details": {"missing_base": missing_base}
+                        })
+                    elif not pdf_paths:
+                        failure_status = MinutaProcessingStatus.FAILED_CONCATENATION
+                        await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                        entry_result.update({
+                            "success": False,
+                            "error": "No PDFs available for concatenation",
+                            "failure_status": failure_status.value
+                        })
+                        execution_summary["cnpjs_failed"] += 1
+                        record_failure_detail("pdf_missing")
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": failure_status.value,
+                            "error": "No PDFs available",
+                            "action": action
+                        })
+                    else:
+                        final_pdf_path = f"mctech/minutas/concatenated/final_{cnpj_numeric}.pdf"
+                        concat_result = await concatenate_pdfs(pdf_paths, final_pdf_path)
+
+                        if concat_result.get("success"):
+                            await apply_status_update(json_file_path, cnpj_claro, next_status)
+                            entry_result.update({
+                                "success": True,
+                                "new_status": next_status.value,
+                                "details": {"pdf_count": concat_result.get("total_pdfs"), "output_path": final_pdf_path}
+                            })
+                            execution_summary["successful_actions"] += 1
+                            execution_summary["cnpjs_updated"] += 1
+                            cnpj_status_details.append({
+                                "cnpj": cnpj_claro,
+                                "status": next_status.value,
+                                "action": action,
+                                "minutas_count": minuta_count,
+                                "total_value": group_total_value
+                            })
+                        else:
+                            failure_status = MinutaProcessingStatus.FAILED_CONCATENATION
+                            await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                            entry_result.update({
+                                "success": False,
+                                "error": concat_result.get("error", "Concatenation failed"),
+                                "failure_status": failure_status.value
+                            })
+                            execution_summary["cnpjs_failed"] += 1
+                            record_failure_detail("pdf_concatenation_failed")
+                            cnpj_status_details.append({
+                                "cnpj": cnpj_claro,
+                                "status": failure_status.value,
+                                "error": concat_result.get("error", "Concatenation failed"),
+                                "action": action
+                            })
+
+                elif action == "invoiceUpload":
+                    final_pdf_path = f"mctech/minutas/concatenated/final_{cnpj_numeric}.pdf"
+                    if not os.path.exists(final_pdf_path):
+                        failure_status = MinutaProcessingStatus.FAILED_UPLOAD
+                        await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                        entry_result.update({
+                            "success": False,
+                            "error": "Concatenated PDF not found",
+                            "failure_status": failure_status.value
+                        })
+                        execution_summary["cnpjs_failed"] += 1
+                        record_failure_detail("upload_missing_pdf")
+                        cnpj_status_details.append({
+                            "cnpj": cnpj_claro,
+                            "status": failure_status.value,
+                            "error": "Concatenated PDF not found",
+                            "action": action
+                        })
+                    else:
+                        upload_group = dict(cnpj_group)
+                        upload_group.setdefault("cnpj", cnpj_numeric)
+                        try:
+                            upload_payload = api_client.build_minuta_invoice_upload_payload(upload_group, final_pdf_path)
+                        except Exception as build_error:
+                            failure_status = MinutaProcessingStatus.FAILED_UPLOAD
+                            await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                            error_msg = str(build_error)
+                            entry_result.update({
+                                "success": False,
+                                "error": error_msg,
+                                "failure_status": failure_status.value
+                            })
+                            execution_summary["cnpjs_failed"] += 1
+                            record_failure_detail("upload_payload_failed")
+                            cnpj_status_details.append({
+                                "cnpj": cnpj_claro,
+                                "status": failure_status.value,
+                                "error": error_msg,
+                                "action": action
+                            })
+                        else:
+                            api_response = await api_client.execute_api_call("invoiceUpload", upload_payload)
+                            http_success = api_response.get("success", False)
+                            browser_success = api_response.get("api_result", {}).get("success", http_success)
+
+                            if http_success and browser_success:
+                                protocol = api_response.get("api_result", {}).get("protocol")
+                                await apply_status_update(json_file_path, cnpj_claro, next_status, protocol)
+                                entry_result.update({
+                                    "success": True,
+                                    "new_status": next_status.value,
+                                    "details": {"protocol": protocol}
+                                })
+                                execution_summary["successful_actions"] += 1
+                                execution_summary["cnpjs_updated"] += 1
+                                execution_summary["minutas_generated"] += minuta_count
+                                execution_summary["total_value"] += group_total_value
+                                cnpj_status_details.append({
+                                    "cnpj": cnpj_claro,
+                                    "status": next_status.value,
+                                    "action": action,
+                                    "minutas_count": minuta_count,
+                                    "total_value": group_total_value,
+                                    "protocol": protocol
+                                })
+                            else:
+                                failure_status = MinutaProcessingStatus.FAILED_UPLOAD
+                                error_msg = api_response.get("api_result", {}).get("error") or api_response.get("error", "invoiceUpload failed")
+                                await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                                entry_result.update({
+                                    "success": False,
+                                    "error": error_msg,
+                                    "failure_status": failure_status.value
+                                })
+                                execution_summary["cnpjs_failed"] += 1
+                                record_failure_detail("upload_failed")
+                                cnpj_status_details.append({
+                                    "cnpj": cnpj_claro,
+                                    "status": failure_status.value,
+                                    "error": error_msg,
+                                    "action": action
+                                })
+
+                else:
+                    entry_result.update({
+                        "success": False,
+                        "error": f"unknown_action_{action}",
+                    })
+                    execution_summary["cnpjs_failed"] += 1
+                    record_failure_detail("unknown_action")
+                    logger.error(f"❌ Unknown MINUTA action '{action}' for queue {queue_name}")
+
+            except Exception as e:
+                logger.error(f"❌ Unexpected error processing MINUTA action {action} for CNPJ {cnpj_claro}: {e!s}")
+                import traceback
+                logger.error(traceback.format_exc())
+                failure_status = MinutaProcessingStatus.FAILED_GENERATION
+                await apply_status_update(json_file_path, cnpj_claro, failure_status)
+                error_msg = str(e)
+                entry_result.update({
+                    "success": False,
+                    "error": error_msg,
+                    "failure_status": failure_status.value
+                })
+                execution_summary["cnpjs_failed"] += 1
+                record_failure_detail("unexpected_error")
+                cnpj_status_details.append({
+                    "cnpj": cnpj_claro,
+                    "status": failure_status.value,
+                    "error": error_msg,
+                    "action": action
+                })
+
+            queue_results[queue_name].append(entry_result)
+
+    await api_client.close_session()
+
     set_session_state(step_input, "minuta_processing_results", processing_results)
-    logger.info(f"✅ MINUTA processing complete: {cnpjs_uploaded} uploaded, {cnpjs_failed} failed")
+    logger.info(
+        "✅ MINUTA processing run complete: %s successes, %s failures",
+        execution_summary["cnpjs_updated"],
+        execution_summary["cnpjs_failed"],
+    )
 
     return StepOutput(content=json.dumps(processing_results))
 
@@ -4561,4 +4997,3 @@ if __name__ == "__main__":
 
     # Run test
     asyncio.run(test_processamento_faturas_workflow())
-
