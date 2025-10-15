@@ -961,9 +961,42 @@ class BrowserAPIClient:
                                 "text_output": "Received binary data for non-download flow"
                             }
                         }
+                elif response.content_type in ["application/pdf", "application/x-pdf"]:
+                    po_number = payload.get("parameters", {}).get("po", "unknown")
+                    file_content = await response.read()
+
+                    download_dir = Path("mctech/minutas/downloads")
+                    download_dir.mkdir(parents=True, exist_ok=True)
+
+                    content_disposition = response.headers.get("content-disposition", "")
+                    filename = None
+                    if "filename=" in content_disposition:
+                        import re
+                        match = re.search(r'filename=["\']?([^"\';]+)["\']?', content_disposition)
+                        if match:
+                            filename = match.group(1).strip()
+                    if not filename:
+                        filename = f"minuta_{po_number}.pdf"
+
+                    file_path = download_dir / filename
+                    with open(file_path, "wb") as f:
+                        f.write(file_content)
+
+                    logger.info("📁 PDF downloaded: {} ({} bytes)", file_path, len(file_content))
+
+                    response_data = {
+                        "status": "success",
+                        "flow": flow_name,
+                        "output": {
+                            "success": True,
+                            "file_path": str(file_path),
+                            "text_output": f"Downloaded {filename}",
+                            "error": ""
+                        }
+                    }
                 else:
                     # Text response (fallback)
-                    response_text = await response.text()
+                    response_text = await response.text(errors="ignore")
                     response_data = {"text_output": response_text}
 
                 # Log response details for debugging
@@ -1035,9 +1068,9 @@ class BrowserAPIClient:
                 logger.error(f"❌ HTTP {response.status} {response.reason} for {flow_name}")
                 logger.error(f"🔗 URL: {url}")
                 request_payload_str = json.dumps(request_payload, indent=2)
-                logger.error(f"📋 Request payload: {request_payload_str}")
+                logger.opt(raw=True).error(f"📋 Request payload: {request_payload_str}\n")
                 response_content_str = json.dumps(response_data, indent=2) if response_data else "No content"
-                logger.error(f"📄 Response content: {response_content_str}")
+                logger.opt(raw=True).error(f"📄 Response content: {response_content_str}\n")
                 
                 error_message = response_data.get("error", response_data.get("detail", f"HTTP {response.status}"))
                 raise aiohttp.ClientResponseError(
@@ -1056,7 +1089,7 @@ class BrowserAPIClient:
             logger.error(f"❌ Connection error: {error_type} - {e!s}")
             logger.error(f"🔗 Failed URL: {url}")
             request_payload_str = json.dumps(request_payload, indent=2)
-            logger.error(f"📋 Request payload: {request_payload_str}")
+            logger.opt(raw=True).error(f"📋 Request payload: {request_payload_str}\n")
             logger.error(f"💥 Traceback: {traceback_str}")
             
             # Re-raise the exception to be handled by the retry logic
@@ -1078,11 +1111,13 @@ class BrowserAPIClient:
                 "ensure_browser_api_server_running"
             )
 
+        failed_url = f"{self.base_url}/execute-flow"
+
         for attempt in range(self.max_retries):
             try:
                 logger.info(f"🔗 Executing Browser API call: {flow_name} (attempt {attempt + 1})")
                 payload_str = json.dumps(payload)
-                logger.info(f"📋 Payload: {payload_str}")
+                logger.opt(raw=True).info(f"📋 Payload: {payload_str}\n")
 
                 # Try real HTTP call first
                 result = await self._execute_real_api_call(flow_name, payload)
@@ -1096,9 +1131,9 @@ class BrowserAPIClient:
             except aiohttp.ClientError as e:
                 error_type = type(e).__name__
                 logger.warning(f"⚠️ HTTP client error on attempt {attempt + 1}: {error_type} - {e!s}")
-                logger.warning(f"🔗 Failed URL: {url}")
-                request_payload_str = json.dumps(request_payload, indent=2)
-                logger.warning(f"📋 Request payload: {request_payload_str}")
+                logger.warning(f"🔗 Failed URL: {failed_url}")
+                request_payload_str = json.dumps(payload, indent=2)
+                logger.opt(raw=True).warning(f"📋 Request payload: {request_payload_str}\n")
 
                 if attempt < self.max_retries - 1:
                     wait_time = 2 ** attempt
@@ -1121,9 +1156,9 @@ class BrowserAPIClient:
                 traceback_str = traceback.format_exc()
                 
                 logger.error(f"❌ Unexpected error on attempt {attempt + 1}: {error_type} - {e!s}")
-                logger.error(f"🔗 Failed URL: {url}")
-                request_payload_str = json.dumps(request_payload, indent=2)
-                logger.error(f"📋 Request payload: {request_payload_str}")
+                logger.error(f"🔗 Failed URL: {failed_url}")
+                request_payload_str = json.dumps(payload, indent=2)
+                logger.opt(raw=True).error(f"📋 Request payload: {request_payload_str}\n")
                 logger.error(f"💥 Traceback: {traceback_str}")
 
                 if attempt < self.max_retries - 1:
@@ -1282,7 +1317,14 @@ class BrowserAPIClient:
             - PDF should contain ALL base + regional PDFs concatenated
         """
 
-        cnpj = cnpj_group["cnpj"]
+        cnpj_raw = (
+            cnpj_group.get("cnpj")
+            or cnpj_group.get("cnpj_claro")
+            or cnpj_group.get("cnpj_claro_formatted")
+        )
+
+        if not cnpj_raw:
+            raise KeyError("cnpj_claro")
 
         # Read and encode PDF file
         with open(concatenated_pdf_path, "rb") as f:
@@ -1290,7 +1332,7 @@ class BrowserAPIClient:
         invoice_base64 = base64.b64encode(pdf_content).decode("utf-8")
 
         # Generate filename from CNPJ (cleaned)
-        cnpj_clean = cnpj.replace(".", "").replace("/", "").replace("-", "")
+        cnpj_clean = "".join(filter(str.isdigit, str(cnpj_raw)))
         invoice_filename = f"minuta_{cnpj_clean}.pdf"
 
         payload = {
@@ -1303,7 +1345,9 @@ class BrowserAPIClient:
             }
         }
 
-        logger.info(f"📤 Built MINUTA upload payload for PO {po_number} (CNPJ group with {len(cnpj_group['po_list'])} POs)")
+        logger.info(
+            f"📤 Built MINUTA upload payload for PO {po_number} (CNPJ {cnpj_clean})"
+        )
         return payload
 
     async def save_pdf_response(self, api_response: dict[str, Any], output_path: str) -> dict[str, Any]:
@@ -4632,10 +4676,20 @@ async def execute_pipeline_action(
             if not response.get("success"):
                 return False, {"error": "Download API failed"}
 
-            pdf_path = f"mctech/minutas/downloads/minuta_{cnpj_group['cnpj_claro']}_{po_number}.pdf"
-            save_result = await api_client.save_pdf_response(response, pdf_path)
-            if not save_result.get("success"):
-                return False, {"error": save_result.get("error", "Failed to save PDF")}
+            api_result = response.get("api_result", {}) or {}
+            raw_output = api_result.get("raw_response", {}).get("output", {}) if api_result.get("raw_response") else {}
+            downloaded_files = api_result.get("downloadedFiles") or []
+
+            pdf_path = api_result.get("file_path") or raw_output.get("file_path")
+            if not pdf_path and downloaded_files:
+                pdf_path = downloaded_files[0]
+
+            if not pdf_path:
+                return False, {"error": "No PDF path returned from Browser API"}
+
+            pdf_path = str(pdf_path)
+            if str(po_number) not in pdf_path:
+                logger.warning(f"⚠️ Downloaded file name does not include PO {po_number}: {pdf_path}")
 
             temp_store = _get_po_temp_storage(cnpj_group, po_number)
             temp_store["base_pdf_paths"] = [pdf_path]
@@ -4654,10 +4708,9 @@ async def execute_pipeline_action(
             if not response.get("success"):
                 return False, {"error": "Regional download API failed"}
 
-            regional_path = f"mctech/minutas/additional/{uf.lower()}_{cnpj_group['cnpj_claro']}_{po_number}.pdf"
-            save_result = await api_client.save_pdf_response(response, regional_path)
-            if not save_result.get("success"):
-                return False, {"error": save_result.get("error", "Failed to save regional PDF")}
+            regional_path = response.get("api_result", {}).get("file_path")
+            if not regional_path:
+                return False, {"error": "No regional PDF path returned from Browser API"}
 
             temp_store = _get_po_temp_storage(cnpj_group, po_number)
             regional_paths = temp_store.get("regional_pdf_paths", [])
