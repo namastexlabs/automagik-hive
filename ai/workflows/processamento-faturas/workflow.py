@@ -53,14 +53,6 @@ def get_minuta_pipeline_wait_time() -> int:
         return 180
 
 
-def get_minuta_pipeline_batch_size() -> int:
-    """Get max CNPJs to process per pipeline run (0 = unlimited, default 5)"""
-    try:
-        return max(0, int(os.getenv("MINUTA_PIPELINE_BATCH_SIZE", "5")))
-    except ValueError:
-        return 5
-
-
 class ProcessingStatus(Enum):
     """CTE Processing Status Enum"""
     PENDING = "pending"
@@ -1326,14 +1318,19 @@ class BrowserAPIClient:
         if not cnpj_raw:
             raise KeyError("cnpj_claro")
 
+        po_temp = cnpj_group.get("_po_temp", {}).get(po_number, {})
+        base_filename = po_temp.get("base_pdf_filename")
+
         # Read and encode PDF file
         with open(concatenated_pdf_path, "rb") as f:
             pdf_content = f.read()
         invoice_base64 = base64.b64encode(pdf_content).decode("utf-8")
 
-        # Generate filename from CNPJ (cleaned)
-        cnpj_clean = "".join(filter(str.isdigit, str(cnpj_raw)))
-        invoice_filename = f"minuta_{cnpj_clean}.pdf"
+        if base_filename:
+            invoice_filename = base_filename
+        else:
+            # Fallback to CNPJ-based filename if base not available
+            invoice_filename = f"NFS-e_{po_number}.pdf"
 
         payload = {
             "flow_name": "invoiceUpload",
@@ -1346,7 +1343,7 @@ class BrowserAPIClient:
         }
 
         logger.info(
-            f"📤 Built MINUTA upload payload for PO {po_number} (CNPJ {cnpj_clean})"
+            f"📤 Built MINUTA upload payload for PO {po_number} (arquivo: {invoice_filename})"
         )
         return payload
 
@@ -4254,11 +4251,6 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
         cnpjs = queue_info.get("cnpjs", [])
         pipeline_steps = queue_info.get("pipeline_steps", [])
 
-        batch_size = get_minuta_pipeline_batch_size()
-        if batch_size and len(cnpjs) > batch_size:
-            logger.info(f"⚠️ Limiting pipeline batch to {batch_size} CNPJs (env configured)")
-            cnpjs = cnpjs[:batch_size]
-
         logger.info(f"🚀 Branch 2: Processing {len(cnpjs)} CNPJs via multi-hop pipeline...")
 
         for entry in cnpjs:
@@ -4430,6 +4422,17 @@ async def execute_multi_hop_pipeline(
         except ValueError:
             return -1
 
+    po_status_map = cnpj_group.setdefault("po_status", {})
+    po_groups = _group_minutas_by_po(cnpj_group)
+
+    if not po_status_map:
+        now_iso = datetime.now(UTC).isoformat()
+        for po_num in po_groups.keys():
+            po_status_map.setdefault(po_num, {
+                "status": MinutaProcessingStatus.CLARO_GENERATED.value,
+                "last_updated": now_iso
+            })
+
     pending_pos = cnpj_entry.get("pending_pos") or []
 
     if not pending_pos:
@@ -4445,10 +4448,11 @@ async def execute_multi_hop_pipeline(
         pending_pos = po_status_candidates
 
     if not pending_pos:
+        pending_pos = list(po_groups.keys())
+
+    if not pending_pos:
         logger.info(f"ℹ️ No pending POs for CNPJ {cnpj_claro}")
         return {"success": True, "processed_pos": [], "failed_pos": []}
-
-    po_status_map = cnpj_group.setdefault("po_status", {})
 
     processed_pos: list[str] = []
     failed_pos: list[str] = []
@@ -4505,7 +4509,7 @@ async def execute_multi_hop_pipeline(
                     json_file_path,
                     cnpj_claro,
                     po_number,
-                    next_status,
+                    current_status,
                     pipeline_progress={
                         "current_step": step_num,
                         "total_steps": len(pipeline_steps),
@@ -4514,9 +4518,6 @@ async def execute_multi_hop_pipeline(
                         "failed_step": None
                     }
                 )
-                current_status = next_status
-                current_idx = _status_index(current_status)
-                po_entry["status"] = next_status.value
                 po_entry["pipeline_progress"] = {
                     "current_step": step_num,
                     "total_steps": len(pipeline_steps),
@@ -4693,6 +4694,7 @@ async def execute_pipeline_action(
 
             temp_store = _get_po_temp_storage(cnpj_group, po_number)
             temp_store["base_pdf_paths"] = [pdf_path]
+            temp_store.setdefault("base_pdf_filename", os.path.basename(pdf_path))
             return True, {"file_path": pdf_path}
 
         if action == "regional-download":
@@ -4708,10 +4710,18 @@ async def execute_pipeline_action(
             if not response.get("success"):
                 return False, {"error": "Regional download API failed"}
 
-            regional_path = response.get("api_result", {}).get("file_path")
+            api_result = response.get("api_result", {}) or {}
+            raw_output = api_result.get("raw_response", {}).get("output", {}) if api_result.get("raw_response") else {}
+            downloaded_files = api_result.get("downloadedFiles") or []
+
+            regional_path = api_result.get("file_path") or raw_output.get("file_path")
+            if not regional_path and downloaded_files:
+                regional_path = downloaded_files[0]
+
             if not regional_path:
                 return False, {"error": "No regional PDF path returned from Browser API"}
 
+            regional_path = str(regional_path)
             temp_store = _get_po_temp_storage(cnpj_group, po_number)
             regional_paths = temp_store.get("regional_pdf_paths", [])
             regional_paths.append(regional_path)
