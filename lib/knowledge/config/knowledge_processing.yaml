@@ -31,3 +31,12 @@ metadata:
   auto_categorize: true           # Automatically categorize documents
   auto_tag: true                  # Automatically generate tags
   detect_business_unit: true      # Detect and assign business unit
+
+# Page-based document splitting for large files
+document_splitting:
+  enabled: true                    # Enable page-based splitting
+  split_by_pages: true             # Split by pages instead of full document
+  pages_per_chunk: 5               # Number of pages per document chunk
+  max_pages: null                  # Maximum pages to process (null = all)
+  create_separate_documents: true  # Create separate database rows per chunk
+  page_metadata: true              # Add page range metadata to chunks

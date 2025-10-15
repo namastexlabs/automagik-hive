@@ -72,6 +72,55 @@ class MetadataConfig(BaseModel):
     )
 
 
+class DocumentSplittingConfig(BaseModel):
+    """Configuration for page-based document splitting."""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable page-based document splitting for large files"
+    )
+    split_by_pages: bool = Field(
+        default=True,
+        description="Split documents by pages instead of processing as full document"
+    )
+    pages_per_chunk: int = Field(
+        default=5,
+        ge=1,
+        le=100,
+        description="Number of pages per document chunk (1-100)"
+    )
+    max_pages: int | None = Field(
+        default=None,
+        description="Maximum pages to process (None = all pages)"
+    )
+    create_separate_documents: bool = Field(
+        default=True,
+        description="Create separate database rows for each page chunk"
+    )
+    page_metadata: bool = Field(
+        default=True,
+        description="Add page range metadata (page_range_start, page_range_end) to chunks"
+    )
+
+    @field_validator("max_pages")
+    @classmethod
+    def validate_max_pages(cls, v: int | None) -> int | None:
+        """Ensure max_pages is positive if provided."""
+        if v is not None and v <= 0:
+            raise ValueError("max_pages must be positive or None")
+        return v
+
+    @model_validator(mode="after")
+    def validate_splitting_config(self) -> DocumentSplittingConfig:
+        """Validate splitting configuration consistency."""
+        if self.enabled and self.split_by_pages:
+            if self.max_pages is not None and self.max_pages < self.pages_per_chunk:
+                raise ValueError(
+                    f"max_pages ({self.max_pages}) should be >= pages_per_chunk ({self.pages_per_chunk})"
+                )
+        return self
+
+
 class ProcessingConfig(BaseModel):
     """Main processing configuration model."""
 
@@ -89,6 +138,9 @@ class ProcessingConfig(BaseModel):
     metadata: MetadataConfig = Field(
         default_factory=MetadataConfig, description="Metadata enrichment configuration"
     )
+    document_splitting: DocumentSplittingConfig = Field(
+        default_factory=DocumentSplittingConfig, description="Page-based document splitting configuration"
+    )
 
 
 __all__ = [
@@ -96,5 +148,6 @@ __all__ = [
     "EntityExtractionConfig",
     "ChunkingConfig",
     "MetadataConfig",
+    "DocumentSplittingConfig",
     "ProcessingConfig",
 ]

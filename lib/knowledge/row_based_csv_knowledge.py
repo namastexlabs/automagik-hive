@@ -75,6 +75,173 @@ def _temporary_agno_logger_filter() -> Iterator[None]:
         agno_logger.removeFilter(filter_instance)
 
 
+def extract_pages_from_pdf_bytes(
+    pdf_bytes: bytes,
+    pages_per_chunk: int = 5,
+    max_pages: int | None = None
+) -> list[dict[str, Any]]:
+    """
+    Extract PDF pages and group into chunks for page-based document splitting.
+
+    Args:
+        pdf_bytes: Raw PDF file bytes
+        pages_per_chunk: Number of pages per document chunk (default: 5)
+        max_pages: Maximum pages to extract (None = all pages)
+
+    Returns:
+        List of page group dictionaries with actual content per page range
+
+    Strategy:
+    1. Extract full document with Docling (best quality)
+    2. Use pypdf to map content to page numbers
+    3. Group pages by pages_per_chunk
+    """
+    # HYBRID APPROACH: Docling for quality + pypdf for page boundaries
+    full_text = ""
+    page_count = 0
+
+    # Step 1: Extract full document with Docling for quality
+    if DOCLING_AVAILABLE:
+        try:
+            import tempfile
+            import os
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
+                tmp_file.write(pdf_bytes)
+                tmp_path = tmp_file.name
+
+            try:
+                logger.info("Extracting full document with Docling for quality")
+
+                pipeline_options = PdfPipelineOptions()
+                pipeline_options.accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CPU)
+
+                converter = DocumentConverter(
+                    format_options={
+                        InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+                    }
+                )
+                result = converter.convert(tmp_path)
+
+                # Export full document (this works!)
+                full_text = result.document.export_to_markdown()
+
+                # Get page count from pypdf for accuracy
+                pdf_file = io.BytesIO(pdf_bytes)
+                pdf_reader = PdfReader(pdf_file)
+                page_count = len(pdf_reader.pages)
+
+                logger.info(
+                    "Docling full document extraction successful",
+                    text_length=len(full_text),
+                    page_count=page_count,
+                    method="docling_hybrid"
+                )
+
+            finally:
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
+
+        except Exception as e:
+            logger.warning(
+                "Docling extraction failed, falling back to pypdf",
+                error_type=type(e).__name__,
+                error_message=str(e)[:100]
+            )
+
+    # Step 2: If Docling failed or unavailable, use pypdf for everything
+    if not full_text or not page_count:
+        logger.info("Using pypdf for page-based PDF extraction")
+        pdf_file = io.BytesIO(pdf_bytes)
+        pdf_reader = PdfReader(pdf_file)
+
+        page_texts = []
+        for page_num in range(len(pdf_reader.pages)):
+            if max_pages and (page_num + 1) > max_pages:
+                break
+
+            page = pdf_reader.pages[page_num]
+            text = page.extract_text()
+            page_texts.append(text if text else "")
+
+        full_text = "\n\n".join(page_texts)
+        page_count = len(page_texts)
+
+        logger.info(
+            "pypdf extraction successful",
+            page_count=page_count,
+            text_length=len(full_text),
+            method="pypdf"
+        )
+
+    # Step 3: Smart page grouping using character distribution
+    # Estimate chars per page from total length
+    if not full_text.strip():
+        logger.error("No text extracted from PDF")
+        return [{
+            'page_range': (1, 1),
+            'content': "",
+            'page_count': 1
+        }]
+
+    # Apply max_pages limit
+    if max_pages:
+        page_count = min(page_count, max_pages)
+
+    # Calculate approximate chars per page
+    chars_per_page = len(full_text) // page_count if page_count > 0 else len(full_text)
+
+    # Create page groups by dividing the full text
+    page_groups = []
+    current_pos = 0
+    page_num = 1
+
+    while current_pos < len(full_text) and page_num <= page_count:
+        # Calculate how many pages in this chunk
+        pages_in_chunk = min(pages_per_chunk, page_count - page_num + 1)
+        chars_for_chunk = chars_per_page * pages_in_chunk
+
+        # Extract chunk text (try to break at paragraph boundaries)
+        end_pos = min(current_pos + chars_for_chunk, len(full_text))
+
+        # Look for a good break point (paragraph or sentence)
+        if end_pos < len(full_text):
+            # Try to find paragraph break within next 500 chars
+            search_end = min(end_pos + 500, len(full_text))
+            paragraph_break = full_text.find('\n\n', end_pos, search_end)
+            if paragraph_break != -1:
+                end_pos = paragraph_break + 2
+            else:
+                # Try sentence break
+                sentence_break = full_text.find('. ', end_pos, search_end)
+                if sentence_break != -1:
+                    end_pos = sentence_break + 2
+
+        chunk_text = full_text[current_pos:end_pos].strip()
+
+        if chunk_text:
+            page_groups.append({
+                'page_range': (page_num, page_num + pages_in_chunk - 1),
+                'content': chunk_text,
+                'page_count': pages_in_chunk
+            })
+
+        page_num += pages_in_chunk
+        current_pos = end_pos
+
+    logger.info(
+        "Page-based grouping completed",
+        total_pages=page_count,
+        page_groups=len(page_groups),
+        pages_per_chunk=pages_per_chunk,
+        method="hybrid_smart_split"
+    )
+
+    return page_groups
+
+
 def extract_text_from_pdf_bytes(pdf_bytes: bytes) -> str:
     """
     Extract text from PDF bytes with automatic fallback strategy.
@@ -548,38 +715,55 @@ class RowBasedCSVKnowledgeBase:
             return
         self._signatures[doc_id] = signature
 
-        # === NEW: Insert into contents_db FIRST (agno_knowledge) ===
-        contents_db = knowledge.contents_db
-        if contents_db is not None:
-            # Debug logging to understand contents_db interface
-            logger.info(
-                "Contents DB available for insertion",
-                contents_db_type=type(contents_db).__name__,
-                has_insert=hasattr(contents_db, 'insert'),
-                has_upsert=hasattr(contents_db, 'upsert'),
-                has_exists=hasattr(contents_db, 'exists'),
-                has_delete=hasattr(contents_db, 'delete'),
-                available_methods=[m for m in dir(contents_db) if not m.startswith('_') and callable(getattr(contents_db, m, None))][:15]
-            )
+        # === NEW: Detect if this is a child document from page splitting ===
+        is_page_child = (
+            doc_id is not None
+            and "_pages_" in doc_id
+            and document.meta_data
+            and document.meta_data.get('is_page_chunk') is True
+            and document.meta_data.get('parent_knowledge_id') is not None
+        )
 
+        if is_page_child:
+            # For child documents, use the parent_knowledge_id from metadata
+            knowledge_id = document.meta_data.get('parent_knowledge_id')
+            logger.info(
+                "Skipping agno_knowledge insertion for child document",
+                document_id=doc_id,
+                parent_id=knowledge_id,
+                page_range=f"{document.meta_data.get('page_range_start')}-{document.meta_data.get('page_range_end')}"
+            )
+        else:
+            # === STEP 1: Insert into contents_db FIRST (agno_knowledge table) ===
+            # This stores document metadata and gets us a knowledge_id to reference
+            # SKIP this step for child documents - they should ONLY go to vector_db
+            knowledge_id = None
+
+        contents_db = knowledge.contents_db
+        if contents_db is not None and not is_page_child:
             try:
                 # Serialize metadata for JSON storage (handle datetime, Enum, etc.)
                 serialized_metadata = self._serialize_metadata_for_db(document.meta_data or {})
 
                 # Create KnowledgeRow instance with required fields
                 knowledge_row = KnowledgeRow(
-                    id=doc_id,
+                    id=doc_id,  # Use document ID as knowledge ID
                     name=getattr(document, 'name', None) or doc_id,
                     description=document.content[:500],  # Use first 500 chars as description
-                    metadata=serialized_metadata,  # Use serialized metadata
+                    metadata=serialized_metadata,  # Serialized metadata
                 )
 
                 # Use the correct Agno method: upsert_knowledge_content
+                # This inserts/updates the row in agno_knowledge table
                 result = contents_db.upsert_knowledge_content(knowledge_row)
+
+                # Store the knowledge_id for reference in vector_db
+                knowledge_id = doc_id
 
                 logger.info(
                     "Content metadata inserted into agno_knowledge",
                     document_id=doc_id,
+                    knowledge_id=knowledge_id,
                     table="agno_knowledge",
                     has_metadata=bool(serialized_metadata),
                     upsert_result=result is not None
@@ -609,8 +793,9 @@ class RowBasedCSVKnowledgeBase:
                 print(f"{'='*60}\n")
 
                 # Don't fail the entire operation, continue to vector_db
-        # === END NEW CODE ===
+        # === END STEP 1 ===
 
+        # === STEP 2: Insert into vector_db (knowledge_base table) with agno_knowledge reference ===
         vector_db = knowledge.vector_db
         if vector_db is None:
             logger.warning("Cannot add document without vector database")
@@ -631,7 +816,16 @@ class RowBasedCSVKnowledgeBase:
             except Exception as exc:  # pragma: no cover - defensive logging
                 logger.warning("Failed to remove existing knowledge content", error=str(exc))
 
-        vector_filters = document.meta_data or None
+        # Add knowledge_id reference to metadata if we successfully inserted into agno_knowledge
+        vector_filters = document.meta_data or {}
+        if knowledge_id is not None:
+            # Create a copy to avoid mutating the original document
+            vector_filters = {**vector_filters, 'knowledge_id': knowledge_id}
+            logger.debug(
+                "Added knowledge_id reference to vector_db metadata",
+                document_id=doc_id,
+                knowledge_id=knowledge_id
+            )
         # Method selection respects upsert preference when requested, with
         # graceful fallbacks if a preferred method isn't actually awaitable.
         if upsert:
@@ -647,6 +841,13 @@ class RowBasedCSVKnowledgeBase:
                 try:
                     vector_db.upsert(
                         signature.content_hash, [document], filters=vector_filters
+                    )
+                    logger.info(
+                        "Document persisted successfully to knowledge_base",
+                        document_id=doc_id,
+                        knowledge_id=knowledge_id,
+                        method="upsert",
+                        has_agno_knowledge_reference=knowledge_id is not None
                     )
                     return
                 except Exception as exc:  # pragma: no cover - continue to fallback
@@ -668,6 +869,13 @@ class RowBasedCSVKnowledgeBase:
                             filters=vector_filters,
                         )
                         asyncio.run(coroutine)
+                        logger.info(
+                            "Document persisted successfully to knowledge_base",
+                            document_id=doc_id,
+                            knowledge_id=knowledge_id,
+                            method="async_upsert",
+                            has_agno_knowledge_reference=knowledge_id is not None
+                        )
                         return
                 except Exception as exc:  # pragma: no cover - continue to fallback
                     logger.debug(
@@ -678,6 +886,13 @@ class RowBasedCSVKnowledgeBase:
                 try:
                     vector_db.upsert(
                         signature.content_hash, [document], filters=vector_filters
+                    )
+                    logger.info(
+                        "Document persisted successfully to knowledge_base",
+                        document_id=doc_id,
+                        knowledge_id=knowledge_id,
+                        method="upsert_fallback",
+                        has_agno_knowledge_reference=knowledge_id is not None
                     )
                     return
                 except Exception as exc:  # pragma: no cover - continue to fallback
@@ -694,6 +909,13 @@ class RowBasedCSVKnowledgeBase:
                             signature.content_hash, [document], filters=vector_filters
                         )
                     )
+                    logger.info(
+                        "Document persisted successfully to knowledge_base",
+                        document_id=doc_id,
+                        knowledge_id=knowledge_id,
+                        method="async_insert",
+                        has_agno_knowledge_reference=knowledge_id is not None
+                    )
                     return
                 except Exception as exc:  # pragma: no cover - continue to fallback
                     logger.debug(
@@ -705,6 +927,13 @@ class RowBasedCSVKnowledgeBase:
                     vector_db.insert(
                         signature.content_hash, [document], filters=vector_filters
                     )
+                    logger.info(
+                        "Document persisted successfully to knowledge_base",
+                        document_id=doc_id,
+                        knowledge_id=knowledge_id,
+                        method="insert",
+                        has_agno_knowledge_reference=knowledge_id is not None
+                    )
                     return
                 except Exception as exc:  # pragma: no cover - continue to fallback
                     logger.debug("insert failed; trying add", error=str(exc))
@@ -712,6 +941,13 @@ class RowBasedCSVKnowledgeBase:
                 try:
                     vector_db.add(
                         signature.content_hash, [document], filters=vector_filters
+                    )
+                    logger.info(
+                        "Document persisted successfully to knowledge_base",
+                        document_id=doc_id,
+                        knowledge_id=knowledge_id,
+                        method="add",
+                        has_agno_knowledge_reference=knowledge_id is not None
                     )
                     return
                 except Exception as exc:  # pragma: no cover - last resort
@@ -729,6 +965,13 @@ class RowBasedCSVKnowledgeBase:
                         signature.content_hash, [document], filters=vector_filters
                     )
                 )
+                logger.info(
+                    "Document persisted successfully to knowledge_base",
+                    document_id=doc_id,
+                    knowledge_id=knowledge_id,
+                    method="async_insert",
+                    has_agno_knowledge_reference=knowledge_id is not None
+                )
                 return
             except Exception as exc:  # pragma: no cover - continue to fallback
                 logger.debug(
@@ -740,6 +983,13 @@ class RowBasedCSVKnowledgeBase:
                 vector_db.insert(
                     signature.content_hash, [document], filters=vector_filters
                 )
+                logger.info(
+                    "Document persisted successfully to knowledge_base",
+                    document_id=doc_id,
+                    knowledge_id=knowledge_id,
+                    method="insert",
+                    has_agno_knowledge_reference=knowledge_id is not None
+                )
                 return
             except Exception as exc:  # pragma: no cover - continue to fallback
                 logger.debug("insert failed; trying add", error=str(exc))
@@ -748,13 +998,19 @@ class RowBasedCSVKnowledgeBase:
                 vector_db.add(
                     signature.content_hash, [document], filters=vector_filters
                 )
+                logger.info(
+                    "Document persisted successfully to knowledge_base",
+                    document_id=doc_id,
+                    knowledge_id=knowledge_id,
+                    method="add",
+                    has_agno_knowledge_reference=knowledge_id is not None
+                )
                 return
             except Exception as exc:  # pragma: no cover - last resort
                 logger.error(
                     "add failed while persisting document", error=str(exc)
                 )
-
-        # Contents DB integration deferred until Agno surfaces declarative APIs.
+        # === END STEP 2 ===
 
     def _track_metadata_structure(self, metadata: dict[str, Any]) -> None:
         if not isinstance(metadata, dict):
@@ -1021,6 +1277,8 @@ class RowBasedCSVKnowledgeBase:
 
                     # Get content text - handle both Document and Content objects
                     content_text = None
+                    raw_content = None
+
                     if hasattr(content_obj, 'content'):
                         content_text = content_obj.content
                         logger.info("Extracted content from .content attribute", content_length=len(content_text) if content_text else 0)
@@ -1028,6 +1286,250 @@ class RowBasedCSVKnowledgeBase:
                         # Content object with file_data (Pydantic dataclass)
                         raw_content = content_obj.file_data.content
 
+                    # Check if page-based splitting is enabled for PDF files
+                    splitting_config = None
+                    if self.processor and hasattr(self.processor, 'config'):
+                        proc_config = getattr(self.processor, 'config', None)
+                        if proc_config:
+                            splitting_config = getattr(proc_config, 'document_splitting', None)
+
+                    # Check if we should split - only for multi-page PDFs
+                    should_split = (
+                        splitting_config
+                        and splitting_config.enabled
+                        and splitting_config.split_by_pages
+                        and isinstance(raw_content, bytes)  # Only for PDF/binary files
+                    )
+
+                    # Quick check: count PDF pages to skip single-page PDFs
+                    if should_split and isinstance(raw_content, bytes):
+                        try:
+                            from pypdf import PdfReader
+                            pdf_file = io.BytesIO(raw_content)
+                            pdf_reader = PdfReader(pdf_file)
+                            page_count = len(pdf_reader.pages)
+
+                            # Skip splitting for single-page PDFs
+                            if page_count <= 1:
+                                logger.info(
+                                    "Skipping page splitting for single-page PDF",
+                                    content_id=getattr(content_obj, 'id', 'unknown'),
+                                    page_count=page_count
+                                )
+                                should_split = False
+                        except Exception as e:
+                            logger.warning(
+                                "Failed to count PDF pages, proceeding with splitting",
+                                error=str(e)
+                            )
+
+                    if should_split:
+                        # NEW PATH: Page-based document splitting
+                        # Strategy: ONE row in agno_knowledge for the whole document
+                        #          MULTIPLE rows in knowledge_base (one per page group)
+                        logger.info(
+                            "Using page-based document splitting",
+                            content_id=getattr(content_obj, 'id', 'unknown'),
+                            pages_per_chunk=splitting_config.pages_per_chunk,
+                            max_pages=splitting_config.max_pages,
+                            page_metadata=splitting_config.page_metadata
+                        )
+
+                        try:
+                            # Extract page groups using configured settings
+                            page_groups = extract_pages_from_pdf_bytes(
+                                raw_content,
+                                pages_per_chunk=splitting_config.pages_per_chunk,
+                                max_pages=splitting_config.max_pages
+                            )
+
+                            logger.info(
+                                "Page extraction completed",
+                                content_id=getattr(content_obj, 'id', 'unknown'),
+                                page_groups=len(page_groups),
+                                total_chunks_expected=len(page_groups)
+                            )
+
+                            # === STEP 1: Insert ONE row into agno_knowledge for the ENTIRE document ===
+                            parent_knowledge_id = None
+                            contents_db = self.knowledge.contents_db if self.knowledge else None
+
+                            if contents_db is not None:
+                                try:
+                                    # Get original metadata
+                                    original_meta = {}
+                                    if hasattr(content_obj, 'meta_data'):
+                                        original_meta = content_obj.meta_data or {}
+                                    elif hasattr(content_obj, 'metadata'):
+                                        original_meta = content_obj.metadata or {}
+
+                                    # Build parent document metadata
+                                    parent_meta = {
+                                        **original_meta,
+                                        'is_page_split_parent': True,
+                                        'total_page_groups': len(page_groups),
+                                        'document_type': 'pdf_multi_page'
+                                    }
+
+                                    # Serialize metadata
+                                    serialized_parent_meta = self._serialize_metadata_for_db(parent_meta)
+
+                                    # Create parent knowledge row
+                                    parent_knowledge_row = KnowledgeRow(
+                                        id=content_obj.id,  # Original document ID
+                                        name=getattr(content_obj, 'name', None) or content_obj.id,
+                                        description=f"Multi-page PDF document split into {len(page_groups)} page groups",
+                                        metadata=serialized_parent_meta,
+                                    )
+
+                                    # Insert into agno_knowledge table
+                                    result = contents_db.upsert_knowledge_content(parent_knowledge_row)
+                                    parent_knowledge_id = content_obj.id
+
+                                    logger.info(
+                                        "Parent document metadata inserted into agno_knowledge",
+                                        document_id=content_obj.id,
+                                        knowledge_id=parent_knowledge_id,
+                                        page_groups=len(page_groups),
+                                        table="agno_knowledge"
+                                    )
+                                except Exception as exc:
+                                    logger.error(
+                                        "Failed to insert parent document into agno_knowledge",
+                                        document_id=content_obj.id,
+                                        error=str(exc)
+                                    )
+                            # === END STEP 1 ===
+
+                            # === STEP 2: Create MULTIPLE documents for knowledge_base (one per page group) ===
+                            # Each will reference the same parent_knowledge_id
+                            for group_idx, page_group in enumerate(page_groups):
+                                page_range_start, page_range_end = page_group['page_range']
+                                group_content = page_group['content']
+
+                                logger.info(
+                                    "Processing page group",
+                                    group_index=group_idx,
+                                    page_range=f"{page_range_start}-{page_range_end}",
+                                    page_count=page_group['page_count'],
+                                    content_length=len(group_content)
+                                )
+
+                                # Skip empty page groups
+                                if not group_content or not group_content.strip():
+                                    logger.warning(
+                                        "Skipping empty page group",
+                                        group_index=group_idx,
+                                        page_range=f"{page_range_start}-{page_range_end}"
+                                    )
+                                    continue
+
+                                # Get original metadata
+                                original_meta = {}
+                                if hasattr(content_obj, 'meta_data'):
+                                    original_meta = content_obj.meta_data or {}
+                                elif hasattr(content_obj, 'metadata'):
+                                    original_meta = content_obj.metadata or {}
+
+                                # Build page group metadata (lightweight - no full processing)
+                                page_meta = {**original_meta}
+
+                                # Add page range metadata if enabled
+                                if splitting_config.page_metadata:
+                                    page_meta.update({
+                                        'page_range_start': page_range_start,
+                                        'page_range_end': page_range_end,
+                                        'page_count': page_group['page_count'],
+                                        'is_page_chunk': True,
+                                        'total_page_groups': len(page_groups),
+                                        'page_group_index': group_idx,
+                                        'parent_document_id': content_obj.id,  # Reference to parent in agno_knowledge
+                                        'parent_knowledge_id': parent_knowledge_id,  # Explicit FK reference
+                                        'original_document_name': getattr(content_obj, 'name', None),
+                                        'content_length': len(group_content)
+                                    })
+
+                                # Serialize metadata for database storage (datetime, Enum, etc.)
+                                serialized_page_meta = self._serialize_metadata_for_db(page_meta)
+
+                                # Generate unique document ID for this page group
+                                doc_id = f"{content_obj.id}_pages_{page_range_start}-{page_range_end}"
+
+                                # Create ONE document per page group (no chunking)
+                                # This will be inserted into knowledge_base referencing the parent in agno_knowledge
+                                enhanced_doc = Document(
+                                    id=doc_id,
+                                    name=getattr(content_obj, 'name', None),
+                                    content=group_content,
+                                    meta_data=serialized_page_meta
+                                )
+                                enhanced_contents.append(enhanced_doc)
+
+                                logger.info(
+                                    "Page group document created",
+                                    group_index=group_idx,
+                                    page_range=f"{page_range_start}-{page_range_end}",
+                                    document_id=doc_id,
+                                    parent_knowledge_id=parent_knowledge_id
+                                )
+                            # === END STEP 2 ===
+
+                            logger.info(
+                                "Page-based splitting completed",
+                                content_id=getattr(content_obj, 'id', 'unknown'),
+                                page_groups=len(page_groups),
+                                documents_created=len([doc for doc in enhanced_contents if hasattr(doc, 'id') and content_obj.id in doc.id]),
+                                parent_knowledge_id=parent_knowledge_id
+                            )
+
+                            # Update content status to completed
+                            if self.knowledge and self.knowledge.contents_db:
+                                try:
+                                    # Get existing knowledge row and update status
+                                    existing = self.knowledge.contents_db.get_knowledge_content(content_obj.id)
+                                    if existing:
+                                        existing.status = "completed"
+                                        self.knowledge.contents_db.upsert_knowledge_content(existing)
+
+                                        logger.info(
+                                            "Content status updated to completed",
+                                            content_id=content_obj.id
+                                        )
+                                except Exception as status_error:
+                                    logger.error(
+                                        "Failed to update content status",
+                                        content_id=content_obj.id,
+                                        error=str(status_error)
+                                    )
+
+                            # Continue to next content object (skip existing processing path)
+                            continue
+
+                        except Exception as split_error:
+                            # Log error and fall back to full document processing
+                            logger.error(
+                                "Page-based splitting failed, falling back to full document processing",
+                                content_id=getattr(content_obj, 'id', 'unknown'),
+                                error_type=type(split_error).__name__,
+                                error_message=str(split_error)
+                            )
+
+                            # Update content status to error
+                            if self.knowledge and self.knowledge.contents_db:
+                                try:
+                                    # Get existing knowledge row and update status
+                                    existing = self.knowledge.contents_db.get_knowledge_content(getattr(content_obj, 'id', 'unknown'))
+                                    if existing:
+                                        existing.status = "error"
+                                        existing.status_message = str(split_error)[:500]  # Truncate long errors
+                                        self.knowledge.contents_db.upsert_knowledge_content(existing)
+                                except Exception:
+                                    pass  # Don't fail on status update failure
+
+                            # Fall through to existing extraction path
+
+                    # EXISTING PATH: Full document processing (unchanged)
+                    if raw_content is not None:
                         # Check if content is bytes (PDF) or string (text file)
                         if isinstance(raw_content, bytes):
                             # Extract text from PDF bytes
@@ -1172,6 +1674,18 @@ Stack Trace:
                         error_message=str(e)
                     )
 
+                    # Update content status to error
+                    if self.knowledge and self.knowledge.contents_db:
+                        try:
+                            # Get existing knowledge row and update status
+                            existing = self.knowledge.contents_db.get_knowledge_content(getattr(content_obj, 'id', 'unknown'))
+                            if existing:
+                                existing.status = "error"
+                                existing.status_message = str(e)[:500]  # Truncate long errors
+                                self.knowledge.contents_db.upsert_knowledge_content(existing)
+                        except Exception:
+                            pass  # Don't fail on status update failure
+
                     enhanced_contents.append(content_obj)
             else:
                 # Keep CSV-loaded documents unchanged
@@ -1256,6 +1770,27 @@ Stack Trace:
                 "Database persistence completed",
                 persisted_count=len(documents_to_persist)
             )
+
+            # Update content status to completed for each successfully uploaded content object
+            for content_obj in contents:
+                if self.knowledge and self.knowledge.contents_db:
+                    try:
+                        # Get existing knowledge row and update status
+                        existing = self.knowledge.contents_db.get_knowledge_content(content_obj.id)
+                        if existing:
+                            existing.status = "completed"
+                            self.knowledge.contents_db.upsert_knowledge_content(existing)
+
+                            logger.info(
+                                "Content status updated to completed",
+                                content_id=content_obj.id
+                            )
+                    except Exception as status_error:
+                        logger.error(
+                            "Failed to update content status",
+                            content_id=content_obj.id,
+                            error=str(status_error)
+                        )
 
         # Return None to match base Knowledge signature
         return None
