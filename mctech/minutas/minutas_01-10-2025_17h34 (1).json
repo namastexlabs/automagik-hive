@@ -8,388 +8,6 @@
   },
   "cnpj_groups": [
     {
-      "cnpj_claro": "40432544010290",
-      "cnpj_claro_formatted": "40.432.544/0102-90",
-      "empresa_origem": "CLARO MOVEL ENG",
-      "status": "CLARO_GENERATED",
-      "city": "RECIFE",
-      "state": "PE",
-      "municipio": "RECIFE",
-      "uf": "PE",
-      "minutas": [
-        {
-          "po": "600730114",
-          "nf_cte": "7663",
-          "valor": 650.0,
-          "data_original": 45444,
-          "competencia": "45444"
-        }
-      ],
-      "minuta_count": 1,
-      "total_value": 650.0,
-      "po_list": [
-        "600730114"
-      ],
-      "start_date": "01/05/2024",
-      "end_date": "31/07/2024",
-      "requires_regional": false,
-      "regional_type": null,
-      "created_at": "2025-10-03T11:44:59.110659+00:00",
-      "last_updated": "2025-10-14T21:37:51.528825+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      },
-      "pipeline_progress": {
-        "current_step": 1,
-        "total_steps": 5,
-        "last_step_completed": "main-minut-gen",
-        "last_step_timestamp": "2025-10-14T21:37:51.527990+00:00",
-        "failed_step": "main-minut-gen"
-      }
-    },
-    {
-      "cnpj_claro": "40432544015500",
-      "cnpj_claro_formatted": "40432544015500",
-      "empresa_origem": "CLARO MOVEL MARKET",
-      "status": "CLARO_GENERATED",
-      "city": "JABOATAO DOS GUARARAPES",
-      "state": "PE",
-      "municipio": "JABOATAO DOS GUARARAPES",
-      "uf": "PE",
-      "minutas": [
-        {
-          "po": "600730111",
-          "nf_cte": "7531",
-          "valor": 34.29,
-          "data_original": 45444,
-          "competencia": "45444"
-        },
-        {
-          "po": "600730111",
-          "nf_cte": "7742",
-          "valor": 127.18,
-          "data_original": 45444,
-          "competencia": "45444"
-        }
-      ],
-      "minuta_count": 2,
-      "total_value": 161.47,
-      "po_list": [
-        "600730111"
-      ],
-      "start_date": "01/05/2024",
-      "end_date": "31/07/2024",
-      "requires_regional": false,
-      "regional_type": null,
-      "created_at": "2025-10-03T11:44:59.112786+00:00",
-      "last_updated": "2025-10-14T21:34:08.365371+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      }
-    },
-    {
-      "cnpj_claro": "40432544019328",
-      "cnpj_claro_formatted": "40432544019328",
-      "empresa_origem": "CLARO MOVEL MARKET",
-      "status": "CLARO_GENERATED",
-      "city": "SALVADOR",
-      "state": "BA",
-      "municipio": "SALVADOR",
-      "uf": "BA",
-      "minutas": [
-        {
-          "po": "600730110",
-          "nf_cte": "17370",
-          "valor": 180.72,
-          "data_original": 45901,
-          "competencia": "45901"
-        }
-      ],
-      "minuta_count": 1,
-      "total_value": 180.72,
-      "po_list": [
-        "600730110"
-      ],
-      "start_date": "01/08/2025",
-      "end_date": "31/10/2025",
-      "requires_regional": false,
-      "regional_type": null,
-      "created_at": "2025-10-03T11:44:59.113715+00:00",
-      "last_updated": "2025-10-14T21:34:08.365374+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      }
-    },
-    {
-      "cnpj_claro": "40432544066598",
-      "cnpj_claro_formatted": "40432544066598",
-      "empresa_origem": "EMBRATEL",
-      "status": "CLARO_GENERATED",
-      "city": "RECIFE",
-      "state": "PE",
-      "municipio": "RECIFE",
-      "uf": "PE",
-      "minutas": [
-        {
-          "po": "600730916",
-          "nf_cte": "8659",
-          "valor": 55.42,
-          "data_original": 45505,
-          "competencia": "45505"
-        }
-      ],
-      "minuta_count": 1,
-      "total_value": 55.42,
-      "po_list": [
-        "600730916"
-      ],
-      "start_date": "01/07/2024",
-      "end_date": "30/09/2024",
-      "requires_regional": false,
-      "regional_type": null,
-      "created_at": "2025-10-03T11:44:59.115145+00:00",
-      "last_updated": "2025-10-14T21:34:08.365377+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      }
-    },
-    {
-      "cnpj_claro": "40432544084570",
-      "cnpj_claro_formatted": "40432544084570",
-      "empresa_origem": "EMBRATEL",
-      "status": "CLARO_GENERATED",
-      "city": "SALVADOR",
-      "state": "BA",
-      "municipio": "SALVADOR",
-      "uf": "BA",
-      "minutas": [
-        {
-          "po": "600730914",
-          "nf_cte": "9239",
-          "valor": 434.44,
-          "data_original": 45505,
-          "competencia": "45505"
-        },
-        {
-          "po": "600730915",
-          "nf_cte": "9370",
-          "valor": 434.44,
-          "data_original": 45536,
-          "competencia": "45536"
-        }
-      ],
-      "minuta_count": 2,
-      "total_value": 868.88,
-      "po_list": [
-        "600730914",
-        "600730915"
-      ],
-      "start_date": "01/07/2024",
-      "end_date": "30/09/2024",
-      "requires_regional": false,
-      "regional_type": null,
-      "created_at": "2025-10-03T11:44:59.116873+00:00",
-      "last_updated": "2025-10-14T21:34:08.365381+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      }
-    },
-    {
-      "cnpj_claro": "40432544084901",
-      "cnpj_claro_formatted": "40432544084901",
-      "empresa_origem": "EMBRATEL",
-      "status": "CLARO_GENERATED",
-      "city": "BELEM",
-      "state": "PA",
-      "municipio": "BELEM",
-      "uf": "PA",
-      "minutas": [
-        {
-          "po": "600730917",
-          "nf_cte": "8994",
-          "valor": 147.55,
-          "data_original": 45505,
-          "competencia": "45505"
-        },
-        {
-          "po": "600730918",
-          "nf_cte": "8995",
-          "valor": 147.55,
-          "data_original": 45505,
-          "competencia": "45505"
-        }
-      ],
-      "minuta_count": 2,
-      "total_value": 295.1,
-      "po_list": [
-        "600730917",
-        "600730918"
-      ],
-      "start_date": "01/07/2024",
-      "end_date": "30/09/2024",
-      "requires_regional": false,
-      "regional_type": null,
-      "created_at": "2025-10-03T11:44:59.118166+00:00",
-      "last_updated": "2025-10-14T21:34:08.365383+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      }
-    },
-    {
-      "cnpj_claro": "66970229026980",
-      "cnpj_claro_formatted": "66.970.229/0269-80",
-      "empresa_origem": "CLARO NXT",
-      "status": "CLARO_GENERATED",
-      "city": "MACEIO",
-      "state": "AL",
-      "municipio": "MACEIO",
-      "uf": "AL",
-      "minutas": [
-        {
-          "po": "600730627",
-          "nf_cte": "6958",
-          "valor": 6.85,
-          "data_original": 45413,
-          "competencia": "45413"
-        },
-        {
-          "po": "600730628",
-          "nf_cte": "6963",
-          "valor": 6.85,
-          "data_original": 45413,
-          "competencia": "45413"
-        }
-      ],
-      "minuta_count": 2,
-      "total_value": 13.7,
-      "po_list": [
-        "600730627",
-        "600730628"
-      ],
-      "start_date": "01/04/2024",
-      "end_date": "30/06/2024",
-      "requires_regional": false,
-      "regional_type": null,
-      "created_at": "2025-10-03T11:44:59.118939+00:00",
-      "last_updated": "2025-10-14T21:34:08.365418+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      }
-    },
-    {
-      "cnpj_claro": "66970229034304",
-      "cnpj_claro_formatted": "66.970.229/0343-04",
-      "empresa_origem": "CLARO NXT",
-      "status": "CLARO_GENERATED",
-      "city": "PALMAS",
-      "state": "TO",
-      "municipio": "PALMAS",
-      "uf": "TO",
-      "minutas": [
-        {
-          "po": "600730481",
-          "nf_cte": "6863",
-          "valor": 36.29,
-          "data_original": 45413,
-          "competencia": "45413"
-        },
-        {
-          "po": "600730482",
-          "nf_cte": "6872",
-          "valor": 30.39,
-          "data_original": 45413,
-          "competencia": "45413"
-        },
-        {
-          "po": "600730483",
-          "nf_cte": "6875",
-          "valor": 285.41,
-          "data_original": 45413,
-          "competencia": "45413"
-        },
-        {
-          "po": "600730484",
-          "nf_cte": "6943",
-          "valor": 33.33,
-          "data_original": 45444,
-          "competencia": "45444"
-        },
-        {
-          "po": "600730485",
-          "nf_cte": "6950",
-          "valor": 33.33,
-          "data_original": 45444,
-          "competencia": "45444"
-        },
-        {
-          "po": "600730486",
-          "nf_cte": "7083",
-          "valor": 30.39,
-          "data_original": 45444,
-          "competencia": "45444"
-        },
-        {
-          "po": "600730487",
-          "nf_cte": "7118",
-          "valor": 55.93,
-          "data_original": 45444,
-          "competencia": "45444"
-        },
-        {
-          "po": "600730488",
-          "nf_cte": "7119",
-          "valor": 30.39,
-          "data_original": 45444,
-          "competencia": "45444"
-        }
-      ],
-      "minuta_count": 8,
-      "total_value": 535.46,
-      "po_list": [
-        "600730481",
-        "600730482",
-        "600730483",
-        "600730484",
-        "600730485",
-        "600730486",
-        "600730487",
-        "600730488"
-      ],
-      "start_date": "01/04/2024",
-      "end_date": "30/06/2024",
-      "requires_regional": true,
-      "regional_type": "palmas",
-      "created_at": "2025-10-03T11:44:59.120526+00:00",
-      "last_updated": "2025-10-14T21:34:08.365420+00:00",
-      "protocol_number": null,
-      "pdf_files": {
-        "base_city_hall_pdfs": [],
-        "additional_city_hall_pdfs": [],
-        "final_concatenated": null
-      }
-    },
-    {
       "cnpj_claro": "66970229044962",
       "cnpj_claro_formatted": "66.970.229/0449-62",
       "empresa_origem": "CLARO NXT",
@@ -425,12 +43,36 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.121317+00:00",
-      "last_updated": "2025-10-14T21:34:08.365458+00:00",
+      "last_updated": "2025-10-15T22:16:49.715626+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
         "additional_city_hall_pdfs": [],
         "final_concatenated": null
+      },
+      "po_status": {
+        "600730296": {
+          "status": "CLARO_GENERATED",
+          "last_updated": "2025-10-15T22:17:20.095392+00:00",
+          "pipeline_progress": {
+            "current_step": 1,
+            "total_steps": 5,
+            "last_step_completed": "main-minut-gen",
+            "last_step_timestamp": "2025-10-15T22:17:20.094982+00:00",
+            "failed_step": "main-minut-gen"
+          }
+        },
+        "600730297": {
+          "status": "CLARO_GENERATED",
+          "last_updated": "2025-10-15T22:17:47.008329+00:00",
+          "pipeline_progress": {
+            "current_step": 1,
+            "total_steps": 5,
+            "last_step_completed": "main-minut-gen",
+            "last_step_timestamp": "2025-10-15T22:17:47.007885+00:00",
+            "failed_step": "main-minut-gen"
+          }
+        }
       }
     },
     {
@@ -461,12 +103,25 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.122028+00:00",
-      "last_updated": "2025-10-14T21:34:08.365460+00:00",
+      "last_updated": "2025-10-15T22:16:49.715628+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
         "additional_city_hall_pdfs": [],
         "final_concatenated": null
+      },
+      "po_status": {
+        "600730600": {
+          "status": "CLARO_GENERATED",
+          "last_updated": "2025-10-15T22:18:13.662887+00:00",
+          "pipeline_progress": {
+            "current_step": 1,
+            "total_steps": 5,
+            "last_step_completed": "main-minut-gen",
+            "last_step_timestamp": "2025-10-15T22:18:13.662396+00:00",
+            "failed_step": "main-minut-gen"
+          }
+        }
       }
     },
     {
@@ -497,12 +152,25 @@
       "requires_regional": true,
       "regional_type": "aracaju",
       "created_at": "2025-10-03T11:44:59.122637+00:00",
-      "last_updated": "2025-10-14T21:34:08.365463+00:00",
+      "last_updated": "2025-10-15T22:16:49.715630+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
         "additional_city_hall_pdfs": [],
         "final_concatenated": null
+      },
+      "po_status": {
+        "600730604": {
+          "status": "CLARO_GENERATED",
+          "last_updated": "2025-10-15T22:20:51.967621+00:00",
+          "pipeline_progress": {
+            "current_step": 1,
+            "total_steps": 5,
+            "last_step_completed": "main-minut-gen",
+            "last_step_timestamp": "2025-10-15T22:20:51.967190+00:00",
+            "failed_step": "main-minut-gen"
+          }
+        }
       }
     },
     {
@@ -557,12 +225,58 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.123664+00:00",
-      "last_updated": "2025-10-14T21:34:08.365402+00:00",
+      "last_updated": "2025-10-15T22:16:49.715581+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
         "additional_city_hall_pdfs": [],
         "final_concatenated": null
+      },
+      "po_status": {
+        "600730779": {
+          "status": "CONCATENATED",
+          "last_updated": "2025-10-15T22:27:39.940653+00:00",
+          "pipeline_progress": {
+            "current_step": 5,
+            "total_steps": 5,
+            "last_step_completed": "invoiceUpload",
+            "last_step_timestamp": "2025-10-15T22:27:39.940218+00:00",
+            "failed_step": "invoiceUpload"
+          }
+        },
+        "600730780": {
+          "status": "CONCATENATED",
+          "last_updated": "2025-10-15T22:34:25.885879+00:00",
+          "pipeline_progress": {
+            "current_step": 5,
+            "total_steps": 5,
+            "last_step_completed": "invoiceUpload",
+            "last_step_timestamp": "2025-10-15T22:34:25.885452+00:00",
+            "failed_step": "invoiceUpload"
+          }
+        },
+        "600730781": {
+          "status": "CONCATENATED",
+          "last_updated": "2025-10-15T22:41:11.675494+00:00",
+          "pipeline_progress": {
+            "current_step": 5,
+            "total_steps": 5,
+            "last_step_completed": "invoiceUpload",
+            "last_step_timestamp": "2025-10-15T22:41:11.675038+00:00",
+            "failed_step": "invoiceUpload"
+          }
+        },
+        "600730782": {
+          "status": "CLARO_GENERATED",
+          "last_updated": "2025-10-15T22:41:19.910379+00:00",
+          "pipeline_progress": {
+            "current_step": 1,
+            "total_steps": 5,
+            "last_step_completed": "main-minut-gen",
+            "last_step_timestamp": "2025-10-15T22:41:19.909942+00:00",
+            "failed_step": "main-minut-gen"
+          }
+        }
       }
     },
     {
@@ -601,7 +315,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.124372+00:00",
-      "last_updated": "2025-10-14T21:34:08.365405+00:00",
+      "last_updated": "2025-10-15T22:16:49.715583+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -645,7 +359,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.125074+00:00",
-      "last_updated": "2025-10-14T21:34:08.365408+00:00",
+      "last_updated": "2025-10-15T22:16:49.715587+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -697,7 +411,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.126051+00:00",
-      "last_updated": "2025-10-14T21:34:08.365412+00:00",
+      "last_updated": "2025-10-15T22:16:49.715589+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -765,7 +479,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.127141+00:00",
-      "last_updated": "2025-10-14T21:34:08.365415+00:00",
+      "last_updated": "2025-10-15T22:16:49.715592+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -778,10 +492,10 @@
       "cnpj_claro_formatted": "66970229026980",
       "empresa_origem": "CLARO NXT",
       "status": "CLARO_GENERATED",
-      "city": "PENDING_LOOKUP",
-      "state": "PENDING_LOOKUP",
-      "municipio": "PENDING_LOOKUP",
-      "uf": "PENDING_LOOKUP",
+      "city": "MACEIO",
+      "state": "AL",
+      "municipio": "MACEIO",
+      "uf": "AL",
       "minutas": [
         {
           "po": "600730629",
@@ -945,7 +659,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.129968+00:00",
-      "last_updated": "2025-10-03T11:44:59.129973+00:00",
+      "last_updated": "2025-10-15T22:16:49.715594+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -958,10 +672,10 @@
       "cnpj_claro_formatted": "66970229034304",
       "empresa_origem": "CLARO NXT",
       "status": "CLARO_GENERATED",
-      "city": "PENDING_LOOKUP",
-      "state": "PENDING_LOOKUP",
-      "municipio": "PENDING_LOOKUP",
-      "uf": "PENDING_LOOKUP",
+      "city": "PALMAS",
+      "state": "TO",
+      "municipio": "PALMAS",
+      "uf": "TO",
       "minutas": [
         {
           "po": "600730489",
@@ -1122,10 +836,10 @@
       ],
       "start_date": "01/11/2024",
       "end_date": "31/01/2025",
-      "requires_regional": false,
-      "regional_type": null,
+      "requires_regional": true,
+      "regional_type": "palmas",
       "created_at": "2025-10-03T11:44:59.131773+00:00",
-      "last_updated": "2025-10-03T11:44:59.131778+00:00",
+      "last_updated": "2025-10-15T22:16:49.715597+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -1193,7 +907,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.133051+00:00",
-      "last_updated": "2025-10-14T21:34:08.365424+00:00",
+      "last_updated": "2025-10-15T22:16:49.715599+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -1493,7 +1207,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.137088+00:00",
-      "last_updated": "2025-10-14T21:34:08.365427+00:00",
+      "last_updated": "2025-10-15T22:16:49.715602+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -1601,7 +1315,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.138743+00:00",
-      "last_updated": "2025-10-14T21:34:08.365430+00:00",
+      "last_updated": "2025-10-15T22:16:49.715605+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -1645,7 +1359,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.139682+00:00",
-      "last_updated": "2025-10-14T21:34:08.365434+00:00",
+      "last_updated": "2025-10-15T22:16:49.715608+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -1833,7 +1547,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.143382+00:00",
-      "last_updated": "2025-10-14T21:34:08.365437+00:00",
+      "last_updated": "2025-10-15T22:16:49.715610+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -1957,7 +1671,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.145421+00:00",
-      "last_updated": "2025-10-14T21:34:08.365440+00:00",
+      "last_updated": "2025-10-15T22:16:49.715613+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -2009,7 +1723,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.146231+00:00",
-      "last_updated": "2025-10-14T21:34:08.365444+00:00",
+      "last_updated": "2025-10-15T22:16:49.715616+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -2133,7 +1847,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.147628+00:00",
-      "last_updated": "2025-10-14T21:34:08.365447+00:00",
+      "last_updated": "2025-10-15T22:16:49.715618+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -2353,7 +2067,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.149805+00:00",
-      "last_updated": "2025-10-14T21:34:08.365451+00:00",
+      "last_updated": "2025-10-15T22:16:49.715622+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -2525,7 +2239,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.151751+00:00",
-      "last_updated": "2025-10-14T21:34:08.365455+00:00",
+      "last_updated": "2025-10-15T22:16:49.715624+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -2829,7 +2543,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.157707+00:00",
-      "last_updated": "2025-10-14T21:34:08.365467+00:00",
+      "last_updated": "2025-10-15T22:16:49.715633+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -2897,7 +2611,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.159252+00:00",
-      "last_updated": "2025-10-14T21:34:08.365471+00:00",
+      "last_updated": "2025-10-15T22:16:49.715636+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -2957,7 +2671,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.160524+00:00",
-      "last_updated": "2025-10-14T21:34:08.365474+00:00",
+      "last_updated": "2025-10-15T22:16:49.715639+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
@@ -3001,7 +2715,7 @@
       "requires_regional": false,
       "regional_type": null,
       "created_at": "2025-10-03T11:44:59.161483+00:00",
-      "last_updated": "2025-10-14T21:34:08.365478+00:00",
+      "last_updated": "2025-10-15T22:16:49.715642+00:00",
       "protocol_number": null,
       "pdf_files": {
         "base_city_hall_pdfs": [],
