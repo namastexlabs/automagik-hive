@@ -762,13 +762,23 @@ async def _async_create_automagik_api():
     app.add_middleware(AgentRunErrorHandler)
 
     # Add CORS middleware
+    # Note: allow_credentials=True is incompatible with allow_origins=["*"]
+    # Browsers reject this combination as a security measure
+    use_credentials = "*" not in api_settings.cors_origin_list
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=api_settings.cors_origin_list,  # No ["*"] fallback
-        allow_credentials=True,
+        allow_origins=api_settings.cors_origin_list,
+        allow_credentials=use_credentials,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
+
+    if not use_credentials:
+        logger.debug(
+            "CORS credentials disabled due to wildcard origin",
+            origins=api_settings.cors_origin_list
+        )
 
     # Switch from startup to runtime logging mode
     from lib.logging import set_runtime_mode
