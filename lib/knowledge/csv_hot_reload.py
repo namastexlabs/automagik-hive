@@ -314,12 +314,49 @@ class CSVHotReloadManager:
             return
 
         try:
-            self.knowledge_base.load(recreate=False, skip_existing=True)
-            logger.info(
-                "Knowledge base reloaded",
-                component="csv_hot_reload",
-                method="agno_incremental",
+            # Use SmartIncrementalLoader for intelligent change detection
+            from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+
+            smart_loader = SmartIncrementalLoader(
+                csv_path=str(self.csv_path),
+                kb=self.knowledge_base
             )
+
+            # Analyze and process only changes
+            result = smart_loader.smart_load()
+
+            if "error" in result:
+                logger.warning(
+                    "Smart reload failed, falling back to basic load",
+                    error=result["error"],
+                    component="csv_hot_reload",
+                )
+                # Fallback to basic incremental load
+                self.knowledge_base.load(recreate=False, skip_existing=True)
+            else:
+                strategy = result.get("strategy", "unknown")
+                if strategy == "no_changes":
+                    logger.debug(
+                        "No changes detected in CSV",
+                        component="csv_hot_reload",
+                    )
+                elif strategy == "incremental_update":
+                    new_rows = result.get("new_rows_processed", 0)
+                    removed_rows = result.get("rows_removed", 0)
+                    logger.info(
+                        "Knowledge base reloaded with changes",
+                        component="csv_hot_reload",
+                        method="smart_incremental",
+                        new_rows=new_rows,
+                        removed_rows=removed_rows,
+                    )
+                else:
+                    logger.info(
+                        "Knowledge base reloaded",
+                        component="csv_hot_reload",
+                        method="smart_incremental",
+                        strategy=strategy,
+                    )
         except Exception as exc:
             logger.error(
                 "Knowledge base reload failed", error=str(exc), component="csv_hot_reload"
