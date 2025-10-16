@@ -72,15 +72,24 @@ def create_app() -> FastAPI:
     app.include_router(protected_router)
 
     # Add Middlewares
+    # Note: allow_credentials=True is incompatible with allow_origins=["*"]
+    # Browsers reject this combination as a security measure
+    cors_origins = api_settings.cors_origin_list if api_settings.cors_origin_list else ["*"]
+    use_credentials = "*" not in cors_origins
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=api_settings.cors_origin_list
-        if api_settings.cors_origin_list
-        else ["*"],
-        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_credentials=use_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    if not use_credentials:
+        logger.debug(
+            "CORS credentials disabled due to wildcard origin",
+            origins=cors_origins
+        )
 
     return app
 

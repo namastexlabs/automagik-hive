@@ -93,22 +93,24 @@ class ApiSettings(BaseSettings):
         )
         environment = str(environment_raw).strip().lower()
 
-        # Development stays wide open for local workflows regardless of env override
-        if environment == "development":
-            return ["*"]
-
         # Prefer explicit validator input when provided (e.g. direct initialization)
         explicit_origins = _parse_origins(_cors_origin_list)
         if explicit_origins:
             return explicit_origins
 
-        # Fallback to environment variable for staging/production
+        # Check for explicit HIVE_CORS_ORIGINS environment variable
+        # This takes precedence even in development to support integrations like agno.os
         origins_source = os.getenv("HIVE_CORS_ORIGINS", "")
         env_origins = _parse_origins(origins_source)
 
         if env_origins:
             return env_origins
 
+        # Development default: allow all origins only when HIVE_CORS_ORIGINS is not set
+        if environment == "development":
+            return ["*"]
+
+        # Production/staging require explicit CORS origins
         if origins_source.strip():
             raise ValueError("HIVE_CORS_ORIGINS contains no valid origins")
 
