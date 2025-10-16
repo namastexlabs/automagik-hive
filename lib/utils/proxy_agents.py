@@ -257,7 +257,8 @@ class AgnoAgentProxy:
         # Add runtime parameters
         agent_params.update(
             {
-                "agent_id": component_id,
+                "id": component_id,  # Used by AgentOS for API serialization
+                "agent_id": component_id,  # Used internally by Agno
                 "session_id": session_id,
                 "debug_mode": debug_mode,
                 "user_id": user_id,
@@ -420,10 +421,9 @@ class AgnoAgentProxy:
         _safe_model_cfg = str(model_config).replace("{", "{{").replace("}", "}}")
         _prov = model_config.get("provider")
         _log = logger.bind(provider=_prov) if _prov is not None else logger
-        _log.info(
-            f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {_safe_model_cfg}"
+        _log.debug(
+            f"🔍 Model configuration for {component_id}: {_safe_model_cfg}"
         )
-        print(f"🔍 TEMPLATE-AGENT MODEL CONFIG for {component_id}: {_safe_model_cfg}")
         
         model_id = model_config.get("id")
         provider = model_config.get("provider")
