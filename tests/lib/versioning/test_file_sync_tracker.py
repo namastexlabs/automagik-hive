@@ -25,7 +25,7 @@ def tracker():
     """Create FileSyncTracker instance with mocked base path."""
     with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
         mock_instance = MagicMock()
-        mock_instance.BASE_DIR = Path("/test/base")
+        mock_instance.base_dir = Path("/test/base")
         mock_settings.return_value = mock_instance
         return FileSyncTracker()
 
@@ -44,7 +44,7 @@ class TestFileSyncTracker:
         """Test that FileSyncTracker initializes with correct base path from settings."""
         with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
             mock_instance = MagicMock()
-            mock_instance.BASE_DIR = Path("/custom/base/path")
+            mock_instance.base_dir = Path("/custom/base/path")
             mock_settings.return_value = mock_instance
             tracker = FileSyncTracker()
 
@@ -394,7 +394,7 @@ class TestFileSyncTrackerIntegration:
         # Create tracker with real base path
         with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
             mock_instance = MagicMock()
-            mock_instance.BASE_DIR = Path(str(temp_directory))
+            mock_instance.base_dir = Path(str(temp_directory))
             mock_settings.return_value = mock_instance
             tracker = FileSyncTracker()
 
@@ -432,7 +432,7 @@ class TestFileSyncTrackerIntegration:
         try:
             with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                 mock_instance = MagicMock()
-                mock_instance.BASE_DIR = Path(str(temp_directory))
+                mock_instance.base_dir = Path(str(temp_directory))
                 mock_settings.return_value = mock_instance
                 tracker = FileSyncTracker()
 

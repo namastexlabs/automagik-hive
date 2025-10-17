@@ -12,7 +12,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from agno.agent import Agent
+    pass
 
 from lib.versioning import AgnoVersionService
 from lib.versioning.bidirectional_sync import BidirectionalSync
@@ -157,9 +157,7 @@ async def create_component_version(component_id: str, request: VersionCreateRequ
         version_info = await service.get_version(component_id, request.version)
 
         if not version_info:
-            raise HTTPException(
-                status_code=500, detail=f"Failed to retrieve created version {request.version}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to retrieve created version {request.version}")
 
         return {
             "component_id": version_info.component_id,
@@ -221,9 +219,7 @@ async def get_component_version(component_id: str, version: int) -> dict[str, An
 
 
 @router.put("/components/{component_id}/versions/{version}")
-async def update_component_version(
-    component_id: str, version: int, request: VersionUpdateRequest
-) -> dict[str, Any]:
+async def update_component_version(component_id: str, version: int, request: VersionUpdateRequest) -> dict[str, Any]:
     """Update configuration for a specific version."""
 
     service = get_version_service()
@@ -297,9 +293,7 @@ async def update_component_version(
         # Return updated version info
         updated_version = await service.get_version(component_id, version)
         if not updated_version:
-            raise HTTPException(
-                status_code=500, detail=f"Failed to retrieve updated version {version}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to retrieve updated version {version}")
 
         return {
             "component_id": updated_version.component_id,
@@ -315,9 +309,7 @@ async def update_component_version(
 
 
 @router.post("/components/{component_id}/versions/{version}/activate")
-async def activate_component_version(
-    component_id: str, version: int, reason: str | None = None
-) -> dict[str, Any]:
+async def activate_component_version(component_id: str, version: int, reason: str | None = None) -> dict[str, Any]:
     """Activate a specific version."""
 
     service = get_version_service()
@@ -327,9 +319,7 @@ async def activate_component_version(
         version_info = await service.get_version(component_id, version)
 
         if not version_info:
-            raise HTTPException(
-                status_code=500, detail=f"Failed to retrieve activated version {version}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to retrieve activated version {version}")
 
         return {
             "component_id": version_info.component_id,

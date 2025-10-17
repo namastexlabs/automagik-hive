@@ -17,7 +17,7 @@ class FileSyncTracker:
 
     def __init__(self):
         """Initialize the file sync tracker."""
-        self.base_path = Path(settings().BASE_DIR)
+        self.base_path = Path(settings().base_dir)
 
     def _get_yaml_path(self, component_id: str) -> Path:
         """

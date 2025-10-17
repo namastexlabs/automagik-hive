@@ -11,7 +11,7 @@ import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 # Agno v2 uses AgentOS instead of deprecated Playground
 try:
@@ -605,7 +605,7 @@ async def _async_create_automagik_api() -> FastAPI:
         available_agent_list = AgentRegistry.list_available_agents()
         logger.info(f"AGUI: Found {len(available_agent_list)} available agents: {available_agent_list}")
 
-        selected_agent_id: Optional[str] = None
+        selected_agent_id: str | None = None
         if agui_agent_id and agui_agent_id in available_agent_list:
             selected_agent_id = agui_agent_id
             logger.info(f"AGUI: Using specified agent: {agui_agent_id}")
@@ -776,7 +776,7 @@ async def _async_create_automagik_api() -> FastAPI:
 
 
 # Global app instance for lazy loading
-_app_instance: Optional[FastAPI] = None
+_app_instance: FastAPI | None = None
 
 
 def create_automagik_api() -> FastAPI:

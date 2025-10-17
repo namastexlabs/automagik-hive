@@ -134,7 +134,7 @@ class TestVersionLifecycleIntegration:
         with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
             with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                 mock_instance = MagicMock()
-                mock_instance.BASE_DIR = Path(str(temp_workspace))
+                mock_instance.base_dir = Path(str(temp_workspace))
                 mock_settings.return_value = mock_instance
 
                 # Mock version service
@@ -189,7 +189,7 @@ class TestVersionLifecycleIntegration:
         with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
             with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                 mock_instance = MagicMock()
-                mock_instance.BASE_DIR = Path(str(temp_workspace))
+                mock_instance.base_dir = Path(str(temp_workspace))
                 mock_settings.return_value = mock_instance
 
                 mock_service = mock_service_class.return_value
@@ -234,7 +234,7 @@ class TestVersionLifecycleIntegration:
         with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
             with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                 mock_instance = MagicMock()
-                mock_instance.BASE_DIR = Path(str(temp_workspace))
+                mock_instance.base_dir = Path(str(temp_workspace))
                 mock_settings.return_value = mock_instance
 
                 mock_service = mock_service_class.return_value
@@ -281,7 +281,7 @@ class TestVersionLifecycleIntegration:
             with patch("lib.versioning.bidirectional_sync.AgnoVersionService"):
                 with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                     mock_instance = MagicMock()
-                    mock_instance.BASE_DIR = Path(str(temp_workspace))
+                    mock_instance.base_dir = Path(str(temp_workspace))
                     mock_settings.return_value = mock_instance
 
                     sync_engine = BidirectionalSync(mock_db_url)
@@ -310,7 +310,7 @@ class TestVersionLifecycleIntegration:
             with patch("lib.versioning.bidirectional_sync.AgnoVersionService"):
                 with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                     mock_instance = MagicMock()
-                    mock_instance.BASE_DIR = Path(str(temp_workspace))
+                    mock_instance.base_dir = Path(str(temp_workspace))
                     mock_settings.return_value = mock_instance
 
                     sync_engine = BidirectionalSync(mock_db_url)
@@ -409,7 +409,7 @@ class TestVersionLifecycleIntegration:
         with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
             with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                 mock_instance = MagicMock()
-                mock_instance.BASE_DIR = Path(str(temp_workspace))
+                mock_instance.base_dir = Path(str(temp_workspace))
                 mock_settings.return_value = mock_instance
 
                 mock_service = mock_service_class.return_value
@@ -479,7 +479,7 @@ class TestVersionLifecycleErrorScenarios:
         with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
             with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                 mock_instance = MagicMock()
-                mock_instance.BASE_DIR = Path(str(temp_workspace))
+                mock_instance.base_dir = Path(str(temp_workspace))
                 mock_settings.return_value = mock_instance
 
                 mock_service = mock_service_class.return_value
@@ -534,7 +534,7 @@ class TestVersionLifecycleErrorScenarios:
             with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                     mock_instance = MagicMock()
-                    mock_instance.BASE_DIR = Path(str(temp_workspace))
+                    mock_instance.base_dir = Path(str(temp_workspace))
                     mock_settings.return_value = mock_instance
 
                     mock_service = mock_service_class.return_value
@@ -573,7 +573,7 @@ class TestVersionLifecycleErrorScenarios:
         with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
             with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                 mock_instance = MagicMock()
-                mock_instance.BASE_DIR = Path(str(temp_workspace))
+                mock_instance.base_dir = Path(str(temp_workspace))
                 mock_settings.return_value = mock_instance
 
                 # Mock database version exists
