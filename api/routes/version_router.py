@@ -6,10 +6,13 @@ No backward compatibility - clean implementation only.
 """
 
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from agno.agent import Agent
 
 from lib.versioning import AgnoVersionService
 from lib.versioning.bidirectional_sync import BidirectionalSync
@@ -69,7 +72,9 @@ def get_version_service() -> AgnoVersionService:
 
 
 @router.post("/execute", response_model=VersionedExecutionResponse)
-async def execute_versioned_component(request: VersionedExecutionRequest, background_tasks: BackgroundTasks):
+async def execute_versioned_component(
+    request: VersionedExecutionRequest, background_tasks: BackgroundTasks
+) -> VersionedExecutionResponse:
     """
     Execute a versioned component using Agno storage.
 
@@ -128,7 +133,7 @@ async def execute_versioned_component(request: VersionedExecutionRequest, backgr
 
 
 @router.post("/components/{component_id}/versions")
-async def create_component_version(component_id: str, request: VersionCreateRequest):
+async def create_component_version(component_id: str, request: VersionCreateRequest) -> dict[str, Any]:
     """Create a new component version."""
 
     service = get_version_service()
@@ -151,6 +156,11 @@ async def create_component_version(component_id: str, request: VersionCreateRequ
         # Get the created version info
         version_info = await service.get_version(component_id, request.version)
 
+        if not version_info:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to retrieve created version {request.version}"
+            )
+
         return {
             "component_id": version_info.component_id,
             "version": version_info.version,
@@ -165,7 +175,7 @@ async def create_component_version(component_id: str, request: VersionCreateRequ
 
 
 @router.get("/components/{component_id}/versions")
-async def list_component_versions(component_id: str):
+async def list_component_versions(component_id: str) -> dict[str, Any]:
     """List all versions for a component."""
 
     service = get_version_service()
@@ -187,7 +197,7 @@ async def list_component_versions(component_id: str):
 
 
 @router.get("/components/{component_id}/versions/{version}")
-async def get_component_version(component_id: str, version: int):
+async def get_component_version(component_id: str, version: int) -> dict[str, Any]:
     """Get details for a specific component version."""
 
     service = get_version_service()
@@ -211,7 +221,9 @@ async def get_component_version(component_id: str, version: int):
 
 
 @router.put("/components/{component_id}/versions/{version}")
-async def update_component_version(component_id: str, version: int, request: VersionUpdateRequest):
+async def update_component_version(
+    component_id: str, version: int, request: VersionUpdateRequest
+) -> dict[str, Any]:
     """Update configuration for a specific version."""
 
     service = get_version_service()
@@ -284,6 +296,11 @@ async def update_component_version(component_id: str, version: int, request: Ver
 
         # Return updated version info
         updated_version = await service.get_version(component_id, version)
+        if not updated_version:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to retrieve updated version {version}"
+            )
+
         return {
             "component_id": updated_version.component_id,
             "version": updated_version.version,
@@ -298,7 +315,9 @@ async def update_component_version(component_id: str, version: int, request: Ver
 
 
 @router.post("/components/{component_id}/versions/{version}/activate")
-async def activate_component_version(component_id: str, version: int, reason: str | None = None):
+async def activate_component_version(
+    component_id: str, version: int, reason: str | None = None
+) -> dict[str, Any]:
     """Activate a specific version."""
 
     service = get_version_service()
@@ -306,6 +325,11 @@ async def activate_component_version(component_id: str, version: int, reason: st
     try:
         await service.set_active_version(component_id, version, "api")
         version_info = await service.get_version(component_id, version)
+
+        if not version_info:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to retrieve activated version {version}"
+            )
 
         return {
             "component_id": version_info.component_id,
@@ -320,7 +344,7 @@ async def activate_component_version(component_id: str, version: int, reason: st
 
 
 @router.delete("/components/{component_id}/versions/{version}")
-async def delete_component_version(component_id: str, version: int):
+async def delete_component_version(component_id: str, version: int) -> dict[str, Any]:
     """Delete a specific version."""
 
     service = get_version_service()
@@ -378,7 +402,7 @@ async def delete_component_version(component_id: str, version: int):
 
 
 @router.get("/components/{component_id}/history")
-async def get_component_history(component_id: str, limit: int = 50):
+async def get_component_history(component_id: str, limit: int = 50) -> dict[str, Any]:
     """Get version history for a component."""
 
     service = get_version_service()
@@ -400,13 +424,13 @@ async def get_component_history(component_id: str, limit: int = 50):
 
 
 @router.get("/components")
-async def list_all_components():
+async def list_all_components() -> dict[str, list[dict[str, Any]]]:
     """List all components with versions."""
 
     service = get_version_service()
     components = await service.get_all_components()
 
-    result = []
+    result: list[dict[str, Any]] = []
     for component_id in components:
         active_version = await service.get_active_version(component_id)
         if active_version:
@@ -423,13 +447,13 @@ async def list_all_components():
 
 
 @router.get("/components/by-type/{component_type}")
-async def list_components_by_type(component_type: str):
+async def list_components_by_type(component_type: str) -> dict[str, Any]:
     """List components by type."""
 
     service = get_version_service()
     components = await service.get_components_by_type(component_type)
 
-    result = []
+    result: list[dict[str, Any]] = []
     for component_id in components:
         active_version = await service.get_active_version(component_id)
         if active_version:

@@ -56,7 +56,7 @@ class VersionFactory:
     Creates versioned components with modern patterns.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with database URL from environment."""
         self.db_url = os.getenv("HIVE_DATABASE_URL")
         if not self.db_url:

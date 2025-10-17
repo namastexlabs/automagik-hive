@@ -114,6 +114,11 @@ async def validate_runs_request(request: Request) -> None:
             # For other content types, skip validation
             return
 
+        # Type narrowing: ensure message is a string
+        if not isinstance(message, str):
+            # Skip validation for non-string types (e.g., UploadFile)
+            return
+
         # Validate message content
         if not message or not message.strip():
             logger.warning(f"🌐 Empty message detected in {request.url.path}")

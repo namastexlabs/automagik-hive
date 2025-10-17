@@ -28,7 +28,9 @@ def get_agentos_service() -> AgentOSService:
 
     global _SERVICE_CACHE, _CACHE_KEY
 
-    settings = HiveSettings()
+    # HiveSettings loads all required values from environment variables via pydantic-settings
+    # mypy in strict mode doesn't understand this pattern, so we suppress the call-arg error
+    settings = HiveSettings()  # type: ignore[call-arg]
     cache_key = _build_cache_key(settings)
 
     if _SERVICE_CACHE is None or cache_key != _CACHE_KEY:

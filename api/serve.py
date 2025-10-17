@@ -8,18 +8,18 @@ import asyncio
 import os
 import signal
 import sys
-from collections.abc import Callable
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 
 # Agno v2 uses AgentOS instead of deprecated Playground
 try:
     from agno.os.app import AgentOS
     from agno.os.settings import AgnoAPISettings
 except ImportError:  # pragma: no cover - optional dependency
-    AgentOS = None  # type: ignore[assignment]
-    AgnoAPISettings = None  # type: ignore[assignment]
+    AgentOS = None  # type: ignore[assignment, misc]
+    AgnoAPISettings = None  # type: ignore[assignment, misc]
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -109,11 +109,11 @@ from lib.utils.startup_orchestration import (  # noqa: E402 - Conditional import
 from lib.utils.version_factory import create_team  # noqa: E402 - Conditional import based on runtime configuration
 
 
-def create_lifespan(startup_display: Any = None) -> Callable:
+def create_lifespan(startup_display: Any = None) -> Any:
     """Create lifespan context manager with startup_display access"""
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         """Application lifespan manager"""
         # Startup - Database migrations are now handled in main startup function
         # This lifespan function handles other FastAPI startup tasks
@@ -147,13 +147,13 @@ def create_lifespan(startup_display: Any = None) -> Callable:
         environment = os.getenv("HIVE_ENVIRONMENT", "development").lower()
         if environment == "production":
 
-            async def _send_startup_notification():
+            async def _send_startup_notification() -> None:
                 try:
                     await asyncio.sleep(2)  # Give MCP manager time to fully initialize
                     from common.startup_notifications import send_startup_notification
 
                     # Pass startup_display for rich notification content
-                    await send_startup_notification(startup_display)
+                    await send_startup_notification(startup_display)  # type: ignore[no-untyped-call]
                     logger.debug("Startup notification sent successfully")
                 except Exception as e:
                     logger.warning("Could not send startup notification", error=str(e))
@@ -217,7 +217,7 @@ def create_lifespan(startup_display: Any = None) -> Callable:
                 try:
                     from lib.metrics.async_metrics_service import shutdown_metrics_service
 
-                    await shutdown_metrics_service()
+                    await shutdown_metrics_service()  # type: ignore[no-untyped-call]
                 except Exception as e:
                     # Don't warn about metrics shutdown - it may not have been fully initialized
                     logger.debug("Metrics service shutdown note", error=str(e))
@@ -226,7 +226,7 @@ def create_lifespan(startup_display: Any = None) -> Callable:
                 try:
                     from common.startup_notifications import send_shutdown_notification
 
-                    await send_shutdown_notification()
+                    await send_shutdown_notification()  # type: ignore[no-untyped-call]
                     logger.debug("Shutdown notification sent successfully")
                 except Exception as e:
                     logger.warning("Could not send shutdown notification", error=str(e))
@@ -304,7 +304,7 @@ def _create_simple_sync_api() -> FastAPI:
     )
 
     @app.get("/")
-    async def root():
+    async def root() -> dict[str, str]:
         return {
             "status": "ok",
             "mode": "simplified",
@@ -312,13 +312,13 @@ def _create_simple_sync_api() -> FastAPI:
         }
 
     @app.get("/health")
-    async def health():
+    async def health() -> dict[str, str]:
         return {"status": "healthy", "mode": "simplified"}
 
     return app
 
 
-async def _async_create_automagik_api():
+async def _async_create_automagik_api() -> FastAPI:
     """Create unified FastAPI app with Performance-Optimized Sequential Startup"""
 
     # Get environment settings
@@ -602,15 +602,15 @@ async def _async_create_automagik_api():
 
         # Get agent ID from environment or default to first available
         agui_agent_id = os.getenv("HIVE_AGUI_AGENT", None)
-        available_agents = AgentRegistry.list_available_agents()
-        logger.info(f"AGUI: Found {len(available_agents)} available agents: {available_agents}")
+        available_agent_list = AgentRegistry.list_available_agents()
+        logger.info(f"AGUI: Found {len(available_agent_list)} available agents: {available_agent_list}")
 
-        selected_agent_id = None
-        if agui_agent_id and agui_agent_id in available_agents:
+        selected_agent_id: Optional[str] = None
+        if agui_agent_id and agui_agent_id in available_agent_list:
             selected_agent_id = agui_agent_id
             logger.info(f"AGUI: Using specified agent: {agui_agent_id}")
-        elif available_agents:
-            selected_agent_id = available_agents[0]
+        elif available_agent_list:
+            selected_agent_id = available_agent_list[0]
             logger.info(f"AGUI: Using first available agent: {selected_agent_id}")
 
         if selected_agent_id:
@@ -623,7 +623,7 @@ async def _async_create_automagik_api():
                 agui_app = AGUIApp(
                     agent=selected_agent,
                     name=selected_agent.name,
-                    app_id=f"{selected_agent.agent_id}_agui",
+                    app_id=f"{selected_agent.agent_id}_agui",  # type: ignore[attr-defined]
                     description=selected_agent.description or f"AGUI interface for {selected_agent.name}",
                 )
             except Exception as e:
@@ -753,29 +753,30 @@ async def _async_create_automagik_api():
     # Add CORS middleware
     # Note: allow_credentials=True is incompatible with allow_origins=["*"]
     # Browsers reject this combination as a security measure
-    use_credentials = "*" not in api_settings.cors_origin_list
+    cors_origins = api_settings.cors_origin_list or []
+    use_credentials = "*" not in cors_origins
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=api_settings.cors_origin_list,
+        allow_origins=cors_origins,
         allow_credentials=use_credentials,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
 
     if not use_credentials:
-        logger.debug("CORS credentials disabled due to wildcard origin", origins=api_settings.cors_origin_list)
+        logger.debug("CORS credentials disabled due to wildcard origin", origins=cors_origins)
 
     # Switch from startup to runtime logging mode
     from lib.logging import set_runtime_mode
 
-    set_runtime_mode()
+    set_runtime_mode()  # type: ignore[no-untyped-call]
 
     return app
 
 
 # Global app instance for lazy loading
-_app_instance = None
+_app_instance: Optional[FastAPI] = None
 
 
 def create_automagik_api() -> FastAPI:
@@ -823,10 +824,10 @@ def app() -> FastAPI:
     return get_app()
 
 
-def _setup_signal_handlers():
+def _setup_signal_handlers() -> None:
     """Setup signal handlers for graceful shutdown on Ctrl+C."""
 
-    def signal_handler(signum, frame):
+    def signal_handler(signum: int, frame: Any) -> None:
         # Let the normal shutdown process handle cleanup
         sys.exit(0)
 
@@ -835,7 +836,7 @@ def _setup_signal_handlers():
     signal.signal(signal.SIGTERM, signal_handler)
 
 
-def main():
+def main() -> None:
     """Main entry point for Automagik Hive server."""
     import uvicorn
 

@@ -327,7 +327,7 @@ def find_referencing_code_snippets(target_symbol: str, target_file: str, context
         # Format output
         output = [f"Code snippets referencing '{target_symbol}' ({len(snippets)} found):\n"]
 
-        for snippet in sorted(snippets, key=lambda x: (x["file"], int(x["target_line"]))):
+        for snippet in sorted(snippets, key=lambda x: (x["file"], x["target_line"])):
             output.append(f"📄 {snippet['file']} (lines {snippet['line_range']}) - {snippet['usage_type']}")
             output.append(f"{snippet['snippet']}")
             output.append("")
@@ -384,7 +384,7 @@ def get_symbols_overview(
             return f"No symbols found in {file_or_directory}"
 
         # Group symbols by file and type
-        by_file = {}
+        by_file: dict[str, dict[str, list[dict[str, Any]]]] = {}
         for symbol in symbols:
             file_key = symbol["file"]
             if file_key not in by_file:
@@ -399,11 +399,11 @@ def get_symbols_overview(
         # Format output
         output = [f"Symbol Overview for {file_or_directory}:\n"]
 
-        for file_path in sorted(by_file.keys()):
-            output.append(f"📄 {file_path}")
+        for file_key in sorted(by_file.keys()):
+            output.append(f"📄 {file_key}")
 
-            for symbol_type in sorted(by_file[file_path].keys()):
-                type_symbols = by_file[file_path][symbol_type]
+            for symbol_type in sorted(by_file[file_key].keys()):
+                type_symbols = by_file[file_key][symbol_type]
                 output.append(f"  {symbol_type.upper()}S ({len(type_symbols)}):")
 
                 for symbol in sorted(type_symbols, key=lambda x: x["line"]):

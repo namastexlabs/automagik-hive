@@ -32,7 +32,8 @@ class ApiSettings(BaseSettings):
     cors_origin_list: list[str] | None = Field(None, validate_default=True)
 
     @field_validator("environment")
-    def validate_environment(cls: type["ApiSettings"], environment: str) -> str:  # noqa: N805
+    @classmethod
+    def validate_environment(cls, environment: str) -> str:
         """Validate environment and enforce production security requirements."""
 
         valid_environments = ["development", "staging", "production"]
@@ -104,4 +105,5 @@ class ApiSettings(BaseSettings):
 
 
 # Create ApiSettings object
-api_settings = ApiSettings()
+# Note: cors_origin_list is derived from environment in validator
+api_settings = ApiSettings(cors_origin_list=None)
