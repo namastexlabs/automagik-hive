@@ -601,9 +601,131 @@ publish: ## 📦 Build and publish beta release to PyPI
 	echo -e "$(FONT_YELLOW)💡 Wait 5-10 minutes for PyPI propagation$(FONT_RESET)"
 
 # ===========================================
-# 🧹 Phony Targets  
+# 🚀 Release Candidate Publishing
 # ===========================================
-.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish
+.PHONY: bump-rc
+bump-rc: ## 🏷️ Bump release candidate version
+	@$(call print_status,Bumping release candidate version...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	if echo "$$CURRENT_VERSION" | grep -q "rc[0-9]*$$"; then \
+		RC_NUM=$$(echo "$$CURRENT_VERSION" | grep -o "rc[0-9]*$$" | sed 's/rc//'); \
+		NEW_RC_NUM=$$((RC_NUM + 1)); \
+		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/rc[0-9]*$$//'); \
+		NEW_VERSION="$${BASE_VERSION}rc$${NEW_RC_NUM}"; \
+	else \
+		$(call print_status,Creating first release candidate from $$CURRENT_VERSION); \
+		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/b[0-9]*$$//'); \
+		NEW_VERSION="$${BASE_VERSION}rc1"; \
+	fi; \
+	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
+	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
+	$(call print_success,Version bumped to $$NEW_VERSION); \
+	echo -e "$(FONT_CYAN)💡 Next steps:$(FONT_RESET)"; \
+	echo -e "  1. make publish-test  (test on TestPyPI)"; \
+	echo -e "  2. make publish-rc    (publish to PyPI)"
+
+.PHONY: publish-test
+publish-test: ## 🧪 Publish to TestPyPI for testing
+	@$(call print_status,Publishing to TestPyPI...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	$(call print_status,Building package for version $$CURRENT_VERSION); \
+	rm -rf dist/ build/ *.egg-info/; \
+	uv build; \
+	$(call print_status,Uploading to TestPyPI...); \
+	if [ -f ".env" ]; then \
+		TEST_PYPI_TOKEN=$$(grep '^TEST_PYPI_API_KEY=' .env | cut -d'=' -f2 | tr -d ' '); \
+		if [ -n "$$TEST_PYPI_TOKEN" ] && [ "$$TEST_PYPI_TOKEN" != "your-test-pypi-token-here" ]; then \
+			$(call print_status,Using TestPyPI credentials from .env...); \
+			TWINE_USERNAME=__token__ TWINE_PASSWORD=$$TEST_PYPI_TOKEN \
+				uv run twine upload --repository testpypi dist/*; \
+		else \
+			$(call print_warning,TestPyPI token not in .env - will prompt); \
+			uv run twine upload --repository testpypi dist/*; \
+		fi; \
+	else \
+		uv run twine upload --repository testpypi dist/*; \
+	fi; \
+	$(call print_success,Published to TestPyPI!); \
+	echo -e "$(FONT_CYAN)🧪 Test installation with:$(FONT_RESET)"; \
+	echo -e "  pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple automagik-hive==$$CURRENT_VERSION"; \
+	echo -e "$(FONT_CYAN)🚀 Or test with uvx:$(FONT_RESET)"; \
+	echo -e "  uvx --from https://test.pypi.org/simple/ automagik-hive==$$CURRENT_VERSION --version"; \
+	echo -e "$(FONT_YELLOW)💡 Wait 2-3 minutes for TestPyPI propagation$(FONT_RESET)"
+
+.PHONY: publish-rc
+publish-rc: ## 📦 Publish release candidate to PyPI
+	@$(call print_status,Publishing release candidate to PyPI...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	if ! echo "$$CURRENT_VERSION" | grep -q "rc[0-9]*$$"; then \
+		$(call print_warning,Current version is not a release candidate: $$CURRENT_VERSION); \
+		echo -e "$(FONT_YELLOW)This command is for RC versions. Use 'make publish' for beta versions.$(FONT_RESET)"; \
+		echo -e "$(FONT_CYAN)Continue anyway? (y/N)$(FONT_RESET)"; \
+		read -r REPLY </dev/tty; \
+		if [ "$$REPLY" != "y" ] && [ "$$REPLY" != "Y" ]; then \
+			$(call print_status,Aborted); \
+			exit 0; \
+		fi; \
+	fi; \
+	$(call print_status,Building package for version $$CURRENT_VERSION); \
+	rm -rf dist/ build/ *.egg-info/; \
+	uv build; \
+	$(call print_status,Committing version bump...); \
+	git add pyproject.toml; \
+	git commit -m "release: v$$CURRENT_VERSION" \
+		-m "🚀 Release Candidate $$CURRENT_VERSION" \
+		-m "" \
+		-m "This release includes:" \
+		-m "- CORS configuration for agno.os integration" \
+		-m "- Agent ID serialization corrections" \
+		-m "- Knowledge hot reload functionality" \
+		-m "" \
+		-m "Associated PR: #56" \
+		-m "Pre-release: https://github.com/namastexlabs/automagik-hive/releases/tag/v$$CURRENT_VERSION" \
+		-m "" \
+		-m "Install with: pip install automagik-hive==$$CURRENT_VERSION" \
+		-m "Or run with: uvx automagik-hive@$$CURRENT_VERSION" \
+		--trailer "Co-Authored-By: Automagik Genie 🧞 <genie@namastex.ai>"; \
+	$(call print_status,Creating and pushing git tag...); \
+	git tag "v$$CURRENT_VERSION" -m "Release candidate v$$CURRENT_VERSION"; \
+	git push origin dev; \
+	git push origin "v$$CURRENT_VERSION"; \
+	$(call print_status,Publishing to PyPI...); \
+	if [ -f ".env" ]; then \
+		PYPI_USERNAME=$$(grep '^PYPI_USERNAME=' .env | cut -d'=' -f2 | tr -d ' '); \
+		PYPI_TOKEN=$$(grep '^PYPI_API_KEY=' .env | cut -d'=' -f2 | tr -d ' '); \
+		if [ -n "$$PYPI_USERNAME" ] && [ -n "$$PYPI_TOKEN" ] && [ "$$PYPI_TOKEN" != "your-pypi-api-token-here" ]; then \
+			$(call print_status,Using PyPI credentials from .env...); \
+			TWINE_USERNAME="$$PYPI_USERNAME" TWINE_PASSWORD="$$PYPI_TOKEN" \
+				uv run twine upload dist/*; \
+		else \
+			$(call print_warning,PyPI credentials not in .env - will prompt); \
+			uv run twine upload dist/*; \
+		fi; \
+	else \
+		uv run twine upload dist/*; \
+	fi; \
+	$(call print_success,Release candidate $$CURRENT_VERSION published to PyPI!); \
+	echo -e "$(FONT_CYAN)🚀 Install with: pip install automagik-hive==$$CURRENT_VERSION$(FONT_RESET)"; \
+	echo -e "$(FONT_CYAN)🚀 Or run with: uvx automagik-hive@$$CURRENT_VERSION$(FONT_RESET)"; \
+	echo -e "$(FONT_YELLOW)💡 Wait 5-10 minutes for PyPI propagation$(FONT_RESET)"; \
+	echo -e "$(FONT_PURPLE)📦 View on PyPI: https://pypi.org/project/automagik-hive/$$CURRENT_VERSION/$(FONT_RESET)"
+
+# ===========================================
+# 🧹 Phony Targets
+# ===========================================
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish bump-rc publish-test publish-rc
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================

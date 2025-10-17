@@ -131,19 +131,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv venv
-          source .venv/bin/activate
-          uv pip install -r uv.lock
+          uv sync
 
       - name: Run linting
         run: |
-          source .venv/bin/activate
           uv run ruff check .
           uv run ruff format --check .
 
       - name: Run type checking
         run: |
-          source .venv/bin/activate
           uv run mypy ai/agents/ api/ --strict
 
       - name: Run tests
@@ -152,7 +148,6 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           RUNTIME_ENV: test
         run: |
-          source .venv/bin/activate
           uv run pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
 
       - name: Upload coverage reports

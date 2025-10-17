@@ -50,12 +50,12 @@ show_progress() {
     local i=0
     
     printf "${CYAN}%s " "$message"
-    while kill -0 $pid 2>/dev/null; do
-        printf "\b${chars:$i:1}"
+    while kill -0 "$pid" 2>/dev/null; do
+        printf '\b%s' "${chars:$i:1}"
         i=$(((i + 1) % ${#chars}))
         sleep 0.1
     done
-    printf "\b✅${RESET}\n"
+    printf '\b✅%s\n' "$RESET"
 }
 
 # Confirmation prompt
@@ -167,7 +167,7 @@ install_uv() {
     # Create temporary directory for download
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
+    trap 'rm -rf "$temp_dir"' EXIT
     
     # Download and install UV using official installer
     print_status "Downloading UV installer..."
