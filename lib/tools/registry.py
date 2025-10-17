@@ -39,6 +39,7 @@ class ToolRegistry:
         Returns:
             Tuple of (callable tool functions, list of successfully loaded tool names)
         """
+
         tools = []
         successfully_loaded_names = []
 
@@ -51,6 +52,7 @@ class ToolRegistry:
         sorted_tool_configs = sorted(tool_configs, key=get_tool_name)
 
         for tool_config in sorted_tool_configs:
+
             if not ToolRegistry._validate_tool_config(tool_config):
                 logger.warning(f"Invalid tool config: {tool_config}")
                 continue
@@ -58,10 +60,13 @@ class ToolRegistry:
             # Handle both string and dict format
             if isinstance(tool_config, str):
                 tool_name = tool_config
+                tool_options = {}
             else:
                 tool_name = tool_config["name"]
+                tool_options = {k: v for k, v in tool_config.items() if k != "name"}
 
             try:
+
                 # Determine tool type and load accordingly
                 if tool_name.startswith("mcp__"):
                     try:
@@ -90,7 +95,7 @@ class ToolRegistry:
                         successfully_loaded_names.append(tool_name)
                 else:
                     # Try to load as native Agno tool via auto-discovery
-                    agno_tool = ToolRegistry._load_native_agno_tool(tool_name)
+                    agno_tool = ToolRegistry._load_native_agno_tool(tool_name, tool_options)
                     if agno_tool:
                         tools.append(agno_tool)
                         successfully_loaded_names.append(tool_name)
@@ -170,16 +175,21 @@ class ToolRegistry:
         return None
 
     @staticmethod
-    def _load_native_agno_tool(tool_name: str) -> Any:
+    def _load_native_agno_tool(tool_name: str, tool_options: dict[str, Any] = None) -> Any:
         """
-        Load native Agno tools via auto-discovery.
+        Load native Agno tools via auto-discovery with optional configuration.
 
         Args:
             tool_name: Name of the native Agno tool (e.g., "ShellTools")
+            tool_options: Optional configuration dict with keys:
+                - instructions: list[str] | str - Custom instructions (overrides auto-extract)
 
         Returns:
             Agno tool instance or None if not found
         """
+        if tool_options is None:
+            tool_options = {}
+
         try:
             # Get auto-discovered tools
             discovered_tools = ToolRegistry.discover_agno_tools()
@@ -187,7 +197,47 @@ class ToolRegistry:
             if tool_name in discovered_tools:
                 tool_class = discovered_tools[tool_name]
                 logger.debug(f"🔧 Loading auto-discovered tool: {tool_name}")
-                return tool_class()
+
+                # Handle instructions
+                if 'instructions' in tool_options:
+                    # User explicitly provided instructions
+                    instructions = tool_options['instructions']
+
+                    # Normalize single string to list
+                    if isinstance(instructions, str):
+                        instructions = [instructions]
+
+                    # Empty list = explicit disable
+                    if instructions == []:
+                        instructions = None
+                        logger.debug(f"🔧 {tool_name}: instructions explicitly disabled")
+                    else:
+                        logger.info(f"🔧 {tool_name}: using {len(instructions)} custom instructions")
+                        # Enable instruction injection into system prompt
+                        tool_options['add_instructions'] = True
+
+                    tool_options['instructions'] = instructions
+
+                else:
+                    # Use toolkit-provided instructions when the class defines them
+                    auto_instructions = ToolRegistry._extract_tool_instructions(tool_class, tool_name)
+                    if auto_instructions:
+                        tool_options['instructions'] = auto_instructions
+                        tool_options['add_instructions'] = True  # Enable instruction injection
+
+                        if isinstance(auto_instructions, (list, tuple, set)):
+                            count = len(auto_instructions)
+                        else:
+                            count = 1
+                        logger.info(
+                            f"🔧 {tool_name}: detected {count} built-in instruction"
+                            f"{'s' if count != 1 else ''}"
+                        )
+
+                # Instantiate with options
+                tool_instance = tool_class(**tool_options)
+
+                return tool_instance
             else:
                 logger.warning(f"Native Agno tool not available: {tool_name}")
                 available_tools = list(discovered_tools.keys())
@@ -199,6 +249,29 @@ class ToolRegistry:
         except Exception as e:
             logger.error(f"Failed to load native Agno tool {tool_name}: {e}")
             return None
+
+    @staticmethod
+    def _extract_tool_instructions(tool_class: type, tool_name: str) -> str | list[str] | None:
+        """Return built-in instructions defined by the toolkit, if any."""
+        try:
+            tool_instance = tool_class()
+        except Exception as e:
+            logger.warning(f"Failed to instantiate {tool_name} for instruction detection: {e}")
+            return None
+
+        candidate = getattr(tool_instance, "instructions", None)
+        if candidate is None:
+            return None
+
+        # Normalize empty strings
+        if isinstance(candidate, str):
+            candidate = candidate.strip()
+            if not candidate:
+                return None
+
+            return candidate
+
+        return candidate if candidate else None
 
     @staticmethod
     def discover_agno_tools() -> dict[str, type]:
