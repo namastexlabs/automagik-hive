@@ -7,10 +7,10 @@ Automated PyPI publishing via GitHub Actions using **Trusted Publishing** (no AP
 The publishing workflow automatically:
 1. ✅ Builds the package
 2. ✅ Verifies version matches git tag
-3. ✅ Publishes to TestPyPI first
-4. ✅ Tests TestPyPI installation
-5. ✅ Publishes to production PyPI
-6. ✅ Updates GitHub Release with artifacts
+3. ✅ Detects pre-release vs stable (rc/beta → pre-release)
+4. ✅ Publishes directly to PyPI
+5. ✅ Updates GitHub Release with artifacts
+6. ✅ Generates release notes
 
 **Trigger:** Push any tag matching `v*.*.*` (e.g., `v0.2.0rc1`, `v1.0.0`)
 
@@ -28,22 +28,15 @@ GitHub Actions can publish to PyPI **without API tokens** using OpenID Connect (
    - **Workflow name**: `publish-pypi.yml`
    - **Environment name**: `pypi`
 
-3. **Repeat for TestPyPI**: https://test.pypi.org/manage/account/publishing/
-   - Same settings but use environment name: `testpypi`
-
-### Step 2: Create GitHub Environments
+### Step 2: Create GitHub Environment
 
 1. **Go to**: https://github.com/namastexlabs/automagik-hive/settings/environments
-2. **Create `testpypi` environment**:
-   - Click "New environment"
-   - Name: `testpypi`
-   - (Optional) Add protection rules
-3. **Create `pypi` environment**:
+2. **Create `pypi` environment**:
    - Click "New environment"
    - Name: `pypi`
    - **Recommended**: Add protection rules:
-     - Required reviewers (for production safety)
-     - Deployment branches: only `main` or tags
+     - Required reviewers (optional, for extra safety)
+     - Deployment branches: `dev` branch or tags only
 
 ### Step 3: Verify Permissions
 
@@ -105,22 +98,19 @@ echo "✅ Release v$VERSION pushed!"
 echo "🔗 Check status: https://github.com/namastexlabs/automagik-hive/actions"
 ```
 
-## 🧪 Testing Before Production
+## 🎯 Pre-Release Detection
 
-The workflow automatically tests on TestPyPI before publishing to production:
+The workflow automatically detects release types:
 
-```bash
-# After TestPyPI publish completes, test locally:
-pip install --index-url https://test.pypi.org/simple/ \
-            --extra-index-url https://pypi.org/simple \
-            automagik-hive==0.2.0rc1
+- **Pre-release** (marked on GitHub): Versions containing `rc`, `b`, `a`, `alpha`, or `beta`
+  - Example: `v0.2.0rc1`, `v1.0.0b2`
+  - Shows as "Pre-release" on GitHub Releases
 
-# Or test with uvx:
-uvx --from https://test.pypi.org/simple/ \
-    automagik-hive==0.2.0rc1 --version
-```
+- **Stable release**: Clean version numbers
+  - Example: `v1.0.0`, `v0.2.0`
+  - Shows as "Latest" on GitHub Releases
 
-If TestPyPI tests fail, the workflow stops before publishing to production PyPI.
+Both types publish to PyPI with appropriate metadata.
 
 ## 📋 Version Naming
 
@@ -134,7 +124,7 @@ All formats are supported by the workflow.
 
 1. **GitHub Actions**: https://github.com/namastexlabs/automagik-hive/actions
 2. **PyPI Package**: https://pypi.org/project/automagik-hive/
-3. **TestPyPI Package**: https://test.pypi.org/project/automagik-hive/
+3. **GitHub Releases**: https://github.com/namastexlabs/automagik-hive/releases
 
 ## 🆘 Troubleshooting
 
