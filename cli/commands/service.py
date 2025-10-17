@@ -39,6 +39,7 @@ class ServiceManager:
 
     def agentos_config(self, json_output: bool = False) -> bool:
         """Display AgentOS configuration snapshot."""
+        import json
 
         from lib.agentos.exceptions import AgentOSConfigError
         from lib.services.agentos_service import AgentOSService
@@ -49,7 +50,7 @@ class ServiceManager:
             return False
 
         if json_output:
-            pass
+            print(json.dumps(payload, indent=2))
         else:
             self._print_agentos_summary(payload)
 

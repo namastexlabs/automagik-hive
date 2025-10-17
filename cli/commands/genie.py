@@ -32,7 +32,10 @@ class GenieCommands:
         Returns:
             bool: True if successful, False otherwise
         """
+        import sys
+
         if not RICH_AVAILABLE:
+            print("This command requires httpx and rich dependencies", file=sys.stderr)
             return False
 
         # Default API base
@@ -73,10 +76,19 @@ class GenieCommands:
             return True
 
         except httpx.ConnectError:
+            print("Could not connect to API. Is the server running?", file=sys.stderr)
             return False
-        except httpx.HTTPStatusError:
+        except httpx.HTTPStatusError as e:
+            print(f"API request failed with status code {e.response.status_code}", file=sys.stderr)
+            return False
+        except httpx.TimeoutException:
+            print("Failed to list wishes: Request timed out", file=sys.stderr)
+            return False
+        except ValueError:
+            print("Failed to list wishes: Invalid JSON response", file=sys.stderr)
             return False
         except Exception:
+            print("Failed to list wishes", file=sys.stderr)
             return False
 
     def launch_claude(self, extra_args: list[str] = None) -> bool:

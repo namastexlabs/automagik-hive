@@ -246,6 +246,7 @@ def main() -> int:
 
         if args.command == "agentos-config":
             if not _is_agentos_cli_enabled():
+                print("AgentOS CLI is disabled. Enable it by setting HIVE_FEATURE_AGENTOS_CLI=1")
                 return 1
 
             service_manager = ServiceManager()
