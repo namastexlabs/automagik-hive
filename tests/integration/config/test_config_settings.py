@@ -170,7 +170,15 @@ class TestSettings:
             assert test_settings.hive_enable_langwatch is False
 
         # Test no API key - LangWatch automatically disabled when no valid API key provided
-        with patch.dict(os.environ, {"HIVE_ENABLE_METRICS": "true", "LANGWATCH_API_KEY": ""}, clear=True):
+        with patch.dict(os.environ, {
+            "HIVE_ENVIRONMENT": "development",
+            "HIVE_API_PORT": "8888",
+            "HIVE_DATABASE_URL": "sqlite:///test.db",
+            "HIVE_API_KEY": "hive_test_key_1234567890abcdef1234567890",
+            "HIVE_CORS_ORIGINS": "http://localhost:3000",
+            "HIVE_ENABLE_METRICS": "true",
+            "LANGWATCH_API_KEY": ""
+        }, clear=True):
             test_settings = Settings()
             assert test_settings.hive_enable_langwatch is False
 
