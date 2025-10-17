@@ -42,9 +42,7 @@ async def validate_message_dependency(message: str = Form(...)) -> str:
 
     # Check for overly long messages (prevent abuse)
     if len(message) > 10000:  # 10KB limit
-        logger.warning(
-            f"🌐 Message too long in Agno Playground endpoint: {len(message)} characters"
-        )
+        logger.warning(f"🌐 Message too long in Agno Playground endpoint: {len(message)} characters")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -133,9 +131,7 @@ async def validate_runs_request(request: Request) -> None:
 
         # Check for overly long messages
         if len(message) > 10000:
-            logger.warning(
-                f"🌐 Message too long in {request.url.path}: {len(message)} characters"
-            )
+            logger.warning(f"🌐 Message too long in {request.url.path}: {len(message)} characters")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={

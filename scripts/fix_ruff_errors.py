@@ -56,9 +56,10 @@ FIXES = {
     ],
     # B015 - Fix pointless comparison
     "scripts/test_tdd_hook_validator.py": [
-        ('mock_result.status_code == 401', 'assert mock_result.status_code == 401'),
+        ("mock_result.status_code == 401", "assert mock_result.status_code == 401"),
     ],
 }
+
 
 def apply_fixes():
     """Apply all fixes."""
@@ -79,6 +80,7 @@ def apply_fixes():
             print(f"✓ Fixed {file_path}")
         else:
             print(f"  No changes needed in {file_path}")
+
 
 if __name__ == "__main__":
     print("Applying ruff fixes...")

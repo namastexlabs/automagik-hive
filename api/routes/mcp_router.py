@@ -97,11 +97,7 @@ async def test_server_connection(server_name: str) -> dict[str, Any]:
             if hasattr(tools, "list_tools"):
                 try:
                     maybe_tools = tools.list_tools()
-                    available_tools = (
-                        await maybe_tools
-                        if inspect.isawaitable(maybe_tools)
-                        else maybe_tools
-                    )
+                    available_tools = await maybe_tools if inspect.isawaitable(maybe_tools) else maybe_tools
                 except Exception as e:
                     logger.warning(f"🌐 Could not list tools for {server_name}: {e}")
 

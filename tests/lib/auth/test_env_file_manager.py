@@ -168,4 +168,3 @@ class TestErrorHandling:
 
         # Should not raise
         mgr.sync_alias()
-

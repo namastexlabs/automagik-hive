@@ -169,12 +169,8 @@ class StartupDisplay:
         # Display migration status
         if self.migration_status:
             if self.migration_status["status"].startswith("✅"):
-                console.print(
-                    "\n[bold green]🔧 Database Migration Status:[/bold green]"
-                )
-                console.print(
-                    f"  {self.migration_status['status']} - Revision: {self.migration_status['revision']}"
-                )
+                console.print("\n[bold green]🔧 Database Migration Status:[/bold green]")
+                console.print(f"  {self.migration_status['status']} - Revision: {self.migration_status['revision']}")
             else:
                 console.print("\n[bold red]🔧 Database Migration Status:[/bold red]")
                 console.print(
@@ -189,20 +185,12 @@ class StartupDisplay:
 
             if DevMode.is_enabled():
                 console.print("\n[bold blue]ℹ️ Development Mode:[/bold blue]")
-                console.print(
-                    "  📄 Using YAML-only configuration (database sync disabled)"
-                )
-                console.print(
-                    "  💡 Set HIVE_DEV_MODE=false to enable database synchronization"
-                )
+                console.print("  📄 Using YAML-only configuration (database sync disabled)")
+                console.print("  💡 Set HIVE_DEV_MODE=false to enable database synchronization")
             else:
                 console.print("\n[bold yellow]⚠️ Database Sync Warning:[/bold yellow]")
-                console.print(
-                    "  📄 Versions are being read from YAML files (database sync unavailable)"
-                )
-                console.print(
-                    "  💡 Check DATABASE_URL configuration and database connectivity"
-                )
+                console.print("  📄 Versions are being read from YAML files (database sync unavailable)")
+                console.print("  💡 Check DATABASE_URL configuration and database connectivity")
             console.print()
 
         # Create main components table
@@ -277,9 +265,7 @@ class StartupDisplay:
 
         # Display errors if any
         if self.errors:
-            error_table = Table(
-                title="⚠️ Issues", show_header=True, header_style="bold red"
-            )
+            error_table = Table(title="⚠️ Issues", show_header=True, header_style="bold red")
             error_table.add_column("Component", style="yellow", width=20)
             error_table.add_column("Message", style="red")
 
@@ -296,9 +282,7 @@ class StartupDisplay:
         if self.errors:
             summary_text += f" | [red]⚠️ {len(self.errors)} issues[/red]"
 
-        dependency_total = sum(
-            len(info.get("dependency_keys", [])) for info in self.agents.values()
-        )
+        dependency_total = sum(len(info.get("dependency_keys", [])) for info in self.agents.values())
         if dependency_total:
             summary_text += f" | [cyan]🔗 {dependency_total} agent dependencies mapped[/cyan]"
 
@@ -335,9 +319,7 @@ class StartupDisplay:
         # Fallback: Read version directly from YAML file
         return self._read_version_from_yaml(component_id, component_type)
 
-    def _read_version_from_yaml(
-        self, component_id: str, component_type: str
-    ) -> str | None:
+    def _read_version_from_yaml(self, component_id: str, component_type: str) -> str | None:
         """Read version directly from YAML configuration file as fallback."""
         import glob
 
@@ -379,10 +361,7 @@ class StartupDisplay:
 
                     # If this is the component we're looking for
                     # Handle both dash and underscore formats for workflow IDs
-                    if (
-                        found_component_id == component_id
-                        or found_component_id == component_id.replace("_", "-")
-                    ):
+                    if found_component_id == component_id or found_component_id == component_id.replace("_", "-"):
                         version = component_section.get("version")
                         if version:
                             return str(version)  # Return version from YAML fallback
@@ -403,9 +382,7 @@ def create_startup_display() -> StartupDisplay:
     return StartupDisplay()
 
 
-def display_simple_status(
-    team_name: str, team_id: str, agent_count: int, workflow_count: int = 0
-) -> None:
+def display_simple_status(team_name: str, team_id: str, agent_count: int, workflow_count: int = 0) -> None:
     """Quick display for simple startup scenarios."""
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("", style="cyan")
@@ -427,7 +404,5 @@ def display_simple_status(
         table.add_row(f"{workflow_emoji} Workflows:", str(workflow_count))
     table.add_row(f"{api_emoji} API:", f"http://localhost:{settings().hive_api_port}")
 
-    panel = Panel(
-        table, title="[bold green]System Ready[/bold green]", border_style="green"
-    )
+    panel = Panel(table, title="[bold green]System Ready[/bold green]", border_style="green")
     console.print(panel)

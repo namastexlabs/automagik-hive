@@ -1,6 +1,5 @@
 """Tests for lib.logging.config module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,6 +15,7 @@ class TestConfig:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.logging.config
+
         assert lib.logging.config is not None
 
     @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")

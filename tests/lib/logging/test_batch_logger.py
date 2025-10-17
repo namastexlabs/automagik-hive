@@ -22,11 +22,13 @@ class TestBatchLogger:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.logging.batch_logger
+
         assert lib.logging.batch_logger is not None
 
     def test_batch_logger_creation(self):
@@ -71,7 +73,7 @@ class TestBatchLogger:
 
         # Log to different categories
         logger.log_agent_inheritance("test_agent")
-        
+
         if hasattr(logger, "log_config_change"):
             logger.log_config_change("config_item", "old_value", "new_value")
 
@@ -103,7 +105,7 @@ class TestBatchLoggerEdgeCases:
     def test_empty_batch_logger(self):
         """Test batch logger with no entries."""
         logger = BatchLogger()
-        
+
         # Should handle empty state gracefully
         assert logger.batches is not None
         assert isinstance(logger.batches, dict)
@@ -157,13 +159,13 @@ class TestBatchLoggerIntegration:
     def test_integration_with_logging_module(self):
         """Test integration with standard logging."""
         import logging
-        
+
         logger = BatchLogger()
-        
+
         # Should work alongside standard logging
         standard_logger = logging.getLogger("test_batch_integration")
         standard_logger.info("Standard log message")
-        
+
         # Batch logger should still work
         logger.log_agent_inheritance("integration_test_agent")
         assert "agent_inheritance" in logger.batches
@@ -180,11 +182,11 @@ class TestBatchLoggerIntegration:
         # Should maintain separate state
         assert "agent_inheritance" in logger1.batches
         assert "agent_inheritance" in logger2.batches
-        
+
         # Check independence
         batch1 = logger1.batches["agent_inheritance"]
         batch2 = logger2.batches["agent_inheritance"]
-        
+
         assert "agent_1" in batch1
         assert "agent_2" in batch2
 
@@ -194,13 +196,13 @@ class TestBatchLoggerIntegration:
 
         # Simulate concurrent logging
         agents = [f"concurrent_agent_{i}" for i in range(10)]
-        
+
         for agent in agents:
             logger.log_agent_inheritance(agent)
 
         # All agents should be logged
         assert "agent_inheritance" in logger.batches
         inheritance_batch = logger.batches["agent_inheritance"]
-        
+
         for agent in agents:
             assert agent in inheritance_batch

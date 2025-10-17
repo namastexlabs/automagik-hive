@@ -71,9 +71,7 @@ class TestGetMCPTools:
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
-    async def test_sse_server_connection(
-        self, mock_mcp_tools_class, mock_get_catalog
-    ) -> None:
+    async def test_sse_server_connection(self, mock_mcp_tools_class, mock_get_catalog) -> None:
         """Test creating MCP tools for SSE server."""
         # Setup mocks
         mock_catalog = Mock()

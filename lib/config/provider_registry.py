@@ -263,14 +263,10 @@ class ProviderRegistry:
                     if isinstance(attr, type):
                         classes.append(attr_name)
 
-            logger.debug(
-                "Discovered classes for provider", provider=provider, classes=classes
-            )
+            logger.debug("Discovered classes for provider", provider=provider, classes=classes)
 
         except ImportError as e:
-            logger.warning(
-                "Failed to import provider module", provider=provider, error=str(e)
-            )
+            logger.warning("Failed to import provider module", provider=provider, error=str(e))
             # Fallback class names for common providers
             classes = self._get_fallback_classes(provider)
 
@@ -300,9 +296,7 @@ class ProviderRegistry:
             "groq": ["Groq"],
         }
 
-        return fallback_classes.get(
-            provider, [provider.title(), f"{provider.title()}Chat"]
-        )
+        return fallback_classes.get(provider, [provider.title(), f"{provider.title()}Chat"])
 
     @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def resolve_model_class(self, provider: str, model_id: str) -> type | None:
@@ -336,11 +330,7 @@ class ProviderRegistry:
                     return model_class
 
             # If no specific class found, log available classes for debugging
-            available_classes = [
-                name
-                for name in dir(module)
-                if not name.startswith("_") and name[0].isupper()
-            ]
+            available_classes = [name for name in dir(module) if not name.startswith("_") and name[0].isupper()]
             logger.warning(
                 "No suitable model class found",
                 provider=provider,
@@ -371,7 +361,7 @@ class ProviderRegistry:
             self.get_available_providers.cache_clear()
         except AttributeError:
             pass  # @cache decorator doesn't support cache_clear
-        
+
         self.get_provider_patterns.cache_clear()
         self.detect_provider.cache_clear()
         self.get_provider_classes.cache_clear()

@@ -1,6 +1,5 @@
 """Tests for lib.auth.init_service module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,11 +15,13 @@ class TestInitService:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.auth.init_service
+
         assert lib.auth.init_service is not None
 
     def test_module_attributes(self):
         """Test module has expected attributes."""
         import lib.auth.init_service
+
         # Add specific attribute tests as needed
         assert hasattr(lib.auth.init_service, "__doc__")
 

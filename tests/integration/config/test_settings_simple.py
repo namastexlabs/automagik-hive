@@ -132,7 +132,7 @@ class TestSettingsEdgeCases:
             # Should raise ValidationError for invalid integer parsing
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
-            
+
             # Verify the specific validation error
             error_messages = str(exc_info.value)
             assert "Input should be a valid integer" in error_messages
@@ -155,7 +155,7 @@ class TestSettingsEdgeCases:
                 # will fail on invalid integer. Need to catch ValidationError.
                 with pytest.raises(ValidationError) as exc_info:
                     Settings()
-                
+
                 # Verify the error is about the metrics batch size
                 error = exc_info.value
                 assert "hive_metrics_batch_size" in str(error)
@@ -229,7 +229,7 @@ class TestSettingsEdgeCases:
             # Current behavior: Pydantic validators raise ValidationError instead of clamping
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
-            
+
             # Verify the error contains information about all three validation failures
             error = exc_info.value
             assert "hive_metrics_batch_size" in str(error)

@@ -55,9 +55,7 @@ class AgnoMetricsBridge:
         """
         self.config = config or MetricsConfig()
 
-    def extract_metrics(
-        self, response: Any, yaml_overrides: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def extract_metrics(self, response: Any, yaml_overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Extract comprehensive metrics from AGNO response using native metrics.
 
@@ -111,9 +109,7 @@ class AgnoMetricsBridge:
             True if AGNO response, False otherwise
         """
         # Check for AGNO agent response
-        if hasattr(response, "run_response") and hasattr(
-            response.run_response, "metrics"
-        ):
+        if hasattr(response, "run_response") and hasattr(response.run_response, "metrics"):
             return True
 
         # Check for AGNO session_metrics
@@ -145,9 +141,7 @@ class AgnoMetricsBridge:
             metrics.update(self._collect_session_metrics(response.session_metrics))
 
         # Secondary: Try run_response.metrics (per-response metrics)
-        elif hasattr(response, "run_response") and hasattr(
-            response.run_response, "metrics"
-        ):
+        elif hasattr(response, "run_response") and hasattr(response.run_response, "metrics"):
             run_metrics = response.run_response.metrics
 
             if isinstance(run_metrics, dict):
@@ -160,17 +154,13 @@ class AgnoMetricsBridge:
         # Add model information if available
         if hasattr(response, "model"):
             metrics["model"] = str(response.model)
-        elif hasattr(response, "run_response") and hasattr(
-            response.run_response, "model"
-        ):
+        elif hasattr(response, "run_response") and hasattr(response.run_response, "model"):
             metrics["model"] = str(response.run_response.model)
 
         # Add response length if available
         if hasattr(response, "content") and response.content:
             metrics["response_length"] = len(str(response.content))
-        elif hasattr(response, "run_response") and hasattr(
-            response.run_response, "content"
-        ):
+        elif hasattr(response, "run_response") and hasattr(response.run_response, "content"):
             metrics["response_length"] = len(str(response.run_response.content))
 
         return metrics
@@ -207,23 +197,13 @@ class AgnoMetricsBridge:
             metrics["provider_metrics"] = provider_metrics
 
         if hasattr(session_metrics, "additional_metrics") and session_metrics.additional_metrics:
-            metrics["additional_metrics"] = deepcopy(
-                session_metrics.additional_metrics
-            )
+            metrics["additional_metrics"] = deepcopy(session_metrics.additional_metrics)
 
         detail_carriers = {
-            "prompt_tokens_details": getattr(
-                session_metrics, "prompt_tokens_details", None
-            ),
-            "completion_tokens_details": getattr(
-                session_metrics, "completion_tokens_details", None
-            ),
+            "prompt_tokens_details": getattr(session_metrics, "prompt_tokens_details", None),
+            "completion_tokens_details": getattr(session_metrics, "completion_tokens_details", None),
         }
-        detail_payload = {
-            key: value
-            for key, value in detail_carriers.items()
-            if value not in (None, {}, [])
-        }
+        detail_payload = {key: value for key, value in detail_carriers.items() if value not in (None, {}, [])}
         if detail_payload:
             extra = metrics.setdefault("additional_metrics", {})
             extra.update(detail_payload)
@@ -250,11 +230,7 @@ class AgnoMetricsBridge:
                     "duration",
                     "time_to_first_token",
                 ]:
-                    numeric_values = [
-                        value
-                        for value in metric_values
-                        if isinstance(value, int | float)
-                    ]
+                    numeric_values = [value for value in metric_values if isinstance(value, int | float)]
                     metrics[metric_name] = sum(numeric_values) if numeric_values else metric_values[-1]
                 else:
                     metrics[metric_name] = metric_values[-1]
@@ -341,9 +317,7 @@ class AgnoMetricsBridge:
             if isinstance(payload, dict):
                 provider_metrics = {}
                 for key, value in payload.items():
-                    target_key = PROVIDER_FIELD_MAPPING.get(
-                        key, LEGACY_FIELD_MAPPING.get(key, key)
-                    )
+                    target_key = PROVIDER_FIELD_MAPPING.get(key, LEGACY_FIELD_MAPPING.get(key, key))
                     if target_key in DETAILED_FIELDS:
                         continue
                     provider_metrics[target_key] = value

@@ -10,13 +10,10 @@ from pathlib import Path
 
 def get_violations() -> dict[str, list[tuple[int, str]]]:
     """Get all S-code violations grouped by file."""
-    result = subprocess.run(
-        ["uv", "run", "ruff", "check", ".", "--output-format=json"],
-        capture_output=True,
-        text=True
-    )
+    result = subprocess.run(["uv", "run", "ruff", "check", ".", "--output-format=json"], capture_output=True, text=True)
 
     import json
+
     violations = {}
     data = json.loads(result.stdout)
 
@@ -70,7 +67,7 @@ def fix_s110_s112(file_path: Path, lines: list[str], violations: list[tuple[int,
             # Replace pass with appropriate logging
             if is_test_file:
                 # In tests, just add a comment
-                lines[idx] = f'{spaces}pass  # Test expects exception to be silently caught\n'
+                lines[idx] = f"{spaces}pass  # Test expects exception to be silently caught\n"
             else:
                 # In production code, add logging
                 lines[idx] = f'{spaces}logger.debug("Exception caught during operation", exc_info=True)\n'
@@ -91,7 +88,7 @@ def fix_s110_s112(file_path: Path, lines: list[str], violations: list[tuple[int,
 
             # Add logging before continue
             if is_test_file:
-                lines.insert(idx, f'{spaces}# Test expects exception to be silently caught\n')
+                lines.insert(idx, f"{spaces}# Test expects exception to be silently caught\n")
             else:
                 lines.insert(idx, f'{spaces}logger.debug("Exception caught, continuing iteration", exc_info=True)\n')
             modified = True
@@ -294,7 +291,7 @@ def main():  # noqa: S110 - Script uses bare except intentionally
         print(f"Processing {file_path}...")
 
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 lines = f.readlines()
         except Exception as e:
             print(f"  Error reading file: {e}")
@@ -315,7 +312,7 @@ def main():  # noqa: S110 - Script uses bare except intentionally
         # Write back if modified
         if lines != original_lines:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.writelines(lines)
                 print(f"  ✓ Fixed {len(violations)} violations")
             except Exception as e:
@@ -324,11 +321,7 @@ def main():  # noqa: S110 - Script uses bare except intentionally
             print("  No changes needed")
 
     print("\nRunning ruff check to verify fixes...")
-    result = subprocess.run(
-        ["uv", "run", "ruff", "check", ".", "--select=S"],
-        capture_output=True,
-        text=True
-    )
+    result = subprocess.run(["uv", "run", "ruff", "check", ".", "--select=S"], capture_output=True, text=True)
 
     print(result.stdout)
     if result.returncode == 0:

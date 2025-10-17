@@ -42,9 +42,7 @@ class FileSyncTracker:
 
         raise FileNotFoundError(f"YAML config not found for component: {component_id}")
 
-    def yaml_newer_than_db(
-        self, component_id: str, db_created_at: datetime | str
-    ) -> bool:
+    def yaml_newer_than_db(self, component_id: str, db_created_at: datetime | str) -> bool:
         """
         Compare YAML file modification time with database timestamp.
 

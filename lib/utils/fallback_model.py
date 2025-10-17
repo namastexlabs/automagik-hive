@@ -76,7 +76,7 @@ class FallbackModel:
         # Simulate streaming by yielding chunks
         chunk_size = 20
         for i in range(0, len(message), chunk_size):
-            yield message[i:i + chunk_size]
+            yield message[i : i + chunk_size]
 
     async def astream(self, messages: str | list[dict[str, str]] | Any, **kwargs: Any) -> AsyncIterator[str]:
         """
@@ -93,7 +93,7 @@ class FallbackModel:
         # Simulate streaming by yielding chunks with small delays
         chunk_size = 20
         for i in range(0, len(message), chunk_size):
-            yield message[i:i + chunk_size]
+            yield message[i : i + chunk_size]
             await asyncio.sleep(0.01)  # Small delay to simulate streaming
 
     def _format_error_message(self) -> str:
@@ -174,7 +174,9 @@ class FallbackModel:
         return f"FallbackModel({self.component_id})"
 
     def __repr__(self) -> str:
-        return f"FallbackModel(component_id='{self.component_id}', error='{self.error_response.get('error', 'unknown')}')"
+        return (
+            f"FallbackModel(component_id='{self.component_id}', error='{self.error_response.get('error', 'unknown')}')"
+        )
 
 
 # Export main class

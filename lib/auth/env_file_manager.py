@@ -43,24 +43,16 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
 
         self.primary_env_path = self._resolve_env_path(env_file, default_name=".env")
         alias_path = alias_file or self.primary_env_path.parent / ".env.master"
-        self.alias_env_path = (
-            alias_path
-            if alias_path.is_absolute()
-            else self.primary_env_path.parent / alias_path
-        )
+        self.alias_env_path = alias_path if alias_path.is_absolute() else self.primary_env_path.parent / alias_path
 
-    def _resolve_project_root(
-        self, project_root: Path | None, env_file: Path | None
-    ) -> Path:
+    def _resolve_project_root(self, project_root: Path | None, env_file: Path | None) -> Path:
         if project_root is not None:
             return Path(project_root)
         if env_file is not None and env_file.parent != Path("."):
             return env_file.parent
         return Path.cwd()
 
-    def _resolve_env_path(
-        self, env_file: Path | None, default_name: str
-    ) -> Path:
+    def _resolve_env_path(self, env_file: Path | None, default_name: str) -> Path:
         if env_file is None:
             return self.project_root / default_name
         if env_file.is_absolute():
@@ -82,9 +74,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
         if self.alias_env_path.exists():
             try:
                 self.primary_env_path.write_text(self.alias_env_path.read_text())
-                logger.debug(
-                    "Hydrated primary env from alias", file=str(self.primary_env_path)
-                )
+                logger.debug("Hydrated primary env from alias", file=str(self.primary_env_path))
                 return self.primary_env_path
             except OSError as error:
                 logger.error(
@@ -106,9 +96,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
         try:
             if template_path.exists():
                 template_content = template_path.read_text()
-                logger.info(
-                    "Hydrating env from template", template=str(template_path)
-                )
+                logger.info("Hydrating env from template", template=str(template_path))
             else:
                 template_content = self.DEFAULT_ENV_TEMPLATE
                 logger.warning(
@@ -132,15 +120,11 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
             if self.primary_env_path.exists():
                 content = self.primary_env_path.read_text()
                 self.alias_env_path.write_text(content)
-                logger.debug(
-                    "Synchronized alias env", alias=str(self.alias_env_path)
-                )
+                logger.debug("Synchronized alias env", alias=str(self.alias_env_path))
             elif self.alias_env_path.exists():
                 content = self.alias_env_path.read_text()
                 self.primary_env_path.write_text(content)
-                logger.debug(
-                    "Restored primary env from alias", file=str(self.primary_env_path)
-                )
+                logger.debug("Restored primary env from alias", file=str(self.primary_env_path))
         except OSError as error:
             logger.error(
                 "Failed to synchronize env alias",
@@ -156,14 +140,10 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
         try:
             return path.read_text().splitlines()
         except OSError as error:
-            logger.error(
-                "Failed to read env file", file=str(path), error=str(error)
-            )
+            logger.error("Failed to read env file", file=str(path), error=str(error))
             return []
 
-    def update_values(
-        self, updates: dict[str, str], create_if_missing: bool = True
-    ) -> bool:
+    def update_values(self, updates: dict[str, str], create_if_missing: bool = True) -> bool:
         """Update key/value pairs in env files, creating from template if needed."""
         target_path = self.refresh_primary(create_if_missing=create_if_missing)
         if target_path is None:
@@ -216,9 +196,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
             )
             raise
 
-    def extract_postgres_credentials(
-        self, database_url_var: str
-    ) -> dict[str, str | None]:
+    def extract_postgres_credentials(self, database_url_var: str) -> dict[str, str | None]:
         credentials: dict[str, str | None] = {
             "user": None,
             "password": None,
@@ -276,9 +254,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
                         logger.info("Hive API key extracted from env")
                         return api_key
         except Exception as error:  # noqa: BLE001 - logging unexpected errors
-            logger.error(
-                "Failed to extract Hive API key", file=str(path), error=str(error)
-            )
+            logger.error("Failed to extract Hive API key", file=str(path), error=str(error))
 
         return None
 
@@ -291,9 +267,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
         base_ports = defaults.copy()
         path = self.master_env_path
         if not path.exists():
-            logger.debug(
-                "No env file found, using default base ports", defaults=base_ports
-            )
+            logger.debug("No env file found, using default base ports", defaults=base_ports)
             return base_ports
 
         try:
@@ -307,16 +281,12 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
                         parsed = urlparse(url)
                         if parsed.port:
                             base_ports["db"] = parsed.port
-                            logger.debug(
-                                "Found custom database port in env", port=parsed.port
-                            )
+                            logger.debug("Found custom database port in env", port=parsed.port)
                 elif line.startswith(f"{api_port_var}="):
                     port_value = line.split("=", 1)[1].strip()
                     try:
                         base_ports["api"] = int(port_value)
-                        logger.debug(
-                            "Found custom API port in env", port=port_value
-                        )
+                        logger.debug("Found custom API port in env", port=port_value)
                     except ValueError:
                         logger.warning(
                             "Invalid API port in env, using default",

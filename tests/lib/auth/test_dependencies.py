@@ -1,6 +1,5 @@
 """Tests for lib.auth.dependencies module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,11 +15,13 @@ class TestDependencies:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.auth.dependencies
+
         assert lib.auth.dependencies is not None
 
     def test_module_attributes(self):
         """Test module has expected attributes."""
         import lib.auth.dependencies
+
         # Add specific attribute tests as needed
         assert hasattr(lib.auth.dependencies, "__doc__")
 

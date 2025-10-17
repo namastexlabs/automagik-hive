@@ -41,12 +41,8 @@ class StartupProgress:
 
             # Log progress milestones
             if percentage >= 100:
-                logger.info(
-                    f"{self.current_phase} complete: {self.completed_components}/{self.total_components}"
-                )
-            elif (
-                self.completed_components % max(1, self.total_components // 4) == 0
-            ):  # Log every 25%
+                logger.info(f"{self.current_phase} complete: {self.completed_components}/{self.total_components}")
+            elif self.completed_components % max(1, self.total_components // 4) == 0:  # Log every 25%
                 logger.info(
                     f"{self.current_phase}: {self.completed_components}/{self.total_components} ({percentage:.0f}%)",
                     phase=self.current_phase,
@@ -130,12 +126,8 @@ class ComponentTracker:
             "workflows": len([w for w in self.workflows if w["status"] == "✅"]),
             "errors": len(self.errors),
             "agent_details": [a["id"] for a in self.agents if a["status"] == "✅"],
-            "team_details": [
-                (t["id"], t["members"]) for t in self.teams if t["status"] == "✅"
-            ],
-            "workflow_details": [
-                w["id"] for w in self.workflows if w["status"] == "✅"
-            ],
+            "team_details": [(t["id"], t["members"]) for t in self.teams if t["status"] == "✅"],
+            "workflow_details": [w["id"] for w in self.workflows if w["status"] == "✅"],
         }
 
     def log_summary(self):
@@ -169,9 +161,7 @@ class ComponentTracker:
             if summary["agent_details"]:
                 logger.info(f"🤖 Agents: {', '.join(summary['agent_details'])}")
             if summary["team_details"]:
-                team_info = [
-                    f"{tid}({count})" for tid, count in summary["team_details"]
-                ]
+                team_info = [f"{tid}({count})" for tid, count in summary["team_details"]]
                 logger.info(f"🔧 Teams: {', '.join(team_info)}", teams=team_info)
             if summary["workflow_details"]:
                 logger.info(f"⚡ Workflows: {', '.join(summary['workflow_details'])}")

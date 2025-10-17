@@ -47,9 +47,7 @@ class DockerBenchmark:
         self.sdk_manager = DockerSDKManager()
         self.results: list[BenchmarkResult] = []
 
-    def benchmark_container_listing(
-        self, iterations: int = 10
-    ) -> list[BenchmarkResult]:
+    def benchmark_container_listing(self, iterations: int = 10) -> list[BenchmarkResult]:
         """Benchmark container listing operations."""
         results = []
 
@@ -122,9 +120,7 @@ class DockerBenchmark:
 
         return results
 
-    def benchmark_container_info(
-        self, container_name: str = "postgres", iterations: int = 10
-    ) -> list[BenchmarkResult]:
+    def benchmark_container_info(self, container_name: str = "postgres", iterations: int = 10) -> list[BenchmarkResult]:
         """Benchmark getting container information."""
         results = []
 
@@ -200,9 +196,7 @@ class DockerBenchmark:
 
         return results
 
-    def benchmark_log_retrieval(
-        self, container_name: str | None = None, iterations: int = 5
-    ) -> list[BenchmarkResult]:
+    def benchmark_log_retrieval(self, container_name: str | None = None, iterations: int = 5) -> list[BenchmarkResult]:
         """Benchmark log retrieval operations."""
         results = []
 
@@ -295,26 +289,14 @@ class DockerBenchmark:
         sdk_results = [r for r in all_results if r.method == "sdk"]
 
         subprocess_avg = (
-            sum(r.duration for r in subprocess_results) / len(subprocess_results)
-            if subprocess_results
-            else 0
+            sum(r.duration for r in subprocess_results) / len(subprocess_results) if subprocess_results else 0
         )
-        sdk_avg = (
-            sum(r.duration for r in sdk_results) / len(sdk_results)
-            if sdk_results
-            else 0
-        )
+        sdk_avg = sum(r.duration for r in sdk_results) / len(sdk_results) if sdk_results else 0
 
         subprocess_success_rate = (
-            sum(1 for r in subprocess_results if r.success) / len(subprocess_results)
-            if subprocess_results
-            else 0
+            sum(1 for r in subprocess_results if r.success) / len(subprocess_results) if subprocess_results else 0
         )
-        sdk_success_rate = (
-            sum(1 for r in sdk_results if r.success) / len(sdk_results)
-            if sdk_results
-            else 0
-        )
+        sdk_success_rate = sum(1 for r in sdk_results if r.success) / len(sdk_results) if sdk_results else 0
 
         overall_speedup = subprocess_avg / sdk_avg if sdk_avg > 0 else 0
 
@@ -325,9 +307,7 @@ class DockerBenchmark:
             "overall_speedup": overall_speedup,
             "subprocess_success_rate": subprocess_success_rate,
             "sdk_success_rate": sdk_success_rate,
-            "subprocess_error_count": sum(
-                1 for r in subprocess_results if not r.success
-            ),
+            "subprocess_error_count": sum(1 for r in subprocess_results if not r.success),
             "sdk_error_count": sum(1 for r in sdk_results if not r.success),
         }
 

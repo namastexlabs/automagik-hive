@@ -272,9 +272,7 @@ class AssertionHelpers:
         """Assert that a function is async."""
         import asyncio
 
-        assert asyncio.iscoroutinefunction(func), (
-            f"Function {func.__name__} is not async"
-        )
+        assert asyncio.iscoroutinefunction(func), f"Function {func.__name__} is not async"
 
 
 @pytest.fixture
@@ -311,9 +309,7 @@ class PerformanceTimer:
     def assert_duration_under(self, max_seconds: float):
         """Assert that duration is under specified seconds."""
         duration = self.duration()
-        assert duration < max_seconds, (
-            f"Operation took {duration}s, expected under {max_seconds}s"
-        )
+        assert duration < max_seconds, f"Operation took {duration}s, expected under {max_seconds}s"
 
 
 @pytest.fixture

@@ -35,9 +35,7 @@ class MigrationService:
         self.alembic_cfg_path = project_root / "alembic.ini"
 
         if not self.alembic_cfg_path.exists():
-            raise ComponentLoadingError(
-                f"Alembic config not found: {self.alembic_cfg_path}"
-            )
+            raise ComponentLoadingError(f"Alembic config not found: {self.alembic_cfg_path}")
 
     def _get_alembic_config(self) -> Config:
         """Get Alembic configuration with database URL."""
@@ -77,9 +75,7 @@ class MigrationService:
                     except Exception:
                         # Database is uninitialized - no alembic_version table exists
                         # This is expected for first-time setup
-                        logger.info(
-                            "Database uninitialized - no alembic_version table found"
-                        )
+                        logger.info("Database uninitialized - no alembic_version table found")
                         current_rev = None
 
                     head_rev = script.get_current_head()
@@ -162,9 +158,7 @@ class MigrationService:
             return result
 
         except Exception as e:
-            logger.error(
-                "Migration service error", error=str(e), error_type=type(e).__name__
-            )
+            logger.error("Migration service error", error=str(e), error_type=type(e).__name__)
             return {
                 "success": False,
                 "error": str(e),
@@ -186,9 +180,7 @@ class MigrationService:
                 }
 
             # If no migrations needed, we're done
-            if not status.get("pending_upgrades", True) and status.get(
-                "is_database_initialized", False
-            ):
+            if not status.get("pending_upgrades", True) and status.get("is_database_initialized", False):
                 logger.info(
                     "Database schema is up-to-date",
                     revision=status.get("current_revision"),
@@ -208,9 +200,7 @@ class MigrationService:
                 "message": "Database migrations completed"
                 if migration_result["success"]
                 else "Database migrations failed",
-                "action": "migrations_applied"
-                if migration_result["success"]
-                else "migrations_failed",
+                "action": "migrations_applied" if migration_result["success"] else "migrations_failed",
                 "details": migration_result,
             }
 

@@ -167,12 +167,7 @@ class EmojiMappingValidator:
         missing_services = set()
 
         for service in detected_resources.get("services", set()):
-            service_key = (
-                service.lower()
-                .replace("service", "")
-                .replace("manager", "")
-                .replace("handler", "")
-            )
+            service_key = service.lower().replace("service", "").replace("manager", "").replace("handler", "")
             if service_key not in service_mappings:
                 missing_services.add(service)
 
@@ -368,9 +363,7 @@ def main():
                 text=True,
                 check=True,
             )
-            files_to_check = (
-                result.stdout.strip().split("\n") if result.stdout.strip() else []
-            )
+            files_to_check = result.stdout.strip().split("\n") if result.stdout.strip() else []
         except subprocess.CalledProcessError:
             logger.error("Could not get staged files from git")
             sys.exit(1)

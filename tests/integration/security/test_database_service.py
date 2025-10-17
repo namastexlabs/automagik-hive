@@ -60,9 +60,7 @@ class TestDatabaseServiceConnectionSecurity:
 
     def test_connection_url_security_parameters(self, clean_environment):
         """Test that connection URLs can contain security parameters."""
-        secure_url = (
-            "postgresql://user:pass@host:5432/db?sslmode=require&sslcert=client.crt"
-        )
+        secure_url = "postgresql://user:pass@host:5432/db?sslmode=require&sslcert=client.crt"
         os.environ["HIVE_DATABASE_URL"] = secure_url
 
         service = DatabaseService()

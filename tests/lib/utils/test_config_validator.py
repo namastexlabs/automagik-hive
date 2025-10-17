@@ -3,7 +3,6 @@
 Tests the simplified config validator with inheritance system removed.
 """
 
-
 from lib.utils.config_validator import AGNOConfigValidator, ValidationResult
 
 
@@ -18,11 +17,9 @@ class TestAGNOConfigValidator:
     def test_validate_inheritance_compliance_disabled(self):
         """Test inheritance validation is disabled."""
         validator = AGNOConfigValidator()
-        
-        result = validator._validate_inheritance_compliance(
-            "test-team", {}, {}
-        )
-        
+
+        result = validator._validate_inheritance_compliance("test-team", {}, {})
+
         assert isinstance(result, ValidationResult)
         assert result.is_valid is True
         assert result.errors == []

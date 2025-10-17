@@ -30,9 +30,7 @@ _shared_kb: RowBasedCSVKnowledgeBase | None = None
 _kb_lock = threading.Lock()
 
 
-def _check_knowledge_base_exists(
-    db_url: str, table_name: str = "knowledge_base"
-) -> bool:
+def _check_knowledge_base_exists(db_url: str, table_name: str = "knowledge_base") -> bool:
     """Check if the knowledge base table already exists and has data"""
     try:
         from sqlalchemy import create_engine, text
@@ -109,18 +107,12 @@ def create_knowledge_base(
 
         db_url = os.getenv("HIVE_DATABASE_URL")
         if not db_url:
-            raise RuntimeError(
-                "HIVE_DATABASE_URL environment variable required for vector database"
-            )
+            raise RuntimeError("HIVE_DATABASE_URL environment variable required for vector database")
 
     # Get CSV path from configuration or use default, supporting legacy top-level key
     if csv_path is None:
         knowledge_cfg = config.get("knowledge", {}) if isinstance(config, dict) else {}
-        configured_csv = (
-            knowledge_cfg.get("csv_file_path")
-            or config.get("csv_file_path")
-            or "data/knowledge_rag.csv"
-        )
+        configured_csv = knowledge_cfg.get("csv_file_path") or config.get("csv_file_path") or "data/knowledge_rag.csv"
         csv_path_value = (Path(__file__).parent / configured_csv).resolve()
         logger.debug("Using CSV path from configuration", csv_path=str(csv_path_value))
     else:
@@ -162,9 +154,7 @@ def create_knowledge_base(
             table_name=vector_config.get("table_name", "knowledge_base"),
             schema="agno",  # Use agno schema for consistency
             db_url=db_url,
-            embedder=OpenAIEmbedder(
-                id=vector_config.get("embedder", "text-embedding-3-small")
-            ),
+            embedder=OpenAIEmbedder(id=vector_config.get("embedder", "text-embedding-3-small")),
             search_type=SearchType.hybrid,
             vector_index=HNSW(),
             distance=vector_config.get("distance", "cosine"),
@@ -193,9 +183,7 @@ def create_knowledge_base(
     with _kb_lock:
         # Double-check pattern - another thread might have created it while we waited
         if _shared_kb is not None:
-            logger.debug(
-                "Knowledge base was created by another thread, returning existing instance"
-            )
+            logger.debug("Knowledge base was created by another thread, returning existing instance")
             _shared_kb.num_documents = num_documents
             return _shared_kb
 
@@ -211,11 +199,7 @@ def create_knowledge_base(
 
         # Set agentic filters from configuration
         filter_config = config.get("knowledge", {}).get("filters", {})
-        valid_filters = set(
-            filter_config.get(
-                "valid_metadata_fields", ["category", "tags"]
-            )
-        )
+        valid_filters = set(filter_config.get("valid_metadata_fields", ["category", "tags"]))
         _shared_kb.valid_metadata_filters = valid_filters
 
     # Use smart incremental loading instead of basic Agno loading
@@ -229,7 +213,7 @@ def create_knowledge_base(
         load_result = smart_loader.smart_load()
 
         if "error" in load_result:
-            logger.warning("Smart loading failed", error=load_result["error"]) 
+            logger.warning("Smart loading failed", error=load_result["error"])
             # Fallback to basic loading
             logger.info("Falling back to basic knowledge base loading")
             _shared_kb.load(recreate=False, upsert=True)
@@ -237,9 +221,7 @@ def create_knowledge_base(
             # Smart loading succeeded - just connect to the populated database
             strategy = load_result.get("strategy", "unknown")
             if strategy == "no_changes":
-                logger.info(
-                    "No changes needed (all documents already exist)"
-                )
+                logger.info("No changes needed (all documents already exist)")
             elif strategy == "incremental_update":
                 new_docs = load_result.get("new_rows_processed", 0)
                 logger.info(
@@ -248,9 +230,7 @@ def create_knowledge_base(
                 )
             elif strategy == "initial_load_with_hashes":
                 total_docs = load_result.get("entries_processed", "unknown")
-                logger.info(
-                    "Initial load completed", total_docs=total_docs
-                )
+                logger.info("Initial load completed", total_docs=total_docs)
             else:
                 logger.info("Completed", strategy=strategy)
 
@@ -263,6 +243,7 @@ def create_knowledge_base(
     # Get final document count for user-facing summary
     try:
         from sqlalchemy import create_engine, text
+
         engine = create_engine(db_url)
         with engine.connect() as conn:
             raw_table = vector_config.get("table_name", "knowledge_base")

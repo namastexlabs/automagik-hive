@@ -15,6 +15,7 @@ _agno_agent_proxy = None
 _agno_team_proxy = None
 _agno_workflow_proxy = None
 
+
 def _merge_dicts(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Recursively merge two dictionaries without mutating inputs."""
 
@@ -23,11 +24,7 @@ def _merge_dicts(base: dict[str, Any], override: dict[str, Any]) -> dict[str, An
         merged[key] = deepcopy(value)
 
     for key, value in override.items():
-        if (
-            key in merged
-            and isinstance(merged[key], dict)
-            and isinstance(value, dict)
-        ):
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
             merged[key] = _merge_dicts(merged[key], value)
         else:
             merged[key] = deepcopy(value)
@@ -47,9 +44,7 @@ _SAMPLE_AGENT_CONFIG: dict[str, Any] = {
         "id": os.getenv("AGNO_SMOKE_MODEL_ID", "claude-3-haiku-20240513"),
         "temperature": 0.0,
     },
-    "instructions": (
-        "You are a smoke-test agent that verifies Automagik Hive's Agno wiring."
-    ),
+    "instructions": ("You are a smoke-test agent that verifies Automagik Hive's Agno wiring."),
 }
 
 
@@ -117,10 +112,7 @@ def reset_proxy_instances():
     This forces the next call to get_*_proxy() functions to create
     fresh instances with current Agno class signatures.
     """
-    global \
-        _agno_agent_proxy, \
-        _agno_team_proxy, \
-        _agno_workflow_proxy
+    global _agno_agent_proxy, _agno_team_proxy, _agno_workflow_proxy
     _agno_agent_proxy = None
     _agno_team_proxy = None
     _agno_workflow_proxy = None

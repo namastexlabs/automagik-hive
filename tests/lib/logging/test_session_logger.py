@@ -1,6 +1,5 @@
 """Tests for lib.logging.session_logger module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,6 +15,7 @@ class TestSessionLogger:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.logging.session_logger
+
         assert lib.logging.session_logger is not None
 
     @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")

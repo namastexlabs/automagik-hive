@@ -68,9 +68,7 @@ class TestMetricsServiceCoverage:
             service = MetricsService()
 
             # Test with custom limit and offset
-            metrics = await service.get_metrics_by_agent(
-                agent_name="paginated-agent", limit=5, offset=10
-            )
+            metrics = await service.get_metrics_by_agent(agent_name="paginated-agent", limit=5, offset=10)
 
         assert len(metrics) == 5
         for metric in metrics:
@@ -93,9 +91,7 @@ class TestMetricsServiceCoverage:
         with patch("lib.services.metrics_service.get_db_service", return_value=mock_db):
             service = MetricsService()
 
-            metrics = await service.get_metrics_by_execution_type(
-                execution_type="completion", limit=50, offset=100
-            )
+            metrics = await service.get_metrics_by_execution_type(execution_type="completion", limit=50, offset=100)
 
         assert metrics == []
 
@@ -271,10 +267,10 @@ class TestMetricsServiceCoverage:
         call_args = mock_db.fetch_one.call_args
         params = call_args[0][1]
         serialized_metrics = params["metrics"]
-        
+
         # Should be a JSON string, not the original dict
         assert isinstance(serialized_metrics, str)
-        
+
         # Should be able to deserialize back to original structure
         deserialized = json.loads(serialized_metrics)
         assert deserialized["performance"]["execution_time"] == 3.14159
@@ -309,7 +305,7 @@ class TestMetricsServiceCoverage:
     async def test_agent_metric_dataclass_validation(self):
         """Test AgentMetric dataclass with various data types."""
         now = datetime.now()
-        
+
         # Test with different metric types
         metric1 = AgentMetric(
             id=1,
@@ -320,7 +316,7 @@ class TestMetricsServiceCoverage:
             version="1.0",
             created_at=now,
         )
-        
+
         assert metric1.metrics["string"] == "value"
         assert metric1.metrics["number"] == 42
         assert metric1.metrics["boolean"] is True
@@ -336,7 +332,7 @@ class TestMetricsServiceCoverage:
             version="1.0",
             created_at=now,
         )
-        
+
         assert metric2.metrics == {}
 
 
@@ -414,10 +410,10 @@ class TestMetricsServiceIntegrationScenarios:
     async def test_complete_metrics_workflow(self):
         """Test a complete workflow of storing and retrieving metrics."""
         mock_db = AsyncMock()
-        
+
         # Mock store operation
         mock_db.fetch_one.return_value = {"id": 100}
-        
+
         # Mock retrieval operation
         stored_timestamp = datetime.now()
         mock_metrics_data = [
@@ -463,7 +459,7 @@ class TestMetricsServiceIntegrationScenarios:
     async def test_high_volume_metrics_simulation(self):
         """Test handling of high-volume metrics scenarios."""
         mock_db = AsyncMock()
-        
+
         # Simulate large result set
         large_dataset = [
             {
@@ -482,12 +478,10 @@ class TestMetricsServiceIntegrationScenarios:
         with patch("lib.services.metrics_service.get_db_service", return_value=mock_db):
             service = MetricsService()
 
-            metrics = await service.get_metrics_by_execution_type(
-                execution_type="bulk", limit=1000, offset=0
-            )
+            metrics = await service.get_metrics_by_execution_type(execution_type="bulk", limit=1000, offset=0)
 
         assert len(metrics) == 1000
-        
+
         # Verify all metrics were properly parsed
         for i, metric in enumerate(metrics):
             assert isinstance(metric, AgentMetric)
@@ -499,7 +493,7 @@ class TestMetricsServiceIntegrationScenarios:
     async def test_metrics_aggregation_scenarios(self):
         """Test various metrics aggregation scenarios."""
         mock_db = AsyncMock()
-        
+
         # Test scenario 1: Multiple agents
         mock_stats_multi_agent = {
             "total_executions": 500,
@@ -524,7 +518,7 @@ class TestMetricsServiceIntegrationScenarios:
         # Test scenario 2: Single agent filter - create new service instance
         with patch("lib.services.metrics_service.get_db_service", return_value=mock_db):
             service2 = MetricsService()
-            
+
             mock_stats_single_agent = {
                 "total_executions": 50,
                 "unique_agents": 1,
@@ -543,7 +537,7 @@ class TestMetricsServiceIntegrationScenarios:
         """Test AgentMetric dataclass properties."""
         timestamp = datetime.now()
         created_at = datetime.now()
-        
+
         metric = AgentMetric(
             id=1,
             timestamp=timestamp,
@@ -553,7 +547,7 @@ class TestMetricsServiceIntegrationScenarios:
             version="1.0",
             created_at=created_at,
         )
-        
+
         # Test that all fields are accessible
         assert hasattr(metric, "id")
         assert hasattr(metric, "timestamp")
@@ -562,7 +556,7 @@ class TestMetricsServiceIntegrationScenarios:
         assert hasattr(metric, "metrics")
         assert hasattr(metric, "version")
         assert hasattr(metric, "created_at")
-        
+
         # Test values are as expected
         assert metric.id == 1
         assert metric.timestamp == timestamp

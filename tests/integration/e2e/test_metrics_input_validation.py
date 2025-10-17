@@ -25,18 +25,18 @@ class TestMetricsInputValidation:
     def _get_base_env(self):
         """Get base environment variables required for HiveSettings."""
         return {
-            'HIVE_ENVIRONMENT': 'development',
-            'HIVE_API_PORT': '8886',
-            'HIVE_DATABASE_URL': 'postgresql://localhost:5432/hive_test',
-            'HIVE_API_KEY': 'hive_test_key_1234567890123456789012345678901234567890',
-            'HIVE_CORS_ORIGINS': 'http://localhost:3000',
+            "HIVE_ENVIRONMENT": "development",
+            "HIVE_API_PORT": "8886",
+            "HIVE_DATABASE_URL": "postgresql://localhost:5432/hive_test",
+            "HIVE_API_KEY": "hive_test_key_1234567890123456789012345678901234567890",
+            "HIVE_CORS_ORIGINS": "http://localhost:3000",
         }
 
     def test_batch_size_validation_normal_values(self):
         """Test that normal batch size values work correctly."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_BATCH_SIZE": "100"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_batch_size == 100
@@ -45,7 +45,7 @@ class TestMetricsInputValidation:
         """Test that minimum batch size boundary is enforced."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_BATCH_SIZE": "1"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_batch_size == 1
@@ -54,7 +54,7 @@ class TestMetricsInputValidation:
         """Test that maximum batch size boundary is enforced."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_BATCH_SIZE": "10000"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_batch_size == 10000
@@ -63,7 +63,7 @@ class TestMetricsInputValidation:
         """Test that batch size below minimum raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_BATCH_SIZE": "0"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -73,7 +73,7 @@ class TestMetricsInputValidation:
         """Test that batch size above maximum raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_BATCH_SIZE": "99999999"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -83,7 +83,7 @@ class TestMetricsInputValidation:
         """Test that invalid string raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_BATCH_SIZE": "not_a_number"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -93,7 +93,7 @@ class TestMetricsInputValidation:
         """Test that normal flush interval values work correctly."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_FLUSH_INTERVAL": "10.0"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_flush_interval == 10.0
@@ -102,7 +102,7 @@ class TestMetricsInputValidation:
         """Test that minimum flush interval boundary is enforced."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_FLUSH_INTERVAL": "0.1"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_flush_interval == 0.1
@@ -111,7 +111,7 @@ class TestMetricsInputValidation:
         """Test that maximum flush interval boundary is enforced."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_FLUSH_INTERVAL": "3600.0"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_flush_interval == 3600.0
@@ -120,7 +120,7 @@ class TestMetricsInputValidation:
         """Test that flush interval below minimum raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_FLUSH_INTERVAL": "0.001"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -130,7 +130,7 @@ class TestMetricsInputValidation:
         """Test that flush interval above maximum raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_FLUSH_INTERVAL": "99999.0"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -140,7 +140,7 @@ class TestMetricsInputValidation:
         """Test that invalid string raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_FLUSH_INTERVAL": "not_a_float"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -150,7 +150,7 @@ class TestMetricsInputValidation:
         """Test that normal queue size values work correctly."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_QUEUE_SIZE": "2000"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_queue_size == 2000
@@ -159,7 +159,7 @@ class TestMetricsInputValidation:
         """Test that minimum queue size boundary is enforced."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_QUEUE_SIZE": "10"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_queue_size == 10
@@ -168,7 +168,7 @@ class TestMetricsInputValidation:
         """Test that maximum queue size boundary is enforced."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_QUEUE_SIZE": "100000"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
             assert settings.hive_metrics_queue_size == 100000
@@ -177,7 +177,7 @@ class TestMetricsInputValidation:
         """Test that queue size below minimum raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_QUEUE_SIZE": "5"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -187,7 +187,7 @@ class TestMetricsInputValidation:
         """Test that queue size above maximum raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_QUEUE_SIZE": "999999"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -197,7 +197,7 @@ class TestMetricsInputValidation:
         """Test that invalid string raises ValidationError."""
         env = self._get_base_env()
         env.update({"HIVE_METRICS_QUEUE_SIZE": "invalid_number"})
-        
+
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
@@ -206,17 +206,19 @@ class TestMetricsInputValidation:
     def test_dos_attack_prevention_extreme_values(self):
         """Test prevention of DoS attacks via extreme configuration values."""
         env = self._get_base_env()
-        env.update({
-            "HIVE_METRICS_BATCH_SIZE": "999999999",
-            "HIVE_METRICS_FLUSH_INTERVAL": "0.001", 
-            "HIVE_METRICS_QUEUE_SIZE": "99999999999",
-        })
-        
+        env.update(
+            {
+                "HIVE_METRICS_BATCH_SIZE": "999999999",
+                "HIVE_METRICS_FLUSH_INTERVAL": "0.001",
+                "HIVE_METRICS_QUEUE_SIZE": "99999999999",
+            }
+        )
+
         # All extreme values should cause validation errors (fail-fast)
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
-            
+
             # Should have multiple validation errors
             errors = exc_info.value.errors()
             assert len(errors) == 3  # One for each invalid field
@@ -224,7 +226,7 @@ class TestMetricsInputValidation:
     def test_enable_metrics_boolean_parsing(self):
         """Test that HIVE_ENABLE_METRICS boolean parsing works correctly."""
         env = self._get_base_env()
-        
+
         # Test true values
         for true_value in ["true", "TRUE", "True", "yes", "1"]:
             env.update({"HIVE_ENABLE_METRICS": true_value})
@@ -232,7 +234,7 @@ class TestMetricsInputValidation:
                 settings = Settings()
                 assert settings.hive_enable_metrics is True
 
-        # Test false values  
+        # Test false values
         for false_value in ["false", "FALSE", "False", "no", "0"]:
             env.update({"HIVE_ENABLE_METRICS": false_value})
             with patch.dict(os.environ, env, clear=True):
@@ -243,7 +245,7 @@ class TestMetricsInputValidation:
         """Test that all default values are used when no metrics environment variables are set."""
         env = self._get_base_env()
         # Explicitly don't set any metrics environment variables
-        
+
         with patch.dict(os.environ, env, clear=True):
             settings = Settings()
 

@@ -33,13 +33,9 @@ def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
 
             try:
                 # Load the workflow module dynamically
-                spec = importlib.util.spec_from_file_location(
-                    f"ai.workflows.{workflow_name}.workflow", workflow_file
-                )
+                spec = importlib.util.spec_from_file_location(f"ai.workflows.{workflow_name}.workflow", workflow_file)
                 if spec is None or spec.loader is None:
-                    logger.warning(
-                        "Failed to create module spec", workflow_name=workflow_name
-                    )
+                    logger.warning("Failed to create module spec", workflow_name=workflow_name)
                     continue
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
@@ -51,9 +47,7 @@ def _discover_workflows() -> dict[str, Callable[..., Workflow]]:
                     registry[workflow_name] = factory_func
 
             except Exception as e:
-                logger.warning(
-                    "Failed to load workflow", workflow_name=workflow_name, error=str(e)
-                )
+                logger.warning("Failed to load workflow", workflow_name=workflow_name, error=str(e))
                 continue
 
     return registry
@@ -69,15 +63,11 @@ def get_workflow_registry() -> dict[str, Callable[..., Workflow]]:
     if _WORKFLOW_REGISTRY is None:
         logger.debug("Initializing workflow registry (lazy)")
         _WORKFLOW_REGISTRY = _discover_workflows()
-        logger.debug(
-            "Workflow registry initialized", workflow_count=len(_WORKFLOW_REGISTRY)
-        )
+        logger.debug("Workflow registry initialized", workflow_count=len(_WORKFLOW_REGISTRY))
     return _WORKFLOW_REGISTRY
 
 
-def get_workflow(
-    workflow_id: str, version: int | None = None, **kwargs: Any
-) -> Workflow:
+def get_workflow(workflow_id: str, version: int | None = None, **kwargs: Any) -> Workflow:
     """
     Retrieve and instantiate a workflow by its ID.
 
@@ -97,10 +87,7 @@ def get_workflow(
 
     if workflow_id not in registry:
         available_workflows = ", ".join(sorted(registry.keys()))
-        raise ValueError(
-            f"Workflow '{workflow_id}' not found in registry. "
-            f"Available workflows: {available_workflows}"
-        )
+        raise ValueError(f"Workflow '{workflow_id}' not found in registry. Available workflows: {available_workflows}")
 
     # Get the factory function for the workflow
     workflow_factory = registry[workflow_id]

@@ -47,10 +47,7 @@ def _get_caller_file_path() -> str | None:
             filename = frame.f_code.co_filename
 
             # Skip internal frames (loguru, logging, this module, etc.)
-            if not any(
-                skip_pattern in filename
-                for skip_pattern in ["loguru", "logging", "__init__.py", "config.py"]
-            ):
+            if not any(skip_pattern in filename for skip_pattern in ["loguru", "logging", "__init__.py", "config.py"]):
                 return filename
 
         return None
@@ -181,9 +178,7 @@ def setup_logging():
 
     emoji_handler = EmojiLoggingHandler()
     emoji_handler.setLevel(log_level)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     emoji_handler.setFormatter(formatter)
     root_logger.addHandler(emoji_handler)
 
@@ -213,10 +208,11 @@ def setup_logging():
     agno_level = os.getenv("AGNO_LOG_LEVEL", "WARNING").upper()
     agno_log_level = getattr(logging, agno_level, logging.WARNING)
     logging.getLogger("agno").setLevel(agno_log_level)
-    
+
     # CRITICAL FIX: Agno internal loggers have propagate=False, so we must set their levels directly
     try:
         from agno.utils.log import agent_logger, team_logger, workflow_logger
+
         agent_logger.setLevel(agno_log_level)
         team_logger.setLevel(agno_log_level)
         workflow_logger.setLevel(agno_log_level)

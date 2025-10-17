@@ -69,9 +69,7 @@ def get_version_service() -> AgnoVersionService:
 
 
 @router.post("/execute", response_model=VersionedExecutionResponse)
-async def execute_versioned_component(
-    request: VersionedExecutionRequest, background_tasks: BackgroundTasks
-):
+async def execute_versioned_component(request: VersionedExecutionRequest, background_tasks: BackgroundTasks):
     """
     Execute a versioned component using Agno storage.
 
@@ -116,9 +114,7 @@ async def execute_versioned_component(
     # Execute component with validation
     from lib.utils.message_validation import safe_agent_run
 
-    response = safe_agent_run(
-        component, request.message, f"versioned {component_type} {request.component_id}"
-    )
+    response = safe_agent_run(component, request.message, f"versioned {component_type} {request.component_id}")
 
     # Create response
     return VersionedExecutionResponse(
@@ -215,9 +211,7 @@ async def get_component_version(component_id: str, version: int):
 
 
 @router.put("/components/{component_id}/versions/{version}")
-async def update_component_version(
-    component_id: str, version: int, request: VersionUpdateRequest
-):
+async def update_component_version(component_id: str, version: int, request: VersionUpdateRequest):
     """Update configuration for a specific version."""
 
     service = get_version_service()
@@ -304,9 +298,7 @@ async def update_component_version(
 
 
 @router.post("/components/{component_id}/versions/{version}/activate")
-async def activate_component_version(
-    component_id: str, version: int, reason: str | None = None
-):
+async def activate_component_version(component_id: str, version: int, reason: str | None = None):
     """Activate a specific version."""
 
     service = get_version_service()
@@ -355,10 +347,10 @@ async def delete_component_version(component_id: str, version: int):
             )
 
         # Delete the version
-        delete_query = "DELETE FROM hive.component_versions WHERE component_id = %(component_id)s AND version = %(version)s"
-        await db.execute(
-            delete_query, {"component_id": component_id, "version": version}
+        delete_query = (
+            "DELETE FROM hive.component_versions WHERE component_id = %(component_id)s AND version = %(version)s"
         )
+        await db.execute(delete_query, {"component_id": component_id, "version": version})
 
         # Record history
         history_query = """

@@ -17,9 +17,7 @@ def _build_cache_key(settings: HiveSettings) -> tuple[Any, ...]:
         settings.hive_agentos_enable_defaults,
         settings.hive_embed_playground,
         settings.hive_playground_mount_path,
-        str(settings.hive_control_pane_base_url)
-        if settings.hive_control_pane_base_url
-        else None,
+        str(settings.hive_control_pane_base_url) if settings.hive_control_pane_base_url else None,
         settings.hive_api_host,
         settings.hive_api_port,
     )

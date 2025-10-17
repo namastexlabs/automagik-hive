@@ -1,6 +1,5 @@
 """Tests for lib.metrics.langwatch_integration module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,6 +15,7 @@ class TestLangwatchIntegration:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.metrics.langwatch_integration
+
         assert lib.metrics.langwatch_integration is not None
 
     @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")

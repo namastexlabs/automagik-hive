@@ -10,6 +10,7 @@ import pytest
 @dataclass
 class MockComponentRegistries:
     """Mock ComponentRegistries with proper dict attributes."""
+
     agents: dict[str, Any]
     teams: dict[str, Any]
     workflows: dict[str, Any]
@@ -18,6 +19,7 @@ class MockComponentRegistries:
 @dataclass
 class MockStartupServices:
     """Mock StartupServices with proper service attributes."""
+
     auth_service: Any
     metrics_service: Any
 
@@ -25,6 +27,7 @@ class MockStartupServices:
 @dataclass
 class MockStartupResults:
     """Mock StartupResults with proper structure."""
+
     registries: MockComponentRegistries
     services: MockStartupServices
     sync_results: dict[str, Any]
@@ -49,22 +52,12 @@ def mock_startup_results():
 
     # Create proper dataclass instances
     registries = MockComponentRegistries(
-        agents={"test-agent": mock_agent},
-        teams={"test-team": MagicMock()},
-        workflows={"test-workflow": MagicMock()}
+        agents={"test-agent": mock_agent}, teams={"test-team": MagicMock()}, workflows={"test-workflow": MagicMock()}
     )
 
-    services = MockStartupServices(
-        auth_service=mock_auth_service,
-        metrics_service=mock_metrics_service
-    )
+    services = MockStartupServices(auth_service=mock_auth_service, metrics_service=mock_metrics_service)
 
-    results = MockStartupResults(
-        registries=registries,
-        services=services,
-        sync_results={},
-        startup_display=MagicMock()
-    )
+    results = MockStartupResults(registries=registries, services=services, sync_results={}, startup_display=MagicMock())
 
     return results
 
@@ -89,22 +82,12 @@ def create_mock_startup_results():
 
     # Create proper dataclass instances
     registries = MockComponentRegistries(
-        agents={"test-agent": mock_agent},
-        teams={"test-team": MagicMock()},
-        workflows={"test-workflow": MagicMock()}
+        agents={"test-agent": mock_agent}, teams={"test-team": MagicMock()}, workflows={"test-workflow": MagicMock()}
     )
 
-    services = MockStartupServices(
-        auth_service=mock_auth_service,
-        metrics_service=mock_metrics_service
-    )
+    services = MockStartupServices(auth_service=mock_auth_service, metrics_service=mock_metrics_service)
 
-    results = MockStartupResults(
-        registries=registries,
-        services=services,
-        sync_results={},
-        startup_display=MagicMock()
-    )
+    results = MockStartupResults(registries=registries, services=services, sync_results={}, startup_display=MagicMock())
 
     return results
 

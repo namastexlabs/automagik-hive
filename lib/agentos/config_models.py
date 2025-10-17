@@ -114,9 +114,7 @@ def build_default_agentos_config(settings: HiveSettings | None = None) -> AgentO
     try:
         return AgentOSConfig.model_validate(payload)
     except ValidationError as exc:
-        raise AgentOSConfigError(
-            "Generated AgentOS defaults failed validation"
-        ) from exc
+        raise AgentOSConfigError("Generated AgentOS defaults failed validation") from exc
 
 
 def _resolve_settings(settings: HiveSettings | None) -> HiveSettings:
@@ -126,9 +124,7 @@ def _resolve_settings(settings: HiveSettings | None) -> HiveSettings:
     try:
         return HiveSettings()
     except ValidationError as exc:  # pragma: no cover - depends on runtime env
-        raise AgentOSConfigError(
-            "HiveSettings validation failed while building AgentOS defaults"
-        ) from exc
+        raise AgentOSConfigError("HiveSettings validation failed while building AgentOS defaults") from exc
 
 
 def _load_default_payload() -> dict[str, Any]:

@@ -112,7 +112,7 @@ class ShutdownProgress:
         if self._animation_thread and self._animation_thread.is_alive():
             # Use a shorter timeout to prevent hanging during shutdown
             self._animation_thread.join(timeout=0.2)
-            
+
             # If thread is still alive, it's a daemon thread and will be cleaned up automatically
             if self._animation_thread.is_alive():
                 pass  # Let daemon thread terminate naturally during shutdown

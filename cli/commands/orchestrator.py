@@ -10,10 +10,10 @@ from typing import Any
 
 class WorkflowOrchestrator:
     """Workflow orchestration for CLI operations."""
-    
+
     def __init__(self, workspace_path: Path | None = None):
         self.workspace_path = workspace_path or Path()
-    
+
     def orchestrate_workflow(self, workflow_name: str | None = None) -> bool:
         """Orchestrate workflow execution."""
         try:
@@ -25,11 +25,11 @@ class WorkflowOrchestrator:
             return True
         except Exception:
             return False
-    
+
     def execute(self) -> bool:
         """Execute workflow orchestrator."""
         return self.orchestrate_workflow()
-    
+
     def status(self) -> dict[str, Any]:
         """Get orchestrator status."""
         return {"status": "running", "healthy": True}

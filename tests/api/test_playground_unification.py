@@ -75,9 +75,7 @@ class TestPlaygroundUnification:
             interfaces = payload.get("interfaces", [])
 
             # Find playground interface
-            playground_interface = next(
-                (i for i in interfaces if i.get("type") == "playground"), None
-            )
+            playground_interface = next((i for i in interfaces if i.get("type") == "playground"), None)
 
             if os.environ.get("HIVE_EMBED_PLAYGROUND", "1") != "0":
                 assert playground_interface is not None, "Playground interface should be present"
@@ -127,9 +125,7 @@ class TestPlaygroundUnification:
             )
             assert override_url == "https://custom.example.com"
 
-    def test_interfaces_includes_all_required_routes(
-        self, test_client, mock_auth_service, api_headers
-    ):
+    def test_interfaces_includes_all_required_routes(self, test_client, mock_auth_service, api_headers):
         """Validate that interfaces payload includes all required route types."""
         mock_auth_service.validate_api_key.return_value = True
 
@@ -150,8 +146,7 @@ class TestPlaygroundUnification:
         # Required interface types
         required_types = {"agentos-config", "wish-catalog", "control-pane"}
         assert required_types.issubset(interface_types), (
-            f"Missing required interface types. "
-            f"Expected: {required_types}, Got: {interface_types}"
+            f"Missing required interface types. Expected: {required_types}, Got: {interface_types}"
         )
 
         # Playground is optional based on HIVE_EMBED_PLAYGROUND
@@ -194,9 +189,7 @@ class TestUnifiedRouterIntegration:
         # Payloads should be identical
         assert versioned_response.json() == legacy_response.json()
 
-    def test_startup_orchestration_populates_interfaces(
-        self, test_client, mock_auth_service, api_headers
-    ):
+    def test_startup_orchestration_populates_interfaces(self, test_client, mock_auth_service, api_headers):
         """Verify startup orchestration properly populates interface routes."""
         mock_auth_service.validate_api_key.return_value = True
 

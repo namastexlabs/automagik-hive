@@ -14,12 +14,8 @@ class TestToolConfig:
 
     def test_tool_config_creation_with_required_fields(self):
         """Test creating ToolConfig with only required fields."""
-        config = ToolConfig(
-            tool_id="test_tool",
-            name="Test Tool",
-            description="A test tool for testing"
-        )
-        
+        config = ToolConfig(tool_id="test_tool", name="Test Tool", description="A test tool for testing")
+
         assert config.tool_id == "test_tool"
         assert config.name == "Test Tool"
         assert config.description == "A test tool for testing"
@@ -43,9 +39,9 @@ class TestToolConfig:
             dependencies=["lib1", "lib2"],
             enabled=False,
             integration={"mcp": {"enabled": True}},
-            parameters={"param1": "value1", "param2": 42}
+            parameters={"param1": "value1", "param2": 42},
         )
-        
+
         assert config.tool_id == "advanced_tool"
         assert config.name == "Advanced Test Tool"
         assert config.description == "An advanced tool with custom configuration"
@@ -61,10 +57,10 @@ class TestToolConfig:
         """Test ToolConfig validation fails with missing required fields."""
         with pytest.raises(ValueError, match="Field required"):
             ToolConfig()
-        
+
         with pytest.raises(ValueError, match="Field required"):
             ToolConfig(tool_id="test")
-        
+
         with pytest.raises(ValueError, match="Field required"):
             ToolConfig(tool_id="test", name="Test")
 
@@ -75,29 +71,29 @@ class TestToolConfig:
                 tool_id="test",
                 name="Test",
                 description="Test",
-                version="not_an_int"  # Should be int
+                version="not_an_int",  # Should be int
             )
-        
+
         with pytest.raises(ValueError):
             ToolConfig(
                 tool_id="test",
-                name="Test", 
+                name="Test",
                 description="Test",
-                enabled="not_a_bool"  # Should be bool
+                enabled="not_a_bool",  # Should be bool
             )
 
 
 class ConcreteTestTool(BaseTool):
     """Concrete implementation of BaseTool for testing."""
-    
+
     def initialize(self, **kwargs) -> None:
         """Test implementation of initialize method."""
         self._is_initialized = True
-    
+
     def execute(self, *args, **kwargs) -> Any:
         """Test implementation of execute method."""
         return {"status": "executed", "args": args, "kwargs": kwargs}
-    
+
     def validate_inputs(self, inputs: dict[str, Any]) -> bool:
         """Test implementation of validate_inputs method."""
         return True
@@ -117,20 +113,24 @@ class TestBaseTool:
         assert isinstance(tool, BaseTool)
 
     @patch("ai.tools.base_tool.Path.exists")
-    @patch("builtins.open", new_callable=mock_open, read_data="""
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="""
 tool_id: test_tool
 name: Test Tool
 description: A test tool
 version: 1
 category: testing
-""")
+""",
+    )
     def test_base_tool_with_config_file(self, mock_file, mock_exists):
         """Test BaseTool initialization with config file."""
         mock_exists.return_value = True
         config_path = Path("/test/config.yaml")
-        
+
         tool = ConcreteTestTool(config_path=config_path)
-        
+
         assert tool.config is not None
         mock_file.assert_called_once()
 
@@ -144,7 +144,7 @@ category: testing
         """Test BaseTool initialization with nonexistent config file."""
         mock_exists.return_value = False
         config_path = Path("/nonexistent/config.yaml")
-        
+
         with pytest.raises(FileNotFoundError):
             ConcreteTestTool(config_path=config_path)
 
@@ -152,7 +152,7 @@ category: testing
         """Test concrete tool has execute method."""
         tool = ConcreteTestTool()
         result = tool.execute("test_arg", test_kwarg="test_value")
-        
+
         assert result["status"] == "executed"
         assert result["args"] == ("test_arg",)
         assert result["kwargs"] == {"test_kwarg": "test_value"}
@@ -161,7 +161,7 @@ category: testing
         """Test concrete tool has validate_inputs method."""
         tool = ConcreteTestTool()
         result = tool.validate_inputs({"input1": "value1"})
-        
+
         assert result is True
 
     @patch("ai.tools.base_tool.Path.exists")
@@ -170,22 +170,26 @@ category: testing
         """Test BaseTool handles invalid YAML configuration."""
         mock_exists.return_value = True
         config_path = Path("/test/invalid_config.yaml")
-        
+
         with pytest.raises(Exception):  # YAML parsing error  # noqa: B017
             ConcreteTestTool(config_path=config_path)
 
     @patch("ai.tools.base_tool.Path.exists")
-    @patch("builtins.open", new_callable=mock_open, read_data="""
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="""
 tool_id: test_tool
 name: Test Tool
 description: A test tool
 invalid_field: should_not_exist
-""")
+""",
+    )
     def test_base_tool_config_validation_with_invalid_fields(self, mock_file, mock_exists):
         """Test BaseTool config validation with invalid fields."""
         mock_exists.return_value = True
         config_path = Path("/test/config.yaml")
-        
+
         # Should still work but ignore invalid fields
         tool = ConcreteTestTool(config_path=config_path)
         assert tool.config is not None
@@ -198,17 +202,20 @@ class TestBaseToolIntegration:
         """Test complete BaseTool lifecycle."""
         # Create tool
         tool = ConcreteTestTool()
-        
+
         # Validate inputs
         is_valid = tool.validate_inputs({"param1": "value1"})
         assert is_valid is True
-        
+
         # Execute tool
         result = tool.execute("test_input", param="test_param")
         assert result["status"] == "executed"
 
     @patch("ai.tools.base_tool.Path.exists")
-    @patch("builtins.open", new_callable=mock_open, read_data="""
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="""
 tool_id: integration_tool
 name: Integration Test Tool
 description: Tool for integration testing
@@ -228,14 +235,15 @@ integration:
 parameters:
   timeout: 30
   retries: 3
-""")
+""",
+    )
     def test_base_tool_complex_configuration(self, mock_file, mock_exists):
         """Test BaseTool with complex configuration."""
         mock_exists.return_value = True
         config_path = Path("/test/complex_config.yaml")
-        
+
         tool = ConcreteTestTool(config_path=config_path)
-        
+
         assert tool.config.tool_id == "integration_tool"
         assert tool.config.version == 3
         assert tool.config.category == "integration"
@@ -254,7 +262,7 @@ class TestBaseToolErrorHandling:
         with patch("ai.tools.base_tool.Path.exists", return_value=True):
             with patch("builtins.open", side_effect=PermissionError("Permission denied")):
                 config_path = Path("/test/config.yaml")
-                
+
                 with pytest.raises(PermissionError):
                     ConcreteTestTool(config_path=config_path)
 
@@ -264,7 +272,7 @@ class TestBaseToolErrorHandling:
         """Test BaseTool handles empty config file."""
         mock_exists.return_value = True
         config_path = Path("/test/empty_config.yaml")
-        
+
         with pytest.raises(Exception):  # Should fail due to missing required fields  # noqa: B017
             ConcreteTestTool(config_path=config_path)
 

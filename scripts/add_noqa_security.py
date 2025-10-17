@@ -9,9 +9,17 @@ from pathlib import Path
 def get_violations() -> dict[str, list[tuple[int, str]]]:
     """Get critical S-code violations."""
     result = subprocess.run(
-        ["uv", "run", "ruff", "check", ".", "--select=S110,S112,S104,S105,S108,S311,S324,S608,S103", "--output-format=json"],
+        [
+            "uv",
+            "run",
+            "ruff",
+            "check",
+            ".",
+            "--select=S110,S112,S104,S105,S108,S311,S324,S608,S103",
+            "--output-format=json",
+        ],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     violations = {}
@@ -34,7 +42,7 @@ def get_violations() -> dict[str, list[tuple[int, str]]]:
 def add_noqa_to_file(file_path: Path, violations: list[tuple[int, str]]) -> bool:
     """Add noqa comments to a file."""
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
     except Exception:  # noqa: S110
         return False
@@ -97,7 +105,7 @@ def add_noqa_to_file(file_path: Path, violations: list[tuple[int, str]]) -> bool
 
     if modified:
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(lines)
             return True
         except Exception:  # noqa: S110
@@ -136,13 +144,13 @@ def main():
     result = subprocess.run(
         ["uv", "run", "ruff", "check", ".", "--select=S110,S112,S104,S105,S108,S311,S324,S608,S103"],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     if "Found 0 errors" in result.stdout or result.returncode == 0:
         print("✅ All critical security violations resolved!")
     else:
-        lines = result.stdout.count('\n')
+        lines = result.stdout.count("\n")
         print(f"⚠️  {lines} violation lines remain")
 
 

@@ -38,10 +38,10 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "test-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
-            init_file.write_text('__version__ = 1')
-            
+            init_file.write_text("__version__ = 1")
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1"
 
@@ -50,10 +50,10 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "test-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text('__version__ = "2.1.0"')
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "2.1.0"
 
@@ -82,14 +82,14 @@ class TestWorkflowVersionFromInit:
             class WorkflowProcessor:
                 pass
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "complex-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(complex_init_content)
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "3.2.1"
 
@@ -98,10 +98,10 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "test-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text("__version__ = '4.0.0-beta'")
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "4.0.0-beta"
 
@@ -110,10 +110,10 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "test-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text('__version__ = """5.0.0"""')
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "5.0.0"
 
@@ -122,10 +122,10 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "test-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
-            init_file.write_text('__version__ = 2.5')
-            
+            init_file.write_text("__version__ = 2.5")
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "2.5"
 
@@ -142,14 +142,14 @@ class TestWorkflowVersionFromInit:
             
             # More comments
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "commented-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content_with_comments)
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.2.3"
 
@@ -158,29 +158,29 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "unicode-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
-            init_file.write_text('__version__ = "1.0.0-α"', encoding='utf-8')
-            
+            init_file.write_text('__version__ = "1.0.0-α"', encoding="utf-8")
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.0.0-α"
 
     def test_version_extraction_with_variable_assignment_expression(self):
         """Test version extraction with variable assignment expressions."""
-        init_content = textwrap.dedent('''
+        init_content = textwrap.dedent("""
             MAJOR = 2
             MINOR = 1
             PATCH = 0
             __version__ = f"{MAJOR}.{MINOR}.{PATCH}"
-        ''')
-        
+        """)
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "dynamic-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             # This should fail because it's a complex expression, not a simple literal
             with pytest.raises(WorkflowVersionError, match="Complex version assignment"):
                 get_workflow_version_from_init(workflow_dir)
@@ -190,7 +190,7 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "no-init-workflow"
             workflow_dir.mkdir()
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.0.0"
 
@@ -204,14 +204,14 @@ class TestWorkflowVersionFromInit:
             def some_function():
                 pass
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "no-version-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.0.0"
 
@@ -220,10 +220,10 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "empty-init-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text("")
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.0.0"
 
@@ -238,14 +238,14 @@ class TestWorkflowVersionFromInit:
             def broken_function(:
                 pass
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "broken-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(invalid_init_content)
-            
+
             with pytest.raises(WorkflowVersionError, match="Failed to parse"):
                 get_workflow_version_from_init(workflow_dir)
 
@@ -254,14 +254,14 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = Path(temp_dir) / "not-a-directory.txt"
             file_path.write_text("content")
-            
+
             with pytest.raises(WorkflowVersionError, match="not a directory"):
                 get_workflow_version_from_init(file_path)
 
     def test_nonexistent_directory_raises_error(self):
         """Test error when workflow directory doesn't exist."""
         nonexistent_path = Path("/nonexistent/workflow/directory")
-        
+
         with pytest.raises(WorkflowVersionError, match="does not exist"):
             get_workflow_version_from_init(nonexistent_path)
 
@@ -290,14 +290,14 @@ class TestWorkflowVersionFromInit:
             
             __version__ = "1.5.0"  # This is the real version
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "function-version-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.5.0"
 
@@ -314,14 +314,14 @@ class TestWorkflowVersionFromInit:
                 def __init__(self):
                     self.__version__ = "1.0.0"  # This should also be ignored
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "class-version-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "3.1.0"
 
@@ -337,14 +337,14 @@ class TestWorkflowVersionFromInit:
             
             __version__ = "2.0.0"  # Second assignment (should be ignored)
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "multi-version-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.0.0"
 
@@ -356,14 +356,14 @@ class TestWorkflowVersionFromInit:
             __version__ = "1.0.0"
             __version__ += "-dev"  # Augmented assignment
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "augmented-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             # Should still return the first assignment
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.0.0"
@@ -373,19 +373,20 @@ class TestWorkflowVersionFromInit:
         # Create a large file with version at the beginning
         large_init_content = '__version__ = "1.0.0"\n'
         large_init_content += "\n".join([f"# Comment line {i}" for i in range(10000)])
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "large-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(large_init_content)
-            
+
             import time
+
             start_time = time.time()
             version = get_workflow_version_from_init(workflow_dir)
             end_time = time.time()
-            
+
             assert version == "1.0.0"
             # Should complete in reasonable time (less than 1 second)
             assert end_time - start_time < 1.0
@@ -404,23 +405,23 @@ class TestWorkflowMetadataFromInit:
             __description__ = "Sample workflow processor"
             __license__ = "MIT"
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "basic-metadata-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             expected_metadata = {
                 "__version__": "1.0.0",
                 "__author__": "AutomagikHive Team",
                 "__description__": "Sample workflow processor",
-                "__license__": "MIT"
+                "__license__": "MIT",
             }
-            
+
             assert metadata == expected_metadata
 
     def test_extract_extended_metadata(self):
@@ -439,16 +440,16 @@ class TestWorkflowMetadataFromInit:
             __copyright__ = "2024 AutomagikHive"
             __credits__ = ["John Doe", "Jane Smith", "Bob Wilson"]
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "extended-metadata-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             expected_metadata = {
                 "__version__": "2.1.0",
                 "__author__": "John Doe <john@example.com>",
@@ -459,9 +460,9 @@ class TestWorkflowMetadataFromInit:
                 "__url__": "https://github.com/example/workflow",
                 "__status__": "Production",
                 "__copyright__": "2024 AutomagikHive",
-                "__credits__": ["John Doe", "Jane Smith", "Bob Wilson"]
+                "__credits__": ["John Doe", "Jane Smith", "Bob Wilson"],
             }
-            
+
             assert metadata == expected_metadata
 
     def test_extract_metadata_with_mixed_quotes(self):
@@ -489,7 +490,7 @@ __license__ = "Triple quote license"
                 "__version__": "1.0.0",
                 "__author__": "Single Quote Author",
                 "__description__": "Triple quote description\nthat spans multiple lines.",
-                "__license__": "Triple quote license"
+                "__license__": "Triple quote license",
             }
 
             assert metadata == expected_metadata
@@ -511,21 +512,18 @@ __license__ = "Triple quote license"
             def some_function():
                 pass
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "mixed-variables-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
-            expected_metadata = {
-                "__version__": "1.0.0",
-                "__author__": "Test Author"
-            }
-            
+
+            expected_metadata = {"__version__": "1.0.0", "__author__": "Test Author"}
+
             assert metadata == expected_metadata
 
     def test_extract_metadata_from_missing_init_file(self):
@@ -533,7 +531,7 @@ __license__ = "Triple quote license"
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "no-init-workflow"
             workflow_dir.mkdir()
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
             assert metadata == {"__version__": "1.0.0"}
 
@@ -542,10 +540,10 @@ __license__ = "Triple quote license"
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "empty-init-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text("")
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
             assert metadata == {"__version__": "1.0.0"}
 
@@ -558,14 +556,14 @@ __license__ = "Triple quote license"
             __author__ = "Simple Author"
             __description__ = f"Dynamic description with {__version__}"  # Complex expression
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "complex-expr-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             with pytest.raises(WorkflowMetadataError, match="Complex assignment"):
                 get_workflow_metadata_from_init(workflow_dir)
 
@@ -585,21 +583,18 @@ __license__ = "Triple quote license"
                 __version__ = "3.0.0"  # Should be ignored
                 __license__ = "Class License"  # Should be ignored
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "nested-metadata-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
-            expected_metadata = {
-                "__version__": "1.0.0",
-                "__author__": "Module Author"
-            }
-            
+
+            expected_metadata = {"__version__": "1.0.0", "__author__": "Module Author"}
+
             assert metadata == expected_metadata
 
     def test_extract_metadata_with_numeric_values(self):
@@ -613,24 +608,24 @@ __license__ = "Triple quote license"
             __debug__ = True
             __stable__ = False
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "numeric-metadata-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             expected_metadata = {
                 "__version__": "2",
                 "__revision__": "42",
                 "__build__": "1234567890",
                 "__debug__": "True",
-                "__stable__": "False"
+                "__stable__": "False",
             }
-            
+
             assert metadata == expected_metadata
 
     def test_extract_metadata_invalid_syntax_raises_error(self):
@@ -641,14 +636,14 @@ __license__ = "Triple quote license"
             __version__ = "1.0.0
             __author__ = "Broken Author
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "broken-syntax-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(invalid_init_content)
-            
+
             with pytest.raises(WorkflowMetadataError, match="Failed to parse"):
                 get_workflow_metadata_from_init(workflow_dir)
 
@@ -662,23 +657,23 @@ __license__ = "Triple quote license"
             __keywords__ = ["workflow", "automation", "processing"]
             __supported_formats__ = ["json", "yaml", "xml"]
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "list-metadata-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             expected_metadata = {
                 "__version__": "1.0.0",
                 "__credits__": ["John Doe", "Jane Smith", "Bob Wilson"],
                 "__keywords__": ["workflow", "automation", "processing"],
-                "__supported_formats__": ["json", "yaml", "xml"]
+                "__supported_formats__": ["json", "yaml", "xml"],
             }
-            
+
             assert metadata == expected_metadata
 
     def test_extract_metadata_handles_dict_values(self):
@@ -690,22 +685,22 @@ __license__ = "Triple quote license"
             __config__ = {"timeout": 30, "retry_count": 3}
             __dependencies__ = {"python": ">=3.8", "pydantic": ">=1.0"}
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "dict-metadata-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             expected_metadata = {
                 "__version__": "1.0.0",
                 "__config__": {"timeout": 30, "retry_count": 3},
-                "__dependencies__": {"python": ">=3.8", "pydantic": ">=1.0"}
+                "__dependencies__": {"python": ">=3.8", "pydantic": ">=1.0"},
             }
-            
+
             assert metadata == expected_metadata
 
 
@@ -717,14 +712,14 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "complete-workflow"
             workflow_dir.mkdir()
-            
+
             # Create all required files
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
             (workflow_dir / "workflow.py").write_text("# Workflow implementation")
             (workflow_dir / "config.yaml").write_text("# Workflow configuration")
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             expected_result = {
                 "valid": True,
                 "has_init": True,
@@ -733,9 +728,9 @@ class TestValidateWorkflowStructure:
                 "init_version": "1.0.0",
                 "missing_files": [],
                 "extra_files": [],
-                "errors": []
+                "errors": [],
             }
-            
+
             assert result == expected_result
 
     def test_validate_minimal_workflow_structure(self):
@@ -743,11 +738,11 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "minimal-workflow"
             workflow_dir.mkdir()
-            
+
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             expected_result = {
                 "valid": False,
                 "has_init": True,
@@ -756,9 +751,9 @@ class TestValidateWorkflowStructure:
                 "init_version": "1.0.0",
                 "missing_files": ["workflow.py", "config.yaml"],
                 "extra_files": [],
-                "errors": ["Missing required file: workflow.py", "Missing required file: config.yaml"]
+                "errors": ["Missing required file: workflow.py", "Missing required file: config.yaml"],
             }
-            
+
             assert result == expected_result
 
     def test_validate_workflow_with_missing_init(self):
@@ -766,12 +761,12 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "no-init-workflow"
             workflow_dir.mkdir()
-            
+
             (workflow_dir / "workflow.py").write_text("# Workflow implementation")
             (workflow_dir / "config.yaml").write_text("# Workflow configuration")
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             expected_result = {
                 "valid": False,
                 "has_init": False,
@@ -780,9 +775,9 @@ class TestValidateWorkflowStructure:
                 "init_version": "1.0.0",  # Default version
                 "missing_files": ["__init__.py"],
                 "extra_files": [],
-                "errors": ["Missing required file: __init__.py"]
+                "errors": ["Missing required file: __init__.py"],
             }
-            
+
             assert result == expected_result
 
     def test_validate_workflow_with_extra_files(self):
@@ -790,19 +785,19 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "extra-files-workflow"
             workflow_dir.mkdir()
-            
+
             # Create required files
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
             (workflow_dir / "workflow.py").write_text("# Workflow implementation")
             (workflow_dir / "config.yaml").write_text("# Workflow configuration")
-            
+
             # Create extra files
             (workflow_dir / "README.md").write_text("# Workflow README")
             (workflow_dir / "tests.py").write_text("# Test file")
             (workflow_dir / "utils.py").write_text("# Utility functions")
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             expected_result = {
                 "valid": True,
                 "has_init": True,
@@ -811,9 +806,9 @@ class TestValidateWorkflowStructure:
                 "init_version": "1.0.0",
                 "missing_files": [],
                 "extra_files": ["README.md", "tests.py", "utils.py"],
-                "errors": []
+                "errors": [],
             }
-            
+
             assert result == expected_result
 
     def test_validate_empty_workflow_directory(self):
@@ -821,9 +816,9 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "empty-workflow"
             workflow_dir.mkdir()
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             expected_result = {
                 "valid": False,
                 "has_init": False,
@@ -835,16 +830,16 @@ class TestValidateWorkflowStructure:
                 "errors": [
                     "Missing required file: __init__.py",
                     "Missing required file: workflow.py",
-                    "Missing required file: config.yaml"
-                ]
+                    "Missing required file: config.yaml",
+                ],
             }
-            
+
             assert result == expected_result
 
     def test_validate_nonexistent_workflow_directory(self):
         """Test validation of non-existent workflow directory."""
         nonexistent_path = Path("/nonexistent/workflow/directory")
-        
+
         with pytest.raises(WorkflowStructureError, match="does not exist"):
             validate_workflow_structure(nonexistent_path)
 
@@ -853,7 +848,7 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = Path(temp_dir) / "not-a-directory.txt"
             file_path.write_text("content")
-            
+
             with pytest.raises(WorkflowStructureError, match="not a directory"):
                 validate_workflow_structure(file_path)
 
@@ -862,19 +857,19 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "subdir-workflow"
             workflow_dir.mkdir()
-            
+
             # Create required files
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
             (workflow_dir / "workflow.py").write_text("# Workflow implementation")
             (workflow_dir / "config.yaml").write_text("# Workflow configuration")
-            
+
             # Create subdirectories
             (workflow_dir / "tests").mkdir()
             (workflow_dir / "docs").mkdir()
             (workflow_dir / "assets").mkdir()
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             expected_result = {
                 "valid": True,
                 "has_init": True,
@@ -883,9 +878,9 @@ class TestValidateWorkflowStructure:
                 "init_version": "1.0.0",
                 "missing_files": [],
                 "extra_files": ["assets", "docs", "tests"],
-                "errors": []
+                "errors": [],
             }
-            
+
             assert result == expected_result
 
     def test_validate_workflow_handles_permission_errors(self):
@@ -893,7 +888,7 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "permission-workflow"
             workflow_dir.mkdir()
-            
+
             with patch("pathlib.Path.iterdir", side_effect=PermissionError("Permission denied")):
                 with pytest.raises(WorkflowStructureError, match="Permission denied"):
                     validate_workflow_structure(workflow_dir)
@@ -903,14 +898,14 @@ class TestValidateWorkflowStructure:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "broken-init-workflow"
             workflow_dir.mkdir()
-            
+
             # Create required files
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0')  # Syntax error
             (workflow_dir / "workflow.py").write_text("# Workflow implementation")
             (workflow_dir / "config.yaml").write_text("# Workflow configuration")
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             # Should still validate structure but note version parsing error
             assert result["valid"] is True
             assert result["has_init"] is True
@@ -922,6 +917,7 @@ class TestValidateWorkflowStructure:
     def test_validate_workflow_structure_case_sensitive_files(self):
         """Test validation is case-sensitive for required files."""
         import platform
+
         # Skip test on case-insensitive filesystems (default macOS HFS+/APFS)
         if platform.system() == "Darwin":
             pytest.skip("macOS filesystem is typically case-insensitive")
@@ -948,8 +944,8 @@ class TestValidateWorkflowStructure:
                 "errors": [
                     "Missing required file: __init__.py",
                     "Missing required file: workflow.py",
-                    "Missing required file: config.yaml"
-                ]
+                    "Missing required file: config.yaml",
+                ],
             }
 
             assert result == expected_result
@@ -962,16 +958,16 @@ class TestDiscoverWorkflowsWithVersions:
         """Test discovery of single workflow in directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create single workflow
             workflow_dir = workflows_dir / "sample-workflow"
             workflow_dir.mkdir()
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
             (workflow_dir / "workflow.py").write_text("# Implementation")
             (workflow_dir / "config.yaml").write_text("# Configuration")
-            
+
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             expected_result = {
                 "sample-workflow": {
                     "path": str(workflow_dir),
@@ -986,18 +982,18 @@ class TestDiscoverWorkflowsWithVersions:
                         "init_version": "1.0.0",
                         "missing_files": [],
                         "extra_files": [],
-                        "errors": []
-                    }
+                        "errors": [],
+                    },
                 }
             }
-            
+
             assert result == expected_result
 
     def test_discover_multiple_workflows(self):
         """Test discovery of multiple workflows in directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create multiple workflows
             for i, name in enumerate(["workflow-alpha", "workflow-beta", "workflow-gamma"]):
                 workflow_dir = workflows_dir / name
@@ -1005,18 +1001,18 @@ class TestDiscoverWorkflowsWithVersions:
                 (workflow_dir / "__init__.py").write_text(f'__version__ = "{i + 1}.0.0"')
                 (workflow_dir / "workflow.py").write_text(f"# {name} implementation")
                 (workflow_dir / "config.yaml").write_text(f"# {name} configuration")
-            
+
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             assert len(result) == 3
             assert "workflow-alpha" in result
             assert "workflow-beta" in result
             assert "workflow-gamma" in result
-            
+
             assert result["workflow-alpha"]["version"] == "1.0.0"
             assert result["workflow-beta"]["version"] == "2.0.0"
             assert result["workflow-gamma"]["version"] == "3.0.0"
-            
+
             for workflow_name in result:
                 assert result[workflow_name]["valid"] is True
                 assert result[workflow_name]["structure"]["valid"] is True
@@ -1025,42 +1021,42 @@ class TestDiscoverWorkflowsWithVersions:
         """Test discovery of workflows with mixed validity states."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create valid workflow
             valid_workflow = workflows_dir / "valid-workflow"
             valid_workflow.mkdir()
             (valid_workflow / "__init__.py").write_text('__version__ = "1.0.0"')
             (valid_workflow / "workflow.py").write_text("# Implementation")
             (valid_workflow / "config.yaml").write_text("# Configuration")
-            
+
             # Create incomplete workflow
             incomplete_workflow = workflows_dir / "incomplete-workflow"
             incomplete_workflow.mkdir()
             (incomplete_workflow / "__init__.py").write_text('__version__ = "2.0.0"')
             # Missing workflow.py and config.yaml
-            
+
             # Create workflow with no init
             no_init_workflow = workflows_dir / "no-init-workflow"
             no_init_workflow.mkdir()
             (no_init_workflow / "workflow.py").write_text("# Implementation")
             (no_init_workflow / "config.yaml").write_text("# Configuration")
-            
+
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             assert len(result) == 3
-            
+
             # Valid workflow
             assert result["valid-workflow"]["valid"] is True
             assert result["valid-workflow"]["version"] == "1.0.0"
             assert result["valid-workflow"]["structure"]["valid"] is True
-            
+
             # Incomplete workflow
             assert result["incomplete-workflow"]["valid"] is False
             assert result["incomplete-workflow"]["version"] == "2.0.0"
             assert result["incomplete-workflow"]["structure"]["valid"] is False
             assert "workflow.py" in result["incomplete-workflow"]["structure"]["missing_files"]
             assert "config.yaml" in result["incomplete-workflow"]["structure"]["missing_files"]
-            
+
             # No init workflow
             assert result["no-init-workflow"]["valid"] is False
             assert result["no-init-workflow"]["version"] == "1.0.0"  # Default
@@ -1071,21 +1067,21 @@ class TestDiscoverWorkflowsWithVersions:
         """Test that discovery ignores files and only processes directories."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create valid workflow directory
             workflow_dir = workflows_dir / "real-workflow"
             workflow_dir.mkdir()
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
             (workflow_dir / "workflow.py").write_text("# Implementation")
             (workflow_dir / "config.yaml").write_text("# Configuration")
-            
+
             # Create files that should be ignored
             (workflows_dir / "README.md").write_text("# Not a workflow")
             (workflows_dir / "setup.py").write_text("# Setup script")
             (workflows_dir / "requirements.txt").write_text("# Dependencies")
-            
+
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             assert len(result) == 1
             assert "real-workflow" in result
             assert result["real-workflow"]["valid"] is True
@@ -1094,21 +1090,21 @@ class TestDiscoverWorkflowsWithVersions:
         """Test that discovery handles hidden directories appropriately."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create regular workflow
             workflow_dir = workflows_dir / "regular-workflow"
             workflow_dir.mkdir()
             (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
             (workflow_dir / "workflow.py").write_text("# Implementation")
             (workflow_dir / "config.yaml").write_text("# Configuration")
-            
+
             # Create hidden directory (should be ignored)
             hidden_dir = workflows_dir / ".hidden-workflow"
             hidden_dir.mkdir()
             (hidden_dir / "__init__.py").write_text('__version__ = "2.0.0"')
-            
+
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             assert len(result) == 1
             assert "regular-workflow" in result
             assert ".hidden-workflow" not in result
@@ -1117,14 +1113,14 @@ class TestDiscoverWorkflowsWithVersions:
         """Test discovery from empty workflows directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             result = discover_workflows_with_versions(workflows_dir)
             assert result == {}
 
     def test_discover_workflows_from_nonexistent_directory(self):
         """Test discovery from non-existent directory raises error."""
         nonexistent_path = Path("/nonexistent/workflows/directory")
-        
+
         with pytest.raises(WorkflowStructureError, match="does not exist"):
             discover_workflows_with_versions(nonexistent_path)
 
@@ -1133,7 +1129,7 @@ class TestDiscoverWorkflowsWithVersions:
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = Path(temp_dir) / "not-a-directory.txt"
             file_path.write_text("content")
-            
+
             with pytest.raises(WorkflowStructureError, match="not a directory"):
                 discover_workflows_with_versions(file_path)
 
@@ -1141,7 +1137,7 @@ class TestDiscoverWorkflowsWithVersions:
         """Test discovery handles permission errors gracefully."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             with patch("pathlib.Path.iterdir", side_effect=PermissionError("Permission denied")):
                 with pytest.raises(WorkflowStructureError, match="Permission denied"):
                     discover_workflows_with_versions(workflows_dir)
@@ -1150,11 +1146,11 @@ class TestDiscoverWorkflowsWithVersions:
         """Test discovery of workflows with complex metadata."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create workflow with rich metadata
             workflow_dir = workflows_dir / "complex-metadata-workflow"
             workflow_dir.mkdir()
-            
+
             complex_init = textwrap.dedent('''
                 """Complex workflow with rich metadata."""
                 
@@ -1169,17 +1165,17 @@ class TestDiscoverWorkflowsWithVersions:
                 __credits__ = ["Alice", "Bob", "Charlie"]
                 __keywords__ = ["workflow", "ai", "automation"]
             ''')
-            
+
             (workflow_dir / "__init__.py").write_text(complex_init)
             (workflow_dir / "workflow.py").write_text("# Implementation")
             (workflow_dir / "config.yaml").write_text("# Configuration")
-            
+
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             workflow_info = result["complex-metadata-workflow"]
             assert workflow_info["version"] == "2.1.0"
             assert workflow_info["valid"] is True
-            
+
             metadata = workflow_info["metadata"]
             assert metadata["__author__"] == "AutomagikHive Team"
             assert metadata["__description__"] == "Advanced workflow processor with AI capabilities"
@@ -1191,7 +1187,7 @@ class TestDiscoverWorkflowsWithVersions:
         """Test discovery performance with many workflow directories."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create many workflows
             num_workflows = 100
             for i in range(num_workflows):
@@ -1200,17 +1196,18 @@ class TestDiscoverWorkflowsWithVersions:
                 (workflow_dir / "__init__.py").write_text(f'__version__ = "1.{i}.0"')
                 (workflow_dir / "workflow.py").write_text(f"# Workflow {i}")
                 (workflow_dir / "config.yaml").write_text(f"# Config {i}")
-            
+
             import time
+
             start_time = time.time()
             result = discover_workflows_with_versions(workflows_dir)
             end_time = time.time()
-            
+
             assert len(result) == num_workflows
-            
+
             # Should complete in reasonable time (less than 5 seconds)
             assert end_time - start_time < 5.0
-            
+
             # Verify random sampling
             assert result["workflow-050"]["version"] == "1.50.0"
             assert result["workflow-099"]["version"] == "1.99.0"
@@ -1219,7 +1216,7 @@ class TestDiscoverWorkflowsWithVersions:
         """Test that discovery results are sorted alphabetically by workflow name."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create workflows in random order
             workflow_names = ["zebra-workflow", "alpha-workflow", "beta-workflow", "charlie-workflow"]
             for name in workflow_names:
@@ -1228,9 +1225,9 @@ class TestDiscoverWorkflowsWithVersions:
                 (workflow_dir / "__init__.py").write_text('__version__ = "1.0.0"')
                 (workflow_dir / "workflow.py").write_text("# Implementation")
                 (workflow_dir / "config.yaml").write_text("# Configuration")
-            
+
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             # Dictionary should maintain order in Python 3.7+
             result_keys = list(result.keys())
             expected_order = ["alpha-workflow", "beta-workflow", "charlie-workflow", "zebra-workflow"]
@@ -1265,14 +1262,14 @@ class TestWorkflowParserEdgeCases:
     def test_workflow_with_very_long_version_string(self):
         """Test handling of extremely long version strings."""
         long_version = "1.0.0-" + "a" * 1000  # Very long version string
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "long-version-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(f'__version__ = "{long_version}"')
-            
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == long_version
 
@@ -1281,10 +1278,10 @@ class TestWorkflowParserEdgeCases:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "workflow-ñ-测试"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
-            init_file.write_text('__version__ = "1.0.0-unicode"', encoding='utf-8')
-            
+            init_file.write_text('__version__ = "1.0.0-unicode"', encoding="utf-8")
+
             version = get_workflow_version_from_init(workflow_dir)
             assert version == "1.0.0-unicode"
 
@@ -1298,16 +1295,16 @@ class TestWorkflowParserEdgeCases:
             __description__ = "Workflow with special chars: !@#$%^&*()[]{}|;:,.<>?"
             __license__ = "MIT/Apache-2.0"
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "special-chars-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
-            init_file.write_text(special_metadata, encoding='utf-8')
-            
+            init_file.write_text(special_metadata, encoding="utf-8")
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             assert metadata["__author__"] == "John Doe <john@example.com> & Team"
             assert metadata["__description__"] == "Workflow with special chars: !@#$%^&*()[]{}|;:,.<>?"
             assert metadata["__license__"] == "MIT/Apache-2.0"
@@ -1322,16 +1319,16 @@ class TestWorkflowParserEdgeCases:
             __license__ = 'This license has "double quotes" inside'
             __notes__ = """This note has both 'single' and "double" quotes"""
         ''')
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "nested-quotes-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(nested_quotes_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             assert metadata["__description__"] == "This workflow has 'single quotes' inside"
             assert metadata["__license__"] == 'This license has "double quotes" inside'
             assert metadata["__notes__"] == """This note has both 'single' and "double" quotes"""
@@ -1345,17 +1342,17 @@ class TestWorkflowParserEdgeCases:
             (real_workflow / "__init__.py").write_text('__version__ = "1.0.0"')
             (real_workflow / "workflow.py").write_text("# Implementation")
             (real_workflow / "config.yaml").write_text("# Configuration")
-            
+
             # Create symlink to workflow (Unix-like systems only)
             try:
                 symlink_workflow = Path(temp_dir) / "symlink-workflow"
                 symlink_workflow.symlink_to(real_workflow)
-                
+
                 # Test that symlinked workflow is handled correctly
                 result = validate_workflow_structure(symlink_workflow)
                 assert result["valid"] is True
                 assert result["init_version"] == "1.0.0"
-                
+
             except (OSError, NotImplementedError):
                 # Skip test on systems that don't support symlinks
                 pytest.skip("Symbolic links not supported on this system")
@@ -1364,10 +1361,10 @@ class TestWorkflowParserEdgeCases:
         """Test concurrent access to workflow discovery functions."""
         import queue
         import threading
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create test workflows
             for i in range(10):
                 workflow_dir = workflows_dir / f"concurrent-workflow-{i}"
@@ -1375,57 +1372,57 @@ class TestWorkflowParserEdgeCases:
                 (workflow_dir / "__init__.py").write_text(f'__version__ = "1.{i}.0"')
                 (workflow_dir / "workflow.py").write_text("# Implementation")
                 (workflow_dir / "config.yaml").write_text("# Configuration")
-            
+
             # Test concurrent discovery
             results_queue = queue.Queue()
-            
+
             def discover_worker():
                 result = discover_workflows_with_versions(workflows_dir)
                 results_queue.put(result)
-            
+
             threads = []
             for _ in range(5):  # 5 concurrent threads
                 thread = threading.Thread(target=discover_worker)
                 threads.append(thread)
                 thread.start()
-            
+
             for thread in threads:
                 thread.join()
-            
+
             # Verify all results are consistent
             results = []
             while not results_queue.empty():
                 results.append(results_queue.get())
-            
+
             assert len(results) == 5
-            
+
             # All results should be identical
             first_result = results[0]
             for result in results[1:]:
                 assert result == first_result
-            
+
             assert len(first_result) == 10
 
     def test_workflow_discovery_memory_usage_large_files(self):
         """Test memory usage with workflows containing large __init__.py files."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)
-            
+
             # Create workflow with large __init__.py
             workflow_dir = workflows_dir / "large-init-workflow"
             workflow_dir.mkdir()
-            
+
             # Create large content (but version at the top for efficiency)
             large_content = '__version__ = "1.0.0"\n'
-            large_content += '# ' + 'Large comment content. ' * 10000
-            
+            large_content += "# " + "Large comment content. " * 10000
+
             (workflow_dir / "__init__.py").write_text(large_content)
             (workflow_dir / "workflow.py").write_text("# Implementation")
             (workflow_dir / "config.yaml").write_text("# Configuration")
-            
+
             # This should still work efficiently
             result = discover_workflows_with_versions(workflows_dir)
-            
+
             assert len(result) == 1
             assert result["large-init-workflow"]["version"] == "1.0.0"
             assert result["large-init-workflow"]["valid"] is True

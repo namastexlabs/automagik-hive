@@ -28,29 +28,23 @@ def check_docker_available() -> bool:
     """Check if Docker is available and running."""
     if not run_command(["docker", "--version"], capture_output=True):
         return False
-    
+
     if not run_command(["docker", "ps"], capture_output=True):
         return False
-    
+
     return True
 
 
 def format_status(name: str, status: str, details: str = "") -> str:
     """Format status line with consistent width."""
-    status_icons = {
-        "running": "🟢",
-        "stopped": "🔴",
-        "missing": "❌",
-        "healthy": "🟢",
-        "unhealthy": "🟡"
-    }
-    
+    status_icons = {"running": "🟢", "stopped": "🔴", "missing": "❌", "healthy": "🟢", "unhealthy": "🟡"}
+
     icon = status_icons.get(status.lower(), "❓")
     status_text = f"{icon} {status.title()}"
-    
+
     if details:
         status_text += f" - {details}"
-    
+
     return f"{name:23} {status_text}"
 
 
@@ -62,10 +56,10 @@ def confirm_action(message: str, default: bool = False) -> bool:
     except (KeyboardInterrupt, EOFError):
         # Handle Ctrl+C and Ctrl+D gracefully - return default value
         return default
-    
+
     if not response:
         return default
-    
+
     if response in ["y", "yes"]:
         return True
     if response in ["n", "no"]:

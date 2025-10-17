@@ -22,6 +22,7 @@ def _ensure_pymongo_stubs() -> None:
 
     try:
         import pymongo  # noqa: F401
+
         return
     except ImportError:
         pass
@@ -164,9 +165,7 @@ def _prepare_context(args: argparse.Namespace) -> MigrationContext:
         settings_module = importlib.import_module("lib.config.settings")
         settings = settings_module.get_settings()  # type: ignore[attr-defined]
     except BaseException:  # pragma: no cover - fallback for missing env configuration
-        logger.warning(
-            "Falling back to in-memory settings snapshot for migration wrapper"
-        )
+        logger.warning("Falling back to in-memory settings snapshot for migration wrapper")
         settings = SimpleNamespace(
             hive_database_url=None,
             hive_agno_v2_migration_enabled=False,

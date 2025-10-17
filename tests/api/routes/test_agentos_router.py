@@ -57,7 +57,9 @@ class TestAgentOSRouter:
         assert routes["wish-catalog"] == f"{expected_base}/api/v1/wishes"
         assert routes["control-pane"] == expected_base
         if os.environ.get("HIVE_EMBED_PLAYGROUND", "1") not in {"0", "false", "False"}:
-            assert routes["playground"] == f"{expected_base}{os.environ.get('HIVE_PLAYGROUND_MOUNT_PATH', '/playground')}"
+            assert (
+                routes["playground"] == f"{expected_base}{os.environ.get('HIVE_PLAYGROUND_MOUNT_PATH', '/playground')}"
+            )
 
     def test_legacy_config_alias_protected(self, agentos_client: TestClient):
         """Legacy alias should maintain API key guard."""
@@ -84,4 +86,6 @@ class TestAgentOSRouter:
         assert routes["wish-catalog"] == f"{expected_base}/api/v1/wishes"
         assert routes["control-pane"] == expected_base
         if os.environ.get("HIVE_EMBED_PLAYGROUND", "1") not in {"0", "false", "False"}:
-            assert routes["playground"] == f"{expected_base}{os.environ.get('HIVE_PLAYGROUND_MOUNT_PATH', '/playground')}"
+            assert (
+                routes["playground"] == f"{expected_base}{os.environ.get('HIVE_PLAYGROUND_MOUNT_PATH', '/playground')}"
+            )

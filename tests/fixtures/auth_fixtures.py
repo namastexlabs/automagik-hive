@@ -123,9 +123,7 @@ class AuthTestHelpers:
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
 
-        assert response.status_code == 401, (
-            f"Expected 401 but got {response.status_code}"
-        )
+        assert response.status_code == 401, f"Expected 401 but got {response.status_code}"
 
         # Check for consistent error structure
         try:

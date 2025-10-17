@@ -1,6 +1,5 @@
 """Tests for lib.auth.cli module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,11 +15,13 @@ class TestCli:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.auth.cli
+
         assert lib.auth.cli is not None
 
     def test_module_attributes(self):
         """Test module has expected attributes."""
         import lib.auth.cli
+
         # Add specific attribute tests as needed
         assert hasattr(lib.auth.cli, "__doc__")
 

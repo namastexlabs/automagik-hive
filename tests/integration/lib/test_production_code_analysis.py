@@ -24,46 +24,52 @@ def test_production_code_import_analysis():
         # Define mock classes inline to demonstrate the compatibility pattern
         class MockBaseValidatedRequest:
             """Mock base request for testing validation patterns."""
+
             def __init__(self):
                 self.validated = True
-                
+
         class MockAgentRequest(MockBaseValidatedRequest):
             """Mock agent request for testing."""
+
             def __init__(self):
                 super().__init__()
                 self.agent_id = "test-agent"
-                
+
         class MockErrorResponse:
             """Mock error response for testing."""
+
             def __init__(self):
                 self.error = "test-error"
                 self.status_code = 400
-                
+
         class MockSuccessResponse:
             """Mock success response for testing."""
+
             def __init__(self):
                 self.data = {"status": "success"}
                 self.status_code = 200
-        
+
         # If we reach here, mock creation is working - this is the expected state
         import_success = True
-        
+
         # Verify we can instantiate mock models
         mock_request = MockBaseValidatedRequest()
         assert mock_request is not None, "Mock models should be instantiable"
         assert mock_request.validated is True, "Mock validation should work"
-        
+
         # Test agent request specialization
         agent_request = MockAgentRequest()
         assert agent_request.agent_id == "test-agent", "Agent request should have agent_id"
-        
+
     except Exception as e:
         # If mock creation fails, document the error for debugging
         import_success = False
         import_error = str(e)
 
     # Assert that mock creation pattern is working correctly
-    assert import_success, f"Production code mock patterns should work but failed with: {import_error if not import_success else 'N/A'}"
+    assert import_success, (
+        f"Production code mock patterns should work but failed with: {import_error if not import_success else 'N/A'}"
+    )
 
 
 def test_production_validation_logic_verification():
@@ -107,12 +113,8 @@ def test_production_dangerous_keys_verification():
     ]
 
     for key, should_be_dangerous in test_keys:
-        is_dangerous = any(
-            danger in str(key).lower() for danger in production_dangerous_keys
-        )
-        assert is_dangerous == should_be_dangerous, (
-            f"Dangerous key logic mismatch for {key}"
-        )
+        is_dangerous = any(danger in str(key).lower() for danger in production_dangerous_keys)
+        assert is_dangerous == should_be_dangerous, f"Dangerous key logic mismatch for {key}"
 
 
 def test_production_field_constraints_documentation():

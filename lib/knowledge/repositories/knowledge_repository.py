@@ -23,7 +23,7 @@ def _validate_identifier(identifier: str) -> str:
 
 class KnowledgeRepository:
     """Repository class for all database operations related to knowledge management."""
-    
+
     def __init__(
         self,
         db_url: str,
@@ -75,9 +75,7 @@ class KnowledgeRepository:
                     # Old table without hash tracking - treat as empty for fresh start
                     from lib.logging import logger
 
-                    logger.warning(
-                        "Table exists but no content_hash column - will recreate with hash tracking"
-                    )
+                    logger.warning("Table exists but no content_hash column - will recreate with hash tracking")
                     return set()
 
                 # Get existing content hashes from agno schema
@@ -90,7 +88,7 @@ class KnowledgeRepository:
 
             logger.warning("Could not check existing hashes", error=str(e))
             return set()
-    
+
     def add_hash_column_to_table(self) -> bool:
         """Add content_hash column to existing table if it doesn't exist - EXTRACTED"""
         try:
@@ -105,10 +103,13 @@ class KnowledgeRepository:
                 return True
         except Exception as e:
             from lib.logging import logger
+
             logger.warning("Could not add hash column", error=str(e))
             return False
 
-    def update_row_hash(self, row_data: dict[str, Any], content_hash: str, config: dict[str, Any], row_index: int | None = None) -> bool:
+    def update_row_hash(
+        self, row_data: dict[str, Any], content_hash: str, config: dict[str, Any], row_index: int | None = None
+    ) -> bool:
         """Safely update content_hash only when DB content matches the CSV row content.
 
         This prevents incorrectly marking changed rows as unchanged. We:
@@ -191,6 +192,7 @@ class KnowledgeRepository:
 
         except Exception as e:
             from lib.logging import logger
+
             logger.warning("Could not update row hash", error=str(e))
             return False
 
@@ -216,14 +218,16 @@ class KnowledgeRepository:
                         conn.rollback()
                     except Exception as exc2:
                         from lib.logging import logger
+
                         logger.debug("Rollback failed", error=str(exc2))
                     raise
 
                 self._remove_from_knowledge(removed_hashes)
                 return len(removed_hashes) > 0
-                
+
         except Exception as e:
             from lib.logging import logger
+
             logger.error("Error removing row by question", error=str(e))
             return False
 
@@ -249,18 +253,21 @@ class KnowledgeRepository:
                         conn.rollback()
                     except Exception as exc2:
                         from lib.logging import logger
+
                         logger.debug("Rollback failed", error=str(exc2))
                     raise
                 from lib.logging import logger
-                logger.debug("Removed orphaned database rows", 
-                          requested_count=len(removed_hashes),
-                          actual_removed=actual_removed)
+
+                logger.debug(
+                    "Removed orphaned database rows", requested_count=len(removed_hashes), actual_removed=actual_removed
+                )
 
                 self._remove_from_knowledge(removed_hashes)
                 return actual_removed
 
         except Exception as e:
             from lib.logging import logger
+
             logger.warning("Could not remove rows", error=str(e))
             return 0
 
@@ -298,5 +305,6 @@ class KnowledgeRepository:
                 return int(row[0])
         except Exception as e:
             from lib.logging import logger
+
             logger.warning("Could not get row count", error=str(e))
             return 0

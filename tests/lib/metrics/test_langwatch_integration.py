@@ -19,6 +19,7 @@ class TestLangWatchManager:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.metrics.langwatch_integration
+
         assert lib.metrics.langwatch_integration is not None
 
     def test_langwatch_manager_creation(self):
@@ -32,12 +33,8 @@ class TestLangWatchManager:
 
     def test_langwatch_manager_with_config(self):
         """Test LangWatchManager with configuration."""
-        config = {
-            "api_key": "test_key",
-            "project_id": "test_project",
-            "enabled": True
-        }
-        
+        config = {"api_key": "test_key", "project_id": "test_project", "enabled": True}
+
         try:
             manager = LangWatchManager(config=config)
             assert manager is not None
@@ -54,38 +51,38 @@ class TestLangWatchManager:
         """Test basic LangWatchManager methods."""
         try:
             manager = LangWatchManager()
-            
+
             # Test common methods that might exist
             common_methods = ["track", "log", "start", "stop", "flush", "record_event"]
-            
+
             for method_name in common_methods:
                 if hasattr(manager, method_name):
                     method = getattr(manager, method_name)
                     assert callable(method)
-                    
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Manager creation might fail - that's acceptable for testing
             pass
 
-    @patch('lib.metrics.langwatch_integration.langwatch', create=True)
+    @patch("lib.metrics.langwatch_integration.langwatch", create=True)
     def test_langwatch_integration_mocked(self, mock_langwatch):
         """Test LangWatch integration with mocked dependencies."""
         # Mock the langwatch library
         mock_langwatch.configure = MagicMock()
         mock_langwatch.track = MagicMock()
         mock_langwatch.setup = MagicMock()
-        
+
         try:
             manager = LangWatchManager()
-            
+
             # Test configuration
-            if hasattr(manager, 'configure'):
+            if hasattr(manager, "configure"):
                 manager.configure(api_key="test_key", project_id="test_project")
-                
+
             # Test tracking
-            if hasattr(manager, 'track'):
+            if hasattr(manager, "track"):
                 manager.track("test_event", {"data": "test"})
-                
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Integration might not work without real dependencies
             pass
@@ -101,7 +98,7 @@ class TestLangWatchManagerEdgeCases:
             {"invalid_key": "value"},  # Wrong keys
             None,  # None config
         ]
-        
+
         for config in invalid_configs:
             try:
                 manager = LangWatchManager(config=config)
@@ -113,7 +110,7 @@ class TestLangWatchManagerEdgeCases:
 
     def test_missing_dependencies(self):
         """Test behavior when LangWatch dependencies are missing."""
-        with patch('lib.metrics.langwatch_integration.langwatch', None, create=True):
+        with patch("lib.metrics.langwatch_integration.langwatch", None, create=True):
             try:
                 manager = LangWatchManager()
                 # Should handle missing dependencies gracefully
@@ -129,17 +126,17 @@ class TestLangWatchManagerEdgeCases:
         """Test handling of network errors."""
         try:
             manager = LangWatchManager()
-            
+
             # Simulate network error
-            with patch.object(manager, 'track', side_effect=ConnectionError("Network error")):
-                if hasattr(manager, 'track'):
+            with patch.object(manager, "track", side_effect=ConnectionError("Network error")):
+                if hasattr(manager, "track"):
                     # Should handle network errors gracefully
                     try:
                         manager.track("test_event", {"data": "test"})
                     except ConnectionError:
                         # Expected behavior
                         pass
-                        
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Manager creation might fail - acceptable
             pass
@@ -148,17 +145,17 @@ class TestLangWatchManagerEdgeCases:
         """Test handling of API errors."""
         try:
             manager = LangWatchManager()
-            
+
             # Test with invalid API responses
-            if hasattr(manager, 'track'):
+            if hasattr(manager, "track"):
                 # Simulate API error
-                with patch.object(manager, 'track', side_effect=ValueError("API Error")):
+                with patch.object(manager, "track", side_effect=ValueError("API Error")):
                     try:
                         manager.track("test_event", {"data": "test"})
                     except ValueError:
                         # Expected behavior
                         pass
-                        
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Manager creation might fail - acceptable
             pass
@@ -172,10 +169,10 @@ class TestLangWatchManagerIntegration:
         """Test async LangWatch operations."""
         try:
             manager = LangWatchManager()
-            
+
             # Test async methods if they exist
             async_methods = ["track_async", "flush_async", "start_async", "stop_async"]
-            
+
             for method_name in async_methods:
                 if hasattr(manager, method_name):
                     method = getattr(manager, method_name)
@@ -185,7 +182,7 @@ class TestLangWatchManagerIntegration:
                         except Exception:  # noqa: S110 - Silent exception handling is intentional
                             # Method might require parameters
                             pass
-                            
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Manager creation might fail - acceptable
             pass
@@ -194,20 +191,20 @@ class TestLangWatchManagerIntegration:
         """Test batch tracking operations."""
         try:
             manager = LangWatchManager()
-            
-            if hasattr(manager, 'track_batch') or hasattr(manager, 'batch_track'):
+
+            if hasattr(manager, "track_batch") or hasattr(manager, "batch_track"):
                 events = [
                     {"event": "test1", "data": {"key": "value1"}},
                     {"event": "test2", "data": {"key": "value2"}},
                     {"event": "test3", "data": {"key": "value3"}},
                 ]
-                
+
                 # Test batch tracking
-                if hasattr(manager, 'track_batch'):
+                if hasattr(manager, "track_batch"):
                     manager.track_batch(events)
-                elif hasattr(manager, 'batch_track'):
+                elif hasattr(manager, "batch_track"):
                     manager.batch_track(events)
-                    
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Method might not exist or require different parameters
             pass
@@ -216,14 +213,14 @@ class TestLangWatchManagerIntegration:
         """Test context manager functionality."""
         try:
             manager = LangWatchManager()
-            
+
             # Test if manager can be used as context manager
-            if hasattr(manager, '__enter__') and hasattr(manager, '__exit__'):
+            if hasattr(manager, "__enter__") and hasattr(manager, "__exit__"):
                 with manager:
                     # Test operations within context
-                    if hasattr(manager, 'track'):
+                    if hasattr(manager, "track"):
                         manager.track("context_test", {"data": "test"})
-                        
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Context management might not be supported
             pass
@@ -232,19 +229,15 @@ class TestLangWatchManagerIntegration:
         """Test runtime configuration updates."""
         try:
             manager = LangWatchManager()
-            
+
             # Test configuration updates
-            if hasattr(manager, 'update_config'):
-                new_config = {
-                    "api_key": "new_key",
-                    "project_id": "new_project",
-                    "batch_size": 50
-                }
+            if hasattr(manager, "update_config"):
+                new_config = {"api_key": "new_key", "project_id": "new_project", "batch_size": 50}
                 manager.update_config(new_config)
-                
-            elif hasattr(manager, 'configure'):
+
+            elif hasattr(manager, "configure"):
                 manager.configure(api_key="new_key", project_id="new_project")
-                
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Configuration updates might not be supported
             pass
@@ -253,16 +246,16 @@ class TestLangWatchManagerIntegration:
         """Test metrics collection and reporting."""
         try:
             manager = LangWatchManager()
-            
+
             # Test metrics collection
-            if hasattr(manager, 'get_metrics'):
+            if hasattr(manager, "get_metrics"):
                 metrics = manager.get_metrics()
                 assert isinstance(metrics, dict | list)
-                
-            elif hasattr(manager, 'collect_metrics'):
+
+            elif hasattr(manager, "collect_metrics"):
                 metrics = manager.collect_metrics()
                 assert isinstance(metrics, dict | list)
-                
+
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Metrics collection might not be supported
             pass

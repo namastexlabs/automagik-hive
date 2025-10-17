@@ -10,30 +10,30 @@ from typing import Any
 
 class UninstallCommands:
     """CLI UninstallCommands implementation."""
-    
+
     def __init__(self, workspace_path: Path | None = None):
         self.workspace_path = workspace_path or Path()
-    
+
     def uninstall_current_workspace(self) -> bool:
         """Uninstall current workspace."""
         return True
-    
+
     def uninstall_global(self) -> bool:
         """Uninstall global installation."""
         return True
-    
+
     def execute(self) -> bool:
         """Execute command stub."""
         return True
-    
+
     def uninstall_agent(self) -> bool:
         """Uninstall agent stub."""
         return True
-    
+
     def uninstall_workspace(self) -> bool:
         """Uninstall workspace stub."""
         return True
-    
+
     def status(self) -> dict[str, Any]:
         """Get status stub."""
         return {"status": "running", "healthy": True}

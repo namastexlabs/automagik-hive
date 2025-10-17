@@ -15,13 +15,14 @@ def test_cli_install_uses_single_credential_system():
         temp_path = Path(temp_dir)
 
         # Mock all Docker operations so we can test credential generation
-        with patch('cli.docker_manager.DockerManager._check_docker', return_value=True):
-            with patch('cli.docker_manager.DockerManager._create_network'):
-                with patch('cli.docker_manager.DockerManager._container_exists', return_value=False):
-                    with patch('cli.docker_manager.DockerManager._container_running', return_value=False):
-                        with patch('cli.docker_manager.DockerManager._create_containers_via_compose', return_value=True):
-                            with patch('time.sleep'):  # Skip sleep delays in tests
-
+        with patch("cli.docker_manager.DockerManager._check_docker", return_value=True):
+            with patch("cli.docker_manager.DockerManager._create_network"):
+                with patch("cli.docker_manager.DockerManager._container_exists", return_value=False):
+                    with patch("cli.docker_manager.DockerManager._container_running", return_value=False):
+                        with patch(
+                            "cli.docker_manager.DockerManager._create_containers_via_compose", return_value=True
+                        ):
+                            with patch("time.sleep"):  # Skip sleep delays in tests
                                 # Create DockerManager with temp directory
                                 docker_manager = DockerManager()
                                 docker_manager.project_root = temp_path

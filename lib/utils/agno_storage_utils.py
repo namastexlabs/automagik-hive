@@ -33,9 +33,7 @@ def get_storage_class(storage_type: str):
 
     if storage_type not in storage_type_map:
         supported_types = list(storage_type_map.keys())
-        raise ValueError(
-            f"Unsupported storage type: {storage_type}. Supported types: {supported_types}"
-        )
+        raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: {supported_types}")
 
     module_path, class_name = storage_type_map[storage_type].rsplit(".", 1)
     try:
@@ -69,17 +67,13 @@ def create_dynamic_storage(
     try:
         signature = inspect.signature(storage_class.__init__)
     except Exception as exc:  # pragma: no cover - defensive logging
-        raise Exception(
-            f"Failed to introspect {storage_type} storage constructor: {exc}"
-        ) from exc
+        raise Exception(f"Failed to introspect {storage_type} storage constructor: {exc}") from exc
 
     db_kwargs: dict[str, Any] = {}
     safe_component = component_id.replace("-", "_")
     table_name_override = storage_config.get("table_name")
     base_for_related = table_name_override or f"{component_mode}_{safe_component}"
-    session_default = (
-        table_name_override or f"{component_mode}_{safe_component}_sessions"
-    )
+    session_default = table_name_override or f"{component_mode}_{safe_component}_sessions"
 
     for param_name, _param in signature.parameters.items():
         if param_name == "self":
@@ -96,10 +90,7 @@ def create_dynamic_storage(
             if schema is not None:
                 db_kwargs["db_schema"] = schema
         elif param_name == "session_table":
-            db_kwargs["session_table"] = (
-                storage_config.get("session_table")
-                or session_default
-            )
+            db_kwargs["session_table"] = storage_config.get("session_table") or session_default
         elif param_name == "memory_table":
             db_kwargs["memory_table"] = storage_config.get("memory_table") or f"{base_for_related}_memories"
         elif param_name == "metrics_table":
@@ -138,9 +129,7 @@ def create_dynamic_storage(
 
     dependencies_config = storage_config.get("dependencies") or {}
     if not isinstance(dependencies_config, dict):
-        logger.warning(
-            "Ignoring non-dict dependencies config for %s '%s'", component_mode, component_id
-        )
+        logger.warning("Ignoring non-dict dependencies config for %s '%s'", component_mode, component_id)
         dependencies_config = {}
 
     dependencies = dict(dependencies_config)

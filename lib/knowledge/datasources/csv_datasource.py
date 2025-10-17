@@ -14,7 +14,7 @@ import pandas as pd
 
 class CSVDataSource:
     """Service for CSV data reading and single row processing with StringIO support."""
-    
+
     def __init__(
         self,
         csv_path: Path | str | None,
@@ -22,7 +22,7 @@ class CSVDataSource:
     ) -> None:
         self.csv_path: Path | None = Path(csv_path) if csv_path else None
         self.hash_manager = hash_manager
-    
+
     def get_csv_rows_with_hashes(self) -> list[dict[str, Any]]:
         """Read CSV and return rows with their hashes - EXTRACTED from SmartIncrementalLoader._get_csv_rows_with_hashes"""
         try:
@@ -37,9 +37,7 @@ class CSVDataSource:
                 row_hash = self.hash_manager.hash_row(row)
                 if not row_hash:
                     continue
-                rows_with_hashes.append(
-                    {"index": idx, "hash": row_hash, "data": row.to_dict()}
-                )
+                rows_with_hashes.append({"index": idx, "hash": row_hash, "data": row.to_dict()})
 
             return rows_with_hashes
 
@@ -48,7 +46,7 @@ class CSVDataSource:
 
             logger.warning("Could not read CSV with hashes", error=str(e))
             return []
-    
+
     def process_single_row(
         self,
         row_data: dict[str, Any],
@@ -82,5 +80,6 @@ class CSVDataSource:
 
         except Exception as e:
             from lib.logging import logger
+
             logger.error("Error processing single row", error=str(e))
             return False

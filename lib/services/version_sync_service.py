@@ -65,23 +65,24 @@ class AgnoVersionSyncService:
         """Get database service - either injected for testing or create new one"""
         if self._db_service:
             return self._db_service
-        
+
         from lib.services.database_service import DatabaseService
+
         return DatabaseService(self.db_url)
 
     async def get_yaml_component_versions(self, component_type: str | None = None) -> list[dict[str, Any]]:
         """
         Get component versions from YAML files.
-        
+
         Args:
             component_type: Optional filter by component type ('agent', 'team', 'workflow')
-        
+
         Returns:
             List of component version dictionaries
         """
         versions = []
         component_types = [component_type] if component_type else ["agent", "team", "workflow"]
-        
+
         for comp_type in component_types:
             try:
                 # Get the directory path for this component type using resolved AI root
@@ -93,77 +94,79 @@ class AgnoVersionSyncService:
                     base_dir = self.ai_root / "workflows"
                 else:
                     continue
-                
+
                 if not base_dir.exists():
                     continue
-                
+
                 # Look for component directories
                 for component_dir in base_dir.iterdir():
                     if not component_dir.is_dir():
                         continue
-                    
+
                     # Look for YAML/YML config files in the component directory
                     for config_file in component_dir.iterdir():
-                        if config_file.suffix not in ['.yaml', '.yml']:
+                        if config_file.suffix not in [".yaml", ".yml"]:
                             continue
-                        
+
                         try:
-                            with open(config_file, encoding='utf-8') as f:
+                            with open(config_file, encoding="utf-8") as f:
                                 config = yaml.safe_load(f)
-                            
+
                             if not config or not isinstance(config, dict):
                                 continue
-                            
+
                             # Extract component info - handle both nested and flat structures
                             component_section = config.get(comp_type, {})
-                            
+
                             # If no nested section, check if the root has component data
                             if not component_section:
                                 # Check if root level has name/version (test structure)
-                                if 'name' in config or 'version' in config:
+                                if "name" in config or "version" in config:
                                     component_section = config
                                 else:
                                     continue
-                            
+
                             # Get version, defaulting to "1.0.0" if missing
-                            version = component_section.get('version', '1.0.0')
-                            name = component_section.get('name', component_dir.name)
-                            
-                            versions.append({
-                                'component_type': comp_type,
-                                'name': name,
-                                'version': version,
-                                'file_path': str(config_file),
-                                'updated_at': datetime.fromtimestamp(config_file.stat().st_mtime)
-                            })
-                            
+                            version = component_section.get("version", "1.0.0")
+                            name = component_section.get("name", component_dir.name)
+
+                            versions.append(
+                                {
+                                    "component_type": comp_type,
+                                    "name": name,
+                                    "version": version,
+                                    "file_path": str(config_file),
+                                    "updated_at": datetime.fromtimestamp(config_file.stat().st_mtime),
+                                }
+                            )
+
                             # Only process the first valid config file per directory
                             break
-                            
+
                         except (yaml.YAMLError, OSError) as e:
                             logger.warning(f"Error reading YAML file {config_file}: {e}")
                             continue
-                        
+
             except Exception as e:
                 logger.error(f"Error processing component type {comp_type}: {e}")
                 continue
-        
+
         return versions
 
     async def get_db_component_versions(self, component_type: str | None = None) -> list[dict[str, Any]]:
         """
         Get component versions from database.
-        
+
         Args:
             component_type: Optional filter by component type
-        
+
         Returns:
             List of component version dictionaries from database
         """
         try:
             # Get database service (supports dependency injection for testing)
             db_service = await self._get_db_service()
-            
+
             # Build query
             if component_type:
                 query = """
@@ -180,22 +183,24 @@ class AgnoVersionSyncService:
                     ORDER BY component_type, name
                 """
                 params = None
-            
+
             # Execute query
             results = await db_service.fetch_all(query, params)
-            
+
             # Convert to list of dictionaries
             versions = []
             for row in results:
-                versions.append({
-                    'component_type': row['component_type'],
-                    'name': row['name'],
-                    'version': row['version'],
-                    'updated_at': row['updated_at']
-                })
-            
+                versions.append(
+                    {
+                        "component_type": row["component_type"],
+                        "name": row["name"],
+                        "version": row["version"],
+                        "updated_at": row["updated_at"],
+                    }
+                )
+
             return versions
-            
+
         except Exception as e:
             logger.error(f"Error fetching component versions from database: {e}")
             return []
@@ -203,14 +208,14 @@ class AgnoVersionSyncService:
     async def sync_component_to_db(self, component_data: dict[str, Any]) -> None:
         """
         Sync a single component to database.
-        
+
         Args:
             component_data: Dictionary with component_type, name, version
         """
         try:
             # Get database service (supports dependency injection for testing)
             db_service = await self._get_db_service()
-            
+
             # Check if component already exists
             existing_query = """
                 SELECT version, updated_at 
@@ -218,13 +223,9 @@ class AgnoVersionSyncService:
                 WHERE component_type = %(component_type)s AND name = %(name)s
             """
             existing = await db_service.fetch_one(
-                existing_query,
-                {
-                    "component_type": component_data['component_type'],
-                    "name": component_data['name']
-                }
+                existing_query, {"component_type": component_data["component_type"], "name": component_data["name"]}
             )
-            
+
             if existing is None:
                 # Insert new component
                 insert_query = """
@@ -234,14 +235,16 @@ class AgnoVersionSyncService:
                 await db_service.execute(
                     insert_query,
                     {
-                        "component_type": component_data['component_type'],
-                        "name": component_data['name'],
-                        "version": component_data['version']
-                    }
+                        "component_type": component_data["component_type"],
+                        "name": component_data["name"],
+                        "version": component_data["version"],
+                    },
                 )
-                logger.debug(f"Inserted new component: {component_data['component_type']}/{component_data['name']} v{component_data['version']}")
-                
-            elif existing['version'] != component_data['version']:
+                logger.debug(
+                    f"Inserted new component: {component_data['component_type']}/{component_data['name']} v{component_data['version']}"
+                )
+
+            elif existing["version"] != component_data["version"]:
                 # Update existing component with different version
                 update_query = """
                     UPDATE hive.component_versions 
@@ -251,15 +254,17 @@ class AgnoVersionSyncService:
                 await db_service.execute(
                     update_query,
                     {
-                        "version": component_data['version'],
-                        "component_type": component_data['component_type'],
-                        "name": component_data['name']
-                    }
+                        "version": component_data["version"],
+                        "component_type": component_data["component_type"],
+                        "name": component_data["name"],
+                    },
                 )
-                logger.debug(f"Updated component: {component_data['component_type']}/{component_data['name']} {existing['version']} -> {component_data['version']}")
-            
+                logger.debug(
+                    f"Updated component: {component_data['component_type']}/{component_data['name']} {existing['version']} -> {component_data['version']}"
+                )
+
             # If versions match, no action needed
-            
+
         except Exception as e:
             logger.error(f"Error syncing component to database: {e}")
             raise
@@ -267,55 +272,50 @@ class AgnoVersionSyncService:
     async def sync_yaml_to_db(self, component_type: str | None = None) -> dict[str, Any]:
         """
         Sync YAML components to database.
-        
+
         Args:
             component_type: Optional filter by component type
-        
+
         Returns:
             Dictionary with sync results
         """
         try:
             # Get YAML components
             yaml_components = await self.get_yaml_component_versions(component_type)
-            
+
             synced_count = 0
             component_types = []
             seen_types = set()
-            
+
             # Sync each component
             for component in yaml_components:
                 try:
                     await self.sync_component_to_db(component)
                     synced_count += 1
                     # Add to component_types list in order, avoiding duplicates
-                    if component['component_type'] not in seen_types:
-                        component_types.append(component['component_type'])
-                        seen_types.add(component['component_type'])
+                    if component["component_type"] not in seen_types:
+                        component_types.append(component["component_type"])
+                        seen_types.add(component["component_type"])
                 except Exception as e:
                     logger.error(f"Error syncing component {component['name']}: {e}")
-            
+
             return {
-                'synced_count': synced_count,
-                'component_types': component_types,
-                'total_found': len(yaml_components)
+                "synced_count": synced_count,
+                "component_types": component_types,
+                "total_found": len(yaml_components),
             }
-            
+
         except Exception as e:
             logger.error(f"Error in sync_yaml_to_db: {e}")
-            return {
-                'synced_count': 0,
-                'component_types': [],
-                'total_found': 0,
-                'error': str(e)
-            }
+            return {"synced_count": 0, "component_types": [], "total_found": 0, "error": str(e)}
 
     async def get_sync_status(self, component_type: str | None = None) -> dict[str, Any]:
         """
         Get synchronization status between YAML and database.
-        
+
         Args:
             component_type: Optional filter by component type
-        
+
         Returns:
             Dictionary with sync status information
         """
@@ -323,71 +323,71 @@ class AgnoVersionSyncService:
             # Get components from both sources
             yaml_components = await self.get_yaml_component_versions(component_type)
             db_components = await self.get_db_component_versions(component_type)
-            
+
             # Create lookup dictionaries
-            yaml_lookup = {
-                f"{comp['component_type']}/{comp['name']}": comp 
-                for comp in yaml_components
-            }
-            db_lookup = {
-                f"{comp['component_type']}/{comp['name']}": comp 
-                for comp in db_components
-            }
-            
+            yaml_lookup = {f"{comp['component_type']}/{comp['name']}": comp for comp in yaml_components}
+            db_lookup = {f"{comp['component_type']}/{comp['name']}": comp for comp in db_components}
+
             # Find matches and mismatches
             in_sync = []
             out_of_sync = []
-            
+
             # Check YAML components against DB
             for key, yaml_comp in yaml_lookup.items():
                 db_comp = db_lookup.get(key)
-                if db_comp and yaml_comp['version'] == db_comp['version']:
-                    in_sync.append({
-                        'component_type': yaml_comp['component_type'],
-                        'name': yaml_comp['name'],
-                        'version': yaml_comp['version']
-                    })
+                if db_comp and yaml_comp["version"] == db_comp["version"]:
+                    in_sync.append(
+                        {
+                            "component_type": yaml_comp["component_type"],
+                            "name": yaml_comp["name"],
+                            "version": yaml_comp["version"],
+                        }
+                    )
                 else:
-                    out_of_sync.append({
-                        'component_type': yaml_comp['component_type'],
-                        'name': yaml_comp['name'],
-                        'yaml_version': yaml_comp['version'],
-                        'db_version': db_comp['version'] if db_comp else None,
-                        'status': 'version_mismatch' if db_comp else 'missing_in_db'
-                    })
-            
+                    out_of_sync.append(
+                        {
+                            "component_type": yaml_comp["component_type"],
+                            "name": yaml_comp["name"],
+                            "yaml_version": yaml_comp["version"],
+                            "db_version": db_comp["version"] if db_comp else None,
+                            "status": "version_mismatch" if db_comp else "missing_in_db",
+                        }
+                    )
+
             # Check for DB components not in YAML
             for key, db_comp in db_lookup.items():
                 if key not in yaml_lookup:
-                    out_of_sync.append({
-                        'component_type': db_comp['component_type'],
-                        'name': db_comp['name'],
-                        'yaml_version': None,
-                        'db_version': db_comp['version'],
-                        'status': 'missing_in_yaml'
-                    })
-            
+                    out_of_sync.append(
+                        {
+                            "component_type": db_comp["component_type"],
+                            "name": db_comp["name"],
+                            "yaml_version": None,
+                            "db_version": db_comp["version"],
+                            "status": "missing_in_yaml",
+                        }
+                    )
+
             return {
-                'total_yaml_components': len(yaml_components),
-                'total_db_components': len(db_components),
-                'in_sync_count': len(in_sync),
-                'out_of_sync_count': len(out_of_sync),
-                'in_sync_components': in_sync,
-                'out_of_sync_components': out_of_sync,
-                'sync_percentage': (len(in_sync) / max(len(yaml_components), 1)) * 100
+                "total_yaml_components": len(yaml_components),
+                "total_db_components": len(db_components),
+                "in_sync_count": len(in_sync),
+                "out_of_sync_count": len(out_of_sync),
+                "in_sync_components": in_sync,
+                "out_of_sync_components": out_of_sync,
+                "sync_percentage": (len(in_sync) / max(len(yaml_components), 1)) * 100,
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting sync status: {e}")
             return {
-                'total_yaml_components': 0,
-                'total_db_components': 0,
-                'in_sync_count': 0,
-                'out_of_sync_count': 0,
-                'in_sync_components': [],
-                'out_of_sync_components': [],
-                'sync_percentage': 0,
-                'error': str(e)
+                "total_yaml_components": 0,
+                "total_db_components": 0,
+                "in_sync_count": 0,
+                "out_of_sync_count": 0,
+                "in_sync_components": [],
+                "out_of_sync_components": [],
+                "sync_percentage": 0,
+                "error": str(e),
             }
 
     async def sync_on_startup(self) -> dict[str, Any]:
@@ -433,9 +433,7 @@ class AgnoVersionSyncService:
                 if result:
                     results.append(result)
             except Exception as e:
-                logger.warning(
-                    "Error syncing config file", config_file=config_file, error=str(e)
-                )
+                logger.warning("Error syncing config file", config_file=config_file, error=str(e))
                 results.append(
                     {
                         "component_id": "unknown",
@@ -447,9 +445,7 @@ class AgnoVersionSyncService:
 
         return results
 
-    async def sync_single_component(
-        self, config_file: str, component_type: str
-    ) -> dict[str, Any] | None:
+    async def sync_single_component(self, config_file: str, component_type: str) -> dict[str, Any] | None:
         """Core bilateral sync logic for a single component"""
         try:
             # Read YAML configuration
@@ -458,17 +454,13 @@ class AgnoVersionSyncService:
 
             # Skip shared configuration files
             if "shared" in config_file.lower():
-                logger.debug(
-                    "Skipping shared configuration file", config_file=config_file
-                )
+                logger.debug("Skipping shared configuration file", config_file=config_file)
                 return None
 
             if not isinstance(yaml_config, dict) or not any(
                 section in yaml_config for section in ["agent", "team", "workflow"]
             ):
-                logger.debug(
-                    "Skipping non-component configuration file", config_file=config_file
-                )
+                logger.debug("Skipping non-component configuration file", config_file=config_file)
                 return None
 
             if not yaml_config:
@@ -493,9 +485,7 @@ class AgnoVersionSyncService:
             )
 
             if not component_id:
-                logger.warning(
-                    "No component ID found in config file", config_file=config_file
-                )
+                logger.warning("No component ID found in config file", config_file=config_file)
                 return None
 
             yaml_version = component_section.get("version")
@@ -509,9 +499,7 @@ class AgnoVersionSyncService:
 
             # Get current active version from Agno storage
             try:
-                agno_version = await self.version_service.get_active_version(
-                    component_id
-                )
+                agno_version = await self.version_service.get_active_version(component_id)
             except Exception as version_error:
                 logger.error(
                     "Error getting active version",
@@ -573,9 +561,7 @@ class AgnoVersionSyncService:
                 and agno_version.version > yaml_version
             ):
                 # Agno is newer - update YAML
-                await self.update_yaml_from_agno(
-                    config_file, component_id, component_type
-                )
+                await self.update_yaml_from_agno(config_file, component_id, component_type)
                 action_taken = "yaml_updated"
                 logger.info(
                     "Updated YAML version from Agno",
@@ -628,9 +614,7 @@ class AgnoVersionSyncService:
             }
 
         except Exception as e:
-            logger.error(
-                "Error processing config file", config_file=config_file, error=str(e)
-            )
+            logger.error("Error processing config file", config_file=config_file, error=str(e))
             return {
                 "component_id": "unknown",
                 "file": config_file,
@@ -638,9 +622,7 @@ class AgnoVersionSyncService:
                 "error": str(e),
             }
 
-    async def update_yaml_from_agno(
-        self, yaml_file: str, component_id: str, component_type: str
-    ):
+    async def update_yaml_from_agno(self, yaml_file: str, component_id: str, component_type: str):
         """Update YAML file with active Agno version configuration"""
         # Get active version from Agno storage
         try:
@@ -683,9 +665,7 @@ class AgnoVersionSyncService:
             logger.info("Updated YAML file", yaml_file=yaml_file)
 
         except Exception as e:
-            logger.error(
-                "Failed to update YAML file", yaml_file=yaml_file, error=str(e)
-            )
+            logger.error("Failed to update YAML file", yaml_file=yaml_file, error=str(e))
             # Try to restore backup
             if os.path.exists(backup_file):
                 try:
@@ -743,9 +723,7 @@ class AgnoVersionSyncService:
                         )
 
                 except Exception as e:
-                    logger.warning(
-                        "Error reading YAML file", yaml_file=yaml_file, error=str(e)
-                    )
+                    logger.warning("Error reading YAML file", yaml_file=yaml_file, error=str(e))
 
         return discovered
 
@@ -808,9 +786,7 @@ class AgnoVersionSyncService:
     def cleanup_old_backups(self, max_backups: int = 5):
         """Clean up old backup files"""
         for component_type in ["agent", "team", "workflow"]:
-            pattern = self.config_paths.get(component_type, "").replace(
-                "config.yaml", "*.backup.*"
-            )
+            pattern = self.config_paths.get(component_type, "").replace("config.yaml", "*.backup.*")
             backup_files = glob.glob(pattern)
 
             if len(backup_files) > max_backups:

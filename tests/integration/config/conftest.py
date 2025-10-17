@@ -39,6 +39,7 @@ def clean_singleton() -> Generator[None, None, None]:
     """Clean singleton instances before and after tests."""
     # Import here to avoid circular imports
     from lib.config.settings import HiveSettings
+
     Settings = HiveSettings  # Alias for compatibility  # noqa: N806
 
     # Clear any existing singleton instance before test
@@ -112,8 +113,7 @@ def clean_environment() -> Generator[None, None, None]:
     config_vars = [
         var
         for var in os.environ
-        if var.startswith("HIVE_")
-        or var in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "LANGWATCH_API_KEY"]
+        if var.startswith("HIVE_") or var in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "LANGWATCH_API_KEY"]
     ]
 
     for var in config_vars:
@@ -139,9 +139,7 @@ def mock_settings_file(temp_project_dir: Path) -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def isolated_settings(
-    temp_project_dir: Path, clean_singleton: None, mock_settings_file: Path
-) -> None:
+def isolated_settings(temp_project_dir: Path, clean_singleton: None, mock_settings_file: Path) -> None:
     """Provide isolated settings environment for testing."""
     # This fixture combines temp directory, clean singleton, and mock settings file
     # for comprehensive settings isolation

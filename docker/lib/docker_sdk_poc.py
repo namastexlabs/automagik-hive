@@ -121,9 +121,7 @@ class DockerSDKManager:
             return ContainerInfo(
                 id=container.id[:12],  # Short ID like Docker CLI
                 name=container.name,
-                image=container.image.tags[0]
-                if container.image.tags
-                else container.image.id[:12],
+                image=container.image.tags[0] if container.image.tags else container.image.id[:12],
                 state=state,
                 status=container.status,
                 ports=container.attrs["NetworkSettings"]["Ports"] or {},
@@ -289,9 +287,7 @@ class DockerSDKManager:
         except APIError:
             return None
 
-    def wait_for_healthy(
-        self, name_or_id: str, timeout: int = 60, check_interval: float = 1.0
-    ) -> bool:
+    def wait_for_healthy(self, name_or_id: str, timeout: int = 60, check_interval: float = 1.0) -> bool:
         """Wait for container to become healthy using Docker SDK.
 
         Args:
@@ -368,9 +364,7 @@ class DockerSDKManager:
                     info = ContainerInfo(
                         id=container.id[:12],
                         name=container.name,
-                        image=container.image.tags[0]
-                        if container.image.tags
-                        else container.image.id[:12],
+                        image=container.image.tags[0] if container.image.tags else container.image.id[:12],
                         state=state,
                         status=container.status,
                         ports=container.attrs["NetworkSettings"]["Ports"] or {},
@@ -434,13 +428,9 @@ class DockerSDKManager:
                 container_id=container_info.id,
                 state=container_info.state,
                 health_status=health.get("Status"),
-                last_health_check=health.get("Log", [{}])[-1].get("Start")
-                if health.get("Log")
-                else None,
+                last_health_check=health.get("Log", [{}])[-1].get("Start") if health.get("Log") else None,
                 is_ready=container_info.state == ContainerState.RUNNING
-                and (
-                    health.get("Status") in ["healthy", None]
-                ),  # No health check or healthy
+                and (health.get("Status") in ["healthy", None]),  # No health check or healthy
             )
 
         except (NotFound, APIError):

@@ -1,6 +1,5 @@
 """Tests for lib.models.version_history module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,6 +15,7 @@ class TestVersionHistory:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.models.version_history
+
         assert lib.models.version_history is not None
 
     @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")

@@ -132,17 +132,13 @@ class DockerComposeService:
         }
 
         # Add PostgreSQL service (foundational)
-        compose_config["services"]["postgres"] = (
-            self.generate_postgresql_service_template(
-                external_port=postgres_port, database=postgres_database
-            )
+        compose_config["services"]["postgres"] = self.generate_postgresql_service_template(
+            external_port=postgres_port, database=postgres_database
         )
 
         # Optionally add application service (for complete setup)
         if include_app_service:
-            compose_config["services"]["app"] = self._generate_app_service_template(
-                postgres_port=postgres_port
-            )
+            compose_config["services"]["app"] = self._generate_app_service_template(postgres_port=postgres_port)
 
         logger.info("Complete Docker Compose template generated")
         return compose_config
@@ -198,7 +194,7 @@ class DockerComposeService:
             True if .env file exists with required variables, False otherwise
         """
         logger.info("Validating required environment variables for Docker Compose")
-        
+
         env_file = self.workspace_path / ".env"
         if not env_file.exists():
             logger.error(
@@ -206,42 +202,31 @@ class DockerComposeService:
                 "to be defined externally. Please create .env from .env.example."
             )
             return False
-        
+
         # Check for critical variables that Docker Compose templates expect
-        required_vars = [
-            "HIVE_DATABASE_URL",
-            "HIVE_API_KEY", 
-            "HIVE_API_PORT"
-        ]
-        
+        required_vars = ["HIVE_DATABASE_URL", "HIVE_API_KEY", "HIVE_API_PORT"]
+
         try:
             env_content = env_file.read_text()
             missing_vars = []
-            
+
             for var in required_vars:
                 if f"{var}=" not in env_content:
                     missing_vars.append(var)
-            
+
             if missing_vars:
-                logger.error(
-                    "Missing required environment variables in .env file",
-                    missing_vars=missing_vars
-                )
-                logger.error(
-                    "Please add missing variables to .env file. See .env.example for reference."
-                )
+                logger.error("Missing required environment variables in .env file", missing_vars=missing_vars)
+                logger.error("Please add missing variables to .env file. See .env.example for reference.")
                 return False
-            
+
             logger.info("Environment file validation successful")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to validate environment file: {e}")
             return False
 
-    def save_docker_compose_template(
-        self, compose_config: dict, output_path: Path | None = None
-    ) -> Path:
+    def save_docker_compose_template(self, compose_config: dict, output_path: Path | None = None) -> Path:
         """Save Docker Compose configuration to file.
 
         Args:
@@ -261,16 +246,12 @@ class DockerComposeService:
 
         # Save YAML with proper formatting
         with open(output_path, "w") as f:
-            yaml.dump(
-                compose_config, f, default_flow_style=False, indent=2, sort_keys=False
-            )
+            yaml.dump(compose_config, f, default_flow_style=False, indent=2, sort_keys=False)
 
         logger.info("Docker Compose template saved successfully")
         return output_path
 
-    def validate_environment_file_exists(
-        self, output_path: Path | None = None
-    ) -> bool:
+    def validate_environment_file_exists(self, output_path: Path | None = None) -> bool:
         """Validate that required .env file exists.
 
         ARCHITECTURAL RULE: Python code NEVER writes .env files.
@@ -290,17 +271,14 @@ class DockerComposeService:
         exists = output_path.exists()
         if not exists:
             logger.warning(
-                "Environment file missing - must be created manually or from .env.example",
-                output_path=str(output_path)
+                "Environment file missing - must be created manually or from .env.example", output_path=str(output_path)
             )
         else:
             logger.info("Environment file exists")
-        
+
         return exists
 
-    def create_data_directories(
-        self, postgres_data_path: str = "./data/postgres"
-    ) -> Path:
+    def create_data_directories(self, postgres_data_path: str = "./data/postgres") -> Path:
         """Create required data directories for PostgreSQL persistence.
 
         Args:
@@ -411,7 +389,7 @@ class DockerComposeService:
 
         This method provides:
         - PostgreSQL container service definition
-        - Docker Compose template generation  
+        - Docker Compose template generation
         - Data directory setup
         - Security configurations
         - .env file validation (does NOT create)
@@ -431,9 +409,7 @@ class DockerComposeService:
         logger.info("Validating required .env file exists")
         env_exists = self.validate_environment_file_exists()
         if not env_exists:
-            logger.error(
-                "Required .env file missing. Please create from .env.example or run manual setup."
-            )
+            logger.error("Required .env file missing. Please create from .env.example or run manual setup.")
 
         # 2. Generate Docker Compose template
         logger.info("Generating Docker Compose template")

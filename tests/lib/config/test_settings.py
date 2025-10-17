@@ -35,7 +35,7 @@ class TestSettings:
             "HIVE_LOG_LEVEL": "DEBUG",
             "HIVE_MAX_CONVERSATION_TURNS": "10",
             "HIVE_SESSION_TIMEOUT": "600",
-            "HIVE_MAX_CONCURRENT_USERS": "50"
+            "HIVE_MAX_CONCURRENT_USERS": "50",
         }
 
         with patch("lib.config.settings.__file__", str(fake_settings_file)):
@@ -71,7 +71,7 @@ class TestSettings:
             "HIVE_SESSION_TIMEOUT": "600",
             "HIVE_ENABLE_METRICS": "false",
             "HIVE_ENVIRONMENT": "development",
-            "HIVE_LOG_LEVEL": "DEBUG"
+            "HIVE_LOG_LEVEL": "DEBUG",
         }
 
         with patch.dict(os.environ, mock_env_vars, clear=True):
@@ -102,7 +102,7 @@ class TestSettingsMethods:
     def test_get_logging_config(self):
         """Test logging configuration generation."""
         test_settings = Settings()
-        
+
         if hasattr(test_settings, "get_logging_config"):
             config = test_settings.get_logging_config()
 
@@ -121,7 +121,7 @@ class TestSettingsMethods:
         with patch("lib.config.settings.__file__", str(fake_settings_file)):
             with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True):
                 test_settings = Settings()
-                
+
                 if hasattr(test_settings, "validate_settings"):
                     validations = test_settings.validate_settings()
                     assert isinstance(validations, dict)
@@ -201,10 +201,10 @@ class TestSettingsEdgeCases:
         """Test security-related settings."""
         mock_env_vars = {
             "HIVE_MAX_REQUEST_SIZE": "5242880",
-            "HIVE_RATE_LIMIT_REQUESTS": "50", 
-            "HIVE_RATE_LIMIT_PERIOD": "30"
+            "HIVE_RATE_LIMIT_REQUESTS": "50",
+            "HIVE_RATE_LIMIT_PERIOD": "30",
         }
-        
+
         with patch.dict(os.environ, mock_env_vars, clear=True):
             test_settings = Settings()
             # Test that security settings can be accessed if they exist

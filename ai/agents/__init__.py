@@ -16,7 +16,7 @@ from .registry import (
 __all__ = [
     # Registry and factory functions
     "AgentRegistry",
-    "get_agent", 
+    "get_agent",
     "get_team_agents",
     "list_available_agents",
     # MCP functions

@@ -10,6 +10,7 @@ try:
     import httpx
     from rich.console import Console
     from rich.table import Table
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -65,10 +66,7 @@ class GenieCommands:
 
             for wish in wishes:
                 table.add_row(
-                    wish.get("id", ""),
-                    wish.get("title", ""),
-                    wish.get("status", "UNKNOWN"),
-                    wish.get("path", "")
+                    wish.get("id", ""), wish.get("title", ""), wish.get("status", "UNKNOWN"), wish.get("path", "")
                 )
 
             self.console.print(table)
@@ -95,32 +93,34 @@ class GenieCommands:
                         break
                 else:
                     return False
-            
+
             # Read AGENTS.md content
             try:
-                with open(agents_md_path, encoding='utf-8') as f:
+                with open(agents_md_path, encoding="utf-8") as f:
                     agents_content = f.read()
             except Exception:
                 return False
-            
+
             # Build claude command
             claude_cmd = [
                 "claude",
-                "--append-system-prompt", agents_content,
-                "--mcp-config", ".mcp.json",
-                "--model", "sonnet",
-                "--dangerously-skip-permissions"
+                "--append-system-prompt",
+                agents_content,
+                "--mcp-config",
+                ".mcp.json",
+                "--model",
+                "sonnet",
+                "--dangerously-skip-permissions",
             ]
-            
+
             # Add any extra arguments passed by user
             if extra_args:
                 claude_cmd.extend(extra_args)
-            
-            
+
             # Launch claude
             result = subprocess.run(claude_cmd)
             return result.returncode == 0
-            
+
         except FileNotFoundError:
             return False
         except KeyboardInterrupt:

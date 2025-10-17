@@ -54,9 +54,7 @@ def validate_agent_message(message: str, context: str = "agent execution") -> No
         )
 
 
-def validate_request_data(
-    request_data: dict[str, Any], context: str = "request"
-) -> str:
+def validate_request_data(request_data: dict[str, Any], context: str = "request") -> str:
     """
     Extract and validate message from request data.
 

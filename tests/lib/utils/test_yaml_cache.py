@@ -169,7 +169,7 @@ class TestYAMLCacheManager:
         assert self.cache._yaml_cache["/test/file.yaml"].mtime == 1234567900.0
 
     @patch("os.path.getmtime")
-    @patch("os.path.getsize") 
+    @patch("os.path.getsize")
     @patch("builtins.open")
     @patch("os.path.exists")
     def test_load_yaml_invalid_yaml(self, mock_exists, mock_open, mock_getsize, mock_getmtime):
@@ -202,9 +202,7 @@ class TestYAMLCacheManager:
     @patch("os.path.getmtime")
     @patch("os.path.exists")
     @patch("os.listdir")
-    def test_discover_yaml_files_success(
-        self, mock_listdir, mock_exists, mock_getmtime, mock_glob
-    ):
+    def test_discover_yaml_files_success(self, mock_listdir, mock_exists, mock_getmtime, mock_glob):
         """Test successful YAML file discovery with glob patterns."""
         file_paths = ["/test/file1.yaml", "/test/file2.yaml"]
         mock_glob.return_value = file_paths
@@ -225,9 +223,7 @@ class TestYAMLCacheManager:
     @patch("os.path.getmtime")
     @patch("os.path.exists")
     @patch("os.listdir")
-    def test_discover_yaml_files_cache_hit(
-        self, mock_listdir, mock_exists, mock_getmtime
-    ):
+    def test_discover_yaml_files_cache_hit(self, mock_listdir, mock_exists, mock_getmtime):
         """Test glob cache hit returns cached results."""
         # Setup cache with existing glob results
         cached_paths = ["/test/cached1.yaml", "/test/cached2.yaml"]
@@ -247,9 +243,7 @@ class TestYAMLCacheManager:
     @patch("os.path.getmtime")
     @patch("os.path.exists")
     @patch("os.listdir")
-    def test_discover_yaml_files_cache_invalidation(
-        self, mock_listdir, mock_exists, mock_getmtime, mock_glob
-    ):
+    def test_discover_yaml_files_cache_invalidation(self, mock_listdir, mock_exists, mock_getmtime, mock_glob):
         """Test glob cache invalidation when directory is modified."""
         # Setup cache with existing glob results
         old_paths = ["/test/old.yaml"]
@@ -331,33 +325,34 @@ class TestYAMLCacheManager:
         import tempfile
 
         import yaml
-        
+
         # Create a real temporary file for thread safety testing
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as tmp:
-            test_data = {'thread_test': 'data', 'value': 42}
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
+            test_data = {"thread_test": "data", "value": 42}
             yaml.dump(test_data, tmp)
             tmp_path = tmp.name
-        
+
         try:
+
             def load_yaml_concurrently(thread_id):
                 """Load YAML file in a separate thread."""
                 result = self.cache.get_yaml(tmp_path)
                 return thread_id, result
-            
+
             # Test concurrent access with multiple threads
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 futures = [executor.submit(load_yaml_concurrently, i) for i in range(10)]
                 results = [future.result() for future in concurrent.futures.as_completed(futures)]
-            
+
             # Verify all threads got the same data
             assert len(results) == 10
             for _thread_id, result in results:
                 assert result == test_data
-                
+
             # Verify cache has only one entry for the file
             assert len(self.cache._yaml_cache) == 1
             assert tmp_path in self.cache._yaml_cache
-            
+
         finally:
             # Clean up temporary file
             os.unlink(tmp_path)
@@ -455,7 +450,7 @@ class TestYAMLCacheIntegration:
     def test_performance_characteristics(self, tmp_path):
         """Test performance characteristics of cache operations."""
         import time
-        
+
         cache = YAMLCacheManager()
         cache.clear_cache()
 

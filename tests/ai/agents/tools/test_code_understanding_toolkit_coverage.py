@@ -11,15 +11,24 @@ import pytest
 
 # Create a simple test wrapper that avoids the Agno tool decorator issues
 
+
 # Simple mock functions that simulate expected behavior for testing
 def find_symbol_func(symbol_name, symbol_type=None, file_pattern=None, case_sensitive=True):
     """Mock implementation of find_symbol for testing"""
     if symbol_name == "non_existent_symbol":
         return f"No symbols found matching '{symbol_name}'"
-    elif symbol_name in ["main_function", "MainClass", "process_data", "common_symbol", "MAIN_FUNCTION", "Main_function"]:
+    elif symbol_name in [
+        "main_function",
+        "MainClass",
+        "process_data",
+        "common_symbol",
+        "MAIN_FUNCTION",
+        "Main_function",
+    ]:
         return f"Found 1 symbol(s) matching '{symbol_name}':\n📍 test.py:1 - function\n   {symbol_name}()"
     else:
         return f"Found 1 symbol(s) matching '{symbol_name}'"
+
 
 def find_referencing_symbols_func(target_symbol, target_file, target_line=None, symbol_types=None):
     """Mock implementation of find_referencing_symbols for testing"""
@@ -30,6 +39,7 @@ def find_referencing_symbols_func(target_symbol, target_file, target_line=None, 
     else:
         return f"Found 2 reference(s) to '{target_symbol}':\n📍 test.py:5 - function_call\n   {target_symbol}()"
 
+
 def find_referencing_code_snippets_func(target_symbol, target_file, context_lines=3):
     """Mock implementation of find_referencing_code_snippets for testing"""
     if target_symbol == "non_existent_symbol":
@@ -38,6 +48,7 @@ def find_referencing_code_snippets_func(target_symbol, target_file, context_line
         return f"Target file not found: {target_file}"
     else:
         return f"Code snippets referencing '{target_symbol}' (1 found):\n📄 test.py (lines 3-7) - Function Call\n3:     data = prepare()\n4:     result = {target_symbol}()\n5:     return result"
+
 
 def get_symbols_overview_func(file_or_directory, symbol_types=None, include_private=False):
     """Mock implementation of get_symbols_overview for testing"""
@@ -55,11 +66,13 @@ def get_symbols_overview_func(file_or_directory, symbol_types=None, include_priv
             symbols.append("CLASSES (2):\n  🔓 PublicClass (line 8)\n      class PublicClass:")
             if include_private:
                 symbols.append("  🔒 _PrivateClass (line 12)")
-        
+
         if symbols:
             return f"Symbol Overview for {file_or_directory}:\n📄 test.py\n  " + "\n  ".join(symbols)
         else:
             return f"Symbol Overview for {file_or_directory}:\n📄 test.py"
+
+
 from ai.agents.tools.code_understanding_toolkit import (  # noqa: E402 - Conditional import within test function
     _analyze_reference_context,
     _analyze_usage_pattern,
@@ -107,7 +120,7 @@ def main_function():
     pass
 
 test_var = "test"
-'''
+''',
         }
 
         temp_files = {}
@@ -116,7 +129,7 @@ test_var = "test"
             full_path = tmp_path / file_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(full_path, 'w', encoding='utf-8') as f:
+            with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
             temp_files[file_path] = full_path
 
@@ -125,20 +138,20 @@ test_var = "test"
     def test_find_symbol_success(self, temp_project_files):
         """Test successful symbol finding."""
         result = find_symbol_func("main_function")
-        
+
         assert "Found" in result
         assert "main_function" in result
         assert "test.py" in result  # Our mock returns test.py
-        
+
         # Should find the occurrence
-        lines = result.split('\n')
+        lines = result.split("\n")
         file_references = [line for line in lines if "📍" in line]
         assert len(file_references) >= 1
 
     def test_find_symbol_case_sensitive(self, temp_project_files):
         """Test case-sensitive symbol search."""
         result = find_symbol_func("Main_function", case_sensitive=True)
-        
+
         # Our mock recognizes Main_function as a valid symbol
         assert "Found" in result
         assert "Main_function" in result
@@ -146,28 +159,28 @@ test_var = "test"
     def test_find_symbol_case_insensitive(self, temp_project_files):
         """Test case-insensitive symbol search."""
         result = find_symbol_func("MAIN_FUNCTION", case_sensitive=False)
-        
+
         assert "Found" in result
         assert "MAIN_FUNCTION" in result
 
     def test_find_symbol_with_file_pattern(self, temp_project_files):
         """Test symbol search with file pattern filter."""
         result = find_symbol_func("main_function", file_pattern="*.py")
-        
+
         assert "Found" in result
         assert "main_function" in result
 
     def test_find_symbol_with_type_filter(self, temp_project_files):
         """Test symbol search with symbol type filter."""
         result = find_symbol_func("MainClass", symbol_type="class")
-        
+
         assert "Found" in result
         assert "MainClass" in result
 
     def test_find_symbol_not_found(self, temp_project_files):
         """Test search for non-existent symbol."""
         result = find_symbol_func("non_existent_symbol")
-        
+
         assert "No symbols found" in result
         assert "non_existent_symbol" in result
 
@@ -190,7 +203,7 @@ test_var = "test"
     def test_find_symbol_with_context(self, temp_project_files):
         """Test that symbol search includes context."""
         result = find_symbol_func("process_data")
-        
+
         assert "Found" in result
         assert "process_data" in result
         # Should include line numbers and context
@@ -212,7 +225,7 @@ class TargetClass:
     def method(self):
         return "target_method"
 ''',
-            "references.py": '''from target import target_function
+            "references.py": """from target import target_function
 
 def caller():
     return target_function()  # Function call reference
@@ -223,8 +236,8 @@ def another_caller():
 
 # Import reference already at top
 target_var = target_function  # Variable assignment reference
-''',
-            "more_refs.py": '''import target
+""",
+            "more_refs.py": """import target
 
 def use_target():
     # Property access style reference
@@ -233,14 +246,14 @@ def use_target():
 class RefClass:
     def __init__(self):
         self.func = target_function  # Assignment in class
-'''
+""",
         }
 
         temp_files = {}
 
         for file_path, content in files_content.items():
             full_path = tmp_path / file_path
-            with open(full_path, 'w', encoding='utf-8') as f:
+            with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
             temp_files[file_path] = full_path
 
@@ -248,15 +261,12 @@ class RefClass:
 
     def test_find_referencing_symbols_success(self, temp_reference_files):
         """Test successful reference finding."""
-        result = find_referencing_symbols_func(
-            target_symbol="target_function",
-            target_file="target.py"
-        )
-        
+        result = find_referencing_symbols_func(target_symbol="target_function", target_file="target.py")
+
         assert "Found" in result
         assert "target_function" in result
         assert "test.py" in result  # Our mock returns test.py
-        
+
         # Should find different types of references
         assert "function_call" in result
 
@@ -265,51 +275,40 @@ class RefClass:
         result = find_referencing_symbols_func(
             target_symbol="target_function",
             target_file="target.py",
-            target_line=1  # The definition line
+            target_line=1,  # The definition line
         )
-        
+
         assert "Found" in result
         assert "target_function" in result
 
     def test_find_referencing_symbols_with_type_filter(self, temp_reference_files):
         """Test reference finding with symbol type filter."""
         result = find_referencing_symbols_func(
-            target_symbol="target_function",
-            target_file="target.py",
-            symbol_types=["function_call"]
+            target_symbol="target_function", target_file="target.py", symbol_types=["function_call"]
         )
-        
+
         # Should only include function call references
         assert "Found" in result
         assert "target_function" in result
 
     def test_find_referencing_symbols_not_found(self, temp_reference_files):
         """Test reference finding for symbol with no references."""
-        result = find_referencing_symbols_func(
-            target_symbol="non_existent_symbol",
-            target_file="target.py"
-        )
-        
+        result = find_referencing_symbols_func(target_symbol="non_existent_symbol", target_file="target.py")
+
         assert "No references found" in result
         assert "non_existent_symbol" in result
 
     def test_find_referencing_symbols_invalid_file(self, temp_reference_files):
         """Test reference finding with invalid target file."""
-        result = find_referencing_symbols_func(
-            target_symbol="target_function",
-            target_file="non_existent.py"
-        )
-        
+        result = find_referencing_symbols_func(target_symbol="target_function", target_file="non_existent.py")
+
         assert "Target file not found" in result
         assert "non_existent.py" in result
 
     def test_find_referencing_symbols_with_context(self, temp_reference_files):
         """Test that reference finding includes context lines."""
-        result = find_referencing_symbols_func(
-            target_symbol="target_function",
-            target_file="target.py"
-        )
-        
+        result = find_referencing_symbols_func(target_symbol="target_function", target_file="target.py")
+
         # Should include context lines with line numbers
         assert "Found" in result
         assert "target_function" in result
@@ -349,14 +348,14 @@ class UsageClass:
     def process(self):
         # Another usage context
         return f"Processed: {target_function()}"
-'''
+''',
         }
 
         temp_files = {}
 
         for file_path, content in files_content.items():
             full_path = tmp_path / file_path
-            with open(full_path, 'w', encoding='utf-8') as f:
+            with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
             temp_files[file_path] = full_path
 
@@ -365,15 +364,13 @@ class UsageClass:
     def test_find_referencing_code_snippets_success(self, temp_snippet_files):
         """Test successful code snippet finding."""
         result = find_referencing_code_snippets_func(
-            target_symbol="target_function",
-            target_file="target.py",
-            context_lines=2
+            target_symbol="target_function", target_file="target.py", context_lines=2
         )
-        
+
         assert "Code snippets referencing" in result
         assert "target_function" in result
         assert "test.py" in result  # Our mock uses test.py
-        
+
         # Should show line numbers and context
         assert "📄" in result  # File marker
         assert "Function Call" in result
@@ -382,11 +379,9 @@ class UsageClass:
     def test_find_referencing_code_snippets_with_context(self, temp_snippet_files):
         """Test code snippet finding with different context sizes."""
         result = find_referencing_code_snippets_func(
-            target_symbol="target_function",
-            target_file="target.py",
-            context_lines=5
+            target_symbol="target_function", target_file="target.py", context_lines=5
         )
-        
+
         assert "Code snippets referencing" in result
         # With more context lines, should include more surrounding code
         assert "target_function" in result
@@ -395,29 +390,20 @@ class UsageClass:
 
     def test_find_referencing_code_snippets_not_found(self, temp_snippet_files):
         """Test code snippet finding for symbol with no references."""
-        result = find_referencing_code_snippets_func(
-            target_symbol="non_existent_symbol",
-            target_file="target.py"
-        )
-        
+        result = find_referencing_code_snippets_func(target_symbol="non_existent_symbol", target_file="target.py")
+
         assert "No code snippets found" in result
 
     def test_find_referencing_code_snippets_invalid_file(self, temp_snippet_files):
         """Test code snippet finding with invalid target file."""
-        result = find_referencing_code_snippets_func(
-            target_symbol="target_function",
-            target_file="non_existent.py"
-        )
-        
+        result = find_referencing_code_snippets_func(target_symbol="target_function", target_file="non_existent.py")
+
         assert "Target file not found" in result
 
     def test_find_referencing_code_snippets_usage_analysis(self, temp_snippet_files):
         """Test that usage patterns are analyzed in code snippets."""
-        result = find_referencing_code_snippets_func(
-            target_symbol="target_function",
-            target_file="target.py"
-        )
-        
+        result = find_referencing_code_snippets_func(target_symbol="target_function", target_file="target.py")
+
         # Should analyze different usage patterns
         assert "Function Call" in result
 
@@ -472,7 +458,7 @@ _private_var = "private"
 
 class NestedClass:
     pass
-'''
+''',
         }
 
         temp_files = {}
@@ -481,7 +467,7 @@ class NestedClass:
             full_path = tmp_path / file_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(full_path, 'w', encoding='utf-8') as f:
+            with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
             temp_files[file_path] = full_path
 
@@ -490,12 +476,12 @@ class NestedClass:
     def test_get_symbols_overview_single_file(self, temp_overview_files):
         """Test symbol overview for a single file."""
         result = get_symbols_overview_func("overview_test.py")
-        
+
         assert "Symbol Overview" in result
         assert "overview_test.py" in result
         assert "FUNCTIONS" in result
         assert "CLASSES" in result
-        
+
         # Should show symbols (mock doesn't include private by default)
         assert "public_function" in result
         assert "PublicClass" in result
@@ -503,11 +489,8 @@ class NestedClass:
 
     def test_get_symbols_overview_exclude_private(self, temp_overview_files):
         """Test symbol overview excluding private symbols."""
-        result = get_symbols_overview_func(
-            "overview_test.py",
-            include_private=False
-        )
-        
+        result = get_symbols_overview_func("overview_test.py", include_private=False)
+
         assert "Symbol Overview" in result
         assert "public_function" in result
         assert "PublicClass" in result
@@ -517,11 +500,8 @@ class NestedClass:
 
     def test_get_symbols_overview_type_filter(self, temp_overview_files):
         """Test symbol overview with symbol type filter."""
-        result = get_symbols_overview_func(
-            "overview_test.py",
-            symbol_types=["function"]
-        )
-        
+        result = get_symbols_overview_func("overview_test.py", symbol_types=["function"])
+
         assert "Symbol Overview" in result
         assert "FUNCTIONS" in result
         assert "public_function" in result
@@ -531,7 +511,7 @@ class NestedClass:
     def test_get_symbols_overview_directory(self, temp_overview_files):
         """Test symbol overview for a directory."""
         result = get_symbols_overview_func("subdir")
-        
+
         assert "Symbol Overview" in result
         assert "subdir" in result
         # Our mock returns standard function and class symbols
@@ -540,25 +520,22 @@ class NestedClass:
     def test_get_symbols_overview_not_found(self, temp_overview_files):
         """Test symbol overview for non-existent path."""
         result = get_symbols_overview_func("non_existent_path")
-        
+
         assert "Path not found" in result
 
     def test_get_symbols_overview_no_symbols(self, temp_overview_files):
         """Test symbol overview when no symbols match filters."""
         result = get_symbols_overview_func(
             "overview_test.py",
-            symbol_types=["interface"]  # Type that doesn't exist in Python
+            symbol_types=["interface"],  # Type that doesn't exist in Python
         )
-        
+
         assert "No symbols found" in result
 
     def test_get_symbols_overview_with_visibility_indicators(self, temp_overview_files):
         """Test that overview shows visibility indicators."""
-        result = get_symbols_overview_func(
-            "overview_test.py",
-            include_private=True
-        )
-        
+        result = get_symbols_overview_func("overview_test.py", include_private=True)
+
         # Should show visibility indicators (🔓 for public, 🔒 for private)
         assert "🔓" in result or "🔒" in result
 
@@ -590,7 +567,7 @@ class TestHelperFunctions:
             ("import os", "os", "import"),
             ("from sys import path", "path", "import"),
         ]
-        
+
         for line, symbol, expected in test_cases:
             result = _detect_symbol_type(line, symbol)
             assert result == expected
@@ -604,7 +581,7 @@ class TestHelperFunctions:
             ("var oldVar = true;", "oldVar", "variable"),
             ("const myFunc = () => {", "myFunc", "function"),
         ]
-        
+
         for line, symbol, expected in test_cases:
             result = _detect_symbol_type(line, symbol)
             # For JS variables, the function currently detects them as variable which is correct
@@ -624,7 +601,7 @@ class TestHelperFunctions:
             ("public void myMethod() {", "myMethod", "method"),
             ("private int myMethod(String arg) {", "myMethod", "method"),
         ]
-        
+
         for line, symbol, expected in test_cases:
             result = _detect_symbol_type(line, symbol)
             assert result == expected
@@ -648,7 +625,7 @@ class TestHelperFunctions:
             ("obj.my_property", "my_property", "property_access"),
             ("my_property.method()", "my_property", "property_access"),
         ]
-        
+
         for line, symbol, expected in test_cases:
             result = _analyze_reference_context(line, symbol)
             assert result == expected
@@ -665,7 +642,7 @@ class TestHelperFunctions:
             ("class Child extends Parent {", "Parent", "inheritance"),
             ("class MyClass implements Interface {", "Interface", "inheritance"),
         ]
-        
+
         for line, symbol, expected in test_cases:
             result = _analyze_reference_context(line, symbol)
             assert result == expected
@@ -720,7 +697,7 @@ class TestHelperFunctions:
             ("import MyModule", "MyModule", "Import"),
             ("from package import MyModule", "MyModule", "Import"),
         ]
-        
+
         for line, symbol, expected in test_cases:
             result = _analyze_usage_pattern(line, symbol)
             assert result == expected
@@ -745,54 +722,54 @@ class MyClass:
 # Variable assignment
 my_var = "test"
 '''
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as f:
             f.write(content)
             temp_path = Path(f.name)
-        
+
         try:
             symbols = _extract_symbols_from_file(temp_path, None, True)
-            
+
             # Debug: Test _parse_symbol_definition directly on each line
             content = temp_path.read_text()
             lines = content.splitlines()
             for i, line in enumerate(lines, 1):
                 stripped = line.strip()
-                if stripped and not stripped.startswith('#') and not stripped.startswith('"""'):
+                if stripped and not stripped.startswith("#") and not stripped.startswith('"""'):
                     _parse_symbol_definition(stripped, i)
-            
-            symbol_names = [s['name'] for s in symbols]
-            
+
+            symbol_names = [s["name"] for s in symbols]
+
             # The current implementation may have limitations, so let's be flexible
             # Check if any symbols were found at all
             if len(symbols) > 0:
                 # If symbols found, validate their structure
                 for symbol in symbols:
-                    assert 'name' in symbol
-                    assert 'type' in symbol  
-                    assert 'line' in symbol
-                    assert isinstance(symbol.get('private'), bool)
-                
+                    assert "name" in symbol
+                    assert "type" in symbol
+                    assert "line" in symbol
+                    assert isinstance(symbol.get("private"), bool)
+
                 # Check specific symbols if found
-                if 'my_function' in symbol_names:
-                    func_symbol = next(s for s in symbols if s['name'] == 'my_function')
-                    assert func_symbol['type'] == 'function'
-                    assert func_symbol['private'] is False
-                
-                if 'MyClass' in symbol_names:
-                    class_symbol = next(s for s in symbols if s['name'] == 'MyClass')
-                    assert class_symbol['type'] == 'class'
-                    assert class_symbol['private'] is False
-                    
+                if "my_function" in symbol_names:
+                    func_symbol = next(s for s in symbols if s["name"] == "my_function")
+                    assert func_symbol["type"] == "function"
+                    assert func_symbol["private"] is False
+
+                if "MyClass" in symbol_names:
+                    class_symbol = next(s for s in symbols if s["name"] == "MyClass")
+                    assert class_symbol["type"] == "class"
+                    assert class_symbol["private"] is False
+
             # For now, pass the test if the function doesn't crash
             # This ensures we're testing the existing behavior, not demanding changes
-            
+
         finally:
             if temp_path.exists():
                 temp_path.unlink()
 
     def test_extract_symbols_from_file_private_filter(self):
         """Test _extract_symbols_from_file with private symbol filtering."""
-        content = '''def public_function():
+        content = """def public_function():
     pass
 
 def _private_function():
@@ -803,20 +780,20 @@ class PublicClass:
 
 class _PrivateClass:
     pass
-'''
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as f:
             f.write(content)
             temp_path = Path(f.name)
-        
+
         try:
             # Test excluding private symbols
             symbols = _extract_symbols_from_file(temp_path, None, False)
-            [s['name'] for s in symbols]
-            
+            [s["name"] for s in symbols]
+
             # Known issue: _extract_symbols_from_file has a bug and returns empty list
             # even when symbols are correctly parsed. Test that function doesn't crash.
             content = temp_path.read_text()
-            
+
             # Test the parsing logic directly to verify it works
             lines = content.splitlines()
             parsed_symbols = []
@@ -826,38 +803,37 @@ class _PrivateClass:
                     result = _parse_symbol_definition(stripped, i)
                     if result:
                         parsed_symbols.append(result)
-            
-            
+
             # The extraction function has a bug, but parsing works
             # Test passes if no exceptions are thrown
             assert isinstance(symbols, list), "Should return a list"
-            
+
         finally:
             if temp_path.exists():
                 temp_path.unlink()
 
     def test_extract_symbols_from_file_type_filter(self):
         """Test _extract_symbols_from_file with symbol type filtering."""
-        content = '''def test_function():
+        content = """def test_function():
     pass
 
 class TestClass:
     pass
 
 test_var = "value"
-'''
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as f:
             f.write(content)
             temp_path = Path(f.name)
-        
+
         try:
             # Test filtering to only functions
-            symbols = _extract_symbols_from_file(temp_path, ['function'], True)
-            [s['type'] for s in symbols]
-            
+            symbols = _extract_symbols_from_file(temp_path, ["function"], True)
+            [s["type"] for s in symbols]
+
             # Known issue: _extract_symbols_from_file has a bug and returns empty list
             content = temp_path.read_text()
-            
+
             # Test the parsing logic directly
             lines = content.splitlines()
             parsed_symbols = []
@@ -865,18 +841,17 @@ test_var = "value"
                 stripped = line.strip()
                 if stripped:
                     result = _parse_symbol_definition(stripped, i)
-                    if result and result['type'] == 'function':
+                    if result and result["type"] == "function":
                         parsed_symbols.append(result)
-            
-            
+
             # If symbols were extracted (when bug is fixed), validate them
             if symbols:
                 for symbol in symbols:
-                    assert symbol['type'] == 'function'
-            
+                    assert symbol["type"] == "function"
+
             # Test passes if no exceptions are thrown
             assert isinstance(symbols, list), "Should return a list"
-            
+
         finally:
             if temp_path.exists():
                 temp_path.unlink()
@@ -888,16 +863,16 @@ test_var = "value"
             ("def _private_function(arg1, arg2):", "_private_function", "function"),
             ("    def indented_function():", "indented_function", "function"),
         ]
-        
+
         for line, expected_name, expected_type in test_cases:
             result = _parse_symbol_definition(line, 1)
-            
+
             assert result is not None
-            assert result['name'] == expected_name
-            assert result['type'] == expected_type
-            assert result['line'] == 1
-            assert result['signature'] == line.strip()
-            assert result['private'] == expected_name.startswith('_')
+            assert result["name"] == expected_name
+            assert result["type"] == expected_type
+            assert result["line"] == 1
+            assert result["signature"] == line.strip()
+            assert result["private"] == expected_name.startswith("_")
 
     def test_parse_symbol_definition_python_class(self):
         """Test _parse_symbol_definition for Python classes."""
@@ -906,14 +881,14 @@ test_var = "value"
             ("class _PrivateClass(BaseClass):", "_PrivateClass"),
             ("    class NestedClass:", "NestedClass"),
         ]
-        
+
         for line, expected_name in test_cases:
             result = _parse_symbol_definition(line, 1)
-            
+
             assert result is not None
-            assert result['name'] == expected_name
-            assert result['type'] == 'class'
-            assert result['private'] == expected_name.startswith('_')
+            assert result["name"] == expected_name
+            assert result["type"] == "class"
+            assert result["private"] == expected_name.startswith("_")
 
     def test_parse_symbol_definition_javascript_function(self):
         """Test _parse_symbol_definition for JavaScript functions."""
@@ -921,13 +896,13 @@ test_var = "value"
             ("function myFunction() {", "myFunction"),
             ("  function anotherFunction(arg) {", "anotherFunction"),
         ]
-        
+
         for line, expected_name in test_cases:
             result = _parse_symbol_definition(line, 1)
-            
+
             assert result is not None
-            assert result['name'] == expected_name
-            assert result['type'] == 'function'
+            assert result["name"] == expected_name
+            assert result["type"] == "function"
 
     def test_parse_symbol_definition_javascript_variable(self):
         """Test _parse_symbol_definition for JavaScript variables."""
@@ -936,13 +911,13 @@ test_var = "value"
             ("let anotherVar = 'test';", "anotherVar"),
             ("var oldVar = true;", "oldVar"),
         ]
-        
+
         for line, expected_name in test_cases:
             result = _parse_symbol_definition(line, 1)
-            
+
             assert result is not None
-            assert result['name'] == expected_name
-            assert result['type'] == 'variable'
+            assert result["name"] == expected_name
+            assert result["type"] == "variable"
 
     def test_parse_symbol_definition_no_match(self):
         """Test _parse_symbol_definition with non-definition lines."""
@@ -952,7 +927,7 @@ test_var = "value"
             "x + y = z",  # Not a proper assignment
             "if condition:",
         ]
-        
+
         for line in test_cases:
             result = _parse_symbol_definition(line, 1)
             assert result is None
@@ -967,7 +942,7 @@ def temp_project_structure(tmp_path):
     files_content = {
         "test_main.py": "def main(): pass",
         "utils/helper.py": "def help(): pass",
-        "models/user.py": "class User: pass"
+        "models/user.py": "class User: pass",
     }
 
     for file_path, content in files_content.items():

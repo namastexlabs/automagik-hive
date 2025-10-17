@@ -98,9 +98,7 @@ class AGNOConfigValidator:
 
         # Validate inheritance compliance
         if member_configs:
-            inheritance_result = self._validate_inheritance_compliance(
-                team_id, team_config, member_configs
-            )
+            inheritance_result = self._validate_inheritance_compliance(team_id, team_config, member_configs)
             self._merge_results(result, inheritance_result)
 
         return result
@@ -148,9 +146,7 @@ class AGNOConfigValidator:
         ]
 
         for param_path, description in drift_checks:
-            drift_analysis = self._analyze_parameter_drift(
-                all_configs, param_path, description
-            )
+            drift_analysis = self._analyze_parameter_drift(all_configs, param_path, description)
             if drift_analysis["has_drift"]:
                 result.drift_detected = True
                 result.warnings.append(drift_analysis["message"])
@@ -160,9 +156,7 @@ class AGNOConfigValidator:
 
         return result
 
-    def _validate_team_structure(
-        self, team_id: str, config: dict[str, Any]
-    ) -> ValidationResult:
+    def _validate_team_structure(self, team_id: str, config: dict[str, Any]) -> ValidationResult:
         """Validate team configuration structure."""
         result = ValidationResult(is_valid=True, errors=[], warnings=[], suggestions=[])
 
@@ -170,9 +164,7 @@ class AGNOConfigValidator:
         required_fields = ["team.team_id", "team.name", "members"]
         for field in required_fields:
             if not self._has_nested_field(config, field):
-                result.errors.append(
-                    f"Team {team_id}: Missing required field '{field}'"
-                )
+                result.errors.append(f"Team {team_id}: Missing required field '{field}'")
                 result.is_valid = False
 
         # Validate team members exist
@@ -183,9 +175,7 @@ class AGNOConfigValidator:
         for member_id in members:
             member_path = self.agents_path / member_id / "config.yaml"
             if not member_path.exists():
-                result.errors.append(
-                    f"Team {team_id}: Member '{member_id}' config not found"
-                )
+                result.errors.append(f"Team {team_id}: Member '{member_id}' config not found")
                 result.is_valid = False
 
         # Validate version field
@@ -193,15 +183,11 @@ class AGNOConfigValidator:
         if not version:
             result.warnings.append(f"Team {team_id}: No version specified")
         elif version == "dev":
-            result.suggestions.append(
-                f"Team {team_id}: Consider versioning for production"
-            )
+            result.suggestions.append(f"Team {team_id}: Consider versioning for production")
 
         return result
 
-    def _validate_agent_structure(
-        self, agent_id: str, config: dict[str, Any]
-    ) -> ValidationResult:
+    def _validate_agent_structure(self, agent_id: str, config: dict[str, Any]) -> ValidationResult:
         """Validate agent configuration structure."""
         result = ValidationResult(is_valid=True, errors=[], warnings=[], suggestions=[])
 
@@ -209,26 +195,21 @@ class AGNOConfigValidator:
         required_fields = ["agent.agent_id", "agent.name", "instructions"]
         for field in required_fields:
             if not self._has_nested_field(config, field):
-                result.errors.append(
-                    f"Agent {agent_id}: Missing required field '{field}'"
-                )
+                result.errors.append(f"Agent {agent_id}: Missing required field '{field}'")
                 result.is_valid = False
 
         # Validate agent_id consistency
         config_agent_id = config.get("agent", {}).get("agent_id")
         if config_agent_id and config_agent_id != agent_id:
             result.warnings.append(
-                f"Agent {agent_id}: config.agent.agent_id '{config_agent_id}' "
-                f"doesn't match directory name"
+                f"Agent {agent_id}: config.agent.agent_id '{config_agent_id}' doesn't match directory name"
             )
 
         # Validate storage table_name uniqueness
         table_name = config.get("storage", {}).get("table_name")
         if table_name:
             if not table_name.startswith("agents_"):
-                result.warnings.append(
-                    f"Agent {agent_id}: table_name should start with 'agents_'"
-                )
+                result.warnings.append(f"Agent {agent_id}: table_name should start with 'agents_'")
             if not table_name.endswith(agent_id.replace("-", "_")):
                 result.suggestions.append(
                     f"Agent {agent_id}: Consider table_name 'agents_{agent_id.replace('-', '_')}'"
@@ -262,16 +243,11 @@ class AGNOConfigValidator:
             except Exception:  # noqa: S112 - Continue after exception is intentional
                 continue
 
-        all_agents = {
-            agent_path.parent.name
-            for agent_path in self.agents_path.glob("*/config.yaml")
-        }
+        all_agents = {agent_path.parent.name for agent_path in self.agents_path.glob("*/config.yaml")}
         orphaned_agents = all_agents - all_team_members
 
         if orphaned_agents:
-            result.suggestions.append(
-                f"Orphaned agents (not in any team): {', '.join(sorted(orphaned_agents))}"
-            )
+            result.suggestions.append(f"Orphaned agents (not in any team): {', '.join(sorted(orphaned_agents))}")
 
         return result
 
@@ -327,10 +303,7 @@ class AGNOConfigValidator:
         for value, configs_list in values.items():
             drift_summary.append(f"{value}: {len(configs_list)} configs")
 
-        message = (
-            f"Parameter drift in {description} ({param_path}): "
-            f"{', '.join(drift_summary)}"
-        )
+        message = f"Parameter drift in {description} ({param_path}): {', '.join(drift_summary)}"
 
         return {
             "has_drift": True,
@@ -352,10 +325,7 @@ class AGNOConfigValidator:
             except Exception:  # noqa: S112 - Continue after exception is intentional
                 continue
 
-        all_agents = {
-            agent_path.parent.name
-            for agent_path in self.agents_path.glob("*/config.yaml")
-        }
+        all_agents = {agent_path.parent.name for agent_path in self.agents_path.glob("*/config.yaml")}
 
         return list(all_agents - all_team_members)
 
@@ -375,9 +345,7 @@ class AGNOConfigValidator:
         except (KeyError, TypeError):
             return None
 
-    def _merge_results(
-        self, target: ValidationResult, source: ValidationResult
-    ) -> None:
+    def _merge_results(self, target: ValidationResult, source: ValidationResult) -> None:
         """Merge validation results."""
         target.errors.extend(source.errors)
         target.warnings.extend(source.warnings)
@@ -391,9 +359,7 @@ class AGNOConfigValidator:
 
 
 # CLI interface for validation
-def validate_configurations(
-    base_path: str = "ai", verbose: bool = False
-) -> ValidationResult:
+def validate_configurations(base_path: str = "ai", verbose: bool = False) -> ValidationResult:
     """Validate all AGNO configurations in the project."""
     validator = AGNOConfigValidator(base_path)
 

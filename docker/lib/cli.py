@@ -43,9 +43,7 @@ def setup_foundational_services(
         True if setup successful, False otherwise
     """
     try:
-        logger.info(
-            "Starting foundational services setup", workspace=str(workspace_path)
-        )
+        logger.info("Starting foundational services setup", workspace=str(workspace_path))
 
         if verbose:
             pass
@@ -191,9 +189,7 @@ def setup_postgres_data_directories(
         True if setup successful, False otherwise
     """
     try:
-        logger.info(
-            "Setting up PostgreSQL data directories", workspace=str(workspace_path)
-        )
+        logger.info("Setting up PostgreSQL data directories", workspace=str(workspace_path))
 
         if verbose:
             pass
@@ -242,9 +238,7 @@ def validate_docker_compose_setup(workspace_path: Path, verbose: bool = False) -
             "docker-compose.yml": compose_file.exists(),
             ".env file": env_file.exists(),
             "PostgreSQL data directory": data_dir.exists(),
-            ".env permissions": env_file.stat().st_mode & 0o777 == 0o600
-            if env_file.exists()
-            else False,
+            ".env permissions": env_file.stat().st_mode & 0o777 == 0o600 if env_file.exists() else False,
         }
 
         all_valid = all(validation_results.values())
@@ -271,96 +265,44 @@ def validate_docker_compose_setup(workspace_path: Path, verbose: bool = False) -
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Docker Compose CLI for UVX Automagik Hive Foundational Services"
-    )
+    parser = argparse.ArgumentParser(description="Docker Compose CLI for UVX Automagik Hive Foundational Services")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Setup foundational services command
-    setup_parser = subparsers.add_parser(
-        "setup", help="Setup foundational services containerization"
-    )
-    setup_parser.add_argument(
-        "workspace_path", type=Path, help="Workspace directory path"
-    )
-    setup_parser.add_argument(
-        "--postgres-port", type=int, default=5532, help="PostgreSQL external port"
-    )
-    setup_parser.add_argument(
-        "--postgres-db", default="hive", help="PostgreSQL database name"
-    )
-    setup_parser.add_argument(
-        "--api-port", type=int, default=8886, help="API server port"
-    )
-    setup_parser.add_argument(
-        "--include-app", action="store_true", help="Include application service"
-    )
-    setup_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose output"
-    )
+    setup_parser = subparsers.add_parser("setup", help="Setup foundational services containerization")
+    setup_parser.add_argument("workspace_path", type=Path, help="Workspace directory path")
+    setup_parser.add_argument("--postgres-port", type=int, default=5532, help="PostgreSQL external port")
+    setup_parser.add_argument("--postgres-db", default="hive", help="PostgreSQL database name")
+    setup_parser.add_argument("--api-port", type=int, default=8886, help="API server port")
+    setup_parser.add_argument("--include-app", action="store_true", help="Include application service")
+    setup_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     # Generate PostgreSQL template command
-    postgres_parser = subparsers.add_parser(
-        "postgres", help="Generate PostgreSQL container template"
-    )
-    postgres_parser.add_argument(
-        "--output", type=Path, help="Output path for docker-compose.yml"
-    )
-    postgres_parser.add_argument(
-        "--port", type=int, default=5532, help="PostgreSQL external port"
-    )
-    postgres_parser.add_argument(
-        "--database", default="hive", help="PostgreSQL database name"
-    )
-    postgres_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose output"
-    )
+    postgres_parser = subparsers.add_parser("postgres", help="Generate PostgreSQL container template")
+    postgres_parser.add_argument("--output", type=Path, help="Output path for docker-compose.yml")
+    postgres_parser.add_argument("--port", type=int, default=5532, help="PostgreSQL external port")
+    postgres_parser.add_argument("--database", default="hive", help="PostgreSQL database name")
+    postgres_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     # Generate credentials command
-    creds_parser = subparsers.add_parser(
-        "credentials", help="Generate workspace credentials"
-    )
-    creds_parser.add_argument(
-        "workspace_path", type=Path, help="Workspace directory path"
-    )
-    creds_parser.add_argument(
-        "--postgres-port", type=int, default=5532, help="PostgreSQL port"
-    )
-    creds_parser.add_argument(
-        "--postgres-db", default="hive", help="PostgreSQL database name"
-    )
-    creds_parser.add_argument(
-        "--api-port", type=int, default=8886, help="API server port"
-    )
-    creds_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose output"
-    )
+    creds_parser = subparsers.add_parser("credentials", help="Generate workspace credentials")
+    creds_parser.add_argument("workspace_path", type=Path, help="Workspace directory path")
+    creds_parser.add_argument("--postgres-port", type=int, default=5532, help="PostgreSQL port")
+    creds_parser.add_argument("--postgres-db", default="hive", help="PostgreSQL database name")
+    creds_parser.add_argument("--api-port", type=int, default=8886, help="API server port")
+    creds_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     # Setup data directories command
-    data_parser = subparsers.add_parser(
-        "data", help="Setup PostgreSQL data directories"
-    )
-    data_parser.add_argument(
-        "workspace_path", type=Path, help="Workspace directory path"
-    )
-    data_parser.add_argument(
-        "--data-path", default="./data/postgres", help="PostgreSQL data path"
-    )
-    data_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose output"
-    )
+    data_parser = subparsers.add_parser("data", help="Setup PostgreSQL data directories")
+    data_parser.add_argument("workspace_path", type=Path, help="Workspace directory path")
+    data_parser.add_argument("--data-path", default="./data/postgres", help="PostgreSQL data path")
+    data_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     # Validate setup command
-    validate_parser = subparsers.add_parser(
-        "validate", help="Validate Docker Compose setup"
-    )
-    validate_parser.add_argument(
-        "workspace_path", type=Path, help="Workspace directory path"
-    )
-    validate_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose output"
-    )
+    validate_parser = subparsers.add_parser("validate", help="Validate Docker Compose setup")
+    validate_parser.add_argument("workspace_path", type=Path, help="Workspace directory path")
+    validate_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -403,9 +345,7 @@ if __name__ == "__main__":
         sys.exit(0 if success else 1)
 
     elif args.command == "validate":
-        success = validate_docker_compose_setup(
-            workspace_path=args.workspace_path, verbose=args.verbose
-        )
+        success = validate_docker_compose_setup(workspace_path=args.workspace_path, verbose=args.verbose)
         sys.exit(0 if success else 1)
 
     else:

@@ -80,19 +80,13 @@ class SmartIncrementalLoader:
 
         # Resolve CSV path: prefer explicit arg, else from config relative to this file
         if csv_path is None:
-            cfg_rel = (
-                self.config.get("knowledge", {}).get("csv_file_path", "test.csv")
-            )
+            cfg_rel = self.config.get("knowledge", {}).get("csv_file_path", "test.csv")
             self.csv_path = Path(__file__).parent / cfg_rel
         else:
             self.csv_path = Path(csv_path)
 
         # Table name from config (with default)
-        self.table_name = (
-            self.config.get("knowledge", {})
-            .get("vector_db", {})
-            .get("table_name", "knowledge_base")
-        )
+        self.table_name = self.config.get("knowledge", {}).get("vector_db", {}).get("table_name", "knowledge_base")
 
         # DB URL is required by tests
         db_url_env = os.getenv("HIVE_DATABASE_URL")
@@ -171,9 +165,7 @@ class SmartIncrementalLoader:
             try:
                 engine = self._engine()
                 with engine.connect() as conn:
-                    result = conn.execute(
-                        text("SELECT COUNT(*) FROM agno.knowledge_base")
-                    )
+                    result = conn.execute(text("SELECT COUNT(*) FROM agno.knowledge_base"))
                     row = result.fetchone()
                     if row is not None and row[0] is not None:
                         entries_processed = int(row[0])
@@ -349,21 +341,13 @@ class SmartIncrementalLoader:
                 ).fetchone()
                 has_hash = int(hash_row[0]) if hash_row and hash_row[0] is not None else 0
                 if has_hash == 0:
-                    app_log.logger.warning(
-                        "Table exists but no content_hash column - will recreate with hash tracking"
-                    )
+                    app_log.logger.warning("Table exists but no content_hash column - will recreate with hash tracking")
                     return set()
 
                 result = conn.execute(
-                    text(
-                        "SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL"
-                    )
+                    text("SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL")
                 )
-                return {
-                    cast(str, row[0])
-                    for row in result.fetchall()
-                    if row[0] is not None
-                }
+                return {cast(str, row[0]) for row in result.fetchall() if row[0] is not None}
         except Exception as exc:
             app_log.logger.warning("Could not check existing hashes", error=str(exc))
             return set()
@@ -481,9 +465,7 @@ class SmartIncrementalLoader:
                     try:
                         conn.rollback()
                     except Exception as rollback_exc:
-                        app_log.logger.debug(
-                            "Rollback failed during removal", error=str(rollback_exc)
-                        )
+                        app_log.logger.debug("Rollback failed during removal", error=str(rollback_exc))
                     raise
                 app_log.logger.info("Removed obsolete rows", removed_count=removed)
                 return removed

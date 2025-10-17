@@ -64,9 +64,7 @@ def build_and_validate() -> None:
     # Validate wheel contents
     wheel_file = wheel_files[0]
 
-    result = run_command(
-        ["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)]
-    )
+    result = run_command(["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)])
 
     wheel_contents = result.stdout
 

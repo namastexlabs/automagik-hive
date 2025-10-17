@@ -150,7 +150,7 @@ class TestAIRootResolution:
         # Create relative path by getting just the last part
         relative_path = Path(temp_ai_structure.name)
 
-        with patch('pathlib.Path.resolve', return_value=temp_ai_structure):
+        with patch("pathlib.Path.resolve", return_value=temp_ai_structure):
             result = resolve_ai_root(explicit_path=relative_path, settings=None)
             assert result.is_absolute()
 
@@ -214,17 +214,10 @@ class TestAIStructureValidation:
         expected_result = {
             "valid": True,
             "ai_root": str(temp_ai_structure),
-            "required_subdirs": {
-                "agents": True,
-                "teams": True,
-                "workflows": True
-            },
-            "optional_subdirs": {
-                "tools": True,
-                "templates": True
-            },
+            "required_subdirs": {"agents": True, "teams": True, "workflows": True},
+            "optional_subdirs": {"tools": True, "templates": True},
             "missing_subdirs": [],
-            "errors": []
+            "errors": [],
         }
 
         assert result == expected_result
@@ -385,7 +378,7 @@ class TestAISubdirectoryHelper:
         # Create a relative path reference
         relative_root = Path(".")
 
-        with patch('pathlib.Path.resolve', return_value=temp_ai_structure):
+        with patch("pathlib.Path.resolve", return_value=temp_ai_structure):
             result = get_ai_subdirectory(relative_root, "agents")
             assert result.is_absolute()
 
@@ -431,7 +424,7 @@ class TestAIRootErrorHandling:
             "AI root '/path/to/ai' is not a directory",
             "Required subdirectory 'agents' missing from AI root",
             "Permission denied accessing AI root directory",
-            "Invalid subdirectory 'invalid' - must be one of: agents, teams, workflows, tools, templates"
+            "Invalid subdirectory 'invalid' - must be one of: agents, teams, workflows, tools, templates",
         ]
 
         for message in error_scenarios:
@@ -683,6 +676,7 @@ class TestAIRootEdgeCases:
 
     def test_concurrent_directory_modification_during_validation(self, temp_ai_structure):
         """Test validation behavior when directory is modified during validation."""
+
         def modify_directory():
             # Wait a bit then modify directory
             time.sleep(0.1)

@@ -1,6 +1,5 @@
 """Tests for lib.logging.progress module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,6 +15,7 @@ class TestProgress:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.logging.progress
+
         assert lib.logging.progress is not None
 
     @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")

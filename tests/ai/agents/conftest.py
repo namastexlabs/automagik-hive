@@ -51,9 +51,7 @@ def mock_database_layer():
             "lib.services.component_version_service.ComponentVersionService",
             return_value=mock_component_service,
         ),
-        patch(
-            "lib.services.database_service.get_db_service", return_value=mock_db_service
-        ),
+        patch("lib.services.database_service.get_db_service", return_value=mock_db_service),
         # Mock version factory - These need to be AsyncMock since they are async functions
         patch(
             "lib.utils.version_factory.create_agent",

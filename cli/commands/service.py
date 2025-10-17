@@ -31,7 +31,7 @@ async def _gather_runtime_snapshot() -> dict[str, Any]:
 
 class ServiceManager:
     """Enhanced service management with Docker orchestration support."""
-    
+
     def __init__(self, workspace_path: Path | None = None):
         initialize_logging(surface="cli.commands.service")
         self.workspace_path = workspace_path or Path()
@@ -57,7 +57,7 @@ class ServiceManager:
 
     def serve_local(self, host: str | None = None, port: int | None = None, reload: bool = True) -> bool:
         """Start local development server with uvicorn.
-        
+
         ARCHITECTURAL RULE: Host and port come from environment variables via .env files.
         """
         postgres_started = False
@@ -70,7 +70,6 @@ class ServiceManager:
             actual_host = host or os.getenv("HIVE_API_HOST", "0.0.0.0")  # noqa: S104
             actual_port = port or int(os.getenv("HIVE_API_PORT", "8886"))
 
-
             # Check and auto-start PostgreSQL dependency if needed
             postgres_running, postgres_started = self._ensure_postgres_dependency()
             if not postgres_running:
@@ -78,10 +77,15 @@ class ServiceManager:
 
             # Build uvicorn command
             cmd = [
-                "uv", "run", "uvicorn", "api.serve:app",
+                "uv",
+                "run",
+                "uvicorn",
+                "api.serve:app",
                 "--factory",  # Explicitly declare app factory pattern
-                "--host", actual_host,
-                "--port", str(actual_port)
+                "--host",
+                actual_host,
+                "--port",
+                str(actual_port),
             ]
             if reload:
                 cmd.append("--reload")
@@ -145,7 +149,7 @@ class ServiceManager:
             else:
                 if postgres_started or self._is_postgres_dependency_active():
                     self._stop_postgres_dependency()
-    
+
     def serve_docker(self, workspace: str = ".") -> bool:
         """Start production Docker containers."""
         try:
@@ -154,11 +158,10 @@ class ServiceManager:
             return True  # Graceful shutdown
         except Exception:
             return False
-    
+
     def install_full_environment(self, workspace: str = ".") -> bool:
         """Complete environment setup with deployment choice - ENHANCED METHOD."""
         try:
-
             resolved_workspace = self._resolve_install_root(workspace)
             if Path(workspace).resolve() != resolved_workspace:
                 pass
@@ -168,6 +171,7 @@ class ServiceManager:
 
             # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
             from lib.auth.credential_service import CredentialService
+
             credential_service = CredentialService(project_root=resolved_workspace)
 
             # Generate workspace credentials using existing comprehensive service
@@ -177,10 +181,8 @@ class ServiceManager:
             if deployment_mode == "local_hybrid":
                 return self._setup_local_hybrid_deployment(str(resolved_workspace))
             else:  # full_docker
-                return self.main_service.install_main_environment(
-                    str(resolved_workspace)
-                )
-                
+                return self.main_service.install_main_environment(str(resolved_workspace))
+
         except KeyboardInterrupt:
             return False
         except Exception:
@@ -223,7 +225,6 @@ class ServiceManager:
     def _print_agentos_summary(self, payload: dict[str, Any]) -> None:
         """Render AgentOS configuration overview for terminal output."""
 
-
         payload.get("available_models") or []
 
         def _render_components(title: str, items: list[dict[str, Any]]) -> None:
@@ -244,20 +245,21 @@ class ServiceManager:
         try:
             import shutil
             from pathlib import Path
-            
+
             workspace_path = Path(workspace)
             env_file = workspace_path / ".env"
             env_example = workspace_path / ".env.example"
-            
+
             if not env_file.exists():
                 if env_example.exists():
                     shutil.copy(env_example, env_file)
                 else:
                     return False
-            
+
             # Generate API key if needed
             try:
                 from lib.auth.init_service import AuthInitService
+
                 auth_service = AuthInitService()
                 existing_key = auth_service.get_current_key()
                 if existing_key:
@@ -267,7 +269,7 @@ class ServiceManager:
             except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
                 # Continue anyway - not critical for basic setup
-            
+
             return True
         except Exception:
             return False
@@ -275,41 +277,40 @@ class ServiceManager:
     def _setup_postgresql_interactive(self, workspace: str) -> bool:
         """Interactive PostgreSQL setup - validates credentials exist in .env."""
         try:
-            
             try:
                 response = input().strip().lower()
             except (EOFError, KeyboardInterrupt):
                 response = "y"  # Default to yes for automated scenarios
-            
+
             if response in ["n", "no"]:
                 return True
-            
+
             # Credential generation now handled by CredentialService.install_all_modes()
-            
+
             env_file = Path(workspace) / ".env"
             if not env_file.exists():
                 return False
-                
+
             env_content = env_file.read_text()
             if "HIVE_DATABASE_URL=" not in env_content:
                 return False
-            
+
             # Extract and validate that it's not a placeholder
-            db_url_line = [line for line in env_content.split('\n') if line.startswith('HIVE_DATABASE_URL=')][0]
-            db_url = db_url_line.split('=', 1)[1].strip()
-            
-            if 'your-' in db_url or 'password-here' in db_url:
+            db_url_line = [line for line in env_content.split("\n") if line.startswith("HIVE_DATABASE_URL=")][0]
+            db_url = db_url_line.split("=", 1)[1].strip()
+
+            if "your-" in db_url or "password-here" in db_url:
                 return False
-            
+
             # The main service will handle the actual Docker setup
             return True
-            
+
         except Exception:
             return False
-    
+
     def _prompt_deployment_choice(self) -> str:
         """Interactive deployment choice selection - NEW METHOD."""
-        
+
         while True:
             try:
                 choice = input("\nEnter your choice (A/B) [default: A]: ").strip().upper()
@@ -321,60 +322,59 @@ class ServiceManager:
                     pass
             except (EOFError, KeyboardInterrupt):
                 return "local_hybrid"  # Default for automated scenarios
-    
+
     def _setup_local_hybrid_deployment(self, workspace: str) -> bool:
         """Setup local main + PostgreSQL docker only - NEW METHOD."""
         try:
             return self.main_service.start_postgres_only(workspace)
         except Exception:
             return False
-    
+
     # Credential generation handled by CredentialService.install_all_modes()
-    
+
     def stop_docker(self, workspace: str = ".") -> bool:
         """Stop Docker production containers."""
         try:
             return self.main_service.stop_main(workspace)
         except Exception:
             return False
-    
+
     def restart_docker(self, workspace: str = ".") -> bool:
         """Restart Docker production containers."""
         try:
             return self.main_service.restart_main(workspace)
         except Exception:
             return False
-    
+
     def docker_status(self, workspace: str = ".") -> dict[str, str]:
         """Get Docker containers status."""
         try:
             return self.main_service.get_main_status(workspace)
         except Exception:
             return {"hive-postgres": "🛑 Stopped", "hive-api": "🛑 Stopped"}
-    
+
     def docker_logs(self, workspace: str = ".", tail: int = 50) -> bool:
         """Show Docker containers logs."""
         try:
             return self.main_service.show_main_logs(workspace, tail)
         except Exception:
             return False
-    
+
     def uninstall_environment(self, workspace: str = ".") -> bool:
         """Uninstall main environment - COMPLETE SYSTEM WIPE."""
         try:
-            
             # Get user confirmation for complete wipe
             try:
                 response = input().strip()
             except (EOFError, KeyboardInterrupt):
                 return False
-            
+
             if response != "WIPE ALL":
                 return False
-            
+
             success_count = 0
             total_environments = 1
-            
+
             # Uninstall Main Environment
             try:
                 if self.uninstall_main_only(workspace):
@@ -383,30 +383,29 @@ class ServiceManager:
                     pass
             except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
-            
+
             # Final status
-            
+
             if success_count == total_environments:
                 return True
             else:
                 return success_count > 0  # Consider partial success as success
-                
+
         except Exception:
             return False
-    
+
     def uninstall_main_only(self, workspace: str = ".") -> bool:
         """Uninstall ONLY the main production environment with database preservation option."""
         try:
-            
             # Ask about database preservation
-            
+
             try:
                 response = input().strip().lower()
             except (EOFError, KeyboardInterrupt):
                 response = "y"  # Default to preserve data for safety
-            
+
             preserve_data = response not in ["n", "no"]
-            
+
             if preserve_data:
                 result = self.main_service.uninstall_preserve_data(workspace)
             else:
@@ -414,16 +413,16 @@ class ServiceManager:
                     confirm = input().strip().lower()
                 except (EOFError, KeyboardInterrupt):
                     confirm = "no"
-                
+
                 if confirm == "yes":
                     result = self.main_service.uninstall_wipe_data(workspace)
                 else:
                     return False
-            
+
             return result
         except Exception:
             return False
-    
+
     def manage_service(self, service_name: str | None = None) -> bool:
         """Legacy method for compatibility."""
         try:
@@ -434,11 +433,11 @@ class ServiceManager:
             return True
         except Exception:
             return False
-    
+
     def execute(self) -> bool:
         """Execute service manager."""
         return self.manage_service()
-    
+
     def status(self) -> dict[str, Any]:
         """Get service manager status."""
         docker_status = self.docker_status()
@@ -482,7 +481,7 @@ class ServiceManager:
             # Check current PostgreSQL status
             status = self.main_service.get_main_status(str(self.workspace_path))
             postgres_status = status.get("hive-postgres", "")
-            
+
             if "✅ Running" in postgres_status:
                 return True, False
 
@@ -495,7 +494,6 @@ class ServiceManager:
             if not env_file.exists():
                 return False, False
 
-
             # Start only PostgreSQL container using Docker Compose
             try:
                 result = subprocess.run(
@@ -505,7 +503,7 @@ class ServiceManager:
                     text=True,
                     timeout=60,
                 )
-                
+
                 if result.returncode != 0:
                     return False, False
 

@@ -53,9 +53,7 @@ async def get_mcp_tools(server_name: str) -> AsyncIterator[MCPTools]:
     # Create MCPTools based on server type
     try:
         if server_config.is_sse_server:
-            tools = MCPTools(
-                url=server_config.url, transport="sse", env=server_config.env or {}
-            )
+            tools = MCPTools(url=server_config.url, transport="sse", env=server_config.env or {})
         elif server_config.is_command_server:
             command_parts = [server_config.command]
             if server_config.args:
@@ -104,9 +102,7 @@ def create_mcp_tools_sync(server_name: str) -> MCPTools | None:
 
     try:
         if server_config.is_sse_server:
-            return MCPTools(
-                url=server_config.url, transport="sse", env=server_config.env or {}
-            )
+            return MCPTools(url=server_config.url, transport="sse", env=server_config.env or {})
         if server_config.is_command_server:
             command_parts = [server_config.command]
             if server_config.args:

@@ -1,6 +1,5 @@
 """Tests for lib.config.server_config module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,11 +15,13 @@ class TestServerConfig:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.config.server_config
+
         assert lib.config.server_config is not None
 
     def test_module_attributes(self):
         """Test module has expected attributes."""
         import lib.config.server_config
+
         # Add specific attribute tests as needed
         assert hasattr(lib.config.server_config, "__doc__")
 

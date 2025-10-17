@@ -40,18 +40,14 @@ def load_agentos_config(
 
     if config is None:
         if active_settings is None:
-            raise AgentOSConfigError(
-                "HiveSettings validation failed; cannot build AgentOS defaults"
-            )
+            raise AgentOSConfigError("HiveSettings validation failed; cannot build AgentOS defaults")
         config = build_default_agentos_config(settings=active_settings)
 
     if overrides:
         try:
             config = config.model_copy(update=overrides)
         except ValidationError as exc:
-            raise AgentOSConfigError(
-                "Overrides could not be applied to AgentOS configuration"
-            ) from exc
+            raise AgentOSConfigError("Overrides could not be applied to AgentOS configuration") from exc
 
     return config
 
@@ -95,13 +91,9 @@ def _load_from_file(path: Path) -> AgentOSConfig:
         with path.open(encoding="utf-8") as handle:
             payload = yaml.safe_load(handle) or {}
     except Exception as exc:  # pragma: no cover - defensive logging
-        raise AgentOSConfigError(
-            f"Unable to load AgentOS configuration from {path}: {exc}"
-        ) from exc
+        raise AgentOSConfigError(f"Unable to load AgentOS configuration from {path}: {exc}") from exc
 
     try:
         return AgentOSConfig.model_validate(payload)
     except ValidationError as exc:
-        raise AgentOSConfigError(
-            f"AgentOS configuration at {path} failed validation"
-        ) from exc
+        raise AgentOSConfigError(f"AgentOS configuration at {path} failed validation") from exc

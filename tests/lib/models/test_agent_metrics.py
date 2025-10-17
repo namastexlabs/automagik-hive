@@ -1,6 +1,5 @@
 """Tests for lib.models.agent_metrics module."""
 
-
 import pytest
 
 # Import the module under test
@@ -16,6 +15,7 @@ class TestAgentMetrics:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.models.agent_metrics
+
         assert lib.models.agent_metrics is not None
 
     @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")

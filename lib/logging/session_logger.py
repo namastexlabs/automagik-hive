@@ -250,9 +250,7 @@ session_logger = SessionLifecycleLogger()
 
 
 # Convenience functions for easy import and use
-def log_session_start(
-    session_id: str, agent_id: str, user_id: str | None = None, **kwargs
-) -> None:
+def log_session_start(session_id: str, agent_id: str, user_id: str | None = None, **kwargs) -> None:
     """Convenience function to log session start."""
     session_logger.log_session_start(session_id, agent_id, user_id, kwargs)
 
@@ -262,24 +260,16 @@ def log_run_creation(run_id: str, session_id: str, agent_id: str, **kwargs) -> N
     session_logger.log_run_creation(run_id, session_id, agent_id, **kwargs)
 
 
-def log_run_continuation_attempt(
-    run_id: str, session_id: str, agent_id: str, **kwargs
-) -> None:
+def log_run_continuation_attempt(run_id: str, session_id: str, agent_id: str, **kwargs) -> None:
     """Convenience function to log run continuation attempt."""
     session_logger.log_run_continuation_attempt(run_id, session_id, agent_id, **kwargs)
 
 
-def log_run_continuation_success(
-    run_id: str, session_id: str, agent_id: str, **kwargs
-) -> None:
+def log_run_continuation_success(run_id: str, session_id: str, agent_id: str, **kwargs) -> None:
     """Convenience function to log run continuation success."""
     session_logger.log_run_continuation_success(run_id, session_id, agent_id, **kwargs)
 
 
-def log_run_continuation_failure(
-    run_id: str, session_id: str, agent_id: str, error: str, **kwargs
-) -> None:
+def log_run_continuation_failure(run_id: str, session_id: str, agent_id: str, error: str, **kwargs) -> None:
     """Convenience function to log run continuation failure."""
-    session_logger.log_run_continuation_failure(
-        run_id, session_id, agent_id, error, type(error).__name__, **kwargs
-    )
+    session_logger.log_run_continuation_failure(run_id, session_id, agent_id, error, type(error).__name__, **kwargs)

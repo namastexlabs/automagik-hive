@@ -26,9 +26,7 @@ async def lifespan(_app: FastAPI):
 
     # Log security warnings for production
     if auth_status["production_override_active"]:
-        logger.warning(
-            "Production Security Override: Authentication ENABLED despite HIVE_AUTH_DISABLED=true"
-        )
+        logger.warning("Production Security Override: Authentication ENABLED despite HIVE_AUTH_DISABLED=true")
 
     yield
 
@@ -85,10 +83,7 @@ def create_app() -> FastAPI:
     )
 
     if not use_credentials:
-        logger.debug(
-            "CORS credentials disabled due to wildcard origin",
-            origins=cors_origins
-        )
+        logger.debug("CORS credentials disabled due to wildcard origin", origins=cors_origins)
 
     return app
 
