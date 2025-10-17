@@ -98,7 +98,7 @@ class TestMetricsServicePerformance:
         max_latency = max(latencies)
         avg_latency = sum(latencies) / len(latencies)
         max_threshold = 100.0 * TIMEOUT_MULTIPLIER  # Increased from 1.0ms to 100ms
-        avg_threshold = 50.0 * TIMEOUT_MULTIPLIER   # Increased from 0.5ms to 50ms
+        avg_threshold = 50.0 * TIMEOUT_MULTIPLIER  # Increased from 0.5ms to 50ms
 
         assert max_latency < max_threshold, f"Max latency {max_latency:.3f}ms exceeds {max_threshold:.1f}ms threshold"
         assert avg_latency < avg_threshold, f"Avg latency {avg_latency:.3f}ms exceeds {avg_threshold:.1f}ms threshold"
