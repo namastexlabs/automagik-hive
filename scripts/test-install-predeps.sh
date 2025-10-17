@@ -212,20 +212,31 @@ test_uv_installer_download() {
     # Test that we can download the UV installer (without executing it)
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap 'rm -rf "$temp_dir"' RETURN
-    
+
+    # Use EXIT trap instead of RETURN to ensure cleanup happens correctly
+    local cleanup_done=false
+    cleanup_temp_dir() {
+        if [[ "$cleanup_done" == false && -n "${temp_dir:-}" && -d "$temp_dir" ]]; then
+            rm -rf "$temp_dir"
+            cleanup_done=true
+        fi
+    }
+    trap cleanup_temp_dir RETURN
+
     local install_script="$temp_dir/install.sh"
-    
+
     if curl -fsSL "https://astral.sh/uv/install.sh" -o "$install_script"; then
         assert_file_exists "$install_script" "UV installer should be downloaded"
-        
+
         # Check that the downloaded file looks like a shell script
         local first_line
         first_line=$(head -n1 "$install_script")
         assert_contains "$first_line" "#!/" "Downloaded file should be a shell script"
-        
+
+        cleanup_temp_dir
         return 0
     else
+        cleanup_temp_dir
         return 1
     fi
 }
