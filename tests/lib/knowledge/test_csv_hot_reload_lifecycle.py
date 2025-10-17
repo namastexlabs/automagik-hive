@@ -446,8 +446,8 @@ class TestRealWorldScenarios:
                 assert status["status"] == "running"
 
                 # Mock SmartIncrementalLoader for reload operations
-                with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
-                    mock_smart_load.return_value = {'strategy': 'incremental_update'}
+                with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
+                    mock_smart_load.return_value = {"strategy": "incremental_update"}
 
                     # Simulate file modification
                     updated_content = initial_content + "2,New content\n"
@@ -498,11 +498,11 @@ class TestRealWorldScenarios:
             manager.knowledge_base = Mock()
 
             # Mock SmartIncrementalLoader with failing then successful loads
-            with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+            with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
                 mock_smart_load.side_effect = [
                     Exception("First failure"),
                     Exception("Second failure"),
-                    {'strategy': 'incremental_update'}
+                    {"strategy": "incremental_update"},
                 ]
 
                 # Should handle multiple failures gracefully
@@ -514,6 +514,6 @@ class TestRealWorldScenarios:
 
                 # Test force reload after failures - reset side_effect for success
                 mock_smart_load.side_effect = None
-                mock_smart_load.return_value = {'strategy': 'incremental_update'}
+                mock_smart_load.return_value = {"strategy": "incremental_update"}
                 manager.force_reload()
                 assert mock_smart_load.call_count == 4

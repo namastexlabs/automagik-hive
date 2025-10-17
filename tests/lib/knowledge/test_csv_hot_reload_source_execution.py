@@ -304,8 +304,9 @@ knowledge:
 
         # Mock SmartIncrementalLoader for reload
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
-        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
-            mock_smart_load.return_value = {'strategy': 'incremental_update'}
+
+        with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
+            mock_smart_load.return_value = {"strategy": "incremental_update"}
 
             # Execute reload with updated content
             manager._reload_knowledge_base()
@@ -329,8 +330,9 @@ knowledge:
 
         # Mock SmartIncrementalLoader to return error
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
-        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
-            mock_smart_load.return_value = {'error': 'Reload error'}
+
+        with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
+            mock_smart_load.return_value = {"error": "Reload error"}
 
             # Execute reload with error
             manager._reload_knowledge_base()

@@ -362,12 +362,12 @@ class TestCSVHotReloadManagerReloading:
         self.manager.knowledge_base = mock_kb
 
         # Mock SmartIncrementalLoader since _reload_knowledge_base uses it
-        with patch('lib.knowledge.smart_incremental_loader.SmartIncrementalLoader') as mock_loader_class:
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader.smart_load.return_value = {
-                'strategy': 'incremental_update',
-                'new_rows_processed': 2,
-                'rows_removed': 0
+                "strategy": "incremental_update",
+                "new_rows_processed": 2,
+                "rows_removed": 0,
             }
             mock_loader_class.return_value = mock_loader
 
@@ -390,13 +390,13 @@ class TestCSVHotReloadManagerReloading:
         self.manager.knowledge_base = mock_kb
 
         # Mock SmartIncrementalLoader to return error
-        with patch('lib.knowledge.smart_incremental_loader.SmartIncrementalLoader') as mock_loader_class:
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
             mock_loader = Mock()
-            mock_loader.smart_load.return_value = {'error': 'Load failed'}
+            mock_loader.smart_load.return_value = {"error": "Load failed"}
             mock_loader_class.return_value = mock_loader
 
             # Should handle error gracefully and fall back to basic load
-            with patch.object(mock_kb, 'load') as mock_load:
+            with patch.object(mock_kb, "load") as mock_load:
                 self.manager._reload_knowledge_base()
 
                 # Verify fallback to basic load was attempted
@@ -507,9 +507,11 @@ class TestCSVHotReloadManagerIntegration:
                             mock_observer.start.assert_called_once()
 
                             # Force reload with SmartIncrementalLoader mock
-                            with patch('lib.knowledge.smart_incremental_loader.SmartIncrementalLoader') as mock_loader_class:
+                            with patch(
+                                "lib.knowledge.smart_incremental_loader.SmartIncrementalLoader"
+                            ) as mock_loader_class:
                                 mock_loader = Mock()
-                                mock_loader.smart_load.return_value = {'strategy': 'incremental_update'}
+                                mock_loader.smart_load.return_value = {"strategy": "incremental_update"}
                                 mock_loader_class.return_value = mock_loader
 
                                 manager.force_reload()
@@ -741,12 +743,9 @@ class TestCSVHotReloadErrorHandling:
         manager.knowledge_base = mock_kb
 
         # Mock SmartIncrementalLoader for successful reload
-        with patch('lib.knowledge.smart_incremental_loader.SmartIncrementalLoader') as mock_loader_class:
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
             mock_loader = Mock()
-            mock_loader.smart_load.return_value = {
-                'strategy': 'incremental_update',
-                'new_rows_processed': 2
-            }
+            mock_loader.smart_load.return_value = {"strategy": "incremental_update", "new_rows_processed": 2}
             mock_loader_class.return_value = mock_loader
 
             manager._reload_knowledge_base()
@@ -755,7 +754,7 @@ class TestCSVHotReloadErrorHandling:
             mock_logger.info.assert_called()
 
         # Test error logging with smart loader error
-        with patch('lib.knowledge.smart_incremental_loader.SmartIncrementalLoader') as mock_loader_class:
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader.smart_load.side_effect = Exception("Test error")
             mock_loader_class.return_value = mock_loader
@@ -830,9 +829,9 @@ class TestCSVHotReloadPerformance:
         manager.knowledge_base = mock_kb
 
         # Mock SmartIncrementalLoader for all reload calls
-        with patch('lib.knowledge.smart_incremental_loader.SmartIncrementalLoader') as mock_loader_class:
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
             mock_loader = Mock()
-            mock_loader.smart_load.return_value = {'strategy': 'no_changes'}
+            mock_loader.smart_load.return_value = {"strategy": "no_changes"}
             mock_loader_class.return_value = mock_loader
 
             # Simulate concurrent reloads

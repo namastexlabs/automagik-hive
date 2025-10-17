@@ -231,8 +231,9 @@ class TestKnowledgeBaseReloading:
 
         # Mock SmartIncrementalLoader since _reload_knowledge_base uses it
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
-        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
-            mock_smart_load.return_value = {'strategy': 'incremental_update'}
+
+        with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
+            mock_smart_load.return_value = {"strategy": "incremental_update"}
 
             with patch("lib.knowledge.csv_hot_reload.logger") as mock_logger:
                 manager._reload_knowledge_base()
@@ -431,12 +432,13 @@ class TestEdgeCasesAndErrorHandling:
 
             # Mock SmartIncrementalLoader for multiple reload attempts
             from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
-            with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+
+            with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
                 # Simulate multiple failures then success
                 mock_smart_load.side_effect = [
-                    {'error': 'Error 1'},
-                    {'error': 'Error 2'},
-                    {'strategy': 'incremental_update'}
+                    {"error": "Error 1"},
+                    {"error": "Error 2"},
+                    {"strategy": "incremental_update"},
                 ]
 
                 # Should handle multiple failures gracefully

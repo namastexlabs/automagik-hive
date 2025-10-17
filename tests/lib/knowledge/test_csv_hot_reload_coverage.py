@@ -303,11 +303,12 @@ class TestKnowledgeBaseReloading:
 
         # Mock SmartIncrementalLoader since _reload_knowledge_base uses it
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
-        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+
+        with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
             mock_smart_load.return_value = {
-                'strategy': 'incremental_update',
-                'new_rows_processed': 2,
-                'rows_removed': 0
+                "strategy": "incremental_update",
+                "new_rows_processed": 2,
+                "rows_removed": 0,
             }
 
             manager._reload_knowledge_base()
@@ -532,8 +533,9 @@ class TestEdgeCasesAndErrorHandling:
 
         # Mock SmartIncrementalLoader to return error
         from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
-        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
-            mock_smart_load.return_value = {'error': 'Invalid CSV format'}
+
+        with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
+            mock_smart_load.return_value = {"error": "Invalid CSV format"}
 
             # Should handle invalid CSV content gracefully
             manager._reload_knowledge_base()
@@ -650,8 +652,9 @@ class TestIntegrationScenarios:
 
             # Mock SmartIncrementalLoader for reload
             from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
-            with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
-                mock_smart_load.return_value = {'strategy': 'incremental_update'}
+
+            with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
+                mock_smart_load.return_value = {"strategy": "incremental_update"}
 
                 manager._reload_knowledge_base()
                 # Verify smart_load was called

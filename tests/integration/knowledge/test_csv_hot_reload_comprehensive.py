@@ -696,8 +696,8 @@ class TestCSVHotReloadPerformance:
         manager.knowledge_base = mock_kb
 
         # Mock SmartIncrementalLoader for all reload calls
-        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
-            mock_smart_load.return_value = {'strategy': 'no_changes'}
+        with patch.object(SmartIncrementalLoader, "smart_load") as mock_smart_load:
+            mock_smart_load.return_value = {"strategy": "no_changes"}
 
             # Simulate concurrent reloads
             manager._reload_knowledge_base()

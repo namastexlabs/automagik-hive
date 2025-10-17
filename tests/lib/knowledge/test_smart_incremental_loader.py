@@ -702,7 +702,7 @@ class TestSmartIncrementalLoaderAnalysis:
             loader = SmartIncrementalLoader(str(self.csv_file))
 
             # Mock _get_existing_row_hashes to return one existing hash
-            with patch.object(loader, '_get_existing_row_hashes') as mock_get_hashes:
+            with patch.object(loader, "_get_existing_row_hashes") as mock_get_hashes:
                 # Get the first row's hash and mark it as existing
                 first_hash = loader._hash_row(mock_rows[0][1])
                 mock_get_hashes.return_value = {first_hash}
@@ -747,7 +747,7 @@ class TestSmartIncrementalLoaderAnalysis:
             loader = SmartIncrementalLoader(str(self.csv_file))
 
             # Mock _get_existing_row_hashes to return all row hashes
-            with patch.object(loader, '_get_existing_row_hashes') as mock_get_hashes:
+            with patch.object(loader, "_get_existing_row_hashes") as mock_get_hashes:
                 # Mark all rows as existing
                 all_hashes = {loader._hash_row(row[1]) for row in mock_rows}
                 mock_get_hashes.return_value = all_hashes
@@ -785,7 +785,7 @@ class TestSmartIncrementalLoaderAnalysis:
             loader = SmartIncrementalLoader(str(self.csv_file))
 
             # Mock _get_existing_row_hashes to raise exception
-            with patch.object(loader, '_get_existing_row_hashes', side_effect=Exception("Database connection failed")):
+            with patch.object(loader, "_get_existing_row_hashes", side_effect=Exception("Database connection failed")):
                 analysis = loader.analyze_changes()
 
             assert "error" in analysis
@@ -1149,12 +1149,12 @@ class TestSmartIncrementalLoaderSingleRowProcessing:
 
         with patch.object(SmartIncrementalLoader, "_update_row_hash", return_value=True) as mock_update_hash:
             loader = SmartIncrementalLoader(str(self.csv_file), kb=mock_kb)
-            
+
             # Mock build_document_from_row to return a document
             mock_doc = MagicMock()
             mock_doc.name = "test_document"
-            with patch.object(mock_kb, 'build_document_from_row', return_value=mock_doc):
-                with patch.object(mock_kb, 'add_document') as mock_add_doc:
+            with patch.object(mock_kb, "build_document_from_row", return_value=mock_doc):
+                with patch.object(mock_kb, "add_document") as mock_add_doc:
                     result = loader._process_single_row(row_data)
 
                     assert result is True
@@ -1175,14 +1175,14 @@ class TestSmartIncrementalLoaderSingleRowProcessing:
 
         with patch("lib.logging.logger") as mock_logger:
             loader = SmartIncrementalLoader(str(self.csv_file), kb=mock_kb)
-            
+
             # Mock build_document_from_row to return a document
             mock_doc = MagicMock()
             mock_doc.name = "test_document"
-            
+
             # Mock add_document to raise error
-            with patch.object(mock_kb, 'build_document_from_row', return_value=mock_doc):
-                with patch.object(mock_kb, 'add_document', side_effect=Exception("KB load failed")):
+            with patch.object(mock_kb, "build_document_from_row", return_value=mock_doc):
+                with patch.object(mock_kb, "add_document", side_effect=Exception("KB load failed")):
                     result = loader._process_single_row(row_data)
 
                     assert result is False
