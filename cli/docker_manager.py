@@ -28,7 +28,7 @@ class DockerManager:
 
     # Port mappings - read from environment with no hardcoded fallbacks
     @property
-    def ports(self) -> dict[str, dict[str, int]]:
+    def ports(self) -> dict[str, int]:
         """Port mappings for all components from environment variables.
 
         ARCHITECTURAL RULE: All ports must come from environment variables.
@@ -51,6 +51,12 @@ class DockerManager:
             )
 
         return {"postgres": int(os.getenv("HIVE_POSTGRES_PORT")), "api": int(os.getenv("HIVE_API_PORT", "8886"))}
+
+    # PORTS attribute for test compatibility
+    @property
+    def PORTS(self) -> dict[str, int]:
+        """Uppercase PORTS for test compatibility - delegates to ports property."""
+        return self.ports
 
     def _get_ports(self) -> dict[str, int]:
         """Get port mappings from environment variables."""
@@ -75,20 +81,25 @@ class DockerManager:
                 return result.stdout.strip()
             subprocess.run(cmd, check=True)
             return None
-        except subprocess.CalledProcessError:
-            if capture_output:
-                pass
+        except subprocess.CalledProcessError as e:
+            if capture_output and e.stderr:
+                print(f"❌ Command failed: {cmd[0]}")
+                print(f"Error: {e.stderr}")
             return None
         except FileNotFoundError:
+            if capture_output:
+                print(f"❌ Command not found: {cmd[0]}")
             return None
 
     def _check_docker(self) -> bool:
         """Check if Docker is available."""
         if not self._run_command(["docker", "--version"], capture_output=True):
+            print("❌ Docker not found. Please install Docker first.")
             return False
 
         # Check if Docker daemon is running
         if not self._run_command(["docker", "ps"], capture_output=True):
+            print("❌ Docker daemon not running. Please start Docker.")
             return False
 
         return True
@@ -99,6 +110,7 @@ class DockerManager:
         normalized = component.lower()
         containers = self.CONTAINERS.get(normalized)
         if not containers:
+            print(f"❌ Unsupported component: {component}")
             return []
 
         # Return a copy to avoid accidental mutation by callers/tests
@@ -140,6 +152,7 @@ class DockerManager:
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
 
+        print("⚠️ Neither 'docker compose' nor 'docker-compose' found")
         return "docker compose"  # Default to newer format
 
     def _create_network(self) -> None:
@@ -186,6 +199,7 @@ class DockerManager:
 
         compose_file = self.template_files[component]
         if not compose_file.exists():
+            print(f"❌ Docker Compose file not found: {compose_file}")
             return False
 
         # Create component-specific .env file for Docker Compose
@@ -439,6 +453,7 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return
 
+        print(f"📊 {component.title()} Status:")
         for container in containers:
             if self._container_exists(container):
                 if self._container_running(container):
@@ -447,10 +462,13 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
                     status = "🟢 Running"
                     if port_info:
                         status += f" - {port_info.split(' -> ')[0]}"
+                    print(f"  {container:30} {status}")
                 else:
                     status = "🔴 Stopped"
+                    print(f"  {container:30} {status}")
             else:
                 status = "❌ Not installed"
+                print(f"  {container:30} {status}")
 
     def health(self, component: str) -> None:
         """Check component health."""
@@ -458,14 +476,15 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return
 
+        print(f"🏥 {component.title()} Health Check:")
         for container in containers:
             if self._container_running(container):
                 # Basic health check - container running
-                pass
+                print(f"  {container:30} 🟢 Healthy")
             elif self._container_exists(container):
-                pass
+                print(f"  {container:30} 🟡 Stopped")
             else:
-                pass
+                print(f"  {container:30} 🔴 Not installed")
 
     def logs(self, component: str, lines: int = 50) -> None:
         """Show component logs."""
@@ -475,9 +494,10 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
         for container in containers:
             if self._container_exists(container):
+                print(f"📋 Logs for {container} (last {lines} lines):")
                 self._run_command(["docker", "logs", "--tail", str(lines), container])
             else:
-                pass
+                print(f"❌ Container {container} not found")
 
     def uninstall(self, component: str) -> bool:
         """Uninstall component containers - autonomous operation (no confirmation)."""

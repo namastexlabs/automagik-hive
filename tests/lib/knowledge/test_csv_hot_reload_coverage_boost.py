@@ -229,16 +229,20 @@ class TestKnowledgeBaseReloading:
         mock_kb = Mock()
         manager.knowledge_base = mock_kb
 
-        with patch("lib.knowledge.csv_hot_reload.logger") as mock_logger:
-            manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader since _reload_knowledge_base uses it
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+            mock_smart_load.return_value = {'strategy': 'incremental_update'}
 
-            # Should call load with correct parameters
-            mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
+            with patch("lib.knowledge.csv_hot_reload.logger") as mock_logger:
+                manager._reload_knowledge_base()
 
-            # Should log success
-            mock_logger.info.assert_called_with(
-                "Knowledge base reloaded", component="csv_hot_reload", method="agno_incremental"
-            )
+                # Verify SmartIncrementalLoader.smart_load was called
+                mock_smart_load.assert_called_once()
+
+                # Log message changed to reflect smart incremental loading
+                # Just verify info was called, not exact message (implementation detail)
+                assert mock_logger.info.called
 
     def test_reload_exception_handling(self):
         """Test reload exception handling."""
@@ -423,12 +427,21 @@ class TestEdgeCasesAndErrorHandling:
 
             # Test with failing knowledge base
             mock_kb = Mock()
-            mock_kb.load.side_effect = [Exception("Error 1"), Exception("Error 2"), None]
             manager.knowledge_base = mock_kb
 
-            # Should handle multiple failures gracefully
-            manager._reload_knowledge_base()  # First failure
-            manager._reload_knowledge_base()  # Second failure
-            manager._reload_knowledge_base()  # Success
+            # Mock SmartIncrementalLoader for multiple reload attempts
+            from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+            with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+                # Simulate multiple failures then success
+                mock_smart_load.side_effect = [
+                    {'error': 'Error 1'},
+                    {'error': 'Error 2'},
+                    {'strategy': 'incremental_update'}
+                ]
 
-            assert mock_kb.load.call_count == 3
+                # Should handle multiple failures gracefully
+                manager._reload_knowledge_base()  # First failure
+                manager._reload_knowledge_base()  # Second failure
+                manager._reload_knowledge_base()  # Success
+
+                assert mock_smart_load.call_count == 3

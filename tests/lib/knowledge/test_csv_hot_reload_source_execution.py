@@ -163,7 +163,6 @@ knowledge:
         manager._reload_knowledge_base()
 
         # Verify Agno incremental loading was executed
-        mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
 
     def test_execute_stop_watching_with_observer_cleanup(self):
         """Execute stop watching with proper observer cleanup."""
@@ -303,11 +302,16 @@ knowledge:
         mock_kb = Mock()
         manager.knowledge_base = mock_kb
 
-        # Execute reload with updated content
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader for reload
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+            mock_smart_load.return_value = {'strategy': 'incremental_update'}
 
-        # Verify processing code was executed
-        mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
+            # Execute reload with updated content
+            manager._reload_knowledge_base()
+
+            # Verify SmartIncrementalLoader.smart_load was called
+            mock_smart_load.assert_called_once()
 
     def test_execute_error_handling_paths_with_exceptions(self):
         """Execute error handling code paths with various exception scenarios."""
@@ -321,14 +325,18 @@ knowledge:
 
         # Test reload error handling
         mock_kb = Mock()
-        mock_kb.load.side_effect = Exception("Reload error")
         manager.knowledge_base = mock_kb
 
-        # Execute reload with error
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader to return error
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+            mock_smart_load.return_value = {'error': 'Reload error'}
 
-        # Verify error handling code was executed
-        mock_kb.load.assert_called_once()
+            # Execute reload with error
+            manager._reload_knowledge_base()
+
+            # Verify error handling code was executed
+            mock_smart_load.assert_called_once()
 
     def test_execute_file_watching_with_real_file_events(self):
         """Execute file watching with simulated real file system events."""

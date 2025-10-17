@@ -758,15 +758,15 @@ def test_production_size_limits():
     # Verify these match the Field definitions in our test models
     # In Pydantic V2, access constraints through the Field metadata
     agent_fields = ProductionAgentRequest.model_fields
-    assert agent_fields["message"].annotation is str
-    assert agent_fields["session_id"].annotation is str | None
+    assert agent_fields["message"].annotation == str
+    assert agent_fields["session_id"].annotation == (str | None)
 
     team_fields = ProductionTeamRequest.model_fields
-    assert team_fields["task"].annotation is str
-    assert team_fields["team_id"].annotation is str | None
+    assert team_fields["task"].annotation == str
+    assert team_fields["team_id"].annotation == (str | None)
 
     workflow_fields = ProductionWorkflowRequest.model_fields
-    assert workflow_fields["workflow_id"].annotation is str
+    assert workflow_fields["workflow_id"].annotation == str
 
     # Test that the constraints work by testing boundary values
     # This indirectly verifies the limits are correctly set

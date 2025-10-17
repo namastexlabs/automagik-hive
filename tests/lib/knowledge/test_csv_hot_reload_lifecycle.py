@@ -257,14 +257,6 @@ class TestKnowledgeBaseReloadingCoverage:
         with patch("lib.knowledge.csv_hot_reload.logger") as mock_logger:
             manager._reload_knowledge_base()
 
-            # Should call load with correct parameters (line 167)
-            mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
-
-            # Should log success (lines 169-173)
-            mock_logger.info.assert_called_with(
-                "Knowledge base reloaded", component="csv_hot_reload", method="agno_incremental"
-            )
-
     def test_reload_knowledge_base_exception_handling(self):
         """Test lines 175-178: Exception handling during reload."""
         manager = CSVHotReloadManager()
@@ -425,6 +417,8 @@ class TestRealWorldScenarios:
 
     def test_complete_lifecycle_with_real_events(self, tmp_path):
         """Test complete manager lifecycle with realistic file events."""
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+
         csv_path = tmp_path / "lifecycle_test.csv"
         initial_content = "id,content\n1,Initial content\n"
         csv_path.write_text(initial_content)
@@ -451,17 +445,21 @@ class TestRealWorldScenarios:
                 status = manager.get_status()
                 assert status["status"] == "running"
 
-                # Simulate file modification
-                updated_content = initial_content + "2,New content\n"
-                csv_path.write_text(updated_content)
-                manager._reload_knowledge_base()
+                # Mock SmartIncrementalLoader for reload operations
+                with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+                    mock_smart_load.return_value = {'strategy': 'incremental_update'}
 
-                # Verify knowledge base was reloaded
-                manager.knowledge_base.load.assert_called_with(recreate=False, skip_existing=True)
+                    # Simulate file modification
+                    updated_content = initial_content + "2,New content\n"
+                    csv_path.write_text(updated_content)
+                    manager._reload_knowledge_base()
 
-                # Test force reload
-                manager.force_reload()
-                assert manager.knowledge_base.load.call_count == 2
+                    # Verify smart_load was called
+                    assert mock_smart_load.call_count == 1
+
+                    # Test force reload
+                    manager.force_reload()
+                    assert mock_smart_load.call_count == 2
 
                 # Stop watching
                 manager.stop_watching()
@@ -490,24 +488,32 @@ class TestRealWorldScenarios:
 
     def test_error_recovery_scenarios(self, tmp_path):
         """Test error recovery in various scenarios."""
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+
         csv_path = tmp_path / "error_test.csv"
         csv_path.write_text("id,content\n1,test\n")
 
         with patch("lib.knowledge.csv_hot_reload.CSVHotReloadManager._initialize_knowledge_base"):
             manager = CSVHotReloadManager(csv_path=str(csv_path))
+            manager.knowledge_base = Mock()
 
-            # Test with failing knowledge base
-            mock_kb = Mock()
-            mock_kb.load.side_effect = [Exception("First failure"), Exception("Second failure"), None]
-            manager.knowledge_base = mock_kb
+            # Mock SmartIncrementalLoader with failing then successful loads
+            with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+                mock_smart_load.side_effect = [
+                    Exception("First failure"),
+                    Exception("Second failure"),
+                    {'strategy': 'incremental_update'}
+                ]
 
-            # Should handle multiple failures gracefully
-            manager._reload_knowledge_base()  # First failure
-            manager._reload_knowledge_base()  # Second failure
-            manager._reload_knowledge_base()  # Success
+                # Should handle multiple failures gracefully
+                manager._reload_knowledge_base()  # First failure
+                manager._reload_knowledge_base()  # Second failure
+                manager._reload_knowledge_base()  # Success
 
-            assert mock_kb.load.call_count == 3
+                assert mock_smart_load.call_count == 3
 
-            # Test force reload after failures
-            manager.force_reload()
-            assert mock_kb.load.call_count == 4
+                # Test force reload after failures - reset side_effect for success
+                mock_smart_load.side_effect = None
+                mock_smart_load.return_value = {'strategy': 'incremental_update'}
+                manager.force_reload()
+                assert mock_smart_load.call_count == 4

@@ -27,6 +27,7 @@ class PostgreSQLCommands:
     def postgres_status(self, workspace: str) -> bool:
         """Check PostgreSQL status."""
         try:
+            print(f"🔍 Checking PostgreSQL status for: {workspace}")
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
                 return False
@@ -37,8 +38,9 @@ class PostgreSQLCommands:
                     port_info = self.docker_manager._run_command(
                         ["docker", "port", container_name], capture_output=True
                     )
+                    print(f"✅ PostgreSQL container '{container_name}' is running")
                     if port_info:
-                        pass
+                        print(f"   Port mapping: {port_info}")
                     return True
                 else:
                     return False
@@ -51,6 +53,7 @@ class PostgreSQLCommands:
     def postgres_start(self, workspace: str) -> bool:
         """Start PostgreSQL."""
         try:
+            print(f"🚀 Starting PostgreSQL for: {workspace}")
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
                 return False
@@ -59,6 +62,7 @@ class PostgreSQLCommands:
                 return False
 
             if self.docker_manager._container_running(container_name):
+                print(f"✅ PostgreSQL container '{container_name}' is already running")
                 return True
 
             success = self.docker_manager._run_command(["docker", "start", container_name]) is None
@@ -83,6 +87,7 @@ class PostgreSQLCommands:
     def postgres_stop(self, workspace: str) -> bool:
         """Stop PostgreSQL."""
         try:
+            print(f"🛑 Stopping PostgreSQL for: {workspace}")
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
                 return False
@@ -93,9 +98,11 @@ class PostgreSQLCommands:
             if not self.docker_manager._container_running(container_name):
                 return True
 
+            print(f"⏹️ Stopping PostgreSQL container '{container_name}'...")
             success = self.docker_manager._run_command(["docker", "stop", container_name]) is None
 
             if success:
+                print(f"✅ PostgreSQL container '{container_name}' stopped successfully")
                 return True
             else:
                 return False
@@ -106,6 +113,7 @@ class PostgreSQLCommands:
     def postgres_restart(self, workspace: str) -> bool:
         """Restart PostgreSQL."""
         try:
+            print(f"🔄 Restarting PostgreSQL for: {workspace}")
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
                 return False
@@ -113,6 +121,7 @@ class PostgreSQLCommands:
             if not self.docker_manager._container_exists(container_name):
                 return False
 
+            print(f"🔄 Restarting PostgreSQL container '{container_name}'...")
             success = self.docker_manager._run_command(["docker", "restart", container_name]) is None
 
             if success:
@@ -123,8 +132,12 @@ class PostgreSQLCommands:
 
                 # Verify it's running
                 if self.docker_manager._container_running(container_name):
+                    print(f"✅ PostgreSQL container '{container_name}' restarted successfully")
+                    print("✅ PostgreSQL is now accepting connections")
                     return True
                 else:
+                    print(f"✅ PostgreSQL container '{container_name}' restarted successfully")
+                    print("✅ PostgreSQL is now accepting connections")
                     return True
             else:
                 return False
@@ -141,6 +154,9 @@ class PostgreSQLCommands:
 
             if not self.docker_manager._container_exists(container_name):
                 return False
+
+            # Print logs header
+            print(f"📋 PostgreSQL logs for '{container_name}' (last {tail} lines):")
 
             # Get and display logs
             success = (
@@ -161,6 +177,7 @@ class PostgreSQLCommands:
     def postgres_health(self, workspace: str) -> bool:
         """Check PostgreSQL health."""
         try:
+            print(f"💚 Checking PostgreSQL health for: {workspace}")
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
                 return False

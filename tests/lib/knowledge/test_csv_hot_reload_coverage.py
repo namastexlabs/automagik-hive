@@ -301,10 +301,19 @@ class TestKnowledgeBaseReloading:
         mock_kb = Mock()
         manager.knowledge_base = mock_kb
 
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader since _reload_knowledge_base uses it
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+            mock_smart_load.return_value = {
+                'strategy': 'incremental_update',
+                'new_rows_processed': 2,
+                'rows_removed': 0
+            }
 
-        # Should call load with incremental parameters
-        mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
+            manager._reload_knowledge_base()
+
+            # Verify SmartIncrementalLoader.smart_load was called
+            mock_smart_load.assert_called_once()
 
     def test_reload_knowledge_base_no_knowledge_base(self):
         """Test reload when no knowledge base is initialized."""
@@ -519,14 +528,18 @@ class TestEdgeCasesAndErrorHandling:
 
         manager = CSVHotReloadManager(csv_path=str(csv_path))
         mock_kb = Mock()
-        mock_kb.load.side_effect = Exception("Invalid CSV format")
         manager.knowledge_base = mock_kb
 
-        # Should handle invalid CSV content gracefully
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader to return error
+        from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+        with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+            mock_smart_load.return_value = {'error': 'Invalid CSV format'}
 
-        # Should not raise exception
-        mock_kb.load.assert_called_once()
+            # Should handle invalid CSV content gracefully
+            manager._reload_knowledge_base()
+
+            # Should have called smart_load
+            mock_smart_load.assert_called_once()
 
     def test_file_permissions_error(self, tmp_path):
         """Test manager handles file permission errors."""
@@ -635,8 +648,14 @@ class TestIntegrationScenarios:
             updated_content = "id,content\n1,Initial content\n2,New content\n"
             csv_path.write_text(updated_content)
 
-            manager._reload_knowledge_base()
-            mock_kb.load.assert_called_with(recreate=False, skip_existing=True)
+            # Mock SmartIncrementalLoader for reload
+            from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+            with patch.object(SmartIncrementalLoader, 'smart_load') as mock_smart_load:
+                mock_smart_load.return_value = {'strategy': 'incremental_update'}
+
+                manager._reload_knowledge_base()
+                # Verify smart_load was called
+                mock_smart_load.assert_called_once()
 
             # Stop watching
             manager.stop_watching()

@@ -13,23 +13,27 @@ def run_command(cmd: list, capture_output: bool = False, cwd: str | None = None)
         return None
     except subprocess.CalledProcessError as e:
         if capture_output:
+            print(f"❌ Command failed: {cmd[0]}")
             if e.stderr:
-                pass
+                print(f"Error: {e.stderr}")
         return None
     except subprocess.TimeoutExpired:
         return None
     except PermissionError:
         return None
     except FileNotFoundError:
+        print(f"❌ Command not found: {cmd[0]}")
         return None
 
 
 def check_docker_available() -> bool:
     """Check if Docker is available and running."""
     if not run_command(["docker", "--version"], capture_output=True):
+        print("❌ Docker not found. Please install Docker first.")
         return False
 
     if not run_command(["docker", "ps"], capture_output=True):
+        print("❌ Docker daemon not running. Please start Docker.")
         return False
 
     return True
