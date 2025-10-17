@@ -468,17 +468,35 @@ class RowBasedCSVKnowledgeBase:
                     if _inspect.iscoroutinefunction(async_upsert_callable):
                         import asyncio
 
-                        coroutine = async_upsert_callable(
+                        coro = async_upsert_callable(
                             signature.content_hash,
                             [document],
                             filters=vector_filters,
                         )
-                        asyncio.run(coroutine)
-                        return
+
+                        # Check if we're already in an async context
+                        try:
+                            loop = asyncio.get_running_loop()
+                            # We're in an async context - use run_until_complete
+                            # This will block but allow the loop to progress
+                            import concurrent.futures
+                            import threading
+
+                            # Run in a thread pool to avoid blocking the event loop
+                            with concurrent.futures.ThreadPoolExecutor() as executor:
+                                future = executor.submit(asyncio.run, coro)
+                                result = future.result()
+                            return
+                        except RuntimeError:
+                            # No running loop - we can use asyncio.run()
+                            asyncio.run(coro)
+                            return
                 except Exception as exc:  # pragma: no cover - continue to fallback
-                    logger.debug(
-                        "async_upsert not available or failed; falling back",
+                    logger.error(
+                        "async_upsert failed",
                         error=str(exc),
+                        error_type=type(exc).__name__,
+                        document_id=document.id,
                     )
             if hasattr(vector_db, "upsert"):
                 try:
@@ -495,16 +513,30 @@ class RowBasedCSVKnowledgeBase:
                 try:
                     import asyncio
 
-                    asyncio.run(
-                        vector_db.async_insert(
-                            signature.content_hash, [document], filters=vector_filters
-                        )
+                    coro = vector_db.async_insert(
+                        signature.content_hash, [document], filters=vector_filters
                     )
-                    return
+
+                    # Check if we're already in an async context
+                    try:
+                        loop = asyncio.get_running_loop()
+                        # We're in an async context - run in thread pool
+                        import concurrent.futures
+
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(asyncio.run, coro)
+                            result = future.result()
+                        return
+                    except RuntimeError:
+                        # No running loop - we can use asyncio.run()
+                        asyncio.run(coro)
+                        return
                 except Exception as exc:  # pragma: no cover - continue to fallback
-                    logger.debug(
-                        "async_insert not available or failed; trying insert",
+                    logger.error(
+                        "async_insert (fallback) failed",
                         error=str(exc),
+                        error_type=type(exc).__name__,
+                        document_id=document.id,
                     )
             if hasattr(vector_db, "insert"):
                 try:
@@ -529,17 +561,33 @@ class RowBasedCSVKnowledgeBase:
         if hasattr(vector_db, "async_insert"):
             try:
                 import asyncio
+                import inspect
 
-                asyncio.run(
-                    vector_db.async_insert(
-                        signature.content_hash, [document], filters=vector_filters
-                    )
+                # Get the coroutine
+                coro = vector_db.async_insert(
+                    signature.content_hash, [document], filters=vector_filters
                 )
-                return
+
+                # Check if we're already in an async context
+                try:
+                    loop = asyncio.get_running_loop()
+                    # We're in an async context - run in thread pool
+                    import concurrent.futures
+
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, coro)
+                        result = future.result()
+                    return
+                except RuntimeError:
+                    # No running loop - we can use asyncio.run()
+                    asyncio.run(coro)
+                    return
             except Exception as exc:  # pragma: no cover - continue to fallback
-                logger.debug(
-                    "async_insert not available or failed; trying insert",
+                logger.error(
+                    "async_insert failed",
                     error=str(exc),
+                    error_type=type(exc).__name__,
+                    document_id=document.id,
                 )
         if hasattr(vector_db, "insert"):
             try:
@@ -548,7 +596,11 @@ class RowBasedCSVKnowledgeBase:
                 )
                 return
             except Exception as exc:  # pragma: no cover - continue to fallback
-                logger.debug("insert failed; trying add", error=str(exc))
+                logger.error("insert failed; trying add",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    document_id=document.id,
+                )
         if hasattr(vector_db, "add"):
             try:
                 vector_db.add(
@@ -557,7 +609,10 @@ class RowBasedCSVKnowledgeBase:
                 return
             except Exception as exc:  # pragma: no cover - last resort
                 logger.error(
-                    "add failed while persisting document", error=str(exc)
+                    "add failed while persisting document",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    document_id=document.id,
                 )
 
         # Contents DB integration deferred until Agno surfaces declarative APIs.

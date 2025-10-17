@@ -110,8 +110,8 @@ async def initialize_knowledge_base() -> Any | None:
     """
     Initialize CSV hot reload manager for knowledge base watching.
 
-    The shared knowledge base will be initialized lazily when first accessed by agents,
-    preventing duplicate loading and race conditions.
+    Creates the shared knowledge base instance first, then sets up hot reload
+    to watch and update THIS SAME INSTANCE that agents will use.
 
     Returns:
         CSV manager instance or None if initialization failed
@@ -122,6 +122,7 @@ async def initialize_knowledge_base() -> Any | None:
         from pathlib import Path
 
         from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
+        from lib.knowledge.factories.knowledge_factory import get_knowledge_base
         from lib.utils.version_factory import load_global_knowledge_config
 
         # Load centralized knowledge configuration
@@ -132,8 +133,34 @@ async def initialize_knowledge_base() -> Any | None:
         config_dir = Path(__file__).parent.parent.parent / "lib/knowledge"
         csv_path = config_dir / csv_filename
 
-        # Initialize CSV hot reload manager (this will handle knowledge base creation internally)
+        logger.debug(
+            "Creating shared knowledge base for hot reload",
+            csv_path=str(csv_path),
+        )
+
+        # Create the shared singleton knowledge base that agents will use
+        # This ensures there's only ONE instance across the entire system
+        shared_kb = get_knowledge_base(csv_path=str(csv_path))
+
+        logger.debug(
+            "Shared knowledge base created",
+            instance_id=id(shared_kb),
+        )
+
+        # Initialize CSV hot reload manager to watch THIS shared instance
         csv_manager = CSVHotReloadManager(str(csv_path))
+
+        # CRITICAL: Replace the manager's internal KB with the shared singleton
+        csv_manager.knowledge_base = shared_kb
+
+        logger.info(
+            "Hot reload manager linked to shared knowledge base",
+            kb_instance_id=id(shared_kb),
+            manager_kb_id=id(csv_manager.knowledge_base),
+            instances_match=id(shared_kb) == id(csv_manager.knowledge_base),
+        )
+
+        # Start watching for CSV changes
         csv_manager.start_watching()
 
         logger.info(
@@ -141,7 +168,7 @@ async def initialize_knowledge_base() -> Any | None:
             csv_path=str(csv_path),
             status="watching_for_changes",
             timing="early_initialization",
-            note="shared_kb_will_be_initialized_lazily",
+            note="hot_reload_updates_shared_singleton_instance",
         )
     except Exception as e:
         logger.warning(
