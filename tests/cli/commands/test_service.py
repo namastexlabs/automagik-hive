@@ -584,9 +584,53 @@ class TestServiceManagerPostgreSQLSetup:
 
 
 
+class TestServiceManagerInitWorkspace:
+    """Test workspace initialization (template copying) functionality."""
+
+    def test_init_workspace_already_exists(self, tmp_path):
+        """Test workspace initialization when directory already exists."""
+        workspace_path = tmp_path / "existing-workspace"
+        workspace_path.mkdir()
+
+        manager = ServiceManager()
+        result = manager.init_workspace(str(workspace_path))
+
+        assert result is False
+
+    def test_init_workspace_exception_handling(self):
+        """Test workspace initialization handles exceptions gracefully."""
+        manager = ServiceManager()
+
+        with patch.object(Path, 'exists', side_effect=Exception("File system error")):
+            result = manager.init_workspace("test-workspace")
+
+            assert result is False
+
+    def test_init_workspace_basic_structure(self, tmp_path):
+        """Test basic workspace structure creation."""
+        workspace_name = "test-workspace"
+        workspace_path = tmp_path / workspace_name
+
+        manager = ServiceManager()
+
+        # Mock to avoid actual file copying
+        with patch('shutil.copytree'), \
+             patch('shutil.copy'):
+            result = manager.init_workspace(str(workspace_path))
+
+            # Should create the workspace directory
+            assert workspace_path.exists()
+            # Basic AI directories should be created
+            assert (workspace_path / "ai" / "agents").exists()
+            assert (workspace_path / "ai" / "teams").exists()
+            assert (workspace_path / "ai" / "workflows").exists()
+            assert (workspace_path / "knowledge").exists()
+            assert (workspace_path / "knowledge" / ".gitkeep").exists()
+
+
 class TestServiceManagerUninstall:
     """Test environment uninstall functionality."""
-    
+
     def test_uninstall_environment_preserve_data(self):
         """Test environment uninstall with data preservation."""
         manager = ServiceManager()

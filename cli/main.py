@@ -37,7 +37,6 @@ def create_parser() -> argparse.ArgumentParser:
         description="""Automagik Hive - Multi-Agent AI Framework CLI
 
 CORE COMMANDS (Quick Start):
-  --init [NAME]               Initialize new workspace 
   --serve [WORKSPACE]         Start production server (Docker)
   --dev [WORKSPACE]           Start development server (local)
   --version                   Show version information
@@ -58,10 +57,17 @@ PRODUCTION ENVIRONMENT:
   --logs [--tail N]           Show production environment logs
 
 SUBCOMMANDS:
-  install                     Complete environment setup
+  init [NAME]                 Initialize new workspace with AI templates (lightweight)
+  install                     Setup environment (credentials, PostgreSQL, deployment)
   uninstall                   COMPLETE SYSTEM WIPE - uninstall ALL environments
   genie                       Launch claude with AGENTS.md as system prompt
   dev                         Start development server (alternative syntax)
+
+WORKFLOW:
+  1. automagik-hive init my-project     # Copy AI templates
+  2. cd my-project && cp .env.example .env
+  3. automagik-hive install             # Setup environment
+  4. automagik-hive dev                 # Start developing
 
 Use --help for detailed options or see documentation.
 """,
@@ -105,10 +111,15 @@ Use --help for detailed options or see documentation.
     # Create subparsers for commands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
+    # Init subcommand - lightweight template copying
+    init_parser = subparsers.add_parser("init", help="Initialize new workspace with AI templates")
+    init_parser.add_argument("workspace", nargs="?", default="my-hive-workspace",
+                            help="Workspace name (default: my-hive-workspace)")
+
     # Install subcommand
     install_parser = subparsers.add_parser("install", help="Complete environment setup with .env generation and PostgreSQL")
     install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
-    
+
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
     uninstall_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
@@ -140,9 +151,9 @@ Use --help for detailed options or see documentation.
     # Dev subcommand
     dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
-    
-    # Workspace path - primary positional argument
-    parser.add_argument("workspace", nargs="?", help="Start workspace server")
+
+    # Note: Removed main parser's workspace argument - it conflicted with subcommand arguments
+    # and was already deprecated (see lines 259-264 for the deprecation handler)
 
     return parser
 
@@ -157,10 +168,9 @@ def main() -> int:
         args.init, args.serve, args.dev,
         args.postgres_status, args.postgres_start, args.postgres_stop,
         args.postgres_restart, args.postgres_logs, args.postgres_health,
-        args.command == "genie", args.command == "dev", args.command == "install", args.command == "uninstall",
+        args.command == "genie", args.command == "dev", args.command == "init", args.command == "install", args.command == "uninstall",
         args.command == "agentos-config",
-        args.stop, args.restart, args.status, args.logs,
-        args.workspace
+        args.stop, args.restart, args.status, args.logs
     ]
     command_count = sum(1 for cmd in commands if cmd)
     
@@ -173,11 +183,14 @@ def main() -> int:
         return 0
 
     try:
-        # Init workspace - removed, use 'install' command instead
+        # Init workspace - deprecated flag, suggest subcommand
         if args.init:
-            print("❌ --init command has been removed. Use 'install' command instead:")
-            print("   automagik-hive install")
-            return 1
+            print("⚠️  The --init flag is deprecated. Use the 'init' subcommand instead:")
+            print("   automagik-hive init [workspace-name]")
+            print()
+            workspace = args.init if args.init != "__DEFAULT__" else "my-hive-workspace"
+            service_manager = ServiceManager()
+            return 0 if service_manager.init_workspace(workspace) else 1
 
         # Production server (Docker)
         if args.serve:
@@ -214,7 +227,13 @@ def main() -> int:
             service_manager = ServiceManager()
             result = service_manager.serve_local(args.host, args.port, reload=True)
             return 0 if result else 1
-        
+
+        # Init subcommand - lightweight template copying
+        if args.command == "init":
+            service_manager = ServiceManager()
+            workspace = getattr(args, 'workspace', 'my-hive-workspace') or 'my-hive-workspace'
+            return 0 if service_manager.init_workspace(workspace) else 1
+
         # Install subcommand
         if args.command == "install":
             service_manager = ServiceManager()
@@ -236,12 +255,8 @@ def main() -> int:
             success = service_manager.agentos_config(json_output=getattr(args, "json", False))
             return 0 if success else 1
 
-        # Start workspace server (positional argument) - removed, use 'dev' or 'serve' instead
-        if args.workspace:
-            print("❌ Workspace positional argument has been removed. Use one of:")
-            print("   automagik-hive dev    # Development server")
-            print("   automagik-hive serve  # Production server")
-            return 1
+        # Note: Removed workspace positional argument handler - argument no longer exists
+        # (was causing conflicts with subcommand workspace arguments)
 
         # PostgreSQL commands
         postgres_cmd = PostgreSQLCommands()
