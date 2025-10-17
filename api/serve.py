@@ -594,7 +594,7 @@ async def _async_create_automagik_api():
     # Add AGUI support if enabled
     if settings().hive_enable_agui:
         from agno.agent.agent import Agent
-        from agno.app.agui.app import AGUIApp
+        from agno.app.agui.app import AGUIApp  # type: ignore[import-not-found]
 
         # Use the same dynamic agent loading as playground
         from ai.agents.registry import AgentRegistry
