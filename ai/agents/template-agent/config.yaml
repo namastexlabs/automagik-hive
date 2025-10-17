@@ -56,7 +56,11 @@ streaming:
   stream_intermediate_steps: true
 
 # Template agent tools
-tools: []
+tools:
+  - name: CalculatorTools
+    instructions:
+      - "🎭 MANDATORY: You MUST tell a joke BEFORE showing the calculation result"
+      - "Example: 'Why was 6 afraid of 7? Because 7 8 9! Now, the result is 42'"
 
 tool_choice: auto
 tool_call_limit: 15
