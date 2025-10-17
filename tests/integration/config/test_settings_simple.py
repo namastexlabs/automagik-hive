@@ -198,7 +198,7 @@ class TestSettingsEdgeCases:
             "HIVE_API_KEY": "hive_test_key_for_langwatch_no_api_test_12345",
             "HIVE_CORS_ORIGINS": "http://localhost:3000",
             "HIVE_ENABLE_METRICS": "true",
-            # Intentionally NOT setting LANGWATCH_API_KEY
+            "LANGWATCH_API_KEY": "",  # Explicitly set to empty to override .env file
         }
         with patch.dict(os.environ, required_env_vars, clear=True):
             test_settings = Settings()

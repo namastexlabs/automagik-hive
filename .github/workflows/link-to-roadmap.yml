@@ -1,0 +1,329 @@
+name: Link to Roadmap Initiative
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  link-to-initiative:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'planned-feature')
+    steps:
+      - name: Generate token from GitHub App
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PROJECT_APP_ID }}
+          private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: automagik-roadmap,${{ github.event.repository.name }}
+
+      - name: Parse initiative number from issue body
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || '';
+
+            // Parse initiative number from new format: "### 🔗 Roadmap Initiative: [#29](url)"
+            // Also support old format: "### 🔗 Roadmap Initiative Number\n29"
+            let initiativeNumber = '';
+
+            // Try new format first
+            const newFormatMatch = body.match(/### 🔗 Roadmap Initiative:\s*\[#(\d+)\]/i);
+            if (newFormatMatch) {
+              initiativeNumber = newFormatMatch[1];
+            } else {
+              // Fall back to old format
+              const oldFormatMatch = body.match(/### 🔗 Roadmap Initiative Number\s*\n+([^#\n]+)/i);
+              initiativeNumber = oldFormatMatch ? oldFormatMatch[1].trim() : '';
+            }
+
+            console.log('Parsed initiative number:', initiativeNumber);
+
+            if (!initiativeNumber || !initiativeNumber.match(/^\d+$/)) {
+              core.setFailed('Could not find valid initiative number in issue body');
+              return;
+            }
+
+            core.setOutput('initiative_number', initiativeNumber);
+
+            // Parse additional metadata for labels/fields
+            const workTypeMatch = body.match(/### 📋 Work Type:\s*`([^`]+)`/i);
+            const workType = workTypeMatch ? workTypeMatch[1].trim() : '';
+
+            const complexityMatch = body.match(/### 📊 Estimated Complexity:\s*`([^`]+)`/i);
+            const complexity = complexityMatch ? complexityMatch[1].trim() : '';
+
+            const priorityMatch = body.match(/### ⚡ Priority:\s*`([^`]+)`/i);
+            const priority = priorityMatch ? priorityMatch[1].trim() : '';
+
+            console.log('Parsed metadata - Work Type:', workType, 'Complexity:', complexity, 'Priority:', priority);
+
+            core.setOutput('work_type', workType);
+            core.setOutput('complexity', complexity);
+            core.setOutput('priority', priority);
+
+      - name: Validate initiative exists
+        id: validate
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const initiativeNumber = '${{ steps.parse.outputs.initiative_number }}';
+
+            try {
+              const { data: initiative } = await github.rest.issues.get({
+                owner: 'namastexlabs',
+                repo: 'automagik-roadmap',
+                issue_number: parseInt(initiativeNumber)
+              });
+
+              console.log('Found initiative:', initiative.title);
+              console.log('Initiative state:', initiative.state);
+
+              // Get node ID for GraphQL
+              core.setOutput('initiative_node_id', initiative.node_id);
+              core.setOutput('initiative_title', initiative.title);
+              core.setOutput('initiative_state', initiative.state);
+
+            } catch (error) {
+              core.setFailed(`Initiative #${initiativeNumber} not found in automagik-roadmap: ${error.message}`);
+            }
+
+      - name: Get current issue node ID
+        id: current-issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.setOutput('issue_node_id', context.payload.issue.node_id);
+
+      - name: Create sub-issue link
+        id: link
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const initiativeNodeId = '${{ steps.validate.outputs.initiative_node_id }}';
+            const issueNodeId = '${{ steps.current-issue.outputs.issue_node_id }}';
+            const initiativeNumber = '${{ steps.parse.outputs.initiative_number }}';
+
+            const mutation = `
+              mutation {
+                addSubIssue(input: {
+                  issueId: "${initiativeNodeId}"
+                  subIssueId: "${issueNodeId}"
+                }) {
+                  issue {
+                    title
+                    number
+                  }
+                  subIssue {
+                    title
+                    number
+                  }
+                }
+              }
+            `;
+
+            try {
+              const result = await github.graphql(mutation, {
+                headers: {
+                  'GraphQL-Features': 'sub_issues'
+                }
+              });
+
+              console.log('✓ Sub-issue link created successfully');
+              console.log('Parent:', result.addSubIssue.issue.title);
+              console.log('Child:', result.addSubIssue.subIssue.title);
+
+            } catch (error) {
+              core.setFailed(`Failed to create sub-issue link: ${error.message}`);
+            }
+
+      - name: Add labels
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const initiativeNumber = '${{ steps.parse.outputs.initiative_number }}';
+            const initiativeState = '${{ steps.validate.outputs.initiative_state }}';
+
+            const labels = ['roadmap-linked', `initiative-${initiativeNumber}`];
+
+            // If parent initiative is closed, add special label
+            if (initiativeState === 'closed') {
+              labels.push('closed-initiative-work');
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+
+            console.log('✓ Added labels:', labels.join(', '));
+
+      - name: Comment on issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const initiativeNumber = '${{ steps.parse.outputs.initiative_number }}';
+            const initiativeTitle = '${{ steps.validate.outputs.initiative_title }}';
+            const initiativeState = '${{ steps.validate.outputs.initiative_state }}';
+
+            let comment = `✅ **Successfully linked to roadmap initiative**\n\n`;
+            comment += `**Parent Initiative:** [#${initiativeNumber} - ${initiativeTitle}](https://github.com/namastexlabs/automagik-roadmap/issues/${initiativeNumber})\n\n`;
+
+            if (initiativeState === 'closed') {
+              comment += `⚠️ **Note:** Parent initiative is closed, but link created for traceability.\n\n`;
+            }
+
+            comment += `**Labels Added:**\n`;
+            comment += `- \`roadmap-linked\` - Successfully linked as sub-issue\n`;
+            comment += `- \`initiative-${initiativeNumber}\` - Quick filter for this initiative's work\n`;
+
+            if (initiativeState === 'closed') {
+              comment += `- \`closed-initiative-work\` - Work continues despite parent closure\n`;
+            }
+
+            comment += `\n---\n\n`;
+            comment += `**Query this relationship:**\n`;
+            comment += `\`\`\`graphql\n`;
+            comment += `# Get parent initiative\n`;
+            comment += `query {\n`;
+            comment += `  repository(owner: "${context.repo.owner}", name: "${context.repo.repo}") {\n`;
+            comment += `    issue(number: ${context.issue.number}) {\n`;
+            comment += `      parent { number title url }\n`;
+            comment += `    }\n`;
+            comment += `  }\n`;
+            comment += `}\n`;
+            comment += `\`\`\`\n\n`;
+            comment += `[View all work for initiative #${initiativeNumber}](https://github.com/namastexlabs/automagik-roadmap/issues/${initiativeNumber})`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+      - name: Add to project board
+        id: add-to-board
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const projectId = 'PVT_kwDOBvG2684BE-4E'; // Automagik Roadmap project #9
+            const issueNodeId = context.payload.issue.node_id;
+
+            // Add issue to project
+            const mutation = `
+              mutation {
+                addProjectV2ItemById(input: {
+                  projectId: "${projectId}"
+                  contentId: "${issueNodeId}"
+                }) {
+                  item {
+                    id
+                  }
+                }
+              }
+            `;
+
+            try {
+              const result = await github.graphql(mutation);
+              const itemId = result.addProjectV2ItemById.item.id;
+              console.log('✓ Added to project board, item ID:', itemId);
+              core.setOutput('project_item_id', itemId);
+            } catch (error) {
+              console.log('Warning: Could not add to project board:', error.message);
+            }
+
+      - name: Set project board fields
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const projectId = 'PVT_kwDOBvG2684BE-4E';
+            const itemId = '${{ steps.add-to-board.outputs.project_item_id }}';
+
+            if (!itemId || itemId === '') {
+              console.log('Skipping field updates - item not in project');
+              return;
+            }
+
+            // Field IDs from roadmap project
+            const fields = {
+              stage: 'PVTSSF_lADOBvG2684BE-4Ezg2c_hc',
+              status: 'PVTSSF_lADOBvG2684BE-4Ezg2dPw0',
+              project: 'PVTSSF_lADOBvG2684BE-4Ezg2c_ec'
+            };
+
+            // Option IDs
+            const options = {
+              stage_executing: '2f83e636',
+              status_todo: 'f75ad846',
+              project_omni: '63cc59e9'  // Will need to verify this
+            };
+
+            const repoName = context.repo.repo.replace('automagik-', '');
+            let projectOption = options.project_omni; // default
+
+            // Update Stage to "Executing"
+            try {
+              await github.graphql(`
+                mutation {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "${projectId}"
+                    itemId: "${itemId}"
+                    fieldId: "${fields.stage}"
+                    value: { singleSelectOptionId: "${options.stage_executing}" }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `);
+              console.log('✓ Set Stage to Executing');
+            } catch (error) {
+              console.log('Warning: Could not set Stage:', error.message);
+            }
+
+            // Update Status to "Todo"
+            try {
+              await github.graphql(`
+                mutation {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "${projectId}"
+                    itemId: "${itemId}"
+                    fieldId: "${fields.status}"
+                    value: { singleSelectOptionId: "${options.status_todo}" }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `);
+              console.log('✓ Set Status to Todo');
+            } catch (error) {
+              console.log('Warning: Could not set Status:', error.message);
+            }
+
+            // Update Project to repo name
+            try {
+              await github.graphql(`
+                mutation {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "${projectId}"
+                    itemId: "${itemId}"
+                    fieldId: "${fields.project}"
+                    value: { singleSelectOptionId: "${projectOption}" }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `);
+              console.log('✓ Set Project to', repoName);
+            } catch (error) {
+              console.log('Warning: Could not set Project:', error.message);
+            }
