@@ -9,6 +9,10 @@ class MCPError(Exception):
     """Base exception for MCP operations"""
 
 
+# Alias for backward compatibility
+MCPException = MCPError
+
+
 class MCPConnectionError(MCPError):
     """Exception raised when MCP connection fails"""
 
