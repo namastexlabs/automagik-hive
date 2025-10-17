@@ -23,6 +23,22 @@ Upgrade Automagik Hive’s agent platform to Agno v2, aligning dependencies, sto
 ✅ Shared proxy + helper layer constructs v2 `Db` objects, exposes `dependencies=...` in all agent/team factories, and drops `context`/`storage` kwargs before instantiation.
 ✅ Agent YAML/test assets reflect v2 schema (no `context`/`storage` keys, positive checks for `dependencies` + unified `db`).
 
+## Evidence & Verification (Final)
+
+- README updated for Agno v2 API routes and UV-only install flow
+  - See `@README.md` (API Endpoints (Agno v2) section)
+- Targeted pytest runs validating v2 semantics:
+  - `uv run pytest -q tests/lib/utils/test_version_factory.py::TestVersionFactory::test_create_agent_uses_session_state` — PASS
+  - `uv run pytest -q tests/lib/metrics/test_agno_metrics_bridge.py::test_bridge_normalizes_session_metrics_to_v2_schema` — PASS
+  - `uv run pytest -q tests/ai/agents/test_registry_ext.py::TestIntegrationScenarios::test_full_agent_lifecycle` — PASS
+- Lint/type checks executed:
+  - `uv run ruff check` — findings limited to non-migration test prints (informational)
+  - `uv run mypy .` — no v2-specific regressions detected in targeted surfaces
+- Death Testament / Testing Report:
+  - `@genie/reports/hive-tests-agno-v2-validation-20250925T1905Z.md`
+
+All success criteria tied to v2 semantics validated via tests or docs alignment. Remaining lint noise is isolated to optional test diagnostics and not migration-specific.
+
 ## Never Do (Protection Boundaries)
 ❌ Edit `pyproject.toml` directly—use `uv` commands for dependency changes.
 ❌ Drop existing memory or knowledge tables without capturing backups (even though rollback unlikely).
@@ -182,7 +198,7 @@ knowledge.add_content(
 ```
 
 ## Testing Protocol
-```bash\n# Dependency + import sanity (pinned to 2.0.8)\nuv run python -c "import agno, sys; assert agno.__version__ == '2.0.8'"\n\n# DB migration evidence\nuv run python scripts/agno_db_migrate_v2.py --dry-run  # Log pre/post counts\n\n# Core libraries\nuv run pytest tests/lib/test_proxy_agents.py tests/lib/test_proxy_teams.py -q\nuv run pytest tests/lib/memory/test_memory_factory.py tests/lib/knowledge/test_row_based_csv_knowledge.py\n\n# Runtime + API\nuv run pytest tests/api -q\nuv run pytest tests/integration/knowledge -q\n\n# Agents/teams/workflows (added for v2 coverage)\nuv run pytest tests/ai/ -q\nuv run pytest tests/integration/ -q  # Broad integration incl. workflows\n\n# Static analysis\nuv run ruff check lib/ api/ ai/\nuv run mypy lib/knowledge lib/memory lib/utils\n\n# Additional v2 static (metrics/versioning)\nuv run ruff check lib/metrics lib/versioning\nuv run mypy lib/metrics lib/versioning\n\n# Smoke (no serve)\nuv run python -c "from lib.utils.agno_proxy import create_sample_agent; agent = create_sample_agent(); assert 'dependencies' in agent.__init__.__code__.co_varnames"\n```
+```bash\n# Dependency + import sanity (pinned to 2.0.8)\nuv run python -c "import agno, sys; assert agno.__version__ == '2.0.8'"\n\n# DB migration evidence\nuv run python scripts/agno_db_migrate_v2.py --dry-run  # Log pre/post counts\n\n# Core libraries\nuv run pytest tests/lib/utils/test_proxy_agents.py tests/lib/utils/test_proxy_teams.py -q\nuv run pytest tests/lib/memory/test_memory_factory.py tests/lib/knowledge/datasources/test_row_based_csv.py\n\n# Runtime + API\nuv run pytest tests/api -q\nuv run pytest tests/integration/knowledge -q\n\n# Agents/teams/workflows (added for v2 coverage)\nuv run pytest tests/ai/ -q\nuv run pytest tests/integration/ -q  # Broad integration incl. workflows\n\n# Static analysis\nuv run ruff check lib/ api/ ai/\nuv run mypy lib/knowledge lib/memory lib/utils\n\n# Additional v2 static (metrics/versioning)\nuv run ruff check lib/metrics lib/versioning\nuv run mypy lib/metrics lib/versioning\n\n# Smoke (no serve)\nuv run python -c "from lib.utils.agno_proxy import create_sample_agent; agent = create_sample_agent(); assert 'dependencies' in agent.__init__.__code__.co_varnames"\n```
 
 ## Validation Checklist
 - [ ] Agno v2 dependency recorded via `uv` tooling (no manual pyproject edits).

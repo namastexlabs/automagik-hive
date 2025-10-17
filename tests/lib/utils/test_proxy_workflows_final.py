@@ -5,7 +5,7 @@ Successfully achieved 67% coverage (target was 50%+) for proxy workflows functio
 This test suite provides comprehensive coverage for:
 - Workflow proxy initialization and parameter discovery
 - Configuration processing and validation  
-- Custom parameter handlers (storage, workflow, steps, etc.)
+- Custom parameter handlers (db, workflow, steps, etc.)
 - Metadata creation and management
 - Error handling and edge cases
 - Complex workflow creation scenarios
@@ -21,14 +21,24 @@ from lib.utils.proxy_workflows import AgnoWorkflowProxy
 
 class MockWorkflow:
     """Mock Agno Workflow class for testing."""
-    
-    def __init__(self, workflow_id: str = None, name: str = None, description: str = None, 
-                 storage=None, steps=None, session_id: str = None, 
-                 debug_mode: bool = False, user_id: str = None, **kwargs):
-        self.workflow_id = workflow_id
+
+    def __init__(
+        self,
+        id: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        db=None,
+        steps=None,
+        session_id: str | None = None,
+        debug_mode: bool = False,
+        user_id: str | None = None,
+        **kwargs,
+    ):
+        self.id = id
+        self.workflow_id = id
         self.name = name
         self.description = description
-        self.storage = storage
+        self.db = db
         self.steps = steps
         self.session_id = session_id
         self.debug_mode = debug_mode
@@ -41,7 +51,7 @@ class MockWorkflow:
 def proxy():
     """Fixture providing AgnoWorkflowProxy with mocked dependencies."""
     with patch('lib.utils.proxy_workflows.Workflow', MockWorkflow):
-        return AgnoWorkflowProxy()
+        yield AgnoWorkflowProxy()
 
 
 class TestCoverageAchievementSuite:
@@ -75,7 +85,7 @@ class TestCoverageAchievementSuite:
         fallback = proxy._get_fallback_parameters()
         
         expected_params = {
-            "workflow_id", "name", "description", "storage", "steps",
+            "id", "name", "description", "db", "steps",
             "session_id", "session_name", "workflow_session_state", 
             "user_id", "debug_mode", "stream", "stream_intermediate_steps",
             "store_events", "events_to_skip"
@@ -89,7 +99,7 @@ class TestCoverageAchievementSuite:
         handlers = proxy._get_custom_parameter_handlers()
         
         expected_handlers = [
-            "storage", "workflow", "steps", "suggested_actions",
+            "db", "workflow", "steps", "suggested_actions",
             "escalation_triggers", "streaming_config", "events_config",
             "context_config", "display_config"
         ]
@@ -195,10 +205,10 @@ class TestCoverageAchievementSuite:
     def test_config_validation_categorization(self, proxy):
         """Test configuration validation properly categorizes parameters."""
         config = {
-            "workflow_id": "supported1",
+            "id": "supported1",
             "name": "supported2", 
             "description": "supported3",
-            "storage": "custom1",
+            "db": "custom1",
             "workflow": "custom2",
             "steps": "custom3", 
             "unknown_param": "unknown1"
@@ -232,8 +242,8 @@ class TestCoverageAchievementSuite:
             "unknown_param": "ignored"
         }
         
-        # Mock storage handler to avoid real dependencies
-        with patch.object(proxy, '_handle_storage_config', return_value=Mock()):
+        # Mock db handler to avoid real dependencies
+        with patch.object(proxy, '_handle_db_config', return_value=Mock()):
             with patch('lib.utils.proxy_workflows.logger'):
                 result = proxy._process_config(config, "test-id", None)
                 
@@ -324,7 +334,7 @@ class TestCoverageAchievementSuite:
         config = {
             "name": "Test Workflow",
             "unsupported_param": "should_be_filtered",
-            "workflow_id": "from_config"
+            "id": "from_config"
         }
         
         with patch('lib.utils.proxy_workflows.Workflow') as mock_class:
@@ -336,25 +346,25 @@ class TestCoverageAchievementSuite:
             # Check filtered parameters
             call_kwargs = mock_class.call_args[1]
             assert "unsupported_param" not in call_kwargs
-            assert call_kwargs.get("workflow_id") == "test-id"  # Should override config
+            assert call_kwargs.get("id") == "test-id"  # Should override config
             assert call_kwargs.get("debug_mode") is True
 
-    def test_storage_handler_integration(self, proxy):
-        """Test storage configuration handler integration."""
+    def test_db_handler_integration(self, proxy):
+        """Test db configuration handler integration."""
         with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_create:
-            mock_storage = Mock()
-            mock_create.return_value = mock_storage
+            mock_db = Mock()
+            mock_create.return_value = mock_db
             
-            storage_config = {"type": "postgres", "url": "postgres://test"}
-            result = proxy._handle_storage_config(
-                storage_config, {}, "test-id", "db-url"
+            db_config = {"type": "postgres", "url": "postgres://test"}
+            result = proxy._handle_db_config(
+                db_config, {}, "test-id", "db-url"
             )
             
-            assert result is mock_storage
+            assert result is mock_db
             mock_create.assert_called_once_with(
-                storage_config=storage_config,
+                storage_config=db_config,
                 component_id="test-id",
-                component_mode="workflow", 
+                component_mode="workflow",
                 db_url="db-url"
             )
 

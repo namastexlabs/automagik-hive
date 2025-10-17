@@ -1,12 +1,9 @@
-"""
-Agno Proxy System - Public Interface
+"""Agno Proxy System - Public Interface."""
 
-This module provides the public interface for the modular Agno proxy system,
-preserving backward compatibility while delegating to specialized proxy modules.
-
-The system has been refactored to eliminate code duplication and improve
-maintainability while keeping the same API for all existing client code.
-"""
+import asyncio
+import os
+from copy import deepcopy
+from typing import Any
 
 from lib.logging import logger
 
@@ -14,6 +11,43 @@ from lib.logging import logger
 _agno_agent_proxy = None
 _agno_team_proxy = None
 _agno_workflow_proxy = None
+
+def _merge_dicts(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Recursively merge two dictionaries without mutating inputs."""
+
+    merged: dict[str, Any] = {}
+    for key, value in base.items():
+        merged[key] = deepcopy(value)
+
+    for key, value in override.items():
+        if (
+            key in merged
+            and isinstance(merged[key], dict)
+            and isinstance(value, dict)
+        ):
+            merged[key] = _merge_dicts(merged[key], value)
+        else:
+            merged[key] = deepcopy(value)
+
+    return merged
+
+
+_SAMPLE_AGENT_CONFIG: dict[str, Any] = {
+    "agent": {
+        "name": "Smoke Test Agent",
+        "agent_id": "smoke-test-agent",
+        "version": "1.0.0",
+        "description": "Sanity helper used for migration smoke checks.",
+    },
+    "model": {
+        "provider": os.getenv("AGNO_SMOKE_MODEL_PROVIDER", "anthropic"),
+        "id": os.getenv("AGNO_SMOKE_MODEL_ID", "claude-3-haiku-20240513"),
+        "temperature": 0.0,
+    },
+    "instructions": (
+        "You are a smoke-test agent that verifies Automagik Hive's Agno wiring."
+    ),
+}
 
 
 def get_agno_proxy():
@@ -108,12 +142,12 @@ def get_proxy_module_info() -> dict:
         },
         "features": [
             "Dynamic parameter discovery via introspection",
-            "Shared storage utilities (zero duplication)",
+            "Shared db utilities (zero duplication)",
             "Component-specific processing logic",
             "Lazy loading for performance",
             "Backward compatibility preserved",
         ],
-        "supported_storage_types": [
+        "supported_db_types": [
             "postgres",
             "sqlite",
             "mongodb",
@@ -158,3 +192,43 @@ async def create_workflow(*args, **kwargs):
     return await get_agno_workflow_proxy().create_workflow(*args, **kwargs)
 
 
+async def create_sample_agent_async(
+    config_override: dict[str, Any] | None = None,
+) -> "Agent":
+    """Asynchronously create a sample Agno agent using proxy machinery.
+
+    Args:
+        config_override: Optional partial configuration to merge with defaults.
+
+    Returns:
+        Configured Agent instance suitable for smoke checks.
+    """
+
+    proxy = get_agno_proxy()
+
+    config = deepcopy(_SAMPLE_AGENT_CONFIG)
+    if config_override:
+        config = _merge_dicts(config, config_override)
+
+    component_id = config.get("agent", {}).get("agent_id", "smoke-test-agent")
+
+    return await proxy.create_agent(
+        component_id=component_id,
+        config=config,
+        session_id="smoke-session",
+        db_url=os.getenv("HIVE_DATABASE_URL"),
+    )
+
+
+def create_sample_agent(config_override: dict[str, Any] | None = None) -> "Agent":
+    """Synchronous helper for smoke scripts (legacy compatibility)."""
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(create_sample_agent_async(config_override=config_override))
+
+    raise RuntimeError(
+        "create_sample_agent() cannot run inside an active event loop. "
+        "Use await create_sample_agent_async(...) instead."
+    )

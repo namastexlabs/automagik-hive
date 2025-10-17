@@ -3,10 +3,10 @@ Business Unit Knowledge Base Filter
 Leverages the comprehensive business unit configuration for enhanced filtering
 """
 
-from typing import Any
+from typing import Any, cast
 
+from lib.knowledge import config_aware_filter
 from lib.logging import logger
-from lib.utils.version_factory import load_global_knowledge_config
 
 
 class BusinessUnitFilter:
@@ -15,12 +15,28 @@ class BusinessUnitFilter:
     from config.yaml for intelligent keyword matching and content filtering.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with loaded configuration."""
-        self.config = load_global_knowledge_config()
-        self.business_units = self.config.get("business_units", {})
-        self.search_config = self.config.get("search_config", {})
-        self.performance = self.config.get("performance", {})
+        # IMPORTANT: use the module-local loader symbol so tests can patch
+        # 'lib.knowledge.filters.business_unit_filter.load_global_knowledge_config'
+        # directly, as expected by the test suite.
+        self.config: dict[str, Any] = load_global_knowledge_config()
+
+        # Defensive normalization in case the loaded config has unexpected shapes
+        business_units_cfg = self.config.get("business_units", {}) if isinstance(self.config, dict) else {}
+        self.business_units: dict[str, Any] = (
+            business_units_cfg if isinstance(business_units_cfg, dict) else {}
+        )
+
+        search_cfg = self.config.get("search_config", {}) if isinstance(self.config, dict) else {}
+        self.search_config: dict[str, Any] = (
+            search_cfg if isinstance(search_cfg, dict) else {}
+        )
+
+        perf_cfg = self.config.get("performance", {}) if isinstance(self.config, dict) else {}
+        self.performance: dict[str, Any] = (
+            perf_cfg if isinstance(perf_cfg, dict) else {}
+        )
 
         # Build keyword lookup maps for faster filtering
         self._build_keyword_maps()
@@ -33,20 +49,28 @@ class BusinessUnitFilter:
             ),
         )
 
-    def _build_keyword_maps(self):
+    def _build_keyword_maps(self) -> None:
         """Build optimized keyword lookup maps for fast filtering."""
-        self.keyword_to_business_unit = {}
-        self.business_unit_keywords = {}
+        self.keyword_to_business_unit: dict[str, list[str]] = {}
+        self.business_unit_keywords: dict[str, dict[str, Any]] = {}
+
+        # Guard against malformed business units configuration
+        if not isinstance(self.business_units, dict):
+            return
 
         for unit_id, unit_config in self.business_units.items():
+            if not isinstance(unit_config, dict):
+                # Skip malformed entries gracefully
+                continue
+
             unit_name = unit_config.get("name", unit_id)
-            keywords = unit_config.get("keywords", [])
+            keywords = unit_config.get("keywords", []) or []
 
             self.business_unit_keywords[unit_id] = {
                 "name": unit_name,
                 "keywords": keywords,
-                "expertise": unit_config.get("expertise", []),
-                "common_issues": unit_config.get("common_issues", []),
+                "expertise": unit_config.get("expertise", []) or [],
+                "common_issues": unit_config.get("common_issues", []) or [],
             }
 
             # Build reverse lookup
@@ -69,12 +93,12 @@ class BusinessUnitFilter:
             return None
 
         text_lower = text.lower()
-        unit_scores = {}
+        unit_scores: dict[str, dict[str, Any]] = {}
 
         # Score each business unit based on keyword matches
         for unit_id, unit_data in self.business_unit_keywords.items():
             score = 0
-            matched_keywords = []
+            matched_keywords: list[str] = []
 
             for keyword in unit_data["keywords"]:
                 if keyword.lower() in text_lower:
@@ -141,7 +165,7 @@ class BusinessUnitFilter:
             logger.warning("Unknown business unit for filtering", unit=target_unit)
             return documents
 
-        filtered_docs = []
+        filtered_docs: list[Any] = []
 
         for doc in documents:
             # Check existing metadata first
@@ -181,7 +205,7 @@ class BusinessUnitFilter:
         }
 
 
-def test_config_filter():
+def test_config_filter() -> None:
     """Test function to demonstrate BusinessUnitFilter functionality."""
     # Create filter instance
     filter_instance = BusinessUnitFilter()
@@ -210,3 +234,20 @@ def test_config_filter():
                search_params=search_params,
                performance_settings=performance_settings,
                business_units=business_units)
+
+
+# --- Test patchability helper -------------------------------------------------
+def load_global_knowledge_config() -> dict[str, Any]:
+    """Expose config loader for unit-test patching.
+
+    Tests expect to patch `lib.knowledge.filters.business_unit_filter.load_global_knowledge_config`.
+    Delegate to the canonical loader while keeping a module-local symbol.
+    """
+    config = config_aware_filter.load_global_knowledge_config()
+    return cast(dict[str, Any], config if isinstance(config, dict) else {})
+
+
+__all__ = [
+    "BusinessUnitFilter",
+    "load_global_knowledge_config",
+]

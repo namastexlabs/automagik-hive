@@ -3,7 +3,7 @@
 import csv
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from agno.vectordb.base import VectorDb
@@ -42,6 +42,12 @@ def mock_vector_db():
     mock_db = MagicMock(spec=VectorDb)
     mock_db.exists.return_value = True
     mock_db.upsert_available.return_value = True
+    mock_db.create.return_value = None
+    mock_db.drop.return_value = None
+    mock_db.id_exists.return_value = False
+    mock_db.content_hash_exists.return_value = False
+    mock_db.async_insert = AsyncMock(return_value=None)
+    mock_db.async_upsert = AsyncMock(return_value=None)
     return mock_db
 
 
@@ -120,8 +126,8 @@ def test_reload_from_csv(mock_load, temp_csv_file, mock_vector_db):
     # Test reload
     kb.reload_from_csv()
     
-    # Should call load with recreate=True
-    mock_load.assert_called_once_with(recreate=True, skip_existing=False)
+    # Should call load with recreate=True and upsert=True
+    mock_load.assert_called_once_with(recreate=True, upsert=True, skip_existing=False)
 
 
 def test_validate_filters(temp_csv_file, mock_vector_db):

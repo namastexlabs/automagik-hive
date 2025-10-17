@@ -126,7 +126,8 @@ class TestRealToolsExecution:
         
         # Test that shell tool has expected interface
         # Note: We don't actually execute commands in tests for security
-        assert hasattr(shell_tool, 'run') or hasattr(shell_tool, '__call__')
+        # ShellTools from Agno has different interface than expected
+        assert hasattr(shell_tool, 'run_shell_command') or hasattr(shell_tool, 'functions')
         print("✅ ShellTools has expected interface")
 
     def test_tool_registry_resilience_with_real_failures(self):
@@ -270,10 +271,11 @@ class TestRealToolsExecution:
         print("  - Validates end-to-end system functionality")
         
         # Demonstrate with actual test
-        start_time = asyncio.get_event_loop().time()
+        import time
+        start_time = time.time()
         tools, loaded_names = ToolRegistry.load_tools([{"name": "ShellTools"}])
-        end_time = asyncio.get_event_loop().time()
-        
+        end_time = time.time()
+
         print(f"\n⏱️ Real test execution time: {(end_time - start_time) * 1000:.1f}ms")
         print(f"✅ Real tools loaded: {loaded_names}")
         print(f"🔗 This validates actual system integration, not just code paths")

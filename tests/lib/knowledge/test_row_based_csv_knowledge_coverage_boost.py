@@ -6,7 +6,7 @@ Focus on missing coverage areas to improve from 55% to 60%+
 import csv
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import AsyncMock, MagicMock, Mock, patch, call
 import pytest
 from tqdm import tqdm
 from agno.vectordb.base import VectorDb
@@ -22,8 +22,10 @@ def mock_vector_db():
     mock_db.upsert_available.return_value = True
     mock_db.create.return_value = None
     mock_db.drop.return_value = None
-    mock_db.insert.return_value = None
-    mock_db.upsert.return_value = None
+    mock_db.id_exists.return_value = False
+    mock_db.content_hash_exists.return_value = False
+    mock_db.async_insert = AsyncMock(return_value=None)
+    mock_db.async_upsert = AsyncMock(return_value=None)
     return mock_db
 
 
@@ -257,11 +259,12 @@ class TestVectorDatabaseLoading:
             assert 'desc' in kwargs
             assert kwargs['unit'] == 'doc'
             
-            # Should call insert in batches
-            assert mock_vector_db.insert.call_count >= 3  # 25 docs / 10 batch size = 3 calls
-            
-            # Should update progress bar
-            assert mock_pbar.update.call_count >= 3
+            expected_docs = len(kb.documents)
+            assert mock_vector_db.async_insert.await_count == expected_docs
+            assert mock_vector_db.async_upsert.await_count == 0
+
+            # Should update progress bar for every document
+            assert mock_pbar.update.call_count == expected_docs
             
         finally:
             Path(csv_path).unlink(missing_ok=True)
@@ -291,9 +294,20 @@ class TestVectorDatabaseLoading:
             
             kb.load(upsert=True, skip_existing=False)
             
-            # Should call upsert instead of insert
-            mock_vector_db.upsert.assert_called()
-            assert not mock_vector_db.insert.called
+            expected_docs = len(kb.documents)
+            assert expected_docs == 1
+
+            # Prefer sync upsert when upsert_available=True
+            signature = kb.get_signature(kb.documents[0])
+            mock_vector_db.upsert.assert_called_once()
+            args, kwargs = mock_vector_db.upsert.call_args
+            assert args[0] == signature.content_hash
+            assert args[1] == [kb.documents[0]]
+            assert kwargs.get('filters') == kb.documents[0].meta_data
+
+            # Ensure no async paths taken in this branch
+            assert mock_vector_db.async_upsert.await_count == 0
+            assert mock_vector_db.async_insert.await_count == 0
             
         finally:
             Path(csv_path).unlink(missing_ok=True)
@@ -313,17 +327,64 @@ class TestVectorDatabaseLoading:
         try:
             kb = RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
             
-            # Reset mock to clear initialization calls
             mock_vector_db.reset_mock()
-            
-            # Mock the parent class's filter_existing_documents method
-            with patch('lib.knowledge.row_based_csv_knowledge.DocumentKnowledgeBase.filter_existing_documents', return_value=[]):
-                kb.load(skip_existing=True, upsert=False)
+            mock_vector_db.id_exists.return_value = True
+
+            kb.load(skip_existing=True, upsert=False)
+
+            # Should skip inserting existing documents
+            assert mock_vector_db.async_insert.await_count == 0
+            assert mock_vector_db.async_upsert.await_count == 0
                 
-                # Should not call insert or upsert when no documents to load
-                assert not mock_vector_db.insert.called
-                assert not mock_vector_db.upsert.called
-                
+        finally:
+            Path(csv_path).unlink(missing_ok=True)
+
+    @patch('lib.knowledge.row_based_csv_knowledge.tqdm')
+    def test_load_method_with_upsert_async_path_when_upsert_unavailable(self, mock_tqdm, mock_vector_db):
+        """When upsert_available=False and async_upsert is coroutine, prefer async_upsert."""
+        csv_content = [
+            ["question", "answer"],
+            ["Test?", "Answer"],
+        ]
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_content)
+            csv_path = f.name
+
+        try:
+            kb = RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
+
+            mock_vector_db.exists.return_value = True
+            mock_vector_db.upsert_available.return_value = False
+
+            calls = {"called": False, "args": None, "kwargs": None}
+
+            async def fake_async_upsert(content_hash, documents, *, filters=None):
+                calls["called"] = True
+                calls["args"] = (content_hash, documents)
+                calls["kwargs"] = {"filters": filters}
+                return None
+
+            # Replace with a real coroutine so inspect.iscoroutinefunction returns True
+            mock_vector_db.async_upsert = fake_async_upsert
+
+            mock_pbar = MagicMock()
+            mock_tqdm.return_value.__enter__.return_value = mock_pbar
+
+            kb.load(upsert=True, skip_existing=False)
+
+            assert calls["called"] is True
+            signature = kb.get_signature(kb.documents[0])
+            assert calls["args"][0] == signature.content_hash
+            assert calls["args"][1] == [kb.documents[0]]
+            assert calls["kwargs"]["filters"] == kb.documents[0].meta_data
+
+            # Ensure sync upsert was not called and async_insert not used
+            assert not getattr(mock_vector_db, 'upsert').called if hasattr(mock_vector_db, 'upsert') else True
+            assert hasattr(mock_vector_db, 'async_insert')
+            assert mock_vector_db.async_insert.await_count == 0
+
         finally:
             Path(csv_path).unlink(missing_ok=True)
 

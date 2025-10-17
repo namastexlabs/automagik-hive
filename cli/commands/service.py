@@ -4,6 +4,8 @@ Enhanced service management for Docker orchestration and local development.
 Supports both local development (uvicorn) and production Docker modes.
 """
 
+import asyncio
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -13,6 +15,21 @@ from cli.core.main_service import MainService
 from lib.logging import initialize_logging
 
 
+async def _gather_runtime_snapshot() -> dict[str, Any]:
+    """Collect a lightweight runtime snapshot using Agno v2 helpers."""
+    from lib.utils.startup_orchestration import (
+        build_runtime_summary,
+        orchestrated_startup,
+    )
+
+    startup_results = await orchestrated_startup(
+        quiet_mode=True,
+        enable_knowledge_watch=False,
+        initialize_services=False,
+    )
+    return build_runtime_summary(startup_results)
+
+
 class ServiceManager:
     """Enhanced service management with Docker orchestration support."""
     
@@ -20,7 +37,26 @@ class ServiceManager:
         initialize_logging(surface="cli.commands.service")
         self.workspace_path = workspace_path or Path()
         self.main_service = MainService(self.workspace_path)
-    
+
+    def agentos_config(self, json_output: bool = False) -> bool:
+        """Display AgentOS configuration snapshot."""
+
+        from lib.agentos.exceptions import AgentOSConfigError
+        from lib.services.agentos_service import AgentOSService
+
+        try:
+            payload = AgentOSService().serialize()
+        except AgentOSConfigError as exc:
+            print(f"❌ Unable to load AgentOS configuration: {exc}")
+            return False
+
+        if json_output:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            self._print_agentos_summary(payload)
+
+        return True
+
     def serve_local(self, host: str | None = None, port: int | None = None, reload: bool = True) -> bool:
         """Start local development server with uvicorn.
         
@@ -196,6 +232,33 @@ class ServiceManager:
             path / "Makefile",
         ]
         return any(marker.exists() for marker in markers)
+
+    def _print_agentos_summary(self, payload: dict[str, Any]) -> None:
+        """Render AgentOS configuration overview for terminal output."""
+
+        print("🧠 AgentOS Configuration Snapshot")
+        print(f"ID: {payload.get('os_id', '—')}")
+        print(f"Name: {payload.get('name', '—')}")
+
+        models = payload.get("available_models") or []
+        print(f"Available Models: {', '.join(models) if models else '—'}")
+
+        def _render_components(title: str, items: list[dict[str, Any]]) -> None:
+            print(f"{title} ({len(items)}):")
+            if not items:
+                print("  • —")
+                return
+            for item in items:
+                identifier = item.get("id") or "—"
+                name = item.get("name") or identifier
+                print(f"  • {identifier}: {name}")
+
+        _render_components("Agents", payload.get("agents", []))
+        _render_components("Teams", payload.get("teams", []))
+        _render_components("Workflows", payload.get("workflows", []))
+
+        quick_prompts = (payload.get("chat") or {}).get("quick_prompts", {})
+        print(f"Quick Prompt Targets: {len(quick_prompts)}")
 
     def _setup_env_file(self, workspace: str) -> bool:
         """Setup .env file with API key generation if needed."""
@@ -472,8 +535,17 @@ class ServiceManager:
         return {
             "status": "running",
             "healthy": True,
-            "docker_services": docker_status
+            "docker_services": docker_status,
+            "runtime": self._runtime_snapshot(),
         }
+
+    def _runtime_snapshot(self) -> dict[str, Any]:
+        """Build runtime dependency snapshot, handling failures gracefully."""
+        try:
+            summary = asyncio.run(_gather_runtime_snapshot())
+            return {"status": "ready", "summary": summary}
+        except Exception as exc:  # pragma: no cover - defensive path
+            return {"status": "unavailable", "error": str(exc)}
 
     def _resolve_compose_file(self) -> Path | None:
         """Locate docker-compose file for dependency management."""

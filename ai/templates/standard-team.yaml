@@ -7,7 +7,6 @@ team:
   # name: "REQUIRED - Team display name"
   # team_id: "REQUIRED - Unique team identifier"
   # description: "REQUIRED - Team description"
-  # mode: "route"  # Options: route, coordinate, collaborate
   version: 1
 
 # TEAM MODEL CONFIGURATION
@@ -30,12 +29,6 @@ memory:
   add_memory_references: true
   add_session_summary_references: true
 
-# TEAM CONTEXT CONFIGURATION
-context:
-  add_state_in_messages: true
-  enable_agentic_context: true
-  share_member_interactions: true
-
 # TEAM DISPLAY DEFAULTS
 display:
   markdown: false
@@ -43,11 +36,14 @@ display:
   add_datetime_to_instructions: true
   add_member_tools_to_system_message: false
 
-# TEAM STORAGE
-storage:
+# TEAM DATABASE CONFIGURATION
+db:
   type: postgres
   auto_upgrade_schema: true
   # table_name: REQUIRED - teams_[team_id]
+
+# TEAM DEPENDENCIES
+dependencies: {}
 
 # TEAM STREAMING CONFIGURATION
 streaming:

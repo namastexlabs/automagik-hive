@@ -145,13 +145,21 @@ class TestGenieCommands:
         """Test handling KeyboardInterrupt."""
         test_dir = Path("/test/dir")
         agents_content = "# AGENTS.md"
-        
+
         with patch('pathlib.Path.cwd', return_value=test_dir), \
              patch.object(Path, 'exists', return_value=True), \
-             patch('builtins.open', mock_open(read_data=agents_content)), \
-             patch('subprocess.run', side_effect=KeyboardInterrupt()):
-            
-            result = genie_cmd.launch_claude()
-            
-            # KeyboardInterrupt returns True (not an error)
-            assert result is True
+             patch('builtins.open', mock_open(read_data=agents_content)):
+
+            # Directly test the exception handler by calling with KeyboardInterrupt
+            with patch('subprocess.run') as mock_run:
+                # Configure mock to raise KeyboardInterrupt when called
+                mock_run.side_effect = KeyboardInterrupt()
+
+                # The method should catch the exception and return True
+                try:
+                    result = genie_cmd.launch_claude()
+                    # If we get here, the exception was handled
+                    assert result is True
+                except KeyboardInterrupt:
+                    # If KeyboardInterrupt escapes, the test should fail
+                    pytest.fail("KeyboardInterrupt was not handled properly")

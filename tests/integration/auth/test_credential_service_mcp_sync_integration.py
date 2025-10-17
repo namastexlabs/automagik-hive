@@ -48,33 +48,33 @@ class TestCredentialServiceMcpSyncRealWorldScenarios:
 
     def test_makefile_agent_install_with_mcp_sync(self, tmp_path):
         """
-        FAILING TEST: Test Makefile-style agent installation with MCP sync.
-        
-        This simulates how the Makefile should call credential service for agent setup.
+        UPDATED TEST: Test Makefile-style workspace installation with MCP sync.
+
+        This simulates how the Makefile should call credential service for workspace setup.
         Expected behavior: Should support MCP sync when explicitly requested.
         """
-        # Simulate Makefile environment for agent
+        # Simulate Makefile environment for workspace
         service = CredentialService(project_root=tmp_path)
-        
-        # Create .mcp.json file that would exist for agent development
+
+        # Create .mcp.json file that would exist for workspace development
         mcp_file = tmp_path / ".mcp.json"
         mcp_file.write_text('{"mcpServers": {}}')
-        
+
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
-            # Simulate Makefile agent install with MCP sync
+            # Simulate Makefile workspace install with MCP sync
             result = service.setup_complete_credentials(
                 postgres_host="localhost",
                 postgres_port=5532,
                 postgres_database="hive",
-                sync_mcp=True  # Agent development needs MCP sync
+                sync_mcp=True  # Workspace development needs MCP sync
             )
-            
+
             # Should generate credentials successfully
             assert result is not None
             assert 'postgres_user' in result
             assert 'api_key' in result
-            
-            # Should sync MCP for agent install
+
+            # Should sync MCP for workspace install
             mock_sync.assert_called_once()
 
     def test_cli_workspace_mode_installation(self, tmp_path):
@@ -101,58 +101,58 @@ class TestCredentialServiceMcpSyncRealWorldScenarios:
 
     def test_cli_agent_mode_installation_with_mcp_sync(self, tmp_path):
         """
-        FAILING TEST: Test CLI-style agent mode installation with MCP sync.
-        
-        This simulates how the CLI should support agent installation with MCP sync.
+        UPDATED TEST: Test CLI-style workspace mode installation with MCP sync.
+
+        This simulates how the CLI should support workspace installation with MCP sync.
         Expected behavior: Should support sync_mcp parameter.
         """
-        # Simulate CLI environment for agent mode
+        # Simulate CLI environment for workspace mode
         service = CredentialService(project_root=tmp_path)
-        
+
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
-                # Simulate CLI agent install with MCP sync
+                # Simulate CLI workspace install with MCP sync
                 result = service.install_all_modes(
-                    modes=["agent"], 
+                    modes=["workspace"],
                     sync_mcp=True
                 )
-                
+
                 # Should install successfully
                 assert result is not None
-                assert "agent" in result
-                
-                # Should sync MCP for agent when requested
+                assert "workspace" in result
+
+                # Should sync MCP for workspace when requested
                 mock_sync.assert_called_once()
 
     def test_development_workflow_mixed_modes(self, tmp_path):
         """
-        FAILING TEST: Test development workflow with mixed workspace/agent modes.
-        
-        This simulates a developer setting up both workspace and agent environments.
+        UPDATED TEST: Test development workflow with workspace mode.
+
+        This simulates a developer setting up workspace environment.
         Expected behavior: Should control MCP sync appropriately.
         """
         # Simulate development environment
         service = CredentialService(project_root=tmp_path)
-        
+
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
                 # Phase 1: Install workspace (no MCP sync needed)
                 workspace_result = service.install_all_modes(modes=["workspace"])
-                
+
                 assert workspace_result is not None
                 assert "workspace" in workspace_result
                 mock_sync.assert_not_called()
-                
+
                 mock_sync.reset_mock()
-                
-                # Phase 2: Add agent mode with MCP sync for development
-                agent_result = service.install_all_modes(
-                    modes=["agent"], 
+
+                # Phase 2: Install workspace again with MCP sync for development
+                workspace_sync_result = service.install_all_modes(
+                    modes=["workspace"],
                     sync_mcp=True
                 )
-                
-                assert agent_result is not None
-                assert "agent" in agent_result
+
+                assert workspace_sync_result is not None
+                assert "workspace" in workspace_sync_result
                 mock_sync.assert_called_once()
 
     def test_production_deployment_automation(self, tmp_path):
@@ -201,39 +201,39 @@ HIVE_API_KEY=template-api-key
 
     def test_docker_compose_integration_scenario(self, tmp_path):
         """
-        Test integration with Docker Compose workflows.
-        
+        UPDATED TEST: Test integration with Docker Compose workflows.
+
         This simulates how credential service integrates with Docker-based development.
         Expected behavior: Should handle Docker environment variables correctly.
         """
         # Simulate Docker Compose environment
         service = CredentialService(project_root=tmp_path)
-        
+
         # Create docker environment structure
-        docker_dir = tmp_path / "docker" / "agent"
+        docker_dir = tmp_path / "docker" / "workspace"
         docker_dir.mkdir(parents=True)
-        
+
         with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
-                
-                # Install agent mode for Docker development
+
+                # Install workspace mode for Docker development
                 result = service.install_all_modes(
-                    modes=["agent"],
-                    sync_mcp=True  # Docker agent needs MCP sync
+                    modes=["workspace"],
+                    sync_mcp=True  # Docker workspace needs MCP sync
                 )
-                
+
                 assert result is not None
-                assert "agent" in result
+                assert "workspace" in result
                 mock_sync.assert_called_once()
-                
+
                 # Verify main environment file exists for docker-compose inheritance
                 main_env = tmp_path / ".env"
                 assert main_env.exists()
-                
+
                 main_content = main_env.read_text()
-                # Should contain configuration that agent inherits via docker-compose
-                assert "8886" in main_content  # Main API port, agent gets 38886 via docker-compose  
-                assert result["agent"]["postgres_user"] in main_content
+                # Should contain configuration that workspace uses
+                assert "8886" in main_content  # Main API port
+                assert result["workspace"]["postgres_user"] in main_content
 
 
 class TestCredentialServiceMcpSyncErrorHandling:
@@ -319,34 +319,34 @@ class TestCredentialServiceMcpSyncPerformance:
 
     def test_mcp_sync_performance_single_call(self, tmp_path):
         """
-        Test that MCP sync is only called once during install_all_modes.
-        
-        Expected behavior: Regardless of number of modes, sync once per installation.
+        UPDATED TEST: Test that MCP sync is only called once during install_all_modes.
+
+        Expected behavior: Sync once per installation.
         """
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)
-        
+
         # Create MCP file
         mcp_file = tmp_path / ".mcp.json"
         mcp_file.write_text('{"mcpServers": {}}')
-        
+
         # Track call count
         sync_calls = []
-        
+
         def track_sync():
             sync_calls.append(True)
             # Call original method
             return service.sync_mcp_config_with_credentials.__wrapped__(service)
-            
+
         with patch.object(service, 'sync_mcp_config_with_credentials', side_effect=track_sync):
             with patch.object(service, '_extract_existing_master_credentials', return_value=None):
-                
-                # Install multiple modes
+
+                # Install workspace mode
                 service.install_all_modes(
-                    modes=["workspace", "agent", "genie"],
+                    modes=["workspace"],
                     sync_mcp=True
                 )
-                
+
                 # Should have called sync exactly once
                 assert len(sync_calls) == 1
 

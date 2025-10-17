@@ -75,7 +75,9 @@ def test_temp_path_is_safe_by_default(tmp_path):
 
     # Verify file exists and is in temp location
     assert test_file.exists()
-    assert "tmp" in str(test_file.absolute()).lower()
+    path_str = str(test_file.absolute()).lower()
+    # Check for tmp or var (macOS uses /private/var/folders/)
+    assert "tmp" in path_str or "var" in path_str
 
 
 class TestGlobalIsolationBehavior:
@@ -103,4 +105,6 @@ def test_parametrized_isolation(filename, tmp_path):
     test_file.write_text(f"Test content for {filename}")
 
     assert test_file.exists()
-    assert "tmp" in str(test_file.absolute()).lower()
+    path_str = str(test_file.absolute()).lower()
+    # Check for tmp or var (macOS uses /private/var/folders/)
+    assert "tmp" in path_str or "var" in path_str

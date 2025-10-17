@@ -16,6 +16,7 @@ import os
 import pytest
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from typing import Any
 
@@ -30,6 +31,7 @@ from lib.utils.startup_orchestration import (
     run_version_synchronization,
     orchestrated_startup,
     get_startup_display_with_results,
+    build_runtime_summary,
 )
 
 
@@ -212,8 +214,8 @@ class TestInitializeKnowledgeBase:
         mock_csv_manager = Mock()
 
         with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
-            
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
+
             result = await initialize_knowledge_base()
 
             assert result == mock_csv_manager
@@ -230,8 +232,8 @@ class TestInitializeKnowledgeBase:
         mock_csv_manager = Mock()
 
         with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
-            
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
+
             result = await initialize_knowledge_base()
 
             assert result == mock_csv_manager
@@ -253,8 +255,8 @@ class TestInitializeKnowledgeBase:
         mock_config = {"csv_file_path": "test.csv"}
 
         with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV manager failed")):
-            
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV manager failed")):
+
             result = await initialize_knowledge_base()
 
             assert result is None
@@ -572,16 +574,23 @@ class TestGetStartupDisplayWithResults:
         mock_registries.workflows = {"workflow-alpha": Mock(), "workflow-beta": Mock()}
         
         # Mock agents with different metadata structures
+        class FakeDb:  # Simple helper to give predictable class name
+            pass
+
         mock_agent1 = Mock()
         mock_agent1.name = "Agent One"
         mock_agent1.version = "1.0"
         mock_agent1.metadata = {"version": "1.1"}
-        
+        mock_agent1.db = FakeDb()
+        mock_agent1.dependencies = {"db": mock_agent1.db, "cache": object()}
+
         mock_agent2 = Mock()
         mock_agent2.name = "Agent Two"
         mock_agent2.version = "2.0"
         mock_agent2.metadata = None
-        
+        mock_agent2.dependencies = {}
+        mock_agent2.db = None
+
         mock_registries.agents = {"agent-one": mock_agent1, "agent-two": mock_agent2}
         
         mock_services = Mock()
@@ -602,21 +611,82 @@ class TestGetStartupDisplayWithResults:
             
             # Verify teams were added
             assert mock_display.add_team.call_count == 2
-            mock_display.add_team.assert_any_call("team-one", "Team One", 0, version=1, status="✅")
-            mock_display.add_team.assert_any_call("team-two", "Team Two", 0, version=1, status="✅")
+            mock_display.add_team.assert_any_call(
+                "team-one", "Team One", 0, version=1, status="✅", db_label="—"
+            )
+            mock_display.add_team.assert_any_call(
+                "team-two", "Team Two", 0, version=1, status="✅", db_label="—"
+            )
             
             # Verify agents were added with correct version handling
             assert mock_display.add_agent.call_count == 2
-            mock_display.add_agent.assert_any_call("agent-one", "Agent One", version="1.1", status="✅")
-            mock_display.add_agent.assert_any_call("agent-two", "Agent Two", version="2.0", status="✅")
+            mock_display.add_agent.assert_any_call(
+                "agent-one",
+                "Agent One",
+                version="1.1",
+                status="✅",
+                db_label="FakeDb",
+                dependencies=["cache", "db"],
+            )
+            mock_display.add_agent.assert_any_call(
+                "agent-two",
+                "Agent Two",
+                version="2.0",
+                status="✅",
+                db_label="—",
+                dependencies=[],
+            )
             
             # Verify workflows were added
             assert mock_display.add_workflow.call_count == 2
-            mock_display.add_workflow.assert_any_call("workflow-alpha", "Workflow Alpha", version=1, status="✅")
-            mock_display.add_workflow.assert_any_call("workflow-beta", "Workflow Beta", version=1, status="✅")
+            mock_display.add_workflow.assert_any_call(
+                "workflow-alpha", "Workflow Alpha", version=1, status="✅", db_label="—"
+            )
+            mock_display.add_workflow.assert_any_call(
+                "workflow-beta", "Workflow Beta", version=1, status="✅", db_label="—"
+            )
             
             # Verify sync results were set
             mock_display.set_sync_results.assert_called_once_with(mock_sync_results)
+
+
+class TestRuntimeSummary:
+    """Test building runtime dependency summaries."""
+
+    def test_build_runtime_summary_includes_dependencies(self):
+        """Runtime summary should surface db labels and dependency keys."""
+
+        class DummyDb:
+            pass
+
+        dummy_db = DummyDb()
+        agent = SimpleNamespace(
+            name="Agent One",
+            version=1,
+            metadata={"version": 2},
+            dependencies={"db": dummy_db, "cache": object()},
+            db=dummy_db,
+        )
+
+        registries = ComponentRegistries(
+            workflows={"wf": Mock()},
+            teams={"team": Mock()},
+            agents={"agent-one": agent},
+            summary="1 workflow, 1 teams, 1 agents",
+        )
+
+        startup_results = StartupResults(
+            registries=registries,
+            services=StartupServices(auth_service=None),
+            sync_results=None,
+        )
+
+        summary = build_runtime_summary(startup_results)
+
+        agent_summary = summary["components"]["agents"]["agent-one"]
+        assert agent_summary["db"] == "DummyDb"
+        assert agent_summary["dependencies"] == ["cache", "db"]
+        assert summary["services"]["auth_service"] is None
 
 
 class TestIntegrationScenarios:
@@ -627,25 +697,28 @@ class TestIntegrationScenarios:
         """Test complete startup flow with minimal configuration."""
         with patch('lib.utils.db_migration.check_and_run_migrations', return_value=False), \
              patch('lib.utils.version_factory.load_global_knowledge_config', return_value={}), \
-             patch('lib.knowledge.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV failed")), \
+             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV failed")), \
              patch('ai.workflows.registry.get_workflow_registry', return_value={}), \
              patch('ai.teams.registry.get_team_registry', return_value={}), \
              patch('ai.agents.registry.AgentRegistry') as mock_agent_registry_class, \
              patch('lib.auth.dependencies.get_auth_service') as mock_auth, \
              patch('lib.mcp.MCPCatalog', side_effect=Exception("No MCP")), \
-             patch('lib.config.settings.settings') as mock_settings, \
+             patch('lib.config.settings.get_settings') as mock_settings_getter, \
              patch('lib.versioning.dev_mode.DevMode') as mock_dev_mode:
 
             # Setup mocks
             mock_agent_registry = AsyncMock()
             mock_agent_registry.get_all_agents.return_value = {}
             mock_agent_registry_class.return_value = mock_agent_registry
-            
+
             mock_auth_service = Mock()
             mock_auth_service.is_auth_enabled.return_value = False
             mock_auth.return_value = mock_auth_service
-            
+
+            mock_settings = Mock()
             mock_settings.enable_metrics = False
+            mock_settings_getter.return_value = mock_settings
+
             mock_dev_mode.is_enabled.return_value = True
 
             result = await orchestrated_startup(quiet_mode=True)
