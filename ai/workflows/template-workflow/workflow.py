@@ -14,8 +14,8 @@ import json
 from datetime import UTC, datetime
 
 from agno.agent import Agent
-from agno.workflow.v2 import Step, Workflow
-from agno.workflow.v2.types import StepInput, StepOutput
+from agno.workflow import Step, Workflow
+from agno.workflow.types import StepInput, StepOutput
 
 from lib.config.models import get_default_model_id, resolve_model
 from lib.logging import logger
@@ -79,7 +79,7 @@ def create_finalizer_agent() -> Agent:
 # Step executor functions
 def execute_validation_step(step_input: StepInput) -> StepOutput:
     """Execute input validation step"""
-    input_message = step_input.message
+    input_message = step_input.input
     if not input_message:
         raise ValueError("Input message is required for validation")
 

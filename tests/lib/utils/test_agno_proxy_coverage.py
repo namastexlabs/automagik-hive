@@ -183,7 +183,7 @@ class TestGetProxyModuleInfo:
         assert info["system"] == "Modular Agno Proxy System"
         assert "modules" in info
         assert "features" in info
-        assert "supported_storage_types" in info
+        assert "supported_db_types" in info
         
         # Check module information
         modules = info["modules"]
@@ -199,7 +199,7 @@ class TestGetProxyModuleInfo:
         
         features = info["features"]
         assert "Dynamic parameter discovery via introspection" in features
-        assert "Shared storage utilities (zero duplication)" in features
+        assert "Shared db utilities (zero duplication)" in features
         assert "Component-specific processing logic" in features
         assert "Lazy loading for performance" in features
         assert "Backward compatibility preserved" in features
@@ -208,7 +208,7 @@ class TestGetProxyModuleInfo:
         """Test get_proxy_module_info includes supported storage types."""
         info = agno_proxy.get_proxy_module_info()
         
-        storage_types = info["supported_storage_types"]
+        storage_types = info["supported_db_types"]
         expected_types = [
             "postgres", "sqlite", "mongodb", "redis", "dynamodb",
             "json", "yaml", "singlestore"

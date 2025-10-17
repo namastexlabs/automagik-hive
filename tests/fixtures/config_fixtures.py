@@ -165,8 +165,8 @@ def mock_yaml_operations():
 
 @pytest.fixture
 def mock_database_url():
-    """Mock database URL for testing."""
-    return "postgresql+psycopg://test:test@localhost:5432/test_db"
+    """Mock database URL for testing - use SQLite for reliability."""
+    return "sqlite:///test.db"
 
 
 @pytest.fixture

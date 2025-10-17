@@ -43,62 +43,44 @@ class MockTestTool(BaseTool):
 
 class TestDiscoverToolsFunction:
     """Test the _discover_tools() function with actual execution"""
-    
-    def test_discover_tools_empty_directory(self):
+
+    def test_discover_tools_empty_directory(self, tmp_path):
         """Test _discover_tools with non-existent directory"""
-        with patch('ai.tools.registry.Path') as mock_path:
-            mock_path.return_value.exists.return_value = False
-            
+        # Create AI root without tools directory
+        ai_root = tmp_path / "ai"
+        ai_root.mkdir(parents=True)
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
             # EXECUTE the actual function
             result = _discover_tools()
-            
+
             # Verify execution
             assert result == []
-            mock_path.assert_called_once_with("ai/tools")
     
-    def test_discover_tools_with_valid_tools(self):
+    def test_discover_tools_with_valid_tools(self, tmp_path):
         """Test _discover_tools with valid tool directories"""
-        with patch('ai.tools.registry.Path') as mock_path:
-            # Mock tools directory exists
-            mock_tools_dir = Mock()
-            mock_tools_dir.exists.return_value = True
-            mock_path.return_value = mock_tools_dir
-            
-            # Create mock tool directories with proper path division
-            mock_tool1 = Mock()
-            mock_tool1.is_dir.return_value = True
-            mock_tool1.name = "test-tool-1"
-            
-            mock_tool2 = Mock()
-            mock_tool2.is_dir.return_value = True  
-            mock_tool2.name = "test-tool-2"
-            
-            mock_tools_dir.iterdir.return_value = [mock_tool1, mock_tool2]
-            
-            # Mock config files
-            mock_config1 = Mock()
-            mock_config1.exists.return_value = True
-            mock_tool1.__truediv__ = Mock(return_value=mock_config1)
-            
-            mock_config2 = Mock()
-            mock_config2.exists.return_value = True
-            mock_tool2.__truediv__ = Mock(return_value=mock_config2)
-            
-            # Mock YAML content
-            yaml_content1 = {"tool": {"tool_id": "test-tool-1"}}
-            yaml_content2 = {"tool": {"tool_id": "test-tool-2"}}
-            
-            with patch('builtins.open', mock_open()), \
-                 patch('yaml.safe_load') as mock_yaml:
-                
-                mock_yaml.side_effect = [yaml_content1, yaml_content2]
-                
-                # EXECUTE the actual function
-                result = _discover_tools()
-                
-                # Verify execution results
-                assert result == ["test-tool-1", "test-tool-2"]
-                assert mock_yaml.call_count == 2
+        # Create AI root with tools directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tools_dir.mkdir(parents=True)
+
+        # Create tool directories with config files
+        tool1_dir = tools_dir / "test-tool-1"
+        tool1_dir.mkdir()
+        (tool1_dir / "config.yaml").write_text("tool:\n  tool_id: test-tool-1\n")
+
+        tool2_dir = tools_dir / "test-tool-2"
+        tool2_dir.mkdir()
+        (tool2_dir / "config.yaml").write_text("tool:\n  tool_id: test-tool-2\n")
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            # EXECUTE the actual function
+            result = _discover_tools()
+
+            # Verify execution results
+            assert len(result) == 2
+            assert "test-tool-1" in result
+            assert "test-tool-2" in result
     
     def test_discover_tools_with_invalid_config(self):
         """Test _discover_tools handles invalid YAML configs"""
@@ -199,50 +181,39 @@ class TestToolRegistryClass:
             # Verify import error execution
             assert "Tool module not found" in str(exc_info.value)
     
-    def test_get_tool_successful_loading(self):
+    def test_get_tool_successful_loading(self, tmp_path):
         """Test ToolRegistry.get_tool() successful tool loading execution"""
+        # Create AI root with tool directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+
+        # Create config.yaml and tool.py
+        (tool_dir / "config.yaml").write_text("""tool:
+  tool_id: test-tool
+  name: Test Tool
+  description: A test tool for unit testing
+""")
+        (tool_dir / "tool.py").write_text("""
+from ai.tools.base_tool import BaseTool
+
+class TestToolTool(BaseTool):
+    def initialize(self, **kwargs):
+        self._is_initialized = True
+    def execute(self, *args, **kwargs):
+        return {"status": "success"}
+    def validate_inputs(self, inputs):
+        return True
+""")
+
         with patch.object(ToolRegistry, '_get_available_tools', return_value=["test-tool"]), \
-             patch('ai.tools.registry.Path') as mock_path, \
-             patch('importlib.util') as mock_importlib:
-            
-            # Setup path mocking
-            mock_tool_path = Mock()
-            mock_config_file = Mock()
-            mock_tool_file = Mock()
-            mock_tool_file.exists.return_value = True
-            
-            # Mock __truediv__ to return config or tool file based on the name
-            def truediv_side_effect(name):
-                if "config.yaml" in str(name):
-                    return mock_config_file
-                elif "tool.py" in str(name):
-                    return mock_tool_file
-                return Mock()
-                
-            mock_tool_path.__truediv__ = Mock(side_effect=truediv_side_effect)
-            mock_path.return_value = mock_tool_path
-            
-            # Mock importlib module loading
-            mock_spec = Mock()
-            mock_loader = Mock()
-            mock_spec.loader = mock_loader
-            mock_importlib.spec_from_file_location.return_value = mock_spec
-            
-            mock_module = Mock()
-            mock_tool_class = Mock(return_value=MockTestTool())
-            mock_importlib.module_from_spec.return_value = mock_module
-            
-            # Mock hasattr to return True for expected class name and set the class
-            with patch('builtins.hasattr', return_value=True):
-                setattr(mock_module, "TestToolTool", mock_tool_class)
-                
-                # EXECUTE the actual method
-                result = ToolRegistry.get_tool("test-tool")
-                
-                # Verify successful execution
-                assert result is not None
-                mock_importlib.spec_from_file_location.assert_called_once()
-                mock_loader.exec_module.assert_called_once_with(mock_module)
+             patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            # EXECUTE the actual method
+            result = ToolRegistry.get_tool("test-tool")
+
+            # Verify successful execution
+            assert result is not None
     
     def test_get_all_tools_execution(self):
         """Test ToolRegistry.get_all_tools() execution"""
@@ -282,33 +253,30 @@ class TestToolRegistryClass:
             # Verify execution
             assert result == ["tool1", "tool2"]
     
-    def test_get_tool_info_success(self):
+    def test_get_tool_info_success(self, tmp_path):
         """Test ToolRegistry.get_tool_info() successful execution"""
-        with patch('ai.tools.registry.Path') as mock_path:
-            # Setup path mocking
-            mock_tool_path = Mock()
-            mock_config_file = Mock()
-            mock_config_file.exists.return_value = True
-            mock_tool_path.__truediv__ = Mock(return_value=mock_config_file)
-            mock_path.return_value = mock_tool_path
-            
-            # Mock YAML content
-            tool_info = {
-                "tool": {
-                    "tool_id": "test-tool",
-                    "name": "Test Tool",
-                    "description": "A test tool"
-                }
-            }
-            
-            with patch('builtins.open', mock_open()), \
-                 patch('yaml.safe_load', return_value=tool_info):
-                
-                # EXECUTE the actual method
-                result = ToolRegistry.get_tool_info("test-tool")
-                
-                # Verify execution
-                assert result == tool_info["tool"]
+        # Create AI root with tool directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+
+        # Create config.yaml
+        config_content = """tool:
+  tool_id: test-tool
+  name: Test Tool
+  description: A test tool
+"""
+        (tool_dir / "config.yaml").write_text(config_content)
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            # EXECUTE the actual method
+            result = ToolRegistry.get_tool_info("test-tool")
+
+            # Verify execution
+            assert result["tool_id"] == "test-tool"
+            assert result["name"] == "Test Tool"
+            assert result["description"] == "A test tool"
     
     def test_get_tool_info_config_not_found(self):
         """Test ToolRegistry.get_tool_info() with missing config"""
@@ -326,24 +294,24 @@ class TestToolRegistryClass:
             assert "error" in result
             assert "Tool config not found" in result["error"]
     
-    def test_get_tool_info_yaml_error(self):
+    def test_get_tool_info_yaml_error(self, tmp_path):
         """Test ToolRegistry.get_tool_info() with YAML error"""
-        with patch('ai.tools.registry.Path') as mock_path:
-            mock_tool_path = Mock()
-            mock_config_file = Mock()
-            mock_config_file.exists.return_value = True
-            mock_tool_path.__truediv__ = Mock(return_value=mock_config_file)
-            mock_path.return_value = mock_tool_path
-            
-            with patch('builtins.open', mock_open()), \
-                 patch('yaml.safe_load', side_effect=Exception("YAML error")):
-                
-                # EXECUTE the actual method
-                result = ToolRegistry.get_tool_info("test-tool")
-                
-                # Verify error execution
-                assert "error" in result
-                assert "Failed to load tool config" in result["error"]
+        # Create AI root with tool directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+
+        # Create invalid YAML config
+        (tool_dir / "config.yaml").write_text("invalid: yaml: content: [[[")
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            # EXECUTE the actual method
+            result = ToolRegistry.get_tool_info("test-tool")
+
+            # Verify error execution
+            assert "error" in result
+            assert "Failed to load tool config" in result["error"]
     
     def test_list_tools_by_category_execution(self):
         """Test ToolRegistry.list_tools_by_category() execution"""
@@ -516,26 +484,30 @@ class TestRegistryEdgeCases:
                 # Verify None tool_id is skipped
                 assert result == []
     
-    def test_spec_creation_failure(self):
+    def test_spec_creation_failure(self, tmp_path):
         """Test handling of importlib spec creation failure"""
+        # Create AI root with tool directory and files
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+
+        # Create config.yaml and tool.py
+        (tool_dir / "config.yaml").write_text("""tool:
+  tool_id: test-tool
+  name: Test Tool
+  description: Test tool
+""")
+        (tool_dir / "tool.py").write_text("# empty file")
+
         with patch.object(ToolRegistry, '_get_available_tools', return_value=["test-tool"]), \
-             patch('ai.tools.registry.Path') as mock_path, \
-             patch('importlib.util') as mock_importlib:
-            
-            # Setup path mocking
-            mock_tool_path = Mock()
-            mock_tool_file = Mock()
-            mock_tool_file.exists.return_value = True
-            mock_tool_path.__truediv__ = Mock(return_value=mock_tool_file)
-            mock_path.return_value = mock_tool_path
-            
-            # Mock spec creation returns None
-            mock_importlib.spec_from_file_location.return_value = None
-            
+             patch('ai.tools.registry.resolve_ai_root', return_value=ai_root), \
+             patch('importlib.util.spec_from_file_location', return_value=None):
+
             # EXECUTE get_tool with spec creation failure
             with pytest.raises(ImportError) as exc_info:
                 ToolRegistry.get_tool("test-tool")
-            
+
             # Verify error handling
             assert "Failed to load tool module" in str(exc_info.value)
 
@@ -544,44 +516,30 @@ class TestRegistryEdgeCases:
 class TestRegistryPerformance:
     """Test registry performance with realistic scenarios"""
     
-    def test_large_number_of_tools_discovery(self):
+    def test_large_number_of_tools_discovery(self, tmp_path):
         """Test discovery performance with many tools"""
-        # Generate large number of mock tools
+        # Generate large number of tools
         num_tools = 50
         tool_names = [f"tool-{i:03d}" for i in range(num_tools)]
-        
-        with patch('ai.tools.registry.Path') as mock_path:
-            mock_tools_dir = Mock()
-            mock_tools_dir.exists.return_value = True
-            mock_path.return_value = mock_tools_dir
-            
-            # Create mock tool directories
-            mock_tools = []
-            for name in tool_names:
-                mock_tool = Mock()
-                mock_tool.is_dir.return_value = True
-                mock_tool.name = name
-                
-                mock_config = Mock()
-                mock_config.exists.return_value = True
-                mock_tool.__truediv__ = Mock(return_value=mock_config)
-                
-                mock_tools.append(mock_tool)
-            
-            mock_tools_dir.iterdir.return_value = mock_tools
-            
-            # Mock YAML content for all tools
-            yaml_responses = [{"tool": {"tool_id": name}} for name in tool_names]
-            
-            with patch('builtins.open', mock_open()), \
-                 patch('yaml.safe_load', side_effect=yaml_responses):
-                
-                # EXECUTE discovery with many tools
-                result = _discover_tools()
-                
-                # Verify all tools discovered
-                assert len(result) == num_tools
-                assert result == sorted(tool_names)
+
+        # Create AI root with tools directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tools_dir.mkdir(parents=True)
+
+        # Create real tool directories with config files
+        for name in tool_names:
+            tool_dir = tools_dir / name
+            tool_dir.mkdir()
+            (tool_dir / "config.yaml").write_text(f"tool:\n  tool_id: {name}\n")
+
+        with patch('ai.tools.registry.resolve_ai_root', return_value=ai_root):
+            # EXECUTE discovery with many tools
+            result = _discover_tools()
+
+            # Verify all tools discovered
+            assert len(result) == num_tools
+            assert result == sorted(tool_names)
 
 
 if __name__ == "__main__":

@@ -14,14 +14,24 @@ from lib.utils.proxy_workflows import AgnoWorkflowProxy
 
 class MockWorkflow:
     """Mock Agno Workflow class for testing."""
-    
-    def __init__(self, workflow_id: str = None, name: str = None, description: str = None, 
-                 storage=None, steps=None, session_id: str = None, 
-                 debug_mode: bool = False, user_id: str = None, **kwargs):
-        self.workflow_id = workflow_id
+
+    def __init__(
+        self,
+        id: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        db=None,
+        steps=None,
+        session_id: str | None = None,
+        debug_mode: bool = False,
+        user_id: str | None = None,
+        **kwargs,
+    ):
+        self.id = id
+        self.workflow_id = id
         self.name = name
         self.description = description
-        self.storage = storage
+        self.db = db
         self.steps = steps
         self.session_id = session_id
         self.debug_mode = debug_mode
@@ -34,7 +44,7 @@ class MockWorkflow:
 def proxy():
     """Fixture providing AgnoWorkflowProxy with mocked dependencies."""
     with patch('lib.utils.proxy_workflows.Workflow', MockWorkflow):
-        return AgnoWorkflowProxy()
+        yield AgnoWorkflowProxy()
 
 
 class TestProxyWorkflowCoverageBoost:
@@ -48,7 +58,7 @@ class TestProxyWorkflowCoverageBoost:
                 
                 # Should use fallback parameters
                 assert len(proxy._supported_params) >= 10  # Should have fallback parameters
-                assert "workflow_id" in proxy._supported_params
+                assert "id" in proxy._supported_params
 
     @pytest.mark.asyncio
     async def test_create_workflow_full_pipeline(self, proxy):
@@ -59,7 +69,7 @@ class TestProxyWorkflowCoverageBoost:
                 "description": "Test description",
                 "version": 2
             },
-            "storage": {
+            "db": {
                 "type": "postgres",
                 "url": "postgres://localhost/test"
             },
@@ -75,10 +85,10 @@ class TestProxyWorkflowCoverageBoost:
             "unknown_param": "ignored"
         }
         
-        # Mock the storage creation and Workflow class
-        with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_storage:
+        # Mock the db creation and Workflow class
+        with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_db:
             with patch('lib.utils.proxy_workflows.Workflow', MockWorkflow):
-                mock_storage.return_value = Mock()
+                mock_db.return_value = Mock()
                 
                 # Test the full create_workflow pipeline
                 workflow = await proxy.create_workflow(
@@ -128,7 +138,7 @@ class TestProxyWorkflowCoverageBoost:
             
             # Custom parameters requiring handlers
             "workflow": {"name": "Custom Name"},
-            "storage": {"type": "postgres"},
+            "db": {"type": "postgres"},
             "steps": [{"name": "step1"}],
             "suggested_actions": {"retry": True},
             "escalation_triggers": {"timeout": 300},
@@ -141,10 +151,10 @@ class TestProxyWorkflowCoverageBoost:
             "unknown_parameter": "should_be_logged"
         }
         
-        # Mock the storage creation to prevent real database connections
-        with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_storage:
+        # Mock the db creation to prevent real database connections
+        with patch('lib.utils.proxy_workflows.create_dynamic_storage') as mock_db:
             with patch('lib.utils.proxy_workflows.logger') as mock_logger:
-                mock_storage.return_value = Mock()
+                mock_db.return_value = Mock()
                 
                 result = proxy._process_config(config, "test-id", "db-url")
                 
@@ -155,8 +165,8 @@ class TestProxyWorkflowCoverageBoost:
                 assert "debug_mode" in result
                 assert result["debug_mode"] is True
                 
-                # Verify handler was called for storage
-                assert "storage" in result or result.get("storage") is not None
+                # Verify handler was called for db
+                assert "db" in result or result.get("db") is not None
                 
                 # Verify unknown parameter was logged
                 mock_logger.debug.assert_called()
@@ -245,10 +255,10 @@ class TestProxyWorkflowCoverageBoost:
         """Test validate_config with complete parameter categorization."""
         config = {
             # Parameters that should be in both supported and custom
-            "storage": "postgres",
+            "db": "postgres",
             
             # Pure supported parameters
-            "workflow_id": "test-id",
+            "id": "test-id",
             "name": "test",
             "description": "test",
             
@@ -404,7 +414,7 @@ class TestProxyWorkflowCoverageBoost:
             # Should include supported parameters
             assert "name" in call_kwargs
             assert "description" in call_kwargs
-            assert "workflow_id" in call_kwargs
+            assert "id" in call_kwargs
             assert "session_id" in call_kwargs
             assert "debug_mode" in call_kwargs
             assert "user_id" in call_kwargs
@@ -414,14 +424,14 @@ class TestProxyWorkflowCoverageBoost:
             
             # Method parameters should override config
             assert call_kwargs["debug_mode"] is True
-            assert call_kwargs["workflow_id"] == "test-id"
+            assert call_kwargs["id"] == "test-id"
 
     def test_all_custom_parameter_handlers_coverage(self, proxy):
         """Test all custom parameter handlers exist and are callable."""
         handlers = proxy._get_custom_parameter_handlers()
         
         required_handlers = [
-            "storage", "workflow", "steps", "suggested_actions",
+            "db", "workflow", "steps", "suggested_actions",
             "escalation_triggers", "streaming_config", "events_config",
             "context_config", "display_config"
         ]
@@ -430,8 +440,8 @@ class TestProxyWorkflowCoverageBoost:
             assert handler_name in handlers
             assert callable(handlers[handler_name])
             
-            # Test each handler can be called without error (with mocked storage)
-            if handler_name == "storage":
+            # Test each handler can be called without error (with mocked db)
+            if handler_name == "db":
                 with patch('lib.utils.proxy_workflows.create_dynamic_storage', return_value=Mock()):
                     result = handlers[handler_name]({}, {}, "test-id", None)
                     assert result is not None
@@ -469,7 +479,7 @@ class TestErrorPathsAndBoundaries:
             
             # Should contain core Agno Workflow parameters
             expected_core_params = {
-                "workflow_id", "name", "description", "storage", "steps",
+                "id", "name", "description", "db", "steps",
                 "session_id", "user_id", "debug_mode"
             }
             

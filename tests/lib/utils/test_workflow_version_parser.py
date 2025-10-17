@@ -271,11 +271,12 @@ class TestWorkflowVersionFromInit:
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "permission-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text('__version__ = "1.0.0"')
-            
-            with patch("pathlib.Path.read_text", side_effect=PermissionError("Permission denied")):
+
+            # Mock at the open level which is what the actual function uses
+            with patch("builtins.open", side_effect=PermissionError("Permission denied")):
                 with pytest.raises(WorkflowVersionError, match="Permission denied"):
                     get_workflow_version_from_init(workflow_dir)
 
@@ -466,32 +467,32 @@ class TestWorkflowMetadataFromInit:
 
     def test_extract_metadata_with_mixed_quotes(self):
         """Test metadata extraction with mixed quote styles."""
-        init_content = textwrap.dedent("""
-            '''Mixed quotes workflow.'''
-            
-            __version__ = "1.0.0"
-            __author__ = 'Single Quote Author'
-            __description__ = '''Triple quote description
-            that spans multiple lines.'''
-            __license__ = "Triple quote license"
-        """)
-        
+        # Don't use dedent to preserve exact indentation
+        init_content = """'''Mixed quotes workflow.'''
+
+__version__ = "1.0.0"
+__author__ = 'Single Quote Author'
+__description__ = '''Triple quote description
+that spans multiple lines.'''
+__license__ = "Triple quote license"
+"""
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "mixed-quotes-workflow"
             workflow_dir.mkdir()
-            
+
             init_file = workflow_dir / "__init__.py"
             init_file.write_text(init_content)
-            
+
             metadata = get_workflow_metadata_from_init(workflow_dir)
-            
+
             expected_metadata = {
                 "__version__": "1.0.0",
                 "__author__": "Single Quote Author",
-                "__description__": "Triple quote description\n            that spans multiple lines.",
+                "__description__": "Triple quote description\nthat spans multiple lines.",
                 "__license__": "Triple quote license"
             }
-            
+
             assert metadata == expected_metadata
 
     def test_extract_metadata_ignores_non_metadata_variables(self):
@@ -921,17 +922,22 @@ class TestValidateWorkflowStructure:
 
     def test_validate_workflow_structure_case_sensitive_files(self):
         """Test validation is case-sensitive for required files."""
+        import platform
+        # Skip test on case-insensitive filesystems (default macOS HFS+/APFS)
+        if platform.system() == "Darwin":
+            pytest.skip("macOS filesystem is typically case-insensitive")
+
         with tempfile.TemporaryDirectory() as temp_dir:
             workflow_dir = Path(temp_dir) / "case-sensitive-workflow"
             workflow_dir.mkdir()
-            
+
             # Create files with wrong case
             (workflow_dir / "__INIT__.py").write_text('__version__ = "1.0.0"')
             (workflow_dir / "WORKFLOW.py").write_text("# Workflow implementation")
             (workflow_dir / "CONFIG.yaml").write_text("# Workflow configuration")
-            
+
             result = validate_workflow_structure(workflow_dir)
-            
+
             expected_result = {
                 "valid": False,
                 "has_init": False,
@@ -946,7 +952,7 @@ class TestValidateWorkflowStructure:
                     "Missing required file: config.yaml"
                 ]
             }
-            
+
             assert result == expected_result
 
 

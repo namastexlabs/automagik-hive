@@ -75,7 +75,7 @@ class TestFindSymbol:
     """Test suite for find_symbol function."""
 
     @pytest.fixture
-    def temp_project_files(self):
+    def temp_project_files(self, tmp_path):
         """Create temporary project files for testing."""
         files_content = {
             "main.py": '''def main_function():
@@ -85,7 +85,7 @@ class TestFindSymbol:
 class MainClass:
     def __init__(self):
         self.value = 42
-        
+
     def process_data(self):
         return self.value * 2
 
@@ -111,29 +111,18 @@ def main_function():
 test_var = "test"
 '''
         }
-        
+
         temp_files = {}
-        project_root = Path.cwd()
-        
+
         for file_path, content in files_content.items():
-            full_path = project_root / file_path
+            full_path = tmp_path / file_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(full_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             temp_files[file_path] = full_path
-        
+
         yield temp_files
-        
-        # Cleanup
-        for file_path in temp_files.values():
-            if file_path.exists():
-                file_path.unlink()
-        
-        # Remove created directories
-        subdir = project_root / "subdir"
-        if subdir.exists() and subdir.is_dir():
-            subdir.rmdir()
 
     def test_find_symbol_success(self, temp_project_files):
         """Test successful symbol finding."""
@@ -184,29 +173,21 @@ test_var = "test"
         assert "No symbols found" in result
         assert "non_existent_symbol" in result
 
-    def test_find_symbol_large_results(self, temp_project_files):
+    def test_find_symbol_large_results(self, temp_project_files, tmp_path):
         """Test handling of large result sets."""
         # Create many files with the same symbol
-        project_root = Path.cwd()
         temp_files = []
-        
-        try:
-            for i in range(25):
-                file_path = project_root / f"test_{i}.py"
-                file_path.write_text(f"def common_symbol():\n    return {i}")
-                temp_files.append(file_path)
-            
-            result = find_symbol_func("common_symbol")
-            
-            # Our mock returns a simple found result
-            assert "Found" in result
-            assert "common_symbol" in result
-            
-        finally:
-            # Cleanup
-            for file_path in temp_files:
-                if file_path.exists():
-                    file_path.unlink()
+
+        for i in range(25):
+            file_path = tmp_path / f"test_{i}.py"
+            file_path.write_text(f"def common_symbol():\n    return {i}")
+            temp_files.append(file_path)
+
+        result = find_symbol_func("common_symbol")
+
+        # Our mock returns a simple found result
+        assert "Found" in result
+        assert "common_symbol" in result
 
     def test_find_symbol_with_context(self, temp_project_files):
         """Test that symbol search includes context."""
@@ -222,7 +203,7 @@ class TestFindReferencingSymbols:
     """Test suite for find_referencing_symbols function."""
 
     @pytest.fixture
-    def temp_reference_files(self):
+    def temp_reference_files(self, tmp_path):
         """Create temporary files with symbol references."""
         files_content = {
             "target.py": '''def target_function():
@@ -250,28 +231,22 @@ target_var = target_function  # Variable assignment reference
 def use_target():
     # Property access style reference
     return target.target_function()
-    
+
 class RefClass:
     def __init__(self):
         self.func = target_function  # Assignment in class
 '''
         }
-        
+
         temp_files = {}
-        project_root = Path.cwd()
-        
+
         for file_path, content in files_content.items():
-            full_path = project_root / file_path
+            full_path = tmp_path / file_path
             with open(full_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             temp_files[file_path] = full_path
-        
+
         yield temp_files
-        
-        # Cleanup
-        for file_path in temp_files.values():
-            if file_path.exists():
-                file_path.unlink()
 
     def test_find_referencing_symbols_success(self, temp_reference_files):
         """Test successful reference finding."""
@@ -347,7 +322,7 @@ class TestFindReferencingCodeSnippets:
     """Test suite for find_referencing_code_snippets function."""
 
     @pytest.fixture
-    def temp_snippet_files(self):
+    def temp_snippet_files(self, tmp_path):
         """Create temporary files for code snippet testing."""
         files_content = {
             "target.py": '''def target_function():
@@ -360,10 +335,10 @@ def example_usage():
     """Example of how target_function is used."""
     # Setup some data
     data = "test_data"
-    
+
     # Call the target function
     result = target_function()
-    
+
     # Process the result
     processed = result.upper()
     return processed
@@ -372,28 +347,22 @@ class UsageClass:
     def __init__(self):
         # Using target function in constructor
         self.initial_value = target_function()
-        
+
     def process(self):
         # Another usage context
         return f"Processed: {target_function()}"
 '''
         }
-        
+
         temp_files = {}
-        project_root = Path.cwd()
-        
+
         for file_path, content in files_content.items():
-            full_path = project_root / file_path
+            full_path = tmp_path / file_path
             with open(full_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             temp_files[file_path] = full_path
-        
+
         yield temp_files
-        
-        # Cleanup
-        for file_path in temp_files.values():
-            if file_path.exists():
-                file_path.unlink()
 
     def test_find_referencing_code_snippets_success(self, temp_snippet_files):
         """Test successful code snippet finding."""
@@ -459,7 +428,7 @@ class TestGetSymbolsOverview:
     """Test suite for get_symbols_overview function."""
 
     @pytest.fixture
-    def temp_overview_files(self):
+    def temp_overview_files(self, tmp_path):
         """Create temporary files for symbol overview testing."""
         files_content = {
             "overview_test.py": '''"""Module for testing symbol overview."""
@@ -481,13 +450,13 @@ def _private_function():
 
 class PublicClass:
     """Public class."""
-    
+
     def __init__(self):
         self.value = 0
-        
+
     def public_method(self):
         return "public_method"
-        
+
     def _private_method(self):
         return "private_method"
 
@@ -507,29 +476,18 @@ class NestedClass:
     pass
 '''
         }
-        
+
         temp_files = {}
-        project_root = Path.cwd()
-        
+
         for file_path, content in files_content.items():
-            full_path = project_root / file_path
+            full_path = tmp_path / file_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(full_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             temp_files[file_path] = full_path
-        
+
         yield temp_files
-        
-        # Cleanup
-        for file_path in temp_files.values():
-            if file_path.exists():
-                file_path.unlink()
-        
-        # Remove created directories
-        subdir = project_root / "subdir"
-        if subdir.exists() and subdir.is_dir():
-            subdir.rmdir()
 
     def test_get_symbols_overview_single_file(self, temp_overview_files):
         """Test symbol overview for a single file."""
@@ -1013,48 +971,36 @@ test_var = "value"
 
 
 @pytest.fixture
-def temp_project_structure():
+def temp_project_structure(tmp_path):
     """Create a temporary project structure for testing."""
-    project_root = Path.cwd()
     temp_files = []
-    
+
     # Create test files
     files_content = {
         "test_main.py": "def main(): pass",
-        "utils/helper.py": "def help(): pass", 
+        "utils/helper.py": "def help(): pass",
         "models/user.py": "class User: pass"
     }
-    
+
     for file_path, content in files_content.items():
-        full_path = project_root / file_path
+        full_path = tmp_path / file_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_text(content)
         temp_files.append(full_path)
-    
-    yield project_root
-    
-    # Cleanup
-    for file_path in temp_files:
-        if file_path.exists():
-            file_path.unlink()
-    
-    # Remove directories
-    for dir_path in ["utils", "models"]:
-        dir_full_path = project_root / dir_path
-        if dir_full_path.exists() and dir_full_path.is_dir():
-            dir_full_path.rmdir()
+
+    yield tmp_path
 
 
 def test_integration_symbol_search_and_analysis(temp_project_structure):
     """Integration test combining symbol search with reference analysis."""
-    # First, find all symbols named 'main' 
+    # First, find all symbols named 'main'
     find_result = find_symbol_func("main")
     assert "Found" in find_result or "No symbols found" in find_result
-    
+
     # Then get an overview of the entire project
     overview_result = get_symbols_overview_func(".")
     assert "Symbol Overview" in overview_result
-    
+
     # The integration should work without errors
     assert len(find_result) > 0
     assert len(overview_result) > 0

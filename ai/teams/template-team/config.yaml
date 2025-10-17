@@ -1,5 +1,4 @@
 team:
-  mode: route
   role: "Template Routing Specialist"
   name: Template Team
   team_id: template-team
@@ -21,10 +20,12 @@ model:
     provider: anthropic
     id: claude-haiku-4-20250201
     temperature: 0.5
-storage:
+db:
   type: postgres
   table_name: template_agents
   auto_upgrade_schema: true
+
+dependencies: {}
 memory:
   num_history_runs: 10
   enable_user_memories: true
@@ -37,10 +38,6 @@ display:
   markdown: false
   show_tool_calls: true
   add_datetime_to_instructions: true
-context:
-  add_state_in_messages: true
-  enable_agentic_context: true
-  share_member_interactions: true
 members:
 - template-agent
 events:

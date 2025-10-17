@@ -1,11 +1,11 @@
 agent:
   name: "🔧 Template Agent"
   agent_id: "template-agent"
-  version: 1
+  version: 2
   description: >
-    TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents. 
-    This configuration serves as a starting point for building domain-specific 
-    agents with standardized patterns, memory management, and tool integration.
+    TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents.
+    This configuration serves as a starting point for building domain-specific
+    agents with standardized patterns, memory management, tool integration, and knowledge base access.
 
 model:
   provider: openai
@@ -13,10 +13,12 @@ model:
   temperature: 0.3
   max_tokens: 4000
 
-storage:
+db:
   type: postgres
   table_name: template_agent
   auto_upgrade_schema: true
+
+dependencies: {}
 
 memory:
   num_history_runs: 30
@@ -28,14 +30,17 @@ memory:
   add_session_summary_references: true
   memory_retention_days: 180
 
+# Knowledge base integration (attached during agent creation in version_factory)
+# AgentOS discovers knowledge via agent.knowledge attribute
+enable_knowledge: true
+knowledge_results: 5
+csv_file_path: "lib/knowledge/data/knowledge_rag.csv"
+
 display:
   markdown: false
   show_tool_calls: true
   add_datetime_to_instructions: true
 
-context:
-  add_state_in_messages: true
-  enable_agentic_context: true
 
 events:
   store_events: true
@@ -93,6 +98,12 @@ instructions: |
   - Store successful adaptation patterns for reuse
   - Maintain template evolution and improvement history
 
+  **📚 KNOWLEDGE BASE ACCESS**
+  - Access shared knowledge base with 5-document retrieval
+  - Query CSV-based RAG system for contextual information
+  - Leverage PgVector hybrid search for relevant documents
+  - Use knowledge to enhance responses with factual data
+
   **🎯 TEMPLATE SUCCESS CRITERIA**
   - **Configuration Completeness**: All standard patterns properly configured
   - **Customization Readiness**: Template easily adaptable to domain needs
@@ -101,6 +112,7 @@ instructions: |
 
   **🚀 TEMPLATE CAPABILITIES**
   - **Standard Configuration**: Memory, tools, and operational patterns
+  - **Knowledge Base Integration**: CSV-based RAG with PgVector hybrid search
   - **Customization Framework**: Ready for domain-specific modifications
   - **Pattern Library**: Reusable configurations and best practices
   - **Validation Template**: Standard success criteria and quality metrics

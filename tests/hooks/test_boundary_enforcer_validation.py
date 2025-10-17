@@ -6,6 +6,7 @@ import json
 import subprocess
 import tempfile
 import os
+from pathlib import Path
 
 try:
     import pytest
@@ -13,9 +14,18 @@ except ImportError:
     # pytest not available, skip markers won't work but tests can still run
     pytest = None
 
+# Get project root dynamically
+PROJECT_ROOT = Path(__file__).parent.parent.parent.absolute()
+
 def run_hook_with_input(test_input):
     """Test the hook with given input data."""
-    hook_path = "/home/namastex/workspace/automagik-hive/.claude/hooks/test_boundary_enforcer.py"
+    hook_path = PROJECT_ROOT / ".claude" / "hooks" / "test_boundary_enforcer.py"
+
+    # Skip if hook doesn't exist
+    if not hook_path.exists():
+        if pytest:
+            pytest.skip(f"Hook not found at {hook_path}")
+        return {"returncode": 0, "stdout": "", "stderr": "Hook not found"}
     
     try:
         process = subprocess.run(
@@ -43,7 +53,7 @@ def test_hook_blocks_testing_agent_source_code():
             "subagent_type": "hive-testing-fixer",
             "prompt": "Fix the bug in lib/knowledge/config_aware_filter.py by updating the source code"
         },
-        "cwd": "/home/namastex/workspace/automagik-hive"
+        "cwd": str(PROJECT_ROOT)
     }
     
     result = run_hook_with_input(test_input)
@@ -59,14 +69,14 @@ def test_hook_allows_testing_agent_test_work():
     """Test that hook allows testing agents targeting test work."""
     if pytest:
         pytest.skip("Blocked by task-330ed5e0-4fc2-4612-b95c-9c654b212583 - hook needs prompt analysis fix")
-    
+
     test_input = {
-        "tool_name": "Task", 
+        "tool_name": "Task",
         "tool_input": {
             "subagent_type": "hive-testing-fixer",
             "prompt": "Fix failing test in tests/lib/knowledge/test_config_filter.py by updating test expectations"
         },
-        "cwd": "/home/namastex/workspace/automagik-hive"
+        "cwd": str(PROJECT_ROOT)
     }
     
     result = run_hook_with_input(test_input)
@@ -79,10 +89,10 @@ def test_hook_allows_non_testing_agent():
     test_input = {
         "tool_name": "Task",
         "tool_input": {
-            "subagent_type": "hive-dev-fixer", 
+            "subagent_type": "hive-dev-fixer",
             "prompt": "Fix the bug in lib/knowledge/config_aware_filter.py by updating the source code"
         },
-        "cwd": "/home/namastex/workspace/automagik-hive"
+        "cwd": str(PROJECT_ROOT)
     }
     
     result = run_hook_with_input(test_input)

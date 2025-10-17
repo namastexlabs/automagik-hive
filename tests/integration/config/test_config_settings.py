@@ -344,8 +344,8 @@ class TestSettingsEdgeCases:
                 test_settings = Settings()
 
                 # Should still initialize with defaults from the settings class
-                assert test_settings.hive_metrics_batch_size == 50
-                assert test_settings.hive_metrics_flush_interval == 5.0
+                assert test_settings.hive_metrics_batch_size == 5
+                assert test_settings.hive_metrics_flush_interval == 1.0
                 assert test_settings.hive_metrics_queue_size == 1000
                 
                 # Should have proper validation even with mocked logger

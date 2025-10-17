@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, Depends, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from api.routes.agentos_router import agentos_router, legacy_agentos_router
 from api.routes.health import health_check_router
 from api.routes.mcp_router import router as mcp_router
 from api.routes.version_router import version_router
@@ -64,20 +65,31 @@ def create_app() -> FastAPI:
     protected_v1_router = APIRouter(prefix="/api/v1")
     protected_v1_router.include_router(version_router)
     protected_v1_router.include_router(mcp_router)
+    protected_v1_router.include_router(agentos_router)
 
     protected_router.include_router(protected_v1_router)
+    protected_router.include_router(legacy_agentos_router)
     app.include_router(protected_router)
 
     # Add Middlewares
+    # Note: allow_credentials=True is incompatible with allow_origins=["*"]
+    # Browsers reject this combination as a security measure
+    cors_origins = api_settings.cors_origin_list if api_settings.cors_origin_list else ["*"]
+    use_credentials = "*" not in cors_origins
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=api_settings.cors_origin_list
-        if api_settings.cors_origin_list
-        else ["*"],
-        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_credentials=use_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    if not use_credentials:
+        logger.debug(
+            "CORS credentials disabled due to wildcard origin",
+            origins=cors_origins
+        )
 
     return app
 
