@@ -132,7 +132,9 @@ class TestDockerComposeService:
         assert app_service["depends_on"]["postgres"]["condition"] == "service_healthy"
 
     @patch.object(CredentialService, "setup_complete_credentials")
-    @pytest.mark.skip(reason="Blocked by task-19d9a79b - Missing DockerComposeService.generate_workspace_environment_file method")
+    @pytest.mark.skip(
+        reason="Blocked by task-19d9a79b - Missing DockerComposeService.generate_workspace_environment_file method"
+    )
     def test_generate_workspace_environment_file_with_credentials(self, mock_credentials, compose_service):
         """Test environment file generation with provided credentials."""
         # Mock credentials
@@ -174,7 +176,9 @@ class TestDockerComposeService:
             assert "POSTGRES_GID=1000" in env_content
 
     @patch.object(CredentialService, "setup_complete_credentials")
-    @pytest.mark.skip(reason="Blocked by task-19d9a79b - Missing DockerComposeService.generate_workspace_environment_file method")
+    @pytest.mark.skip(
+        reason="Blocked by task-19d9a79b - Missing DockerComposeService.generate_workspace_environment_file method"
+    )
     def test_generate_workspace_environment_file_generate_credentials(self, mock_credentials, compose_service):
         """Test environment file generation with credential generation."""
         # Mock credential generation
@@ -235,7 +239,9 @@ class TestDockerComposeService:
         assert saved_path == expected_path
         assert expected_path.exists()
 
-    @pytest.mark.skip(reason="Blocked by architectural rule - DockerComposeService NEVER writes .env files (only validates existence)")
+    @pytest.mark.skip(
+        reason="Blocked by architectural rule - DockerComposeService NEVER writes .env files (only validates existence)"
+    )
     def test_save_environment_file(self, compose_service, isolated_workspace):
         """Test saving environment file with secure permissions."""
         env_content = """POSTGRES_USER=test_user

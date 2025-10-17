@@ -59,9 +59,7 @@ class YAMLConfigParser:
             raise ValueError(f"Invalid YAML in {config_path}: {e}")
 
         if not isinstance(raw_config, dict):
-            raise ValueError(
-                f"Configuration file must contain a YAML object: {config_path}"
-            )
+            raise ValueError(f"Configuration file must contain a YAML object: {config_path}")
 
         # Extract tools list
         tools_list = raw_config.get("tools", [])
@@ -109,9 +107,7 @@ class YAMLConfigParser:
             raise ValueError(f"Invalid YAML in {config_path}: {e}")
 
         if not isinstance(raw_config, dict):
-            raise ValueError(
-                f"Configuration file must contain a YAML object: {config_path}"
-            )
+            raise ValueError(f"Configuration file must contain a YAML object: {config_path}")
 
         return TeamConfig(**raw_config)
 
@@ -166,17 +162,13 @@ class YAMLConfigParser:
                     tool_config = MCPToolConfig(server_name=server_name, enabled=True)
                     validated_tools.append(tool_config)
                 else:
-                    logger.warning(
-                        "MCP server not found in catalog", server_name=server_name
-                    )
+                    logger.warning("MCP server not found in catalog", server_name=server_name)
                     # Still add it but mark as disabled
                     tool_config = MCPToolConfig(server_name=server_name, enabled=False)
                     validated_tools.append(tool_config)
 
             except Exception as e:
-                logger.warning(
-                    "Error validating MCP tool", server_name=server_name, error=str(e)
-                )
+                logger.warning("Error validating MCP tool", server_name=server_name, error=str(e))
                 continue
 
         return validated_tools
@@ -222,12 +214,8 @@ class YAMLConfigParser:
             "regular_tools": len(config.regular_tools),
             "mcp_tools": len(config.mcp_tools),
             "mcp_servers": config.mcp_server_names,
-            "enabled_mcp_tools": [
-                tool.server_name for tool in config.mcp_tools if tool.enabled
-            ],
-            "disabled_mcp_tools": [
-                tool.server_name for tool in config.mcp_tools if not tool.enabled
-            ],
+            "enabled_mcp_tools": [tool.server_name for tool in config.mcp_tools if tool.enabled],
+            "disabled_mcp_tools": [tool.server_name for tool in config.mcp_tools if not tool.enabled],
         }
 
     def validate_config_file(self, config_path: str) -> dict[str, Any]:

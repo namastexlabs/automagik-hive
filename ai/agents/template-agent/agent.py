@@ -28,9 +28,7 @@ def get_template_agent(**kwargs) -> Agent:
 
     # Pass knowledge directly to Agent initialization (not via YAML)
     # This ensures proper object type instead of dict from YAML parsing
-    agent = Agent.from_yaml(
-        __file__.replace("agent.py", "config.yaml"), knowledge=knowledge, **kwargs
-    )
+    agent = Agent.from_yaml(__file__.replace("agent.py", "config.yaml"), knowledge=knowledge, **kwargs)
 
     return agent
 

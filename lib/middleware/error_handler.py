@@ -58,9 +58,7 @@ class AgentRunErrorHandler(BaseHTTPMiddleware):
             # Let other errors propagate normally
             raise
 
-    async def _handle_missing_run_error(
-        self, request: Request, error_message: str
-    ) -> JSONResponse:
+    async def _handle_missing_run_error(self, request: Request, error_message: str) -> JSONResponse:
         """
         Handle missing agent run errors with user-friendly responses.
 

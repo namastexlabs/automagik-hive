@@ -360,7 +360,7 @@ class TestAppConfiguration:
     def test_app_metadata(self, simple_fastapi_app):
         """Test app metadata configuration."""
         from lib.utils.version_reader import get_api_version
-        
+
         app = simple_fastapi_app
 
         assert app.title == "Test Automagik Hive Multi-Agent System"
@@ -592,9 +592,7 @@ class TestMainModule:
             assert "/health" in router_paths
 
             # V1 API routes should be protected
-            protected_routes = [
-                route for route in app.routes if hasattr(route, "path_regex")
-            ]
+            protected_routes = [route for route in app.routes if hasattr(route, "path_regex")]
             assert len(protected_routes) > 0
 
     def test_cors_middleware_configuration(self):
@@ -621,14 +619,11 @@ class TestMainModule:
                 middleware_found = False
                 for middleware in app.user_middleware:
                     if (
-                        hasattr(middleware, "cls")
-                        and "CORSMiddleware" in str(middleware.cls)
+                        hasattr(middleware, "cls") and "CORSMiddleware" in str(middleware.cls)
                     ) or "CORSMiddleware" in str(type(middleware)):
                         middleware_found = True
                         break
-                assert middleware_found, (
-                    f"CORS middleware not found in {[str(type(m)) for m in app.user_middleware]}"
-                )
+                assert middleware_found, f"CORS middleware not found in {[str(type(m)) for m in app.user_middleware]}"
 
     def test_protected_router_configuration(self):
         """Test protected router configuration with authentication."""
@@ -717,9 +712,7 @@ class TestMainModuleIntegration:
             assert "/health" in route_paths
 
             # Should have some protected routes
-            protected_routes = [
-                path for path in route_paths if path.startswith("/api/v1")
-            ]
+            protected_routes = [path for path in route_paths if path.startswith("/api/v1")]
             assert len(protected_routes) > 0
 
     def test_middleware_stack_order(self):
@@ -741,10 +734,9 @@ class TestMainModuleIntegration:
             cors_middleware = None
             for middleware in middleware_stack:
                 # Check both direct type and wrapped middleware class
-                if (
-                    hasattr(middleware, "cls")
-                    and "CORSMiddleware" in str(middleware.cls)
-                ) or "CORSMiddleware" in str(type(middleware)):
+                if (hasattr(middleware, "cls") and "CORSMiddleware" in str(middleware.cls)) or "CORSMiddleware" in str(
+                    type(middleware)
+                ):
                     cors_middleware = middleware
                     break
 

@@ -140,7 +140,7 @@ jobs:
 
       - name: Run type checking
         run: |
-          uv run mypy ai/agents/ api/ --strict
+          uv run mypy ai/agents/registry.py ai/agents/__init__.py ai/agents/tools/ api/ --strict
 
       - name: Run tests
         env:

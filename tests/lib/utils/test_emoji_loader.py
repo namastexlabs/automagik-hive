@@ -139,9 +139,7 @@ class TestEmojiLoaderComprehensive:
             # Create a real loader with our config
             test_loader = EmojiLoader(str(config_file))
 
-            with patch(
-                "lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader
-            ):
+            with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
                 # Test message with matching keywords
                 result = auto_emoji("Database query successful", "/path/to/file.py")
                 # Should contain emoji or be unchanged
@@ -162,9 +160,7 @@ class TestEmojiLoaderComprehensive:
             # Create a real loader with no config
             test_loader = EmojiLoader("/non/existent/path.yaml")
 
-            with patch(
-                "lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader
-            ):
+            with patch("lib.utils.emoji_loader.get_emoji_loader", return_value=test_loader):
                 # Should return original message when no config
                 message = "Test message"
                 result = auto_emoji(message, "/path/to/file.py")

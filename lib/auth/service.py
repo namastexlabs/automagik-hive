@@ -26,9 +26,7 @@ class AuthService:
             self.auth_disabled = False
         else:
             # Development/staging: respect HIVE_AUTH_DISABLED setting (default: enabled for security)
-            self.auth_disabled = (
-                os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
-            )
+            self.auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
 
     async def validate_api_key(self, provided_key: str | None) -> bool:
         """
@@ -73,8 +71,7 @@ class AuthService:
         return {
             "environment": self.environment,
             "auth_enabled": not self.auth_disabled,
-            "production_override_active": self.environment == "production"
-            and raw_auth_disabled,
+            "production_override_active": self.environment == "production" and raw_auth_disabled,
             "raw_hive_auth_disabled_setting": raw_auth_disabled,
             "effective_auth_disabled": self.auth_disabled,
             "security_note": "Authentication is ALWAYS enabled in production regardless of HIVE_AUTH_DISABLED setting",

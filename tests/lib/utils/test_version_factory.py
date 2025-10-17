@@ -3,13 +3,13 @@
 Tests the simplified version factory with inheritance system removed.
 """
 
-import pytest
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
-from lib.utils.version_factory import VersionFactory
+import pytest
+
 from lib.utils.user_context_helper import create_user_context_state
+from lib.utils.version_factory import VersionFactory
 
 
 class TestVersionFactory:
@@ -20,18 +20,18 @@ class TestVersionFactory:
         factory = VersionFactory()
         assert factory is not None
 
-    @patch('lib.utils.version_factory.logger')
+    @patch("lib.utils.version_factory.logger")
     def test_apply_team_inheritance_passthrough(self, mock_logger):
         """Test team inheritance returns config unchanged."""
         factory = VersionFactory()
         config = {"name": "test", "version": "1.0.0"}
-        
+
         result = factory._apply_team_inheritance("test-agent", config)
-        
+
         assert result == config
         mock_logger.debug.assert_called_once()
 
-    @patch('lib.utils.version_factory.logger')
+    @patch("lib.utils.version_factory.logger")
     def test_validate_team_inheritance_disabled(self, mock_logger):
         """Test team inheritance validation is disabled."""
         factory = VersionFactory()
@@ -56,10 +56,11 @@ class TestVersionFactory:
             dummy_agent.passed_config = config
             return dummy_agent
 
-        with patch("lib.utils.agno_proxy.get_agno_proxy") as mock_get_proxy, \
-             patch.object(factory, "_apply_team_inheritance", side_effect=lambda cid, cfg: cfg), \
-             patch.object(factory, "_load_agent_tools", return_value=[]):
-
+        with (
+            patch("lib.utils.agno_proxy.get_agno_proxy") as mock_get_proxy,
+            patch.object(factory, "_apply_team_inheritance", side_effect=lambda cid, cfg: cfg),
+            patch.object(factory, "_load_agent_tools", return_value=[]),
+        ):
             mock_proxy = Mock()
             mock_proxy.create_agent = AsyncMock(side_effect=_create_agent_side_effect)
             mock_proxy.get_supported_parameters.return_value = set()
@@ -87,6 +88,4 @@ class TestVersionFactory:
         passed_config = mock_proxy.create_agent.call_args.kwargs["config"]
         assert "context" not in passed_config
         assert passed_config.get("session_state") == expected_state
-        assert agent.metadata.get("runtime_context_keys") == sorted(
-            expected_state["user_context"].keys()
-        )
+        assert agent.metadata.get("runtime_context_keys") == sorted(expected_state["user_context"].keys())

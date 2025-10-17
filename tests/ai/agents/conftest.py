@@ -9,11 +9,9 @@ project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import pytest
+import pytest  # noqa: E402 - Path setup required before imports
 
 # Re-export the specific fixtures needed for registry tests
-from tests.fixtures.config_fixtures import sample_agent_config
-from tests.fixtures.service_fixtures import mock_file_system_ops
 
 
 @pytest.fixture(autouse=True)
@@ -53,9 +51,7 @@ def mock_database_layer():
             "lib.services.component_version_service.ComponentVersionService",
             return_value=mock_component_service,
         ),
-        patch(
-            "lib.services.database_service.get_db_service", return_value=mock_db_service
-        ),
+        patch("lib.services.database_service.get_db_service", return_value=mock_db_service),
         # Mock version factory - These need to be AsyncMock since they are async functions
         patch(
             "lib.utils.version_factory.create_agent",
@@ -88,7 +84,7 @@ def mock_database_layer():
     for p in patches:
         try:
             p.stop()
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Ignore cleanup errors to prevent test failures
             pass
 

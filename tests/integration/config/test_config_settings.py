@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -10,10 +10,10 @@ from pydantic import ValidationError
 from lib.config.settings import (
     PROJECT_ROOT,
     HiveSettings,
+    get_legacy_settings,
     get_project_root,
     get_setting,
     settings,
-    get_legacy_settings,
     validate_environment,
 )
 
@@ -138,12 +138,12 @@ class TestSettings:
         with patch.dict(os.environ, mock_invalid_env_vars):
             # Should raise ValidationError due to invalid values
             with pytest.raises(ValidationError) as exc_info:
-                test_settings = Settings()
-            
+                Settings()
+
             # Verify specific validation errors
             error_messages = str(exc_info.value)
             assert "Metrics batch size must be between 1-10000, got 999999" in error_messages
-            assert "Metrics flush interval must be between 0.1-3600 seconds, got -1.0" in error_messages  
+            assert "Metrics flush interval must be between 0.1-3600 seconds, got -1.0" in error_messages
             assert "Metrics queue size must be between 10-100000, got 5" in error_messages
 
     def test_settings_langwatch_configuration(self, clean_singleton):
@@ -170,7 +170,7 @@ class TestSettings:
             assert test_settings.hive_enable_langwatch is False
 
         # Test no API key - LangWatch automatically disabled when no valid API key provided
-        with patch.dict(os.environ, {"HIVE_ENABLE_METRICS": "true"}, clear=True):
+        with patch.dict(os.environ, {"HIVE_ENABLE_METRICS": "true", "LANGWATCH_API_KEY": ""}, clear=True):
             test_settings = Settings()
             assert test_settings.hive_enable_langwatch is False
 
@@ -183,7 +183,7 @@ class TestSettings:
                 # LANGWATCH_ENDPOINT not set (will be None)
             },
         ):
-            test_settings = Settings()
+            Settings()
 
             # Only non-None values should be in config - needs langwatch_config property
             # This test is disabled until langwatch_config property is implemented in source
@@ -329,9 +329,9 @@ class TestSettingsEdgeCases:
             "HIVE_API_PORT": "8886",
             "HIVE_DATABASE_URL": "postgresql://localhost:5432/test",
             "HIVE_API_KEY": "hive_test_key_with_sufficient_length_to_pass_validation",
-            "HIVE_CORS_ORIGINS": "http://localhost:3000"
+            "HIVE_CORS_ORIGINS": "http://localhost:3000",
         }
-        
+
         with patch.dict(os.environ, valid_env):
             # Mock logger import failure at the module level before initialization
             with patch("lib.config.settings.logger") as mock_logger:
@@ -339,7 +339,7 @@ class TestSettingsEdgeCases:
                 mock_logger.warning = Mock()
                 mock_logger.info = Mock()
                 mock_logger.error = Mock()
-                
+
                 # Create settings instance - should work even with mocked logger
                 test_settings = Settings()
 
@@ -347,14 +347,14 @@ class TestSettingsEdgeCases:
                 assert test_settings.hive_metrics_batch_size == 5
                 assert test_settings.hive_metrics_flush_interval == 1.0
                 assert test_settings.hive_metrics_queue_size == 1000
-                
+
                 # Should have proper validation even with mocked logger
                 assert test_settings.hive_environment == "development"
                 assert test_settings.hive_api_port == 8886
 
     def test_settings_supported_languages(self, clean_singleton):
         """Test supported languages configuration."""
-        test_settings = Settings()
+        Settings()
 
         # These properties need to be implemented in source code
         # assert test_settings.supported_languages == ["pt-BR", "en-US"]

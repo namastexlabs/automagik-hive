@@ -26,9 +26,7 @@ class BaseValidatedRequest(BaseModel):
 class AgentRequest(BaseValidatedRequest):
     """Request model for agent interactions."""
 
-    message: str = Field(
-        ..., min_length=1, max_length=10000, description="Message to send to the agent"
-    )
+    message: str = Field(..., min_length=1, max_length=10000, description="Message to send to the agent")
     session_id: str | None = Field(
         None,
         pattern=r"^[a-zA-Z0-9_-]+$",
@@ -43,9 +41,7 @@ class AgentRequest(BaseValidatedRequest):
         max_length=100,
         description="Optional user ID for personalization",
     )
-    context: dict[str, Any] | None = Field(
-        None, description="Optional context data for the agent"
-    )
+    context: dict[str, Any] | None = Field(None, description="Optional context data for the agent")
     stream: bool = Field(False, description="Whether to stream the response")
 
     @field_validator("message")
@@ -82,9 +78,7 @@ class AgentRequest(BaseValidatedRequest):
 class TeamRequest(BaseValidatedRequest):
     """Request model for team interactions."""
 
-    task: str = Field(
-        ..., min_length=1, max_length=5000, description="Task description for the team"
-    )
+    task: str = Field(..., min_length=1, max_length=5000, description="Task description for the team")
     team_id: str | None = Field(
         None,
         pattern=r"^[a-zA-Z0-9_-]+$",
@@ -106,9 +100,7 @@ class TeamRequest(BaseValidatedRequest):
         max_length=100,
         description="Optional user ID",
     )
-    context: dict[str, Any] | None = Field(
-        default_factory=dict, description="Context data for the team"
-    )
+    context: dict[str, Any] | None = Field(default_factory=dict, description="Context data for the team")
     stream: bool = Field(False, description="Whether to stream the response")
 
     @field_validator("task")
@@ -132,9 +124,7 @@ class WorkflowRequest(BaseValidatedRequest):
         max_length=50,
         description="Workflow identifier",
     )
-    input_data: dict[str, Any] = Field(
-        default_factory=dict, description="Input data for workflow execution"
-    )
+    input_data: dict[str, Any] = Field(default_factory=dict, description="Input data for workflow execution")
     session_id: str | None = Field(
         None,
         pattern=r"^[a-zA-Z0-9_-]+$",
@@ -186,9 +176,7 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error message")
     detail: str | None = Field(None, description="Additional error details")
-    error_code: str | None = Field(
-        None, description="Error code for programmatic handling"
-    )
+    error_code: str | None = Field(None, description="Error code for programmatic handling")
 
 
 class SuccessResponse(BaseModel):

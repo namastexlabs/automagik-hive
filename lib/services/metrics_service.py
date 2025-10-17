@@ -63,9 +63,7 @@ class MetricsService:
 
         return result["id"]
 
-    async def get_metrics_by_agent(
-        self, agent_name: str, limit: int = 100, offset: int = 0
-    ) -> list[AgentMetric]:
+    async def get_metrics_by_agent(self, agent_name: str, limit: int = 100, offset: int = 0) -> list[AgentMetric]:
         """Get metrics for a specific agent."""
         db = await get_db_service()
 
@@ -77,9 +75,7 @@ class MetricsService:
         LIMIT %(limit)s OFFSET %(offset)s
         """
 
-        results = await db.fetch_all(
-            query, {"agent_name": agent_name, "limit": limit, "offset": offset}
-        )
+        results = await db.fetch_all(query, {"agent_name": agent_name, "limit": limit, "offset": offset})
 
         return [
             AgentMetric(
@@ -87,9 +83,7 @@ class MetricsService:
                 timestamp=row["timestamp"],
                 agent_name=row["agent_name"],
                 execution_type=row["execution_type"],
-                metrics=json.loads(row["metrics"])
-                if isinstance(row["metrics"], str)
-                else row["metrics"],
+                metrics=json.loads(row["metrics"]) if isinstance(row["metrics"], str) else row["metrics"],
                 version=row["version"],
                 created_at=row["created_at"],
             )
@@ -110,9 +104,7 @@ class MetricsService:
         LIMIT %(limit)s OFFSET %(offset)s
         """
 
-        results = await db.fetch_all(
-            query, {"execution_type": execution_type, "limit": limit, "offset": offset}
-        )
+        results = await db.fetch_all(query, {"execution_type": execution_type, "limit": limit, "offset": offset})
 
         return [
             AgentMetric(
@@ -120,18 +112,14 @@ class MetricsService:
                 timestamp=row["timestamp"],
                 agent_name=row["agent_name"],
                 execution_type=row["execution_type"],
-                metrics=json.loads(row["metrics"])
-                if isinstance(row["metrics"], str)
-                else row["metrics"],
+                metrics=json.loads(row["metrics"]) if isinstance(row["metrics"], str) else row["metrics"],
                 version=row["version"],
                 created_at=row["created_at"],
             )
             for row in results
         ]
 
-    async def get_metrics_summary(
-        self, agent_name: str | None = None
-    ) -> dict[str, Any]:
+    async def get_metrics_summary(self, agent_name: str | None = None) -> dict[str, Any]:
         """Get metrics summary statistics."""
         db = await get_db_service()
 

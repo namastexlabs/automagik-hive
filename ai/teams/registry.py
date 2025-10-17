@@ -13,9 +13,7 @@ from lib.logging import logger
 from lib.utils.ai_root import resolve_ai_root
 
 
-def _get_factory_function_patterns(
-    team_name: str, config: dict[str, Any] | None = None
-) -> list[str]:
+def _get_factory_function_patterns(team_name: str, config: dict[str, Any] | None = None) -> list[str]:
     """
     Generate factory function name patterns to try for team discovery.
 
@@ -35,9 +33,7 @@ def _get_factory_function_patterns(
         if "{team_name}" in custom_name:
             patterns.append(custom_name.format(team_name=team_name))
         elif "{team_name_underscore}" in custom_name:
-            patterns.append(
-                custom_name.format(team_name_underscore=team_name.replace("-", "_"))
-            )
+            patterns.append(custom_name.format(team_name_underscore=team_name.replace("-", "_")))
         else:
             patterns.append(custom_name)
 
@@ -47,9 +43,7 @@ def _get_factory_function_patterns(
             if "{team_name}" in pattern:
                 patterns.append(pattern.format(team_name=team_name))
             elif "{team_name_underscore}" in pattern:
-                patterns.append(
-                    pattern.format(team_name_underscore=team_name.replace("-", "_"))
-                )
+                patterns.append(pattern.format(team_name_underscore=team_name.replace("-", "_")))
             else:
                 patterns.append(pattern)
 
@@ -97,9 +91,7 @@ def _load_team_config(config_file: Path) -> dict[str, Any] | None:
             config_data = yaml.safe_load(f)
             return config_data if isinstance(config_data, dict) else None
     except Exception as e:
-        logger.warning(
-            "Failed to load team config", config_file=str(config_file), error=str(e)
-        )
+        logger.warning("Failed to load team config", config_file=str(config_file), error=str(e))
         return None
 
 
@@ -128,9 +120,7 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
                 config = _load_team_config(config_file)
 
                 # Load the team module dynamically
-                spec = importlib.util.spec_from_file_location(
-                    f"ai.teams.{team_name}.team", team_file
-                )
+                spec = importlib.util.spec_from_file_location(f"ai.teams.{team_name}.team", team_file)
                 if spec is None or spec.loader is None:
                     logger.warning("Failed to create module spec", team_name=team_name)
                     continue
@@ -157,9 +147,7 @@ def _discover_teams() -> dict[str, Callable[..., Team]]:
                     registry[team_name] = factory_func
                     logger.debug(f"Registered team: {team_name}", factory=used_pattern)
                 else:
-                    attempted_patterns = ", ".join(
-                        factory_patterns[:5]
-                    )  # Show first 5 attempts
+                    attempted_patterns = ", ".join(factory_patterns[:5])  # Show first 5 attempts
                     logger.warning(
                         "No factory function found for team",
                         team_name=team_name,
@@ -213,10 +201,7 @@ async def get_team(team_id: str, version: int | None = None, **kwargs: Any) -> T
 
     if team_id not in registry:
         available_teams = ", ".join(sorted(registry.keys()))
-        raise ValueError(
-            f"Team '{team_id}' not found in registry. "
-            f"Available teams: {available_teams}"
-        )
+        raise ValueError(f"Team '{team_id}' not found in registry. Available teams: {available_teams}")
 
     # Get the factory function for the team
     team_factory = registry[team_id]

@@ -19,9 +19,7 @@ class EmojiLoader:
     def __init__(self, config_path: str | None = None) -> None:
         if config_path is None:
             current_dir = Path(__file__).parent
-            config_path_resolved: Path = (
-                current_dir.parent / "config" / "emoji_mappings.yaml"
-            )
+            config_path_resolved: Path = current_dir.parent / "config" / "emoji_mappings.yaml"
         else:
             config_path_resolved = Path(config_path)
 
@@ -43,7 +41,7 @@ class EmojiLoader:
         """Check if text already has emoji."""
         return bool(self._emoji_regex.search(text))
 
-    @lru_cache(maxsize=500)
+    @lru_cache(maxsize=500)  # noqa: B019 - Intentional cache for singleton
     def get_emoji(self, file_path: str = "", message: str = "") -> str:
         """
         Get emoji for file path or message content.
@@ -82,9 +80,7 @@ class EmojiLoader:
             all_keywords.update(resource_types.get("services", {}))
 
             # Sort by keyword length (longest first) to prioritize specific phrases
-            sorted_keywords = sorted(
-                all_keywords.items(), key=lambda x: len(x[0]), reverse=True
-            )
+            sorted_keywords = sorted(all_keywords.items(), key=lambda x: len(x[0]), reverse=True)
 
             for keyword, emoji in sorted_keywords:
                 if keyword in message_lower:

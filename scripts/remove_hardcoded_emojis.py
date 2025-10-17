@@ -69,10 +69,7 @@ def find_python_files_with_emojis(root_dir: Path) -> list[Path]:
 
     for py_file in root_dir.rglob("*.py"):
         # Skip certain directories
-        if any(
-            skip in str(py_file)
-            for skip in [".git", "__pycache__", "venv", ".venv", "node_modules"]
-        ):
+        if any(skip in str(py_file) for skip in [".git", "__pycache__", "venv", ".venv", "node_modules"]):
             continue
 
         try:
@@ -88,7 +85,7 @@ def find_python_files_with_emojis(root_dir: Path) -> list[Path]:
             if logger_with_emoji:
                 emoji_files.append(py_file)
 
-        except Exception:
+        except Exception:  # noqa: S112 - Continue after exception is intentional
             continue
 
     return emoji_files

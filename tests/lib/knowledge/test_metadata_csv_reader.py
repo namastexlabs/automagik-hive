@@ -1,19 +1,17 @@
 """Tests for lib.knowledge.metadata_csv_reader module."""
 
 import csv
-import os
 import tempfile
 from pathlib import Path
 
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
+    import lib.knowledge.metadata_csv_reader  # noqa: F401 - Availability test import
     from lib.knowledge.metadata_csv_reader import MetadataCSVReader
-    import lib.knowledge.metadata_csv_reader
 except ImportError:
-    pytest.skip(f"Module lib.knowledge.metadata_csv_reader not available", allow_module_level=True)
+    pytest.skip("Module lib.knowledge.metadata_csv_reader not available", allow_module_level=True)
 
 
 class TestMetadataCsvReader:
@@ -27,11 +25,13 @@ class TestMetadataCsvReader:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.knowledge.metadata_csv_reader
+
         assert lib.knowledge.metadata_csv_reader is not None
 
     def test_csv_reading_basic(self):
@@ -100,6 +100,7 @@ class TestMetadataCsvReaderEdgeCases:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_empty_csv_handling(self):
@@ -113,7 +114,7 @@ class TestMetadataCsvReaderEdgeCases:
         try:
             documents = reader.read(self.csv_file)
             assert documents == []
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # It's okay if it raises an exception for empty files
             pass
 
@@ -138,7 +139,7 @@ class TestMetadataCsvReaderEdgeCases:
             documents = reader.read(self.csv_file)
             # Should handle gracefully, not crash
             assert isinstance(documents, list)
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # It's OK if it raises an exception, as long as it doesn't crash the test runner
             pass
 
@@ -173,24 +174,25 @@ class TestMetadataCsvReaderIntegration:
     def teardown_method(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_large_csv_handling(self):
         """Test handling of larger CSV files."""
         csv_file = Path(self.temp_dir) / "large.csv"
-        
+
         # Create larger CSV file with many rows
         with open(csv_file, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(["problem", "solution", "category"])
-            
+
             # Write many rows
             for i in range(100):
                 writer.writerow([f"Problem {i}", f"Solution {i}", f"category_{i % 5}"])
 
         reader = MetadataCSVReader(content_column="problem")
         documents = reader.read(csv_file)
-        
+
         assert len(documents) == 100
         assert documents[0].content == "Problem 0"
         assert documents[99].content == "Problem 99"
@@ -199,7 +201,7 @@ class TestMetadataCsvReaderIntegration:
     def test_special_characters_handling(self):
         """Test CSV handling with special characters."""
         csv_file = Path(self.temp_dir) / "special.csv"
-        
+
         test_data = [
             ["question", "answer"],
             ['What is "AI"?', "Artificial Intelligence, ML & DL"],
@@ -215,13 +217,13 @@ class TestMetadataCsvReaderIntegration:
         documents = reader.read(csv_file)
 
         assert len(documents) == 3
-        assert '$100,000 per year' in documents[1].meta_data["answer"]
+        assert "$100,000 per year" in documents[1].meta_data["answer"]
         assert "E = mc²" in documents[2].meta_data["answer"]
 
     def test_unicode_content_handling(self):
         """Test handling of Unicode content."""
         csv_file = Path(self.temp_dir) / "unicode.csv"
-        
+
         test_data = [
             ["content", "metadata"],
             ["Café ☕", "French"],

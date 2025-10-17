@@ -47,9 +47,7 @@ class TestMakefileUninstallComprehensive:
 
         # Create environment files
         with open(".env", "w") as f:
-            f.write(
-                "HIVE_API_PORT=8886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n"
-            )
+            f.write("HIVE_API_PORT=8886\nHIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5532/hive\n")
         # Agent inherits from main .env via docker-compose, no separate .env.agent needed
 
         # Create log and PID files
@@ -108,8 +106,12 @@ uninstall-purge-comprehensive:
             makefile_content = f.read()
 
         # Verify the comprehensive uninstall target exists and includes workspace cleanup
-        assert ("docker compose" in makefile_content or "docker-compose" in makefile_content or "DOCKER_COMPOSE" in makefile_content)
-        assert ("hive-api" in makefile_content or "postgres" in makefile_content)
+        assert (
+            "docker compose" in makefile_content
+            or "docker-compose" in makefile_content
+            or "DOCKER_COMPOSE" in makefile_content
+        )
+        assert "hive-api" in makefile_content or "postgres" in makefile_content
 
     def test_uninstall_clean_comprehensive_removes_workspace_infrastructure(self):
         """Test that clean uninstall removes workspace infrastructure"""
@@ -120,7 +122,7 @@ uninstall-purge-comprehensive:
             makefile_content = f.read()
 
         # Verify the comprehensive uninstall-clean target includes workspace cleanup
-        assert ("docker" in makefile_content or "DOCKER" in makefile_content)
+        assert "docker" in makefile_content or "DOCKER" in makefile_content
         # Verify process files are cleaned up
         assert "logs" in makefile_content or "clean" in makefile_content
 
@@ -133,10 +135,12 @@ uninstall-purge-comprehensive:
             makefile_content = f.read()
 
         # Verify uninstall includes comprehensive cleanup
-        assert ("docker compose" in makefile_content or
-                "docker-compose" in makefile_content or
-                "DOCKER_COMPOSE" in makefile_content)
-        assert ("hive-api" in makefile_content or "postgres" in makefile_content)
+        assert (
+            "docker compose" in makefile_content
+            or "docker-compose" in makefile_content
+            or "DOCKER_COMPOSE" in makefile_content
+        )
+        assert "hive-api" in makefile_content or "postgres" in makefile_content
 
         # Check purge script exists and has cleanup logic
         purge_script_path = project_root / "scripts" / "purge.sh"
@@ -179,10 +183,12 @@ uninstall-purge-comprehensive:
         assert "uninstall-containers-only-comprehensive" in makefile_content
         assert "uninstall-clean-comprehensive" in makefile_content
         assert "uninstall-purge-comprehensive" in makefile_content
-        assert ("docker compose" in makefile_content or
-                "docker-compose" in makefile_content or
-                "DOCKER_COMPOSE" in makefile_content)
-        assert ("hive-api" in makefile_content or "postgres" in makefile_content)
+        assert (
+            "docker compose" in makefile_content
+            or "docker-compose" in makefile_content
+            or "DOCKER_COMPOSE" in makefile_content
+        )
+        assert "hive-api" in makefile_content or "postgres" in makefile_content
 
     def test_agent_process_cleanup_logic(self):
         """Test that agent processes are properly stopped"""
@@ -195,9 +201,7 @@ uninstall-purge-comprehensive:
         assert pid == "12345"
 
         # Test cleanup removes PID file
-        cleanup_commands = [
-            "rm -f logs/agent-server.pid logs/agent-server.log"
-        ]
+        cleanup_commands = ["rm -f logs/agent-server.pid logs/agent-server.log"]
 
         for cmd in cleanup_commands:
             assert "logs/agent-server.pid" in cmd

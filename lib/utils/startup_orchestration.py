@@ -97,13 +97,9 @@ async def batch_component_discovery() -> ComponentRegistries:
         return registries
 
     except Exception as e:
-        logger.error(
-            "Component discovery failed", error=str(e), error_type=type(e).__name__
-        )
+        logger.error("Component discovery failed", error=str(e), error_type=type(e).__name__)
         # Return minimal registries to allow startup to continue
-        return ComponentRegistries(
-            workflows={}, teams={}, agents={}, summary="0 components (discovery failed)"
-        )
+        return ComponentRegistries(workflows={}, teams={}, agents={}, summary="0 components (discovery failed)")
 
 
 async def initialize_knowledge_base() -> Any | None:
@@ -171,12 +167,8 @@ async def initialize_knowledge_base() -> Any | None:
             note="hot_reload_updates_shared_singleton_instance",
         )
     except Exception as e:
-        logger.warning(
-            "Knowledge base CSV watching initialization failed", error=str(e)
-        )
-        logger.info(
-            "Knowledge base will use fallback initialization when first accessed"
-        )
+        logger.warning("Knowledge base CSV watching initialization failed", error=str(e))
+        logger.info("Knowledge base will use fallback initialization when first accessed")
 
     return csv_manager
 
@@ -215,9 +207,7 @@ async def initialize_other_services(
     from lib.auth.dependencies import get_auth_service
 
     auth_service = get_auth_service()
-    logger.debug(
-        "Authentication service ready", auth_enabled=auth_service.is_auth_enabled()
-    )
+    logger.debug("Authentication service ready", auth_enabled=auth_service.is_auth_enabled())
 
     # Initialize MCP system
     mcp_system = None
@@ -235,13 +225,13 @@ async def initialize_other_services(
             logger.warning(
                 "MCP system initialization failed - configuration file missing",
                 error=error_msg,
-                suggestion="Ensure .mcp.json exists in working directory or set HIVE_MCP_CONFIG_PATH"
+                suggestion="Ensure .mcp.json exists in working directory or set HIVE_MCP_CONFIG_PATH",
             )
         elif "Invalid JSON" in error_msg:
             logger.warning(
                 "MCP system initialization failed - invalid configuration",
                 error=error_msg,
-                suggestion="Check .mcp.json file for valid JSON syntax"
+                suggestion="Check .mcp.json file for valid JSON syntax",
             )
         else:
             logger.warning("MCP system initialization failed", error=error_msg)
@@ -250,7 +240,7 @@ async def initialize_other_services(
     metrics_service = None
     try:
         from lib.config.settings import get_settings
-        
+
         settings = get_settings()
 
         if settings.enable_metrics:
@@ -329,9 +319,7 @@ async def initialize_other_services(
     return services
 
 
-async def run_version_synchronization(
-    registries: ComponentRegistries, db_url: str | None
-) -> dict[str, Any] | None:
+async def run_version_synchronization(registries: ComponentRegistries, db_url: str | None) -> dict[str, Any] | None:
     """
     Run component version synchronization with enhanced reporting and proper cleanup.
     Now uses actual registries data for more accurate synchronization.
@@ -356,15 +344,11 @@ async def run_version_synchronization(
         return None
 
     if not db_url:
-        logger.warning(
-            "Version synchronization skipped - HIVE_DATABASE_URL not configured"
-        )
+        logger.warning("Version synchronization skipped - HIVE_DATABASE_URL not configured")
         return None
 
     # Log actual component counts from registries
-    logger.info(
-        "🔄 Synchronizing component versions", discovered_components=registries.summary
-    )
+    logger.info("🔄 Synchronizing component versions", discovered_components=registries.summary)
 
     sync_service = None
     try:
@@ -469,9 +453,7 @@ async def orchestrated_startup(
     if not quiet_mode:
         logger.debug("🚀 Starting Performance-Optimized Sequential Startup")
     else:
-        logger.debug(
-            "🚀 Starting Performance-Optimized Sequential Startup (quiet mode)"
-        )
+        logger.debug("🚀 Starting Performance-Optimized Sequential Startup (quiet mode)")
 
     services = None
     registries = None
@@ -492,12 +474,8 @@ async def orchestrated_startup(
         except Exception as e:
             logger.error("🚨 Database migration check failed", error=str(e))
             logger.error("⚠️ System will continue with limited functionality")
-            logger.error(
-                "💡 Some features requiring database access will be unavailable"
-            )
-            logger.warning(
-                "🔄 Fix database connection and restart for full functionality"
-            )
+            logger.error("💡 Some features requiring database access will be unavailable")
+            logger.warning("🔄 Fix database connection and restart for full functionality")
 
         # 2. Logging System Ready (implicit - already configured)
         if not quiet_mode:
@@ -552,20 +530,13 @@ async def orchestrated_startup(
                 startup_time_seconds=f"{startup_time:.2f}",
             )
 
-        return StartupResults(
-            registries=registries, services=services, sync_results=sync_results
-        )
+        return StartupResults(registries=registries, services=services, sync_results=sync_results)
 
     except Exception as e:
-        logger.error(
-            "Sequential startup failed", error=str(e), error_type=type(e).__name__
-        )
+        logger.error("Sequential startup failed", error=str(e), error_type=type(e).__name__)
         # Return minimal results to allow server to continue
         return StartupResults(
-            registries=registries
-            or ComponentRegistries(
-                workflows={}, teams={}, agents={}, summary="startup failed"
-            ),
+            registries=registries or ComponentRegistries(workflows={}, teams={}, agents={}, summary="startup failed"),
             services=services or StartupServices(auth_service=None),
             sync_results=sync_results,
         )
@@ -644,9 +615,7 @@ def _safe_class_name(obj: Any) -> str | None:
 def build_runtime_summary(startup_results: StartupResults) -> dict[str, Any]:
     """Generate a lightweight runtime dependency summary for CLI surfaces."""
 
-    display = startup_results.startup_display or get_startup_display_with_results(
-        startup_results
-    )
+    display = startup_results.startup_display or get_startup_display_with_results(startup_results)
 
     agents_summary = {
         agent_id: {
@@ -711,8 +680,8 @@ def build_runtime_summary(startup_results: StartupResults) -> dict[str, Any]:
 def _populate_surface_status(display: Any, startup_results: StartupResults) -> None:
     """Enrich startup display with surface availability and URLs."""
 
-    from lib.config.settings import get_settings
     from lib.config.server_config import get_server_config
+    from lib.config.settings import get_settings
 
     settings = get_settings()
     server_config = get_server_config()

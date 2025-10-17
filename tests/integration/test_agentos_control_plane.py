@@ -42,9 +42,7 @@ class TestAgentOSControlPlaneIntegration:
         """Authentication headers for protected endpoints."""
         return {"x-api-key": os.environ["HIVE_API_KEY"]}
 
-    def test_control_pane_config_endpoint_accessible(
-        self, integration_client, auth_headers
-    ):
+    def test_control_pane_config_endpoint_accessible(self, integration_client, auth_headers):
         """Verify Control Pane can access configuration endpoint."""
         response = integration_client.get("/api/v1/agentos/config", headers=auth_headers)
 
@@ -58,9 +56,7 @@ class TestAgentOSControlPlaneIntegration:
         assert "workflows" in payload
         assert "interfaces" in payload
 
-    def test_control_pane_interfaces_completeness(
-        self, integration_client, auth_headers
-    ):
+    def test_control_pane_interfaces_completeness(self, integration_client, auth_headers):
         """Validate interfaces payload provides all required routes for Control Pane."""
         response = integration_client.get("/api/v1/agentos/config", headers=auth_headers)
 
@@ -118,9 +114,7 @@ class TestAgentOSControlPlaneIntegration:
         payload = response.json()
 
         interfaces = payload.get("interfaces", [])
-        playground_interface = next(
-            (i for i in interfaces if i["type"] == "playground"), None
-        )
+        playground_interface = next((i for i in interfaces if i["type"] == "playground"), None)
 
         assert playground_interface is not None
         assert "route" in playground_interface
@@ -138,7 +132,9 @@ class TestAgentOSControlPlaneIntegration:
             override_url = os.environ.get("HIVE_CONTROL_PANE_BASE_URL")
             assert override_url == custom_base
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     def test_authentication_enforcement(self, integration_client):
         """Ensure Control Pane endpoints enforce authentication."""
         # Request without auth should fail
@@ -146,16 +142,12 @@ class TestAgentOSControlPlaneIntegration:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
         # Request with invalid key should fail
-        response = integration_client.get(
-            "/api/v1/agentos/config", headers={"x-api-key": "invalid-key"}
-        )
+        response = integration_client.get("/api/v1/agentos/config", headers={"x-api-key": "invalid-key"})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_legacy_config_alias_integration(self, integration_client, auth_headers):
         """Verify legacy /config alias works in integration."""
-        versioned_response = integration_client.get(
-            "/api/v1/agentos/config", headers=auth_headers
-        )
+        versioned_response = integration_client.get("/api/v1/agentos/config", headers=auth_headers)
         legacy_response = integration_client.get("/config", headers=auth_headers)
 
         assert versioned_response.status_code == status.HTTP_200_OK
@@ -175,10 +167,7 @@ class TestAgentOSControlPlaneIntegration:
 
         # Each category should have at most 3 entries
         for category, prompts in quick_prompts.items():
-            assert len(prompts) <= 3, (
-                f"Category '{category}' has {len(prompts)} prompts, "
-                f"expected max 3"
-            )
+            assert len(prompts) <= 3, f"Category '{category}' has {len(prompts)} prompts, expected max 3"
 
     def test_interface_routes_use_correct_host(self, integration_client, auth_headers):
         """Verify interface routes use the correct host configuration."""
@@ -224,13 +213,13 @@ class TestControlPlaneErrorHandling:
         """Authentication headers."""
         return {"x-api-key": os.environ["HIVE_API_KEY"]}
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     def test_malformed_auth_header(self, integration_client):
         """Test handling of malformed authentication headers."""
         # Missing x-api-key prefix
-        response = integration_client.get(
-            "/api/v1/agentos/config", headers={"authorization": "Bearer test"}
-        )
+        response = integration_client.get("/api/v1/agentos/config", headers={"authorization": "Bearer test"})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_config_endpoint_with_cors(self, integration_client, auth_headers):
@@ -245,12 +234,8 @@ class TestControlPlaneErrorHandling:
 
     def test_control_pane_config_consistency(self, integration_client, auth_headers):
         """Verify config endpoint returns consistent data across requests."""
-        response1 = integration_client.get(
-            "/api/v1/agentos/config", headers=auth_headers
-        )
-        response2 = integration_client.get(
-            "/api/v1/agentos/config", headers=auth_headers
-        )
+        response1 = integration_client.get("/api/v1/agentos/config", headers=auth_headers)
+        response2 = integration_client.get("/api/v1/agentos/config", headers=auth_headers)
 
         assert response1.status_code == status.HTTP_200_OK
         assert response2.status_code == status.HTTP_200_OK

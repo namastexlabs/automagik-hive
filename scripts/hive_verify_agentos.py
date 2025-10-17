@@ -8,19 +8,17 @@ Exits with zero on success, non-zero on failure.
 import argparse
 import os
 import sys
-from typing import Optional
 
 try:
     import httpx
 except ImportError:
-    print("❌ This script requires httpx. Install with: uv add httpx", file=sys.stderr)
     sys.exit(1)
 
 
 class AgentOSVerifier:
     """Verifies AgentOS unified endpoints."""
 
-    def __init__(self, api_base: str, api_key: Optional[str] = None):
+    def __init__(self, api_base: str, api_key: str | None = None):
         self.api_base = api_base.rstrip("/")
         self.headers = {}
         if api_key:
@@ -30,13 +28,12 @@ class AgentOSVerifier:
 
     def log(self, message: str, status: str = "INFO"):
         """Log a verification message."""
-        emoji = {
+        {
             "INFO": "ℹ️",
             "SUCCESS": "✅",
             "ERROR": "❌",
             "WARNING": "⚠️",
         }.get(status, "ℹ️")
-        print(f"{emoji} {message}")
 
     def check_endpoint(self, path: str, description: str) -> bool:
         """Check a single endpoint for accessibility.
@@ -77,7 +74,6 @@ class AgentOSVerifier:
         """
         self.log("Starting AgentOS unified API verification", "INFO")
         self.log(f"Target API: {self.api_base}", "INFO")
-        print()
 
         # Check health endpoint
         self.check_endpoint("/api/v1/health", "Health endpoint")
@@ -92,7 +88,6 @@ class AgentOSVerifier:
         self.check_endpoint("/api/v1/version", "Version endpoint")
 
         # Summary
-        print()
         self.log("=" * 60, "INFO")
         self.log(f"Verification complete: {self.checks_passed} passed, {self.checks_failed} failed", "INFO")
         self.log("=" * 60, "INFO")

@@ -84,10 +84,7 @@ class TestAgentRequest:
             AgentRequest(message="")
         # Either V1 custom error or V2 min_length error is acceptable
         error_str = str(exc_info.value)
-        assert (
-            "Message cannot be empty" in error_str
-            or "String should have at least 1 character" in error_str
-        )
+        assert "Message cannot be empty" in error_str or "String should have at least 1 character" in error_str
 
         # Test whitespace-only message
         with pytest.raises(ValidationError):
@@ -245,10 +242,7 @@ class TestTeamRequest:
             TeamRequest(task="")
         # Either V1 custom error or V2 min_length error is acceptable
         error_str = str(exc_info.value)
-        assert (
-            "Task cannot be empty" in error_str
-            or "String should have at least 1 character" in error_str
-        )
+        assert "Task cannot be empty" in error_str or "String should have at least 1 character" in error_str
 
         # Test whitespace-only task
         with pytest.raises(ValidationError):

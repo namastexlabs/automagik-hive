@@ -1,8 +1,8 @@
 """Pytest configuration for AI workflows tests."""
 
-import pytest
-from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 
 @pytest.fixture
@@ -19,6 +19,6 @@ def mock_resolve_ai_root(tmp_path):
     ai_root = tmp_path / "ai"
     ai_root.mkdir(parents=True, exist_ok=True)
 
-    with patch('ai.workflows.registry.resolve_ai_root') as mock:
+    with patch("ai.workflows.registry.resolve_ai_root") as mock:
         mock.return_value = ai_root
         yield mock

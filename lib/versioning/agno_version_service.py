@@ -91,9 +91,7 @@ class AgnoVersionService:
         created_by: str | None = None,
     ) -> int:
         """Create a new component version."""
-        return await self._create_version_async(
-            component_id, component_type, version, config, description, created_by
-        )
+        return await self._create_version_async(component_id, component_type, version, config, description, created_by)
 
     async def _create_version_async(
         self,
@@ -130,13 +128,9 @@ class AgnoVersionService:
         """Get specific component version."""
         return await self._get_version_async(component_id, version)
 
-    async def _get_version_async(
-        self, component_id: str, version: int
-    ) -> VersionInfo | None:
+    async def _get_version_async(self, component_id: str, version: int) -> VersionInfo | None:
         """Async implementation of get_version."""
-        db_version = await self.component_service.get_component_version(
-            component_id, version
-        )
+        db_version = await self.component_service.get_component_version(component_id, version)
         return self._db_to_version_info(db_version) if db_version else None
 
     async def get_active_version(self, component_id: str) -> VersionInfo | None:
@@ -148,15 +142,11 @@ class AgnoVersionService:
         db_version = await self.component_service.get_active_version(component_id)
         return self._db_to_version_info(db_version) if db_version else None
 
-    async def set_active_version(
-        self, component_id: str, version: int, changed_by: str | None = None
-    ) -> bool:
+    async def set_active_version(self, component_id: str, version: int, changed_by: str | None = None) -> bool:
         """Set a version as active."""
         return await self._set_active_version_async(component_id, version, changed_by)
 
-    async def _set_active_version_async(
-        self, component_id: str, version: int, changed_by: str | None = None
-    ) -> bool:
+    async def _set_active_version_async(self, component_id: str, version: int, changed_by: str | None = None) -> bool:
         """Async implementation of set_active_version."""
         return await self.component_service.set_active_version(
             component_id=component_id,
@@ -177,9 +167,7 @@ class AgnoVersionService:
         """Get version history for a component."""
         return await self._get_version_history_async(component_id)
 
-    async def _get_version_history_async(
-        self, component_id: str
-    ) -> list[VersionHistory]:
+    async def _get_version_history_async(self, component_id: str) -> list[VersionHistory]:
         """Async implementation of get_version_history."""
         db_history = await self.component_service.get_version_history(component_id)
         return [self._db_to_version_history(h) for h in db_history]

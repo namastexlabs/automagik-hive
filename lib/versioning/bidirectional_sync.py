@@ -30,9 +30,7 @@ class BidirectionalSync:
         self.version_service = AgnoVersionService(db_url)
         self.file_tracker = FileSyncTracker()
 
-    async def sync_component(
-        self, component_id: str, component_type: str
-    ) -> dict[str, Any]:
+    async def sync_component(self, component_id: str, component_type: str) -> dict[str, Any]:
         """
         Core sync logic - determines and performs YAML ↔ DATABASE synchronization.
 
@@ -46,9 +44,7 @@ class BidirectionalSync:
         Raises:
             ValueError: If sync operation fails
         """
-        logger.info(
-            f"Starting bidirectional sync for {component_id} ({component_type})"
-        )
+        logger.info(f"Starting bidirectional sync for {component_id} ({component_type})")
 
         # Get current database version
         db_version = await self.version_service.get_active_version(component_id)
@@ -64,24 +60,18 @@ class BidirectionalSync:
 
         yaml_version = yaml_config.get(component_type, {}).get("version")
         if not isinstance(yaml_version, int):
-            raise ValueError(
-                f"Invalid version in YAML for {component_id}: {yaml_version}"
-            )
+            raise ValueError(f"Invalid version in YAML for {component_id}: {yaml_version}")
 
         if not db_version:
             # No DB version exists - create from YAML (YAML → DB)
             logger.info(f"Creating new database version for {component_id} from YAML")
-            await self._create_db_version(
-                component_id, component_type, yaml_config, yaml_version
-            )
+            await self._create_db_version(component_id, component_type, yaml_config, yaml_version)
             return yaml_config
 
         if self.file_tracker.yaml_newer_than_db(component_id, db_version.created_at):
             # YAML file is newer - update DB from YAML (YAML → DB)
             logger.info(f"YAML newer than DB for {component_id}, updating database")
-            await self._update_db_from_yaml(
-                component_id, component_type, yaml_config, yaml_version
-            )
+            await self._update_db_from_yaml(component_id, component_type, yaml_config, yaml_version)
             return yaml_config
 
         if db_version.version > yaml_version:
@@ -94,9 +84,7 @@ class BidirectionalSync:
         logger.debug(f"Configurations in sync for {component_id}")
         return db_version.config
 
-    def _load_yaml_config(
-        self, component_id: str, component_type: str
-    ) -> dict[str, Any] | None:
+    def _load_yaml_config(self, component_id: str, component_type: str) -> dict[str, Any] | None:
         """
         Load YAML configuration from file.
 
@@ -114,9 +102,7 @@ class BidirectionalSync:
 
             # Validate that the YAML contains the expected component type
             if component_type not in config:
-                logger.warning(
-                    f"Component type {component_type} not found in YAML for {component_id}"
-                )
+                logger.warning(f"Component type {component_type} not found in YAML for {component_id}")
                 return None
 
             return config
@@ -156,15 +142,11 @@ class BidirectionalSync:
             )
 
             if not version_id:
-                raise ValueError(
-                    f"Failed to create database version for {component_id}"
-                )
+                raise ValueError(f"Failed to create database version for {component_id}")
 
             logger.info(f"Created database version {version} for {component_id}")
         except Exception as e:
-            logger.exception(
-                f"Failed to create database version for {component_id}: {e}"
-            )
+            logger.exception(f"Failed to create database version for {component_id}: {e}")
             raise
 
     async def _update_db_from_yaml(
@@ -200,22 +182,14 @@ class BidirectionalSync:
             )
 
             if not version_id:
-                raise ValueError(
-                    f"Failed to update database from YAML for {component_id}"
-                )
+                raise ValueError(f"Failed to update database from YAML for {component_id}")
 
-            logger.info(
-                f"Updated database version {version} for {component_id} from YAML"
-            )
+            logger.info(f"Updated database version {version} for {component_id} from YAML")
         except Exception as e:
-            logger.exception(
-                f"Failed to update database from YAML for {component_id}: {e}"
-            )
+            logger.exception(f"Failed to update database from YAML for {component_id}: {e}")
             raise
 
-    async def _update_yaml_from_db(
-        self, component_id: str, component_type: str, db_version
-    ) -> None:
+    async def _update_yaml_from_db(self, component_id: str, component_type: str, db_version) -> None:
         """
         Update YAML configuration from database (DB → YAML).
 
@@ -229,17 +203,11 @@ class BidirectionalSync:
 
             # Write updated configuration to YAML file
             with open(yaml_path, "w") as f:
-                yaml.dump(
-                    db_version.config, f, default_flow_style=False, sort_keys=False
-                )
+                yaml.dump(db_version.config, f, default_flow_style=False, sort_keys=False)
 
-            logger.info(
-                f"Updated YAML config for {component_id} from database version {db_version.version}"
-            )
+            logger.info(f"Updated YAML config for {component_id} from database version {db_version.version}")
         except Exception as e:
-            logger.exception(
-                f"Failed to update YAML from database for {component_id}: {e}"
-            )
+            logger.exception(f"Failed to update YAML from database for {component_id}: {e}")
             raise
 
     async def write_back_to_yaml(
@@ -259,9 +227,7 @@ class BidirectionalSync:
             version: The version number
         """
         if DevMode.is_enabled():
-            logger.debug(
-                f"Dev mode enabled, skipping YAML write-back for {component_id}"
-            )
+            logger.debug(f"Dev mode enabled, skipping YAML write-back for {component_id}")
             return
 
         try:
@@ -270,9 +236,7 @@ class BidirectionalSync:
             with open(yaml_path, "w") as f:
                 yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
-            logger.info(
-                f"Written API changes back to YAML for {component_id} version {version}"
-            )
+            logger.info(f"Written API changes back to YAML for {component_id} version {version}")
         except Exception as e:
             logger.exception(f"Failed to write back to YAML for {component_id}: {e}")
             raise

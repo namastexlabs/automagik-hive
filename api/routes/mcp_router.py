@@ -1,12 +1,15 @@
 """MCP Status API Routes with runtime diagnostics helpers."""
 
 import inspect
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException
 
 from lib.logging import logger
 from lib.mcp import MCPCatalog, get_mcp_tools
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 router = APIRouter(prefix="/mcp", tags=["MCP Status"])
 
@@ -94,11 +97,7 @@ async def test_server_connection(server_name: str) -> dict[str, Any]:
             if hasattr(tools, "list_tools"):
                 try:
                     maybe_tools = tools.list_tools()
-                    available_tools = (
-                        await maybe_tools
-                        if inspect.isawaitable(maybe_tools)
-                        else maybe_tools
-                    )
+                    available_tools = await maybe_tools if inspect.isawaitable(maybe_tools) else maybe_tools
                 except Exception as e:
                     logger.warning(f"🌐 Could not list tools for {server_name}: {e}")
 

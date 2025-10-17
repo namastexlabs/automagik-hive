@@ -1,25 +1,29 @@
 # PyPI Publishing Workflow
 # Automatically publishes to PyPI when a version tag is pushed
-# Supports both release candidates (rc) and stable releases
+# Supports release candidates (rc), beta (b), and stable releases
 
 name: Publish to PyPI
 
 on:
   push:
     tags:
-      - 'v*.*.*'        # Matches v1.0.0, v0.2.0rc1, etc.
+      - 'v*.*.*'        # Matches v1.0.0, v0.2.0rc1, v0.1.1b2, etc.
   workflow_dispatch:    # Allow manual triggering
 
 env:
   PYTHON_VERSION: '3.12'
 
 jobs:
-  # Build and verify the package
-  build:
-    name: Build Package
+  # Build and publish to PyPI
+  publish-pypi:
+    name: Build and Publish to PyPI
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
+    environment:
+      name: pypi
+      url: https://pypi.org/project/automagik-hive/
+    permissions:
+      id-token: write      # Required for trusted publishing
+      contents: write      # Required for GitHub Release
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,6 +46,15 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Building version: $VERSION"
+
+          # Detect if this is a pre-release
+          if [[ "$VERSION" =~ (rc|b|a|alpha|beta) ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "🔖 Detected pre-release version"
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "🎉 Detected stable release version"
+          fi
 
       - name: Verify pyproject.toml version matches tag
         run: |
@@ -82,65 +95,6 @@ jobs:
 
           echo "✅ All build artifacts present"
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-packages
-          path: dist/
-          retention-days: 7
-
-  # Publish to TestPyPI first
-  publish-testpypi:
-    name: Publish to TestPyPI
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/project/automagik-hive/
-    permissions:
-      id-token: write  # Required for trusted publishing
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: python-packages
-          path: dist/
-
-      - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
-          verbose: true
-
-      - name: Test TestPyPI installation
-        run: |
-          sleep 60  # Wait for TestPyPI propagation
-
-          echo "🧪 Testing installation from TestPyPI..."
-          pip install --index-url https://test.pypi.org/simple/ \
-                      --extra-index-url https://pypi.org/simple \
-                      automagik-hive==${{ needs.build.outputs.version }} || {
-            echo "⚠️ TestPyPI installation test failed (this is non-blocking)"
-          }
-
-  # Publish to production PyPI
-  publish-pypi:
-    name: Publish to PyPI
-    runs-on: ubuntu-latest
-    needs: [build, publish-testpypi]
-    environment:
-      name: pypi
-      url: https://pypi.org/project/automagik-hive/
-    permissions:
-      id-token: write  # Required for trusted publishing
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: python-packages
-          path: dist/
-
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
@@ -149,63 +103,57 @@ jobs:
 
       - name: Create summary
         run: |
-          echo "## 🎉 Package Published!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Package Published to PyPI!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ needs.build.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Pre-release:** ${{ steps.version.outputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Installation" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "# Install from PyPI" >> $GITHUB_STEP_SUMMARY
-          echo "pip install automagik-hive==${{ needs.build.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "pip install automagik-hive==${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Or run directly with uvx" >> $GITHUB_STEP_SUMMARY
-          echo "uvx automagik-hive@${{ needs.build.outputs.version }} --version" >> $GITHUB_STEP_SUMMARY
+          echo "uvx automagik-hive@${{ steps.version.outputs.version }} --version" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [PyPI Package](https://pypi.org/project/automagik-hive/${{ needs.build.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
-          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.build.outputs.version }})" >> $GITHUB_STEP_SUMMARY
-
-  # Update GitHub Release
-  update-release:
-    name: Update GitHub Release
-    runs-on: ubuntu-latest
-    needs: [build, publish-pypi]
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: python-packages
-          path: dist/
+          echo "- [PyPI Package](https://pypi.org/project/automagik-hive/${{ steps.version.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⏰ Availability" >> $GITHUB_STEP_SUMMARY
+          echo "Package will be available on PyPI in ~5-10 minutes" >> $GITHUB_STEP_SUMMARY
 
       - name: Update GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: dist/*
           body: |
-            ## 📦 PyPI Release
+            ## 📦 PyPI Release ${{ steps.version.outputs.version }}
 
             This release has been published to PyPI!
 
             ### Installation
             ```bash
             # Install from PyPI
-            pip install automagik-hive==${{ needs.build.outputs.version }}
+            pip install automagik-hive==${{ steps.version.outputs.version }}
 
             # Or run directly with uvx
-            uvx automagik-hive@${{ needs.build.outputs.version }} --version
+            uvx automagik-hive@${{ steps.version.outputs.version }} --version
             ```
 
+            ### What's Included
+            - CORS configuration for agno.os integration
+            - Agent ID serialization corrections
+            - Knowledge hot reload functionality
+
             ### Links
-            - [PyPI Package](https://pypi.org/project/automagik-hive/${{ needs.build.outputs.version }}/)
+            - [PyPI Package](https://pypi.org/project/automagik-hive/${{ steps.version.outputs.version }}/)
             - [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+            - [Associated PR #56](https://github.com/${{ github.repository }}/pull/56)
 
             ---
-            🤖 Published automatically via GitHub Actions
+            🤖 Published automatically via GitHub Actions using trusted publishing
           draft: false
-          prerelease: ${{ contains(needs.build.outputs.version, 'rc') || contains(needs.build.outputs.version, 'b') }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          generate_release_notes: true

@@ -108,9 +108,7 @@ class TestAuthInitServiceSecurity:
         total_chars = len(all_chars)
         for char, count in char_counts.items():
             frequency = count / total_chars
-            assert frequency < 0.1, (
-                f"Character '{char}' appears too frequently: {frequency:.2%}"
-            )
+            assert frequency < 0.1, f"Character '{char}' appears too frequently: {frequency:.2%}"
 
     def test_ensure_api_key_from_environment(self, clean_environment, mock_env_file):
         """Test key retrieval from environment variable."""
@@ -344,9 +342,7 @@ class TestAuthInitServiceFileSystemSecurity:
                 # File should be readable/writable by owner only (600)
                 permissions = oct(stat_info.st_mode)[-3:]
                 # Allow 644 (readable by group/others) as well since it's common
-                assert permissions in ["600", "644"], (
-                    f"File permissions should be secure, got {permissions}"
-                )
+                assert permissions in ["600", "644"], f"File permissions should be secure, got {permissions}"
 
     def test_concurrent_file_access(self, clean_environment):
         """Test thread safety of file operations."""
@@ -494,7 +490,7 @@ class TestAuthInitServiceErrorHandling:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Make directory read-only
             if os.name == "posix":
-                os.chmod(temp_dir, 0o555)
+                os.chmod(temp_dir, 0o555)  # noqa: S103 - Intentional file permissions
 
             env_file = Path(temp_dir) / ".env"
             service = AuthInitService()
@@ -507,7 +503,7 @@ class TestAuthInitServiceErrorHandling:
 
             # Reset permissions for cleanup
             if os.name == "posix":
-                os.chmod(temp_dir, 0o755)
+                os.chmod(temp_dir, 0o755)  # noqa: S103 - Intentional file permissions
 
     def test_disk_full_simulation(self, clean_environment):
         """Test behavior when disk is full (simulated)."""

@@ -24,7 +24,7 @@ class TestWorkflowDiscovery:
         ai_root = tmp_path / "ai"
         ai_root.mkdir(parents=True)
 
-        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
             result = _discover_workflows()
             assert result == {}
 
@@ -45,7 +45,7 @@ class TestWorkflowDiscovery:
         # Create a file (not a directory)
         (workflows_dir / "file.py").write_text("# Not a workflow directory")
 
-        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
             result = _discover_workflows()
             assert result == {}
 
@@ -60,7 +60,7 @@ class TestWorkflowDiscovery:
         private_dir = workflows_dir / "_private-workflow"
         private_dir.mkdir()
 
-        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
             result = _discover_workflows()
             assert result == {}
 
@@ -75,7 +75,7 @@ class TestWorkflowDiscovery:
         # Create workflow.py but not config.yaml
         (workflow_dir / "workflow.py").write_text("# Workflow without config")
 
-        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
             result = _discover_workflows()
             assert result == {}
 
@@ -90,15 +90,13 @@ class TestWorkflowDiscovery:
         # Create config.yaml but not workflow.py
         (workflow_dir / "config.yaml").write_text("workflow:\n  workflow_id: incomplete-workflow\n")
 
-        with patch('ai.workflows.registry.resolve_ai_root', return_value=ai_root):
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
             result = _discover_workflows()
             assert result == {}
 
     @patch("ai.workflows.registry.importlib.util")
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_factory_function(
-        self, mock_path, mock_importlib
-    ) -> None:
+    def test_discover_workflows_no_factory_function(self, mock_path, mock_importlib) -> None:
         """Test discovery when workflow module has no factory function."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True
@@ -137,9 +135,7 @@ class TestWorkflowDiscovery:
 
     @patch("ai.workflows.registry.importlib.util")
     @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_import_exception(
-        self, mock_path, mock_importlib
-    ) -> None:
+    def test_discover_workflows_import_exception(self, mock_path, mock_importlib) -> None:
         """Test discovery handles import exceptions gracefully."""
         mock_workflows_dir = MagicMock()
         mock_workflows_dir.exists.return_value = True

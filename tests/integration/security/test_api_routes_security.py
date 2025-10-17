@@ -19,9 +19,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.routes.health import health_check_router
-from api.routes.mcp_router import router as mcp_router
 from api.routes.v1_router import v1_router
-from api.routes.version_router import router as version_router
 
 
 class TestHealthEndpointSecurity:
@@ -73,9 +71,7 @@ class TestHealthEndpointSecurity:
 
         response_text = json.dumps(data).lower()
         for keyword in sensitive_keywords:
-            assert keyword not in response_text, (
-                f"Health endpoint should not expose '{keyword}'"
-            )
+            assert keyword not in response_text, f"Health endpoint should not expose '{keyword}'"
 
     def test_health_endpoint_http_methods(self, client):
         """Test that health endpoint only accepts GET requests."""
@@ -105,9 +101,7 @@ class TestHealthEndpointSecurity:
 
         # Should not expose server information
         server_header = response.headers.get("server", "").lower()
-        assert (
-            "fastapi" not in server_header
-        )  # Default FastAPI header might expose version
+        assert "fastapi" not in server_header  # Default FastAPI header might expose version
 
     def test_health_endpoint_rate_limiting_simulation(self, client):
         """Test health endpoint behavior under rapid requests."""
@@ -499,9 +493,13 @@ class TestV1RouterSecurity:
         response = client.post("/api/v1/version/execute", json=large_payload)
 
         # Should handle large requests gracefully (reject or process within limits)
-        assert (
-            response.status_code in [400, 413, 422, 401, 404]
-        )  # Bad Request, Payload Too Large, Validation Error, Unauthorized, or Not Found
+        assert response.status_code in [
+            400,
+            413,
+            422,
+            401,
+            404,
+        ]  # Bad Request, Payload Too Large, Validation Error, Unauthorized, or Not Found
 
     def test_v1_router_security_headers(self, client):
         """Test that v1 router returns appropriate security headers."""
@@ -578,9 +576,7 @@ class TestV1RouterSecurity:
 
         # Response times should be reasonable (under 5 seconds)
         max_response_time = max(r["response_time"] for r in results)
-        assert max_response_time < 5.0, (
-            f"Max response time too high: {max_response_time:.2f}s"
-        )
+        assert max_response_time < 5.0, f"Max response time too high: {max_response_time:.2f}s"
 
 
 class TestAPISecurityIntegration:
@@ -611,9 +607,7 @@ class TestAPISecurityIntegration:
             mock_version.is_active = True
             mock_version.description = "Test component"
 
-            mock_service.get_version.return_value = (
-                None  # Trigger 404 for security tests
-            )
+            mock_service.get_version.return_value = None  # Trigger 404 for security tests
             mock_service.get_component_history.return_value = []
             mock_version_service.return_value = mock_service
 
@@ -733,6 +727,4 @@ class TestAPISecurityIntegration:
 
                 if min_time > 0:
                     time_ratio = max_time / min_time
-                    assert time_ratio < 10.0, (
-                        f"Response time variation too high: {time_ratio:.2f}x"
-                    )
+                    assert time_ratio < 10.0, f"Response time variation too high: {time_ratio:.2f}x"

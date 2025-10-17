@@ -2,8 +2,6 @@
 
 from types import SimpleNamespace
 
-import pytest
-
 from lib.metrics.agno_metrics_bridge import AgnoMetricsBridge
 
 
@@ -39,9 +37,7 @@ def test_bridge_normalizes_session_metrics_to_v2_schema():
     assert metrics["total_tokens"] == 63
     assert metrics["duration"] == 1.5
     assert metrics["cache_write_tokens"] == 3
-    assert metrics["provider_metrics"] == {
-        "openai": {"input_tokens": 42, "output_tokens": 21}
-    }
+    assert metrics["provider_metrics"] == {"openai": {"input_tokens": 42, "output_tokens": 21}}
     assert "prompt_tokens" not in metrics
     assert "completion_tokens" not in metrics
     assert metrics["additional_metrics"] == {"custom_latency": 12.3}
@@ -55,9 +51,7 @@ def test_bridge_handles_run_response_metrics_and_yaml_overrides():
             "duration": 2.0,
             "prompt_tokens": 5,
             "completion_tokens": 7,
-            "provider_metrics": {
-                "anthropic": {"input_tokens": 5, "output_tokens": 7}
-            },
+            "provider_metrics": {"anthropic": {"input_tokens": 5, "output_tokens": 7}},
         },
         model="anthropic-sonnet",
         content="response",
@@ -72,9 +66,7 @@ def test_bridge_handles_run_response_metrics_and_yaml_overrides():
     assert metrics["input_tokens"] == 999  # override takes precedence
     assert metrics["output_tokens"] == 7
     assert metrics["duration"] == 2.0
-    assert metrics["provider_metrics"] == {
-        "anthropic": {"input_tokens": 5, "output_tokens": 7}
-    }
+    assert metrics["provider_metrics"] == {"anthropic": {"input_tokens": 5, "output_tokens": 7}}
     assert metrics["custom_field"] == "override"
     assert "prompt_tokens" not in metrics
 

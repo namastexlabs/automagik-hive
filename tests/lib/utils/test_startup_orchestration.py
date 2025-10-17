@@ -5,33 +5,30 @@ Testing startup orchestration functionality to achieve 50%+ coverage.
 This module tests all core functionality including:
 - Component registry dataclasses
 - Batch component discovery
-- Knowledge base initialization  
+- Knowledge base initialization
 - Service initialization
 - Version synchronization
 - Complete startup orchestration
 """
 
-import asyncio
 import os
-import pytest
-from datetime import datetime
-from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Import the module under test
 from lib.utils.startup_orchestration import (
     ComponentRegistries,
-    StartupServices,
     StartupResults,
+    StartupServices,
     batch_component_discovery,
+    build_runtime_summary,
+    get_startup_display_with_results,
     initialize_knowledge_base,
     initialize_other_services,
-    run_version_synchronization,
     orchestrated_startup,
-    get_startup_display_with_results,
-    build_runtime_summary,
+    run_version_synchronization,
 )
 
 
@@ -45,12 +42,7 @@ class TestComponentRegistries:
         agents = {"agent1": Mock(), "agent2": Mock(), "agent3": Mock()}
         summary = "Test summary"
 
-        registries = ComponentRegistries(
-            workflows=workflows,
-            teams=teams,
-            agents=agents,
-            summary=summary
-        )
+        registries = ComponentRegistries(workflows=workflows, teams=teams, agents=agents, summary=summary)
 
         assert registries.workflows == workflows
         assert registries.teams == teams
@@ -63,23 +55,13 @@ class TestComponentRegistries:
         teams = {"t1": Mock()}
         agents = {"a1": Mock(), "a2": Mock(), "a3": Mock()}
 
-        registries = ComponentRegistries(
-            workflows=workflows,
-            teams=teams,
-            agents=agents,
-            summary="test"
-        )
+        registries = ComponentRegistries(workflows=workflows, teams=teams, agents=agents, summary="test")
 
         assert registries.total_components == 6  # 2 + 1 + 3
 
     def test_total_components_empty_registries(self):
         """Test total_components with empty registries."""
-        registries = ComponentRegistries(
-            workflows={},
-            teams={},
-            agents={},
-            summary="empty"
-        )
+        registries = ComponentRegistries(workflows={}, teams={}, agents={}, summary="empty")
 
         assert registries.total_components == 0
 
@@ -95,10 +77,7 @@ class TestStartupServices:
         metrics_service = Mock()
 
         services = StartupServices(
-            auth_service=auth_service,
-            mcp_system=mcp_system,
-            csv_manager=csv_manager,
-            metrics_service=metrics_service
+            auth_service=auth_service, mcp_system=mcp_system, csv_manager=csv_manager, metrics_service=metrics_service
         )
 
         assert services.auth_service == auth_service
@@ -128,10 +107,7 @@ class TestStartupResults:
         startup_display = Mock()
 
         results = StartupResults(
-            registries=registries,
-            services=services,
-            sync_results=sync_results,
-            startup_display=startup_display
+            registries=registries, services=services, sync_results=sync_results, startup_display=startup_display
         )
 
         assert results.registries == registries
@@ -151,10 +127,11 @@ class TestBatchComponentDiscovery:
         mock_teams = {"team1": Mock()}
         mock_agents = {"agent1": Mock(), "agent2": Mock()}
 
-        with patch('ai.agents.registry.AgentRegistry') as mock_agent_registry_class, \
-             patch('ai.teams.registry.get_team_registry', return_value=mock_teams), \
-             patch('ai.workflows.registry.get_workflow_registry', return_value=mock_workflows):
-            
+        with (
+            patch("ai.agents.registry.AgentRegistry") as mock_agent_registry_class,
+            patch("ai.teams.registry.get_team_registry", return_value=mock_teams),
+            patch("ai.workflows.registry.get_workflow_registry", return_value=mock_workflows),
+        ):
             # Mock AgentRegistry instance
             mock_agent_registry = AsyncMock()
             mock_agent_registry.get_all_agents.return_value = mock_agents
@@ -174,10 +151,11 @@ class TestBatchComponentDiscovery:
         mock_workflows = {"workflow1": Mock()}
         mock_teams = {"team1": Mock()}
 
-        with patch('ai.workflows.registry.get_workflow_registry', return_value=mock_workflows), \
-             patch('ai.teams.registry.get_team_registry', return_value=mock_teams), \
-             patch('ai.agents.registry.AgentRegistry') as mock_agent_registry_class:
-            
+        with (
+            patch("ai.workflows.registry.get_workflow_registry", return_value=mock_workflows),
+            patch("ai.teams.registry.get_team_registry", return_value=mock_teams),
+            patch("ai.agents.registry.AgentRegistry") as mock_agent_registry_class,
+        ):
             # Mock AgentRegistry to raise exception
             mock_agent_registry = AsyncMock()
             mock_agent_registry.get_all_agents.side_effect = Exception("Agent registry failed")
@@ -194,7 +172,7 @@ class TestBatchComponentDiscovery:
     @pytest.mark.asyncio
     async def test_batch_component_discovery_import_failure(self):
         """Test component discovery with import failure."""
-        with patch('ai.workflows.registry.get_workflow_registry', side_effect=ImportError("Import failed")):
+        with patch("ai.workflows.registry.get_workflow_registry", side_effect=ImportError("Import failed")):
             result = await batch_component_discovery()
 
             assert isinstance(result, ComponentRegistries)
@@ -213,9 +191,12 @@ class TestInitializeKnowledgeBase:
         mock_config = {"csv_file_path": "test_knowledge.csv"}
         mock_csv_manager = Mock()
 
-        with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
-
+        with (
+            patch("lib.utils.version_factory.load_global_knowledge_config", return_value=mock_config),
+            patch(
+                "lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager", return_value=mock_csv_manager
+            ) as mock_csv_class,
+        ):
             result = await initialize_knowledge_base()
 
             assert result == mock_csv_manager
@@ -231,9 +212,12 @@ class TestInitializeKnowledgeBase:
         mock_config = {}  # Empty config should use default
         mock_csv_manager = Mock()
 
-        with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', return_value=mock_csv_manager) as mock_csv_class:
-
+        with (
+            patch("lib.utils.version_factory.load_global_knowledge_config", return_value=mock_config),
+            patch(
+                "lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager", return_value=mock_csv_manager
+            ) as mock_csv_class,
+        ):
             result = await initialize_knowledge_base()
 
             assert result == mock_csv_manager
@@ -244,7 +228,7 @@ class TestInitializeKnowledgeBase:
     @pytest.mark.asyncio
     async def test_initialize_knowledge_base_failure(self):
         """Test knowledge base initialization failure."""
-        with patch('lib.utils.version_factory.load_global_knowledge_config', side_effect=Exception("Config failed")):
+        with patch("lib.utils.version_factory.load_global_knowledge_config", side_effect=Exception("Config failed")):
             result = await initialize_knowledge_base()
 
             assert result is None
@@ -254,9 +238,13 @@ class TestInitializeKnowledgeBase:
         """Test knowledge base initialization with CSV manager failure."""
         mock_config = {"csv_file_path": "test.csv"}
 
-        with patch('lib.utils.version_factory.load_global_knowledge_config', return_value=mock_config), \
-             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV manager failed")):
-
+        with (
+            patch("lib.utils.version_factory.load_global_knowledge_config", return_value=mock_config),
+            patch(
+                "lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager",
+                side_effect=Exception("CSV manager failed"),
+            ),
+        ):
             result = await initialize_knowledge_base()
 
             assert result is None
@@ -271,10 +259,11 @@ class TestInitializeOtherServices:
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
-        with patch('lib.auth.dependencies.get_auth_service', return_value=mock_auth_service), \
-             patch('lib.mcp.MCPCatalog', side_effect=Exception("MCP failed")), \
-             patch('lib.config.settings.settings') as mock_settings:
-            
+        with (
+            patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
+            patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP failed")),
+            patch("lib.config.settings.settings") as mock_settings,
+        ):
             mock_settings.enable_metrics = False
 
             result = await initialize_other_services()
@@ -292,10 +281,11 @@ class TestInitializeOtherServices:
         mock_mcp_catalog = Mock()
         mock_mcp_catalog.list_servers.return_value = ["server1", "server2"]
 
-        with patch('lib.auth.dependencies.get_auth_service', return_value=mock_auth_service), \
-             patch('lib.mcp.MCPCatalog', return_value=mock_mcp_catalog), \
-             patch('lib.config.settings.settings') as mock_settings:
-            
+        with (
+            patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
+            patch("lib.mcp.MCPCatalog", return_value=mock_mcp_catalog),
+            patch("lib.config.settings.settings") as mock_settings,
+        ):
             mock_settings.enable_metrics = False
 
             result = await initialize_other_services()
@@ -304,16 +294,17 @@ class TestInitializeOtherServices:
             assert result.mcp_system == mock_mcp_catalog
             assert result.metrics_service is None
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_initialize_other_services_mcp_config_not_found(self):
         """Test MCP initialization with config file not found."""
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
-        with patch('lib.auth.dependencies.get_auth_service', return_value=mock_auth_service), \
-             patch('lib.mcp.MCPCatalog', side_effect=Exception("MCP configuration file not found")), \
-             patch('lib.config.settings.settings') as mock_settings:
-            
+        with (
+            patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
+            patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP configuration file not found")),
+            patch("lib.config.settings.settings") as mock_settings,
+        ):
             mock_settings.enable_metrics = False
 
             result = await initialize_other_services()
@@ -326,10 +317,11 @@ class TestInitializeOtherServices:
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
-        with patch('lib.auth.dependencies.get_auth_service', return_value=mock_auth_service), \
-             patch('lib.mcp.MCPCatalog', side_effect=Exception("Invalid JSON")), \
-             patch('lib.config.settings.settings') as mock_settings:
-            
+        with (
+            patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
+            patch("lib.mcp.MCPCatalog", side_effect=Exception("Invalid JSON")),
+            patch("lib.config.settings.settings") as mock_settings,
+        ):
             mock_settings.enable_metrics = False
 
             result = await initialize_other_services()
@@ -342,10 +334,11 @@ class TestInitializeOtherServices:
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
-        with patch('lib.auth.dependencies.get_auth_service', return_value=mock_auth_service), \
-             patch('lib.mcp.MCPCatalog', side_effect=Exception("MCP failed")), \
-             patch('lib.config.settings.settings') as mock_settings:
-            
+        with (
+            patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
+            patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP failed")),
+            patch("lib.config.settings.settings") as mock_settings,
+        ):
             mock_settings.enable_metrics = False
 
             result = await initialize_other_services()
@@ -360,12 +353,13 @@ class TestInitializeOtherServices:
         mock_metrics_service = AsyncMock()
         mock_coordinator = AsyncMock()
 
-        with patch('lib.auth.dependencies.get_auth_service', return_value=mock_auth_service), \
-             patch('lib.mcp.MCPCatalog', side_effect=Exception("MCP failed")), \
-             patch('lib.config.settings.settings') as mock_settings, \
-             patch('lib.metrics.async_metrics_service.initialize_metrics_service', return_value=mock_metrics_service), \
-             patch('lib.metrics.initialize_dual_path_metrics', return_value=mock_coordinator):
-            
+        with (
+            patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
+            patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP failed")),
+            patch("lib.config.settings.settings") as mock_settings,
+            patch("lib.metrics.async_metrics_service.initialize_metrics_service", return_value=mock_metrics_service),
+            patch("lib.metrics.initialize_dual_path_metrics", return_value=mock_coordinator),
+        ):
             mock_settings.enable_metrics = True
             mock_settings.metrics_batch_size = 100
             mock_settings.metrics_flush_interval = 30
@@ -385,10 +379,11 @@ class TestInitializeOtherServices:
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
-        with patch('lib.auth.dependencies.get_auth_service', return_value=mock_auth_service), \
-             patch('lib.mcp.MCPCatalog', side_effect=Exception("MCP failed")), \
-             patch('lib.config.settings.settings') as mock_settings:
-            
+        with (
+            patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
+            patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP failed")),
+            patch("lib.config.settings.settings") as mock_settings,
+        ):
             mock_settings.enable_metrics = True
             # settings access will fail
             del mock_settings.metrics_batch_size
@@ -407,7 +402,7 @@ class TestRunVersionSynchronization:
         mock_registries = Mock()
         mock_registries.summary = "5 workflows, 3 teams, 2 agents"
 
-        with patch('lib.versioning.dev_mode.DevMode') as mock_dev_mode:
+        with patch("lib.versioning.dev_mode.DevMode") as mock_dev_mode:
             mock_dev_mode.is_enabled.return_value = True
             mock_dev_mode.get_mode_description.return_value = "Development mode"
 
@@ -420,7 +415,7 @@ class TestRunVersionSynchronization:
         """Test version sync skipped without database URL."""
         mock_registries = Mock()
 
-        with patch('lib.versioning.dev_mode.DevMode') as mock_dev_mode:
+        with patch("lib.versioning.dev_mode.DevMode") as mock_dev_mode:
             mock_dev_mode.is_enabled.return_value = False
 
             result = await run_version_synchronization(mock_registries, None)
@@ -444,16 +439,17 @@ class TestRunVersionSynchronization:
             [{"name": "workflow1"}, {"name": "workflow2"}],  # workflows
         ]
 
-        with patch('lib.versioning.dev_mode.DevMode') as mock_dev_mode, \
-             patch('lib.services.version_sync_service.AgnoVersionSyncService', return_value=mock_sync_service):
-            
+        with (
+            patch("lib.versioning.dev_mode.DevMode") as mock_dev_mode,
+            patch("lib.services.version_sync_service.AgnoVersionSyncService", return_value=mock_sync_service),
+        ):
             mock_dev_mode.is_enabled.return_value = False
 
             result = await run_version_synchronization(mock_registries, "test_db_url")
 
             assert result is not None
             assert "agents" in result
-            assert "teams" in result  
+            assert "teams" in result
             assert "workflows" in result
             assert len(result["agents"]) == 2
             assert len(result["teams"]) == 1
@@ -464,9 +460,13 @@ class TestRunVersionSynchronization:
         """Test version sync with service creation failure."""
         mock_registries = Mock()
 
-        with patch('lib.versioning.dev_mode.DevMode') as mock_dev_mode, \
-             patch('lib.services.version_sync_service.AgnoVersionSyncService', side_effect=Exception("Service creation failed")):
-            
+        with (
+            patch("lib.versioning.dev_mode.DevMode") as mock_dev_mode,
+            patch(
+                "lib.services.version_sync_service.AgnoVersionSyncService",
+                side_effect=Exception("Service creation failed"),
+            ),
+        ):
             mock_dev_mode.is_enabled.return_value = False
 
             result = await run_version_synchronization(mock_registries, "test_db_url")
@@ -485,13 +485,20 @@ class TestOrchestratedStartup:
         mock_services = Mock()
         mock_sync_results = {"test": "results"}
 
-        with patch('lib.utils.db_migration.check_and_run_migrations', return_value=True) as mock_migrations, \
-             patch('lib.utils.startup_orchestration.initialize_knowledge_base', return_value=Mock()) as mock_kb, \
-             patch('lib.utils.startup_orchestration.batch_component_discovery', return_value=mock_registries) as mock_discovery, \
-             patch('lib.utils.startup_orchestration.run_version_synchronization', return_value=mock_sync_results) as mock_sync, \
-             patch('lib.utils.startup_orchestration.initialize_other_services', return_value=mock_services) as mock_services_init, \
-             patch.dict(os.environ, {'HIVE_DATABASE_URL': 'test_db_url'}):
-
+        with (
+            patch("lib.utils.db_migration.check_and_run_migrations", return_value=True) as mock_migrations,
+            patch("lib.utils.startup_orchestration.initialize_knowledge_base", return_value=Mock()) as mock_kb,
+            patch(
+                "lib.utils.startup_orchestration.batch_component_discovery", return_value=mock_registries
+            ) as mock_discovery,
+            patch(
+                "lib.utils.startup_orchestration.run_version_synchronization", return_value=mock_sync_results
+            ) as mock_sync,
+            patch(
+                "lib.utils.startup_orchestration.initialize_other_services", return_value=mock_services
+            ) as mock_services_init,
+            patch.dict(os.environ, {"HIVE_DATABASE_URL": "test_db_url"}),
+        ):
             result = await orchestrated_startup()
 
             assert isinstance(result, StartupResults)
@@ -503,7 +510,7 @@ class TestOrchestratedStartup:
             mock_migrations.assert_called_once()
             mock_kb.assert_called_once()
             mock_discovery.assert_called_once()
-            mock_sync.assert_called_once_with(mock_registries, 'test_db_url')
+            mock_sync.assert_called_once_with(mock_registries, "test_db_url")
             mock_services_init.assert_called_once()
 
     @pytest.mark.asyncio
@@ -513,13 +520,14 @@ class TestOrchestratedStartup:
         mock_registries.total_components = 3
         mock_services = Mock()
 
-        with patch('lib.utils.db_migration.check_and_run_migrations', return_value=False), \
-             patch('lib.utils.startup_orchestration.initialize_knowledge_base', return_value=None), \
-             patch('lib.utils.startup_orchestration.batch_component_discovery', return_value=mock_registries), \
-             patch('lib.utils.startup_orchestration.run_version_synchronization', return_value=None), \
-             patch('lib.utils.startup_orchestration.initialize_other_services', return_value=mock_services), \
-             patch.dict(os.environ, {}, clear=True):  # Clear environment
-
+        with (
+            patch("lib.utils.db_migration.check_and_run_migrations", return_value=False),
+            patch("lib.utils.startup_orchestration.initialize_knowledge_base", return_value=None),
+            patch("lib.utils.startup_orchestration.batch_component_discovery", return_value=mock_registries),
+            patch("lib.utils.startup_orchestration.run_version_synchronization", return_value=None),
+            patch("lib.utils.startup_orchestration.initialize_other_services", return_value=mock_services),
+            patch.dict(os.environ, {}, clear=True),
+        ):  # Clear environment
             result = await orchestrated_startup(quiet_mode=True)
 
             assert isinstance(result, StartupResults)
@@ -534,12 +542,13 @@ class TestOrchestratedStartup:
         mock_registries.total_components = 2
         mock_services = Mock()
 
-        with patch('lib.utils.db_migration.check_and_run_migrations', side_effect=Exception("Migration failed")), \
-             patch('lib.utils.startup_orchestration.initialize_knowledge_base', return_value=None), \
-             patch('lib.utils.startup_orchestration.batch_component_discovery', return_value=mock_registries), \
-             patch('lib.utils.startup_orchestration.run_version_synchronization', return_value=None), \
-             patch('lib.utils.startup_orchestration.initialize_other_services', return_value=mock_services):
-
+        with (
+            patch("lib.utils.db_migration.check_and_run_migrations", side_effect=Exception("Migration failed")),
+            patch("lib.utils.startup_orchestration.initialize_knowledge_base", return_value=None),
+            patch("lib.utils.startup_orchestration.batch_component_discovery", return_value=mock_registries),
+            patch("lib.utils.startup_orchestration.run_version_synchronization", return_value=None),
+            patch("lib.utils.startup_orchestration.initialize_other_services", return_value=mock_services),
+        ):
             result = await orchestrated_startup()
 
             # Should still complete despite migration failure
@@ -548,12 +557,17 @@ class TestOrchestratedStartup:
     @pytest.mark.asyncio
     async def test_orchestrated_startup_complete_failure(self):
         """Test orchestrated startup with complete failure."""
-        with patch('lib.utils.db_migration.check_and_run_migrations', side_effect=Exception("Critical failure")), \
-             patch('lib.utils.startup_orchestration.initialize_knowledge_base', side_effect=Exception("KB failed")), \
-             patch('lib.utils.startup_orchestration.batch_component_discovery', side_effect=Exception("Discovery failed")), \
-             patch('lib.utils.startup_orchestration.run_version_synchronization', side_effect=Exception("Sync failed")), \
-             patch('lib.utils.startup_orchestration.initialize_other_services', side_effect=Exception("Services failed")):
-
+        with (
+            patch("lib.utils.db_migration.check_and_run_migrations", side_effect=Exception("Critical failure")),
+            patch("lib.utils.startup_orchestration.initialize_knowledge_base", side_effect=Exception("KB failed")),
+            patch(
+                "lib.utils.startup_orchestration.batch_component_discovery", side_effect=Exception("Discovery failed")
+            ),
+            patch("lib.utils.startup_orchestration.run_version_synchronization", side_effect=Exception("Sync failed")),
+            patch(
+                "lib.utils.startup_orchestration.initialize_other_services", side_effect=Exception("Services failed")
+            ),
+        ):
             result = await orchestrated_startup()
 
             # Should return minimal results even on complete failure
@@ -572,7 +586,7 @@ class TestGetStartupDisplayWithResults:
         mock_registries = Mock()
         mock_registries.teams = {"team-one": Mock(), "team-two": Mock()}
         mock_registries.workflows = {"workflow-alpha": Mock(), "workflow-beta": Mock()}
-        
+
         # Mock agents with different metadata structures
         class FakeDb:  # Simple helper to give predictable class name
             pass
@@ -592,32 +606,26 @@ class TestGetStartupDisplayWithResults:
         mock_agent2.db = None
 
         mock_registries.agents = {"agent-one": mock_agent1, "agent-two": mock_agent2}
-        
+
         mock_services = Mock()
         mock_sync_results = {"test": "sync_data"}
-        
+
         startup_results = StartupResults(
-            registries=mock_registries,
-            services=mock_services,
-            sync_results=mock_sync_results
+            registries=mock_registries, services=mock_services, sync_results=mock_sync_results
         )
 
         mock_display = Mock()
-        
-        with patch('lib.utils.startup_display.create_startup_display', return_value=mock_display):
+
+        with patch("lib.utils.startup_display.create_startup_display", return_value=mock_display):
             result = get_startup_display_with_results(startup_results)
 
             assert result == mock_display
-            
+
             # Verify teams were added
             assert mock_display.add_team.call_count == 2
-            mock_display.add_team.assert_any_call(
-                "team-one", "Team One", 0, version=1, status="✅", db_label="—"
-            )
-            mock_display.add_team.assert_any_call(
-                "team-two", "Team Two", 0, version=1, status="✅", db_label="—"
-            )
-            
+            mock_display.add_team.assert_any_call("team-one", "Team One", 0, version=1, status="✅", db_label="—")
+            mock_display.add_team.assert_any_call("team-two", "Team Two", 0, version=1, status="✅", db_label="—")
+
             # Verify agents were added with correct version handling
             assert mock_display.add_agent.call_count == 2
             mock_display.add_agent.assert_any_call(
@@ -636,7 +644,7 @@ class TestGetStartupDisplayWithResults:
                 db_label="—",
                 dependencies=[],
             )
-            
+
             # Verify workflows were added
             assert mock_display.add_workflow.call_count == 2
             mock_display.add_workflow.assert_any_call(
@@ -645,7 +653,7 @@ class TestGetStartupDisplayWithResults:
             mock_display.add_workflow.assert_any_call(
                 "workflow-beta", "Workflow Beta", version=1, status="✅", db_label="—"
             )
-            
+
             # Verify sync results were set
             mock_display.set_sync_results.assert_called_once_with(mock_sync_results)
 
@@ -695,17 +703,18 @@ class TestIntegrationScenarios:
     @pytest.mark.asyncio
     async def test_full_startup_integration_minimal_config(self):
         """Test complete startup flow with minimal configuration."""
-        with patch('lib.utils.db_migration.check_and_run_migrations', return_value=False), \
-             patch('lib.utils.version_factory.load_global_knowledge_config', return_value={}), \
-             patch('lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager', side_effect=Exception("CSV failed")), \
-             patch('ai.workflows.registry.get_workflow_registry', return_value={}), \
-             patch('ai.teams.registry.get_team_registry', return_value={}), \
-             patch('ai.agents.registry.AgentRegistry') as mock_agent_registry_class, \
-             patch('lib.auth.dependencies.get_auth_service') as mock_auth, \
-             patch('lib.mcp.MCPCatalog', side_effect=Exception("No MCP")), \
-             patch('lib.config.settings.get_settings') as mock_settings_getter, \
-             patch('lib.versioning.dev_mode.DevMode') as mock_dev_mode:
-
+        with (
+            patch("lib.utils.db_migration.check_and_run_migrations", return_value=False),
+            patch("lib.utils.version_factory.load_global_knowledge_config", return_value={}),
+            patch("lib.knowledge.datasources.csv_hot_reload.CSVHotReloadManager", side_effect=Exception("CSV failed")),
+            patch("ai.workflows.registry.get_workflow_registry", return_value={}),
+            patch("ai.teams.registry.get_team_registry", return_value={}),
+            patch("ai.agents.registry.AgentRegistry") as mock_agent_registry_class,
+            patch("lib.auth.dependencies.get_auth_service") as mock_auth,
+            patch("lib.mcp.MCPCatalog", side_effect=Exception("No MCP")),
+            patch("lib.config.settings.get_settings") as mock_settings_getter,
+            patch("lib.versioning.dev_mode.DevMode") as mock_dev_mode,
+        ):
             # Setup mocks
             mock_agent_registry = AsyncMock()
             mock_agent_registry.get_all_agents.return_value = {}

@@ -59,8 +59,8 @@ class TestAgentOSConfigEndpoints:
         assert quick_prompts
         assert all(len(entries) <= 3 for entries in quick_prompts.values())
 
-        raw_host = os.environ.get("HIVE_API_HOST", "0.0.0.0")
-        host = "localhost" if raw_host in {"0.0.0.0", "::"} else raw_host
+        raw_host = os.environ.get("HIVE_API_HOST", "0.0.0.0")  # noqa: S104
+        host = "localhost" if raw_host in {"0.0.0.0", "::"} else raw_host  # noqa: S104
         expected_base = f"http://{host}:{os.environ['HIVE_API_PORT']}"
         routes = {entry["type"]: entry["route"] for entry in versioned_payload["interfaces"]}
 
