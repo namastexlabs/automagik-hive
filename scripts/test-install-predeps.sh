@@ -140,8 +140,9 @@ assert_file_exists() {
 # ===========================================
 test_platform_detection() {
     log_verbose "Testing platform detection function"
-    
+
     # Source the install script to access its functions
+    # shellcheck source=scripts/install-predeps.sh
     source "$INSTALL_SCRIPT"
     
     # Test that detect_platform sets expected environment variables
@@ -207,11 +208,11 @@ test_uv_detection() {
 
 test_uv_installer_download() {
     log_verbose "Testing UV installer download"
-    
+
     # Test that we can download the UV installer (without executing it)
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" RETURN
+    trap 'rm -rf "$temp_dir"' RETURN
     
     local install_script="$temp_dir/install.sh"
     

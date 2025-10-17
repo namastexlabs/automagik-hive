@@ -374,16 +374,16 @@ class HiveSettings(BaseSettings):
         if not self.langwatch_api_key:
             # None or empty string
             invalid_api_key = True
-        elif self.langwatch_api_key.strip() == '':
+        elif self.langwatch_api_key.strip() == "":
             # Whitespace-only
             invalid_api_key = True
         elif len(self.langwatch_api_key.strip()) < 5:
             # Too short to be any kind of key (even test keys)
             invalid_api_key = True
-        elif self.langwatch_api_key.startswith('your-langwatch-api-key'):
+        elif self.langwatch_api_key.startswith("your-langwatch-api-key"):
             # Exact placeholder from .env.example
             invalid_api_key = True
-        elif self.langwatch_api_key in ('xxx', 'XXX', 'changeme', 'CHANGEME', 'placeholder', 'PLACEHOLDER'):
+        elif self.langwatch_api_key in ("xxx", "XXX", "changeme", "CHANGEME", "placeholder", "PLACEHOLDER"):
             # Common obvious placeholder values
             invalid_api_key = True
 
