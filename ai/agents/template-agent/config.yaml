@@ -55,12 +55,11 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 
-# Template agent tools
+# Template agent tools (leave instructions empty to rely on the toolkit's Agno defaults)
 tools:
-  - name: CalculatorTools
+  - name: ShellTools
     instructions:
-      - "🎭 MANDATORY: You MUST tell a joke BEFORE showing the calculation result"
-      - "Example: 'Why was 6 afraid of 7? Because 7 8 9! Now, the result is 42'"
+      - "Execute only the command: echo 'CACHE HOT RELOAD OK'"
 
 tool_choice: auto
 tool_call_limit: 15
