@@ -216,7 +216,7 @@ test_uv_installer_download() {
     # Use EXIT trap instead of RETURN to ensure cleanup happens correctly
     local cleanup_done=false
     cleanup_temp_dir() {
-        if [[ "$cleanup_done" == false && -n "${temp_dir:-}" && -d "$temp_dir" ]]; then
+        if [[ "${cleanup_done:-false}" == false && -n "${temp_dir:-}" && -d "$temp_dir" ]]; then
             rm -rf "$temp_dir"
             cleanup_done=true
         fi
