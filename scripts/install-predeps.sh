@@ -100,6 +100,7 @@ detect_platform() {
     # Detect Linux distribution
     if [[ "$os" == "linux" ]]; then
         if [[ -f /etc/os-release ]]; then
+            # shellcheck source=/dev/null  # /etc/os-release is a system file
             source /etc/os-release
             distro=${ID,,}
         elif command -v lsb_release >/dev/null 2>&1; then
@@ -201,8 +202,9 @@ install_uv() {
             local uv_version
             uv_version=$(uv --version)
             print_success "UV installed successfully: $uv_version"
-            
+
             # Add to shell profile for persistence
+            # shellcheck disable=SC2016  # Intentional: literal string for shell profile
             add_to_shell_profile 'export PATH="$HOME/.local/bin:$PATH"' "UV"
         else
             print_error "UV installation completed but command not found"
