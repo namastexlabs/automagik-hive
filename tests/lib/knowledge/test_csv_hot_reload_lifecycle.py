@@ -254,7 +254,7 @@ class TestKnowledgeBaseReloadingCoverage:
         mock_kb = Mock()
         manager.knowledge_base = mock_kb
 
-        with patch("lib.knowledge.csv_hot_reload.logger") as mock_logger:
+        with patch("lib.knowledge.csv_hot_reload.logger"):
             manager._reload_knowledge_base()
 
     def test_reload_knowledge_base_exception_handling(self):

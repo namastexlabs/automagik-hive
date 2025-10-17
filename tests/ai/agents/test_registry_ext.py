@@ -14,10 +14,9 @@ Focuses on:
 """
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, Mock, mock_open, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-import yaml
 
 from ai.agents.registry import (
     _discover_agents,

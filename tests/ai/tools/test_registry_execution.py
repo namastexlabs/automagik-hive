@@ -6,10 +6,9 @@ by actually calling every method and function with realistic scenarios.
 """
 
 from typing import Any
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import pytest
-import yaml
 
 from ai.tools.base_tool import BaseTool
 

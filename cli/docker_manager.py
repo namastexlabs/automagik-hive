@@ -54,7 +54,7 @@ class DockerManager:
 
     # PORTS attribute for test compatibility
     @property
-    def PORTS(self) -> dict[str, int]:
+    def PORTS(self) -> dict[str, int]:  # noqa: N802
         """Uppercase PORTS for test compatibility - delegates to ports property."""
         return self.ports
 

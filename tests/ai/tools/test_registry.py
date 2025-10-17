@@ -1,6 +1,6 @@
 """Tests for ai.tools.registry module."""
 
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
