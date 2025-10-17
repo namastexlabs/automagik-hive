@@ -75,57 +75,47 @@ class TestDiscoverToolsFunction:
             assert "test-tool-1" in result
             assert "test-tool-2" in result
 
-    def test_discover_tools_with_invalid_config(self):
+    def test_discover_tools_with_invalid_config(self, tmp_path):
         """Test _discover_tools handles invalid YAML configs"""
-        with patch("ai.tools.registry.Path") as mock_path, patch("ai.tools.registry.logger") as mock_logger:
-            mock_tools_dir = Mock()
-            mock_tools_dir.exists.return_value = True
-            mock_path.return_value = mock_tools_dir
+        # Create AI root with tools directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tools_dir.mkdir(parents=True)
 
-            mock_tool = Mock()
-            mock_tool.is_dir.return_value = True
-            mock_tool.name = "invalid-tool"
-            mock_tools_dir.iterdir.return_value = [mock_tool]
+        # Create tool directory with invalid YAML config
+        tool_dir = tools_dir / "invalid-tool"
+        tool_dir.mkdir()
+        (tool_dir / "config.yaml").write_text("invalid: yaml: content: [[[")
 
-            mock_config = Mock()
-            mock_config.exists.return_value = True
-            mock_tool.__truediv__ = Mock(return_value=mock_config)
+        with (
+            patch("ai.tools.registry.resolve_ai_root", return_value=ai_root),
+            patch("ai.tools.registry.logger") as mock_logger,
+        ):
+            # EXECUTE the actual function
+            result = _discover_tools()
 
-            with (
-                patch("builtins.open", mock_open()),
-                patch("yaml.safe_load", side_effect=yaml.YAMLError("Invalid YAML")),
-            ):
-                # EXECUTE the actual function
-                result = _discover_tools()
+            # Verify error handling execution
+            assert result == []
+            mock_logger.warning.assert_called_once()
 
-                # Verify error handling execution
-                assert result == []
-                mock_logger.warning.assert_called_once()
-
-    def test_discover_tools_missing_tool_id(self):
+    def test_discover_tools_missing_tool_id(self, tmp_path):
         """Test _discover_tools with config missing tool_id"""
-        with patch("ai.tools.registry.Path") as mock_path:
-            mock_tools_dir = Mock()
-            mock_tools_dir.exists.return_value = True
-            mock_path.return_value = mock_tools_dir
+        # Create AI root with tools directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tools_dir.mkdir(parents=True)
 
-            mock_tool = Mock()
-            mock_tool.is_dir.return_value = True
-            mock_tool.name = "no-id-tool"
-            mock_tools_dir.iterdir.return_value = [mock_tool]
+        # Create tool directory with config missing tool_id
+        tool_dir = tools_dir / "no-id-tool"
+        tool_dir.mkdir()
+        (tool_dir / "config.yaml").write_text("tool:\n  name: Tool without ID\n")
 
-            mock_config = Mock()
-            mock_config.exists.return_value = True
-            mock_tool.__truediv__ = Mock(return_value=mock_config)
+        with patch("ai.tools.registry.resolve_ai_root", return_value=ai_root):
+            # EXECUTE the actual function
+            result = _discover_tools()
 
-            yaml_content = {"tool": {"name": "Tool without ID"}}
-
-            with patch("builtins.open", mock_open()), patch("yaml.safe_load", return_value=yaml_content):
-                # EXECUTE the actual function
-                result = _discover_tools()
-
-                # Verify execution - tool without ID is skipped
-                assert result == []
+            # Verify execution - tool without ID is skipped
+            assert result == []
 
 
 class TestToolRegistryClass:
@@ -152,19 +142,24 @@ class TestToolRegistryClass:
             assert "Tool 'non-existent-tool' not found" in str(exc_info.value)
             assert "Available: ['existing-tool']" in str(exc_info.value)
 
-    def test_get_tool_missing_module_file(self):
+    def test_get_tool_missing_module_file(self, tmp_path):
         """Test ToolRegistry.get_tool() with missing tool.py file"""
+        # Create AI root with tool directory but NO tool.py file
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+
+        # Create config.yaml but intentionally omit tool.py
+        (tool_dir / "config.yaml").write_text("""tool:
+  tool_id: test-tool
+  name: Test Tool
+""")
+
         with (
             patch.object(ToolRegistry, "_get_available_tools", return_value=["test-tool"]),
-            patch("ai.tools.registry.Path") as mock_path,
+            patch("ai.tools.registry.resolve_ai_root", return_value=ai_root),
         ):
-            # Create a proper mock path that returns a mock file
-            mock_tool_path = Mock()
-            mock_tool_file = Mock()
-            mock_tool_file.exists.return_value = False
-            mock_tool_path.__truediv__ = Mock(return_value=mock_tool_file)
-            mock_path.return_value = mock_tool_path
-
             # EXECUTE the actual method
             with pytest.raises(ImportError) as exc_info:
                 ToolRegistry.get_tool("test-tool")
@@ -273,15 +268,16 @@ class TestToolTool(BaseTool):
             assert result["name"] == "Test Tool"
             assert result["description"] == "A test tool"
 
-    def test_get_tool_info_config_not_found(self):
+    def test_get_tool_info_config_not_found(self, tmp_path):
         """Test ToolRegistry.get_tool_info() with missing config"""
-        with patch("ai.tools.registry.Path") as mock_path:
-            mock_tool_path = Mock()
-            mock_config_file = Mock()
-            mock_config_file.exists.return_value = False
-            mock_tool_path.__truediv__ = Mock(return_value=mock_config_file)
-            mock_path.return_value = mock_tool_path
+        # Create AI root with tool directory but NO config.yaml
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tool_dir = tools_dir / "test-tool"
+        tool_dir.mkdir(parents=True)
+        # Intentionally do NOT create config.yaml
 
+        with patch("ai.tools.registry.resolve_ai_root", return_value=ai_root):
             # EXECUTE the actual method
             result = ToolRegistry.get_tool_info("test-tool")
 
@@ -431,57 +427,43 @@ class TestRegistryIntegrationScenarios:
 class TestRegistryEdgeCases:
     """Test edge cases and boundary conditions"""
 
-    def test_empty_tool_id_in_config(self):
+    def test_empty_tool_id_in_config(self, tmp_path):
         """Test handling of empty tool_id in config"""
-        with patch("ai.tools.registry.Path") as mock_path:
-            mock_tools_dir = Mock()
-            mock_tools_dir.exists.return_value = True
-            mock_path.return_value = mock_tools_dir
+        # Create AI root with tools directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tools_dir.mkdir(parents=True)
 
-            mock_tool = Mock()
-            mock_tool.is_dir.return_value = True
-            mock_tool.name = "empty-id-tool"
-            mock_tools_dir.iterdir.return_value = [mock_tool]
+        # Create tool directory with empty tool_id in config
+        tool_dir = tools_dir / "empty-id-tool"
+        tool_dir.mkdir()
+        (tool_dir / "config.yaml").write_text("tool:\n  tool_id: ''\n")
 
-            mock_config = Mock()
-            mock_config.exists.return_value = True
-            mock_tool.__truediv__ = Mock(return_value=mock_config)
+        with patch("ai.tools.registry.resolve_ai_root", return_value=ai_root):
+            # EXECUTE discovery with empty tool_id
+            result = _discover_tools()
 
-            # Config with empty tool_id
-            yaml_content = {"tool": {"tool_id": ""}}
+            # Verify empty tool_id is skipped
+            assert result == []
 
-            with patch("builtins.open", mock_open()), patch("yaml.safe_load", return_value=yaml_content):
-                # EXECUTE discovery with empty tool_id
-                result = _discover_tools()
-
-                # Verify empty tool_id is skipped
-                assert result == []
-
-    def test_none_tool_id_in_config(self):
+    def test_none_tool_id_in_config(self, tmp_path):
         """Test handling of None tool_id in config"""
-        with patch("ai.tools.registry.Path") as mock_path:
-            mock_tools_dir = Mock()
-            mock_tools_dir.exists.return_value = True
-            mock_path.return_value = mock_tools_dir
+        # Create AI root with tools directory
+        ai_root = tmp_path / "ai"
+        tools_dir = ai_root / "tools"
+        tools_dir.mkdir(parents=True)
 
-            mock_tool = Mock()
-            mock_tool.is_dir.return_value = True
-            mock_tool.name = "none-id-tool"
-            mock_tools_dir.iterdir.return_value = [mock_tool]
+        # Create tool directory with None/null tool_id in config
+        tool_dir = tools_dir / "none-id-tool"
+        tool_dir.mkdir()
+        (tool_dir / "config.yaml").write_text("tool:\n  tool_id: null\n")
 
-            mock_config = Mock()
-            mock_config.exists.return_value = True
-            mock_tool.__truediv__ = Mock(return_value=mock_config)
+        with patch("ai.tools.registry.resolve_ai_root", return_value=ai_root):
+            # EXECUTE discovery with None tool_id
+            result = _discover_tools()
 
-            # Config with None tool_id
-            yaml_content = {"tool": {"tool_id": None}}
-
-            with patch("builtins.open", mock_open()), patch("yaml.safe_load", return_value=yaml_content):
-                # EXECUTE discovery with None tool_id
-                result = _discover_tools()
-
-                # Verify None tool_id is skipped
-                assert result == []
+            # Verify None tool_id is skipped
+            assert result == []
 
     def test_spec_creation_failure(self, tmp_path):
         """Test handling of importlib spec creation failure"""
