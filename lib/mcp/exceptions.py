@@ -5,11 +5,11 @@ Basic exception classes for MCP integration.
 """
 
 
-class MCPException(Exception):
+class MCPError(Exception):
     """Base exception for MCP operations"""
 
 
-class MCPConnectionError(MCPException):
+class MCPConnectionError(MCPError):
     """Exception raised when MCP connection fails"""
 
     def __init__(self, message: str, server_name: str | None = None):

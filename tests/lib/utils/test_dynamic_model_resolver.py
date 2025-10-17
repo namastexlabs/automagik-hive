@@ -1,8 +1,6 @@
 """Tests for dynamic model parameter resolution."""
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-import inspect
+from unittest.mock import patch
 
 
 class TestDynamicModelResolver:
@@ -14,7 +12,7 @@ class TestDynamicModelResolver:
         
         # Create a mock model class with known parameters
         class MockModel:
-            def __init__(self, id: str, temperature: float = 0.7, max_tokens: int = 1000, **kwargs):
+            def __init__(self, id: str, temperature: float = 0.7, max_tokens: int = 1000, **kwargs):  # noqa: A002
                 self.id = id
                 self.temperature = temperature
                 self.max_tokens = max_tokens
@@ -38,7 +36,7 @@ class TestDynamicModelResolver:
         
         # Create a mock model that only accepts certain parameters
         class MockClaudeModel:
-            def __init__(self, id: str, temperature: float = 0.7, max_tokens: int = 2000):
+            def __init__(self, id: str, temperature: float = 0.7, max_tokens: int = 2000):  # noqa: A002
                 self.id = id
                 self.temperature = temperature
                 self.max_tokens = max_tokens
@@ -73,7 +71,7 @@ class TestDynamicModelResolver:
         
         # Create a model that raises TypeError for unknown params
         class StrictModel:
-            def __init__(self, id: str, temperature: float = 0.7):
+            def __init__(self, id: str, temperature: float = 0.7):  # noqa: A002
                 if not isinstance(id, str):
                     raise TypeError("id must be a string")
                 self.id = id
@@ -110,7 +108,7 @@ class TestDynamicModelResolver:
         from lib.utils.dynamic_model_resolver import DynamicModelResolver
         
         class MockModel:
-            def __init__(self, id: str):
+            def __init__(self, id: str):  # noqa: A002
                 self.id = id
         
         resolver = DynamicModelResolver()
@@ -136,7 +134,7 @@ class TestDynamicModelResolver:
         class MockAgnoClaudeClass:
             def __init__(
                 self,
-                id: str,
+                id: str,  # noqa: A002
                 temperature: float = 0.7,
                 max_tokens: int = 4096,
                 top_p: float = 1.0,

@@ -8,12 +8,10 @@ This test suite targets the remaining missing coverage areas:
 Current coverage: 66% -> Target: 70%+
 """
 
-import os
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
 import pytest
-import sys
 
 from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
@@ -94,7 +92,6 @@ class TestFileWatchingImplementationDetails:
         manager = manager_with_mocked_kb
         
         # Create the inner SimpleHandler class manually to test its methods
-        from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
         
         # We need to create the handler as it would be created inside start_watching
         class TestSimpleHandler:
@@ -172,7 +169,7 @@ class TestMainFunctionCLIHandling:
                 mock_manager_class.return_value = mock_manager
                 
                 # The main function uses argparse internally
-                main()
+                main()  # noqa: F821
                 
                 # Verify manager was created with the CSV path from args (line 212)
                 mock_manager_class.assert_called_with('test.csv')
@@ -189,7 +186,7 @@ class TestMainFunctionCLIHandling:
                     mock_manager.get_status.return_value = test_status
                     mock_manager_class.return_value = mock_manager
                     
-                    main()
+                    main()  # noqa: F821
                     
                     # Verify get_status was called (line 215)
                     mock_manager.get_status.assert_called_once()
@@ -206,7 +203,7 @@ class TestMainFunctionCLIHandling:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Verify force_reload was called (line 220)
                 mock_manager.force_reload.assert_called_once()
@@ -220,7 +217,7 @@ class TestMainFunctionCLIHandling:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Verify start_watching was called (line 224)
                 mock_manager.start_watching.assert_called_once()
@@ -235,7 +232,7 @@ class TestMainFunctionCLIHandling:
                 mock_manager.get_status.return_value = {"status": "stopped"}
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should use default path (line 203)
                 mock_manager_class.assert_called_with("knowledge/knowledge_rag.csv")
@@ -304,13 +301,13 @@ class TestEdgeCaseAndIntegrationCoverage:
         with patch('sys.argv', ['csv_hot_reload.py'] + test_args):
             # This should either handle the error gracefully or exit
             try:
-                main()
+                main()  # noqa: F821
             except SystemExit:
                 # argparse calls sys.exit for invalid arguments, which is expected
                 pass
             except Exception as e:
                 # Any other exception should be caught and handled
-                pytest.fail(f"main() raised unexpected exception: {e}")
+                pytest.fail(f"main() raised unexpected exception: {e}")  # noqa: F821
 
 
 class TestCoverageTargetValidation:

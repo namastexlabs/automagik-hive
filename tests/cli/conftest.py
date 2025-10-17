@@ -22,9 +22,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch  # noqa: E402 - Path setup required before imports
 
-import pytest
+import pytest  # noqa: E402 - Path setup required before imports
 
 # Optional imports for real server testing
 try:
@@ -72,7 +72,7 @@ class TestEnvironmentManager:
             try:
                 if Path(temp_dir).exists():
                     shutil.rmtree(temp_dir)
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
         self.temp_dirs.clear()
 
@@ -563,7 +563,7 @@ POSTGRES_PASSWORD=test_password
             workspace = self.env_manager.create_temp_workspace(name)
 
             # Create main .env for docker-compose inheritance
-            (workspace / ".env").write_text(f"""
+            (workspace / ".env").write_text("""
 HIVE_API_PORT=8886
 POSTGRES_PORT=5532
 POSTGRES_DB=hive

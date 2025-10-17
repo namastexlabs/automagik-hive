@@ -8,11 +8,10 @@ They document the exact API changes and behavioral expectations for the implemen
 RED PHASE TESTS: All tests designed to fail initially to drive TDD implementation.
 """
 
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call
-import pytest
 import inspect
+from unittest.mock import patch
+
+import pytest
 
 from lib.auth.credential_service import CredentialService
 
@@ -189,7 +188,7 @@ class TestCredentialServiceMcpSyncSpecification:
         """
         service = CredentialService(project_root=tmp_path)
         
-        with patch.object(service, 'sync_mcp_config_with_credentials') as mock_sync:
+        with patch.object(service, 'sync_mcp_config_with_credentials'):
             
             # Valid boolean values should work
             service.setup_complete_credentials(sync_mcp=True)
@@ -322,8 +321,6 @@ class TestCredentialServiceMcpSyncSpecification:
         service = CredentialService(project_root=tmp_path)
         
         # Check that methods have appropriate docstrings mentioning sync_mcp
-        setup_docstring = service.setup_complete_credentials.__doc__ or ""
-        install_docstring = service.install_all_modes.__doc__ or ""
         
         # After implementation, these should mention sync_mcp parameter
         # For now, we just verify the methods exist and are callable

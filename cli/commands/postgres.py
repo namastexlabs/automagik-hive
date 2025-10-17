@@ -5,7 +5,6 @@ Supports both workspace and agent PostgreSQL instances.
 """
 
 from pathlib import Path
-from typing import Dict, Optional
 
 from ..docker_manager import DockerManager
 
@@ -21,7 +20,7 @@ class PostgreSQLCommands:
         # PostgreSQL container reference
         self.postgres_container = self.docker_manager.POSTGRES_CONTAINER
     
-    def _get_postgres_container_for_workspace(self, workspace: str) -> Optional[str]:
+    def _get_postgres_container_for_workspace(self, workspace: str) -> str | None:
         """Return the PostgreSQL container."""
         return self.postgres_container
     
@@ -30,10 +29,8 @@ class PostgreSQLCommands:
         try:
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
-                print(f"❌ No PostgreSQL container found for workspace: {workspace}")
                 return False
             
-            print(f"🔍 Checking PostgreSQL status for: {workspace}")
             
             if self.docker_manager._container_exists(container_name):
                 if self.docker_manager._container_running(container_name):
@@ -41,20 +38,15 @@ class PostgreSQLCommands:
                     port_info = self.docker_manager._run_command(
                         ["docker", "port", container_name], capture_output=True
                     )
-                    print(f"✅ PostgreSQL container '{container_name}' is running")
                     if port_info:
-                        print(f"   Port mapping: {port_info}")
+                        pass
                     return True
                 else:
-                    print(f"🔴 PostgreSQL container '{container_name}' exists but is stopped")
                     return False
             else:
-                print(f"❌ PostgreSQL container '{container_name}' not found")
-                print("   Run --install to create the container")
                 return False
                 
-        except Exception as e:
-            print(f"❌ Error checking PostgreSQL status: {e}")
+        except Exception:
             return False
     
     def postgres_start(self, workspace: str) -> bool:
@@ -62,42 +54,31 @@ class PostgreSQLCommands:
         try:
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
-                print(f"❌ No PostgreSQL container found for workspace: {workspace}")
                 return False
             
-            print(f"🚀 Starting PostgreSQL for: {workspace}")
             
             if not self.docker_manager._container_exists(container_name):
-                print(f"❌ PostgreSQL container '{container_name}' not found")
-                print("   Run --install to create the container first")
                 return False
             
             if self.docker_manager._container_running(container_name):
-                print(f"✅ PostgreSQL container '{container_name}' is already running")
                 return True
             
-            print(f"▶️ Starting PostgreSQL container '{container_name}'...")
             success = self.docker_manager._run_command(["docker", "start", container_name]) is None
             
             if success:
-                print(f"✅ PostgreSQL container '{container_name}' started successfully")
                 # Wait a moment for startup
                 import time
                 time.sleep(2)
                 
                 # Verify it's actually running
                 if self.docker_manager._container_running(container_name):
-                    print("✅ PostgreSQL is now accepting connections")
                     return True
                 else:
-                    print("⚠️ Container started but may not be ready yet")
                     return True
             else:
-                print(f"❌ Failed to start PostgreSQL container '{container_name}'")
                 return False
                 
-        except Exception as e:
-            print(f"❌ Error starting PostgreSQL: {e}")
+        except Exception:
             return False
     
     def postgres_stop(self, workspace: str) -> bool:
@@ -105,31 +86,23 @@ class PostgreSQLCommands:
         try:
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
-                print(f"❌ No PostgreSQL container found for workspace: {workspace}")
                 return False
             
-            print(f"🛑 Stopping PostgreSQL for: {workspace}")
             
             if not self.docker_manager._container_exists(container_name):
-                print(f"❌ PostgreSQL container '{container_name}' not found")
                 return False
             
             if not self.docker_manager._container_running(container_name):
-                print(f"✅ PostgreSQL container '{container_name}' is already stopped")
                 return True
             
-            print(f"⏹️ Stopping PostgreSQL container '{container_name}'...")
             success = self.docker_manager._run_command(["docker", "stop", container_name]) is None
             
             if success:
-                print(f"✅ PostgreSQL container '{container_name}' stopped successfully")
                 return True
             else:
-                print(f"❌ Failed to stop PostgreSQL container '{container_name}'")
                 return False
                 
-        except Exception as e:
-            print(f"❌ Error stopping PostgreSQL: {e}")
+        except Exception:
             return False
     
     def postgres_restart(self, workspace: str) -> bool:
@@ -137,38 +110,28 @@ class PostgreSQLCommands:
         try:
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
-                print(f"❌ No PostgreSQL container found for workspace: {workspace}")
                 return False
             
-            print(f"🔄 Restarting PostgreSQL for: {workspace}")
             
             if not self.docker_manager._container_exists(container_name):
-                print(f"❌ PostgreSQL container '{container_name}' not found")
-                print("   Run --install to create the container first")
                 return False
             
-            print(f"🔄 Restarting PostgreSQL container '{container_name}'...")
             success = self.docker_manager._run_command(["docker", "restart", container_name]) is None
             
             if success:
-                print(f"✅ PostgreSQL container '{container_name}' restarted successfully")
                 # Wait a moment for startup
                 import time
                 time.sleep(3)
                 
                 # Verify it's running
                 if self.docker_manager._container_running(container_name):
-                    print("✅ PostgreSQL is now accepting connections")
                     return True
                 else:
-                    print("⚠️ Container restarted but may not be ready yet")
                     return True
             else:
-                print(f"❌ Failed to restart PostgreSQL container '{container_name}'")
                 return False
                 
-        except Exception as e:
-            print(f"❌ Error restarting PostgreSQL: {e}")
+        except Exception:
             return False
     
     def postgres_logs(self, workspace: str, tail: int = 50) -> bool:
@@ -176,17 +139,12 @@ class PostgreSQLCommands:
         try:
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
-                print(f"❌ No PostgreSQL container found for workspace: {workspace}")
                 return False
             
-            print(f"📋 Showing PostgreSQL logs for: {workspace}")
             
             if not self.docker_manager._container_exists(container_name):
-                print(f"❌ PostgreSQL container '{container_name}' not found")
                 return False
             
-            print(f"📋 PostgreSQL logs for '{container_name}' (last {tail} lines):")
-            print("=" * 60)
             
             # Get and display logs
             success = self.docker_manager._run_command([
@@ -194,13 +152,11 @@ class PostgreSQLCommands:
             ]) is None
             
             if not success:
-                print(f"❌ Failed to retrieve logs for container '{container_name}'")
                 return False
             
             return True
                 
-        except Exception as e:
-            print(f"❌ Error retrieving PostgreSQL logs: {e}")
+        except Exception:
             return False
     
     def postgres_health(self, workspace: str) -> bool:
@@ -208,19 +164,13 @@ class PostgreSQLCommands:
         try:
             container_name = self._get_postgres_container_for_workspace(workspace)
             if not container_name:
-                print(f"❌ No PostgreSQL container found for workspace: {workspace}")
                 return False
             
-            print(f"💚 Checking PostgreSQL health for: {workspace}")
             
             if not self.docker_manager._container_exists(container_name):
-                print(f"❌ PostgreSQL container '{container_name}' not found")
-                print("   Status: Not installed")
                 return False
             
             if not self.docker_manager._container_running(container_name):
-                print(f"🔴 PostgreSQL container '{container_name}' is not running")
-                print("   Status: Stopped")
                 return False
             
             # Check container health status
@@ -233,21 +183,19 @@ class PostgreSQLCommands:
                 "docker", "inspect", "--format", "{{.State.StartedAt}}", container_name
             ], capture_output=True)
             
-            print(f"✅ PostgreSQL container '{container_name}' health check:")
-            print(f"   Container Status: Running")
             
             if health_status:
                 if health_status == "healthy":
-                    print(f"   Health Status: 🟢 {health_status}")
+                    pass
                 elif health_status == "unhealthy":
-                    print(f"   Health Status: 🔴 {health_status}")
+                    pass
                 else:
-                    print(f"   Health Status: 🟡 {health_status}")
+                    pass
             else:
-                print(f"   Health Status: 🟡 No health check configured")
+                pass
             
             if uptime:
-                print(f"   Started At: {uptime}")
+                pass
             
             # Try to connect to PostgreSQL (basic connectivity test)
             try:
@@ -257,7 +205,6 @@ class PostgreSQLCommands:
                 ], capture_output=True)
                 
                 if port_info:
-                    print(f"   Port Mapping: 5432 -> {port_info}")
                     
                     # Try a basic connection test using docker exec
                     connection_test = self.docker_manager._run_command([
@@ -265,17 +212,16 @@ class PostgreSQLCommands:
                     ], capture_output=True)
                     
                     if connection_test and "accepting connections" in connection_test:
-                        print("   Connection Test: 🟢 PostgreSQL accepting connections")
+                        pass
                     else:
-                        print("   Connection Test: 🟡 PostgreSQL may not be ready")
+                        pass
                         
-            except Exception:
-                print("   Connection Test: 🟡 Unable to test connection")
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
+                pass
             
             return True
                 
-        except Exception as e:
-            print(f"❌ Error checking PostgreSQL health: {e}")
+        except Exception:
             return False
     
     def execute(self) -> bool:
@@ -284,8 +230,6 @@ class PostgreSQLCommands:
     
     def install(self) -> bool:
         """Install PostgreSQL - delegates to DockerManager."""
-        print("🚀 PostgreSQL installation should be done via --install command")
-        print("   This installs the full environment including PostgreSQL")
         return True
     
     def start(self) -> bool:

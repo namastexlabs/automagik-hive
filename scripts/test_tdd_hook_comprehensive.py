@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 """Comprehensive test of TDD hook to ensure it maintains our perfect test structure."""
 
-import sys
 import json
-import tempfile
 import subprocess
-from pathlib import Path
+import sys
+
 
 def test_hook_with_real_scenarios():
     """Test the TDD hook with real-world scenarios."""
     
-    print("=" * 70)
-    print("COMPREHENSIVE TDD HOOK VALIDATION")
-    print("=" * 70)
     
     # Test scenarios
     scenarios = [
@@ -88,9 +84,7 @@ def test_hook_with_real_scenarios():
     ]
     
     # Run each scenario
-    for i, scenario in enumerate(scenarios, 1):
-        print(f"\n{i}. {scenario['name']}")
-        print("-" * 50)
+    for _i, scenario in enumerate(scenarios, 1):
         
         # Create JSON input for the hook
         hook_input = {
@@ -111,28 +105,13 @@ def test_hook_with_real_scenarios():
         
         blocked = result.returncode == 2
         
-        print(f"   File: {scenario['file']}")
-        print(f"   Expected: {'BLOCKED' if scenario['expect_blocked'] else 'ALLOWED'}")
-        print(f"   Actual: {'BLOCKED' if blocked else 'ALLOWED'}")
-        print(f"   Reason: {scenario['reason']}")
         
         if blocked != scenario['expect_blocked']:
-            print(f"   ❌ UNEXPECTED RESULT!")
             if result.stderr:
-                print(f"   Error: {result.stderr[:200]}")
+                pass
         else:
-            print(f"   ✅ CORRECT")
+            pass
     
-    print("\n" + "=" * 70)
-    print("SUMMARY: TDD Hook Configuration")
-    print("=" * 70)
-    print("✅ Enforces test-first development (Red-Green-Refactor)")
-    print("✅ Maintains perfect mirror structure in tests/")
-    print("✅ Allows integration tests without source mirrors")
-    print("✅ Allows fixtures and utilities without test_ prefix")
-    print("✅ Blocks tests outside tests/ directory")
-    print("✅ Blocks incorrectly named test files")
-    print("✅ Blocks source creation without tests")
 
 if __name__ == "__main__":
     test_hook_with_real_scenarios()

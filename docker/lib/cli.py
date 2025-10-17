@@ -12,8 +12,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from lib.docker.compose_service import DockerComposeService
-from lib.logging import logger
+from lib.docker.compose_service import (  # noqa: E402 - Path setup required
+    DockerComposeService,  # noqa: E402 - Environment setup required before module imports
+)
+from lib.logging import logger  # noqa: E402 - Environment setup required before module imports
 
 
 def setup_foundational_services(

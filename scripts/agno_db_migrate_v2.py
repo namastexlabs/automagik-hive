@@ -41,7 +41,7 @@ def _ensure_pymongo_stubs() -> None:
     class _Database:  # pragma: no cover - compatibility shim
         ...
 
-    class _OperationFailure(Exception):  # pragma: no cover - compatibility shim
+    class _OperationFailureError(Exception):  # pragma: no cover - compatibility shim
         ...
 
     class _ReturnDocument:  # pragma: no cover - compatibility shim
@@ -49,7 +49,7 @@ def _ensure_pymongo_stubs() -> None:
 
     collection_module.Collection = _Collection
     database_module.Database = _Database
-    errors_module.OperationFailure = _OperationFailure
+    errors_module.OperationFailure = _OperationFailureError
 
     pymongo_stub.collection = collection_module
     pymongo_stub.database = database_module
@@ -133,7 +133,7 @@ async def _collect_counts(
 
             try:
                 result = await service.fetch_one(
-                    f"SELECT COUNT(*) AS total FROM {qualified}"
+                    f"SELECT COUNT(*) AS total FROM {qualified}"  # noqa: S608 - Test/script SQL
                 )
                 counts[label] = int(result["total"]) if result else 0
             except Exception as exc:  # pragma: no cover - defensive

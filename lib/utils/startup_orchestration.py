@@ -711,8 +711,8 @@ def build_runtime_summary(startup_results: StartupResults) -> dict[str, Any]:
 def _populate_surface_status(display: Any, startup_results: StartupResults) -> None:
     """Enrich startup display with surface availability and URLs."""
 
-    from lib.config.settings import get_settings
     from lib.config.server_config import get_server_config
+    from lib.config.settings import get_settings
 
     settings = get_settings()
     server_config = get_server_config()

@@ -2,8 +2,6 @@
 
 from types import SimpleNamespace
 
-import pytest
-
 from lib.metrics.agno_metrics_bridge import AgnoMetricsBridge
 
 

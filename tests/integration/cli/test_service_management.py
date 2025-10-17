@@ -7,8 +7,7 @@ Targets 90%+ coverage as per CLI cleanup strategy requirements.
 
 import subprocess
 import time
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -28,10 +27,14 @@ class ServiceManager:
         self.logs = ServiceLogs()
         self.cleanup = ServiceCleanup()
 
-class ServiceOperations: pass
-class ServiceStatus: pass  
-class ServiceLogs: pass
-class ServiceCleanup: pass
+class ServiceOperations:
+    pass
+class ServiceStatus:
+    pass  
+class ServiceLogs:
+    pass
+class ServiceCleanup:
+    pass
 
 
 class TestServiceManager:

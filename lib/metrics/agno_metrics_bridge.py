@@ -8,7 +8,6 @@ from typing import Any
 from lib.logging import logger
 from lib.metrics.config import MetricsConfig
 
-
 LEGACY_FIELD_MAPPING = {
     "prompt_tokens": "input_tokens",
     "completion_tokens": "output_tokens",
@@ -207,11 +206,9 @@ class AgnoMetricsBridge:
         if provider_metrics:
             metrics["provider_metrics"] = provider_metrics
 
-        if hasattr(session_metrics, "additional_metrics") and getattr(
-            session_metrics, "additional_metrics"
-        ):
+        if hasattr(session_metrics, "additional_metrics") and session_metrics.additional_metrics:
             metrics["additional_metrics"] = deepcopy(
-                getattr(session_metrics, "additional_metrics")
+                session_metrics.additional_metrics
             )
 
         detail_carriers = {
@@ -256,7 +253,7 @@ class AgnoMetricsBridge:
                     numeric_values = [
                         value
                         for value in metric_values
-                        if isinstance(value, (int, float))
+                        if isinstance(value, int | float)
                     ]
                     metrics[metric_name] = sum(numeric_values) if numeric_values else metric_values[-1]
                 else:

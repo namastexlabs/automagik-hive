@@ -1,13 +1,13 @@
 """Tests for lib.models.base module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.models.base
+    import lib.models.base  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.models.base not available", allow_module_level=True)
+    pytest.skip("Module lib.models.base not available", allow_module_level=True)
 
 
 class TestBase:

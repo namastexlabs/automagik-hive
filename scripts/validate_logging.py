@@ -85,7 +85,7 @@ class LoggingValidator:
                 with open(config_path) as f:
                     user_whitelist = yaml.safe_load(f)
                     default_whitelist.update(user_whitelist)
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # Warning: Could not load whitelist config - using defaults
                 pass
 

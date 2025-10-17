@@ -1,7 +1,6 @@
 # Generic Agent Registry for Multi-Agent Systems
 # Database-driven agent loading via version factory
 
-from pathlib import Path
 from typing import Any
 
 from agno.agent import Agent

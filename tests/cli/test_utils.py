@@ -5,16 +5,14 @@ command execution, Docker validation, status formatting, and user interaction.
 All tests are designed with RED phase compliance for TDD workflow.
 """
 
-import pytest
 import subprocess
-from unittest.mock import MagicMock, Mock, patch, call
-from io import StringIO
+from unittest.mock import Mock, call, patch
 
 from cli.utils import (
-    run_command,
     check_docker_available,
-    format_status,
     confirm_action,
+    format_status,
+    run_command,
 )
 
 
@@ -49,11 +47,11 @@ class TestRunCommand:
         with patch('subprocess.run') as mock_run:
             mock_run.return_value.stdout = "output"
             
-            result = run_command(["ls"], capture_output=True, cwd="/tmp")
+            result = run_command(["ls"], capture_output=True, cwd="/tmp")  # noqa: S108 - Test/script temp file
             
             assert result == "output"
             mock_run.assert_called_once_with(
-                ["ls"], capture_output=True, text=True, check=True, cwd="/tmp"
+                ["ls"], capture_output=True, text=True, check=True, cwd="/tmp"  # noqa: S108 - Test/script temp file
             )
 
     def test_run_command_called_process_error_with_capture(self):
@@ -427,10 +425,10 @@ class TestUtilsIntegration:
             confirmed = confirm_action("Execute dangerous command?", default=False)
             
             if confirmed:
-                run_command(["rm", "-rf", "/tmp/test"], capture_output=False)
+                run_command(["rm", "-rf", "/tmp/test"], capture_output=False)  # noqa: S108 - Test/script temp file
             
             assert confirmed is True
-            mock_run.assert_called_once_with(["rm", "-rf", "/tmp/test"], capture_output=False)
+            mock_run.assert_called_once_with(["rm", "-rf", "/tmp/test"], capture_output=False)  # noqa: S108 - Test/script temp file
 
     def test_error_handling_chain_across_functions(self):
         """Test error handling propagates correctly across utility functions."""

@@ -4,7 +4,6 @@ Replaces verbose startup logs with clean table format.
 Features contextual emoji detection for visual scanning.
 """
 
-import os
 from typing import Any
 
 from rich.console import Console
@@ -388,11 +387,11 @@ class StartupDisplay:
                         if version:
                             return str(version)  # Return version from YAML fallback
 
-                except Exception:
+                except Exception:  # noqa: S112 - Continue after exception is intentional
                     # Skip files that can't be read or parsed
                     continue
 
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # If glob or directory access fails, return None
             pass
 

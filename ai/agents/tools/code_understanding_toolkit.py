@@ -90,7 +90,7 @@ def find_symbol(
                                 ),
                             }
                         )
-            except Exception:
+            except Exception:  # noqa: S110 - Silent file read failures expected during search
                 pass  # Skip files that can't be read
 
             return file_results
@@ -231,7 +231,7 @@ def find_referencing_symbols(
                                 }
                             )
 
-                except Exception:
+                except Exception:  # noqa: S112 - Silent file read failures expected during search
                     continue  # Skip files that can't be read
 
         if not references:
@@ -338,7 +338,7 @@ def find_referencing_code_snippets(
                             }
                             snippets.append(snippet)
 
-                except Exception:
+                except Exception:  # noqa: S112 - Silent file read failures expected during search
                     continue
 
         if not snippets:
@@ -570,7 +570,7 @@ def _extract_symbols_from_file(
 
                 symbols.append(symbol)
 
-    except Exception:
+    except Exception:  # noqa: S110 - Silent file processing failures expected during extraction
         pass  # Skip files that can't be processed
 
     return symbols

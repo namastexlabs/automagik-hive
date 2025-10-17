@@ -9,7 +9,7 @@ import json
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from fastapi import Form, HTTPException, Request, status
+from fastapi import HTTPException, Request, status
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
@@ -337,6 +337,7 @@ class TestMessageValidationIntegration:
     def test_message_validation_as_fastapi_dependency(self, test_client):
         """Test message validation used as FastAPI dependency."""
         from fastapi import Depends, FastAPI
+
         from api.dependencies.message_validation import validate_message_dependency
         
         # Create test app with dependency
@@ -362,7 +363,9 @@ class TestMessageValidationIntegration:
     async def test_async_client_integration(self, async_client: AsyncClient):
         """Test message validation with async client."""
         from fastapi import Depends, FastAPI
-        from httpx import ASGITransport, AsyncClient as HTTPXAsyncClient
+        from httpx import ASGITransport
+        from httpx import AsyncClient as HTTPXAsyncClient
+
         from api.dependencies.message_validation import validate_optional_message_dependency
         
         app = FastAPI()
@@ -385,7 +388,9 @@ class TestMessageValidationIntegration:
     def test_concurrent_validation_requests(self, test_client):
         """Test concurrent validation requests handle properly."""
         import concurrent.futures
+
         from fastapi import Depends, FastAPI
+
         from api.dependencies.message_validation import validate_message_dependency
         
         app = FastAPI()
@@ -411,8 +416,9 @@ class TestMessageValidationIntegration:
 
     def test_request_validation_middleware_integration(self):
         """Test validate_runs_request integration with middleware."""
-        from fastapi import FastAPI, Request, HTTPException
+        from fastapi import FastAPI, HTTPException, Request
         from fastapi.responses import JSONResponse
+
         from api.dependencies.message_validation import validate_runs_request
         
         app = FastAPI()

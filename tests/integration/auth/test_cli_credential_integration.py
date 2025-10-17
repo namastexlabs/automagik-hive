@@ -3,8 +3,7 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import pytest
+from unittest.mock import patch
 
 from cli.docker_manager import DockerManager
 
@@ -70,4 +69,3 @@ def test_cli_install_uses_single_credential_system():
 
 if __name__ == "__main__":
     test_cli_install_uses_single_credential_system()
-    print("✅ CLI credential integration test passed!")

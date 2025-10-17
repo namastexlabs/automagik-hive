@@ -132,7 +132,7 @@ class AuthTestHelpers:
             error_data = response.json()
             assert "detail" in error_data
             assert "Invalid or missing x-api-key header" in error_data["detail"]
-        except:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass  # Some endpoints may return non-JSON errors
 
     @staticmethod

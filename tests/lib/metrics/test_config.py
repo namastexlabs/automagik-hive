@@ -1,13 +1,13 @@
 """Tests for lib.metrics.config module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.metrics.config
+    import lib.metrics.config  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.metrics.config not available", allow_module_level=True)
+    pytest.skip("Module lib.metrics.config not available", allow_module_level=True)
 
 
 class TestConfig:

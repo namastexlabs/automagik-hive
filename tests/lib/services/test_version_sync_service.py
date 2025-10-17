@@ -1,9 +1,7 @@
 """Tests for lib/services/version_sync_service.py."""
 
 import asyncio
-import tempfile
 from datetime import datetime
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 from unittest.mock import call as mock_call
 
@@ -292,7 +290,7 @@ class TestAgnoVersionSyncService:
             {"component_type": "team", "name": "team1", "version": "2.0.0"}
         ]
         
-        with patch.object(service, 'get_yaml_component_versions', return_value=yaml_components) as mock_get_yaml, \
+        with patch.object(service, 'get_yaml_component_versions', return_value=yaml_components), \
              patch.object(service, 'sync_component_to_db') as mock_sync:
             
             result = await service.sync_yaml_to_db()
@@ -666,14 +664,14 @@ class TestAgnoVersionSyncServiceIntegration:
             def mock_fetch_one_side_effect(query, params):
                 # Handle both dict and positional parameters
                 if isinstance(params, dict):
-                    component_name = params.get("name", "")
+                    params.get("name", "")
                 else:
                     # If params is a tuple/list, extract the name parameter
-                    component_name = params[1] if len(params) > 1 else ""
+                    params[1] if len(params) > 1 else ""
                 
                 # Return the mock data for any component query
                 return {
-                    "version": db_version,
+                    "version": db_version,  # noqa: B023
                     "last_modified": datetime.now()
                 }
             
@@ -706,9 +704,10 @@ class TestServiceUtilities:
     def test_service_dependencies(self):
         """Test service dependency requirements."""
         # Test that required modules are available
-        import yaml
         import pathlib
         from datetime import datetime
+
+        import yaml
         
         assert yaml is not None
         assert pathlib is not None
@@ -765,7 +764,6 @@ class TestAgnoVersionSyncServiceAdvanced:
             mock_db_service.execute.reset_mock()
             
             # Mock force sync by patching sync_component_to_db to always update
-            original_sync = service.sync_component_to_db
             async def force_sync_component(component_data):
                 # Always execute UPDATE regardless of version
                 await mock_db_service.execute(

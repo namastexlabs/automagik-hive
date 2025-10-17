@@ -57,7 +57,7 @@ def get_workflow_version_from_init(workflow_dir: Path) -> str:
         return "1.0.0"  # Default version
 
     try:
-        with open(init_file, 'r', encoding='utf-8') as f:
+        with open(init_file, encoding='utf-8') as f:
             content = f.read()
 
         tree = ast.parse(content)
@@ -74,11 +74,11 @@ def get_workflow_version_from_init(workflow_dir: Path) -> str:
                 node.targets[0].id == '__version__'):
 
                 # Only accept module-level assignments (not in functions/classes)
-                if hasattr(node, 'parent') and isinstance(node.parent, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)):
+                if hasattr(node, 'parent') and isinstance(node.parent, ast.FunctionDef | ast.ClassDef | ast.AsyncFunctionDef):
                     continue
 
                 # Check if it's a complex expression (f-string, function call, etc.)
-                if isinstance(node.value, (ast.JoinedStr, ast.Call, ast.BinOp)):
+                if isinstance(node.value, ast.JoinedStr | ast.Call | ast.BinOp):
                     raise WorkflowVersionError("Complex version assignment not supported - use simple literals only")
 
                 try:
@@ -127,7 +127,7 @@ def get_workflow_metadata_from_init(workflow_dir: Path) -> dict[str, Any]:
         return {"__version__": "1.0.0"}
 
     try:
-        with open(init_file, 'r', encoding='utf-8') as f:
+        with open(init_file, encoding='utf-8') as f:
             content = f.read()
 
         tree = ast.parse(content)
@@ -143,19 +143,19 @@ def get_workflow_metadata_from_init(workflow_dir: Path) -> dict[str, Any]:
                 target = node.targets[0]
                 if isinstance(target, ast.Name):
                     # Only accept module-level assignments
-                    if hasattr(node, 'parent') and isinstance(node.parent, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)):
+                    if hasattr(node, 'parent') and isinstance(node.parent, ast.FunctionDef | ast.ClassDef | ast.AsyncFunctionDef):
                         continue
 
                     # Only extract metadata fields (those starting and ending with __)
                     if target.id.startswith('__') and target.id.endswith('__'):
                         # Check if it's a complex expression
-                        if isinstance(node.value, (ast.JoinedStr, ast.Call, ast.BinOp)):
+                        if isinstance(node.value, ast.JoinedStr | ast.Call | ast.BinOp):
                             raise WorkflowMetadataError("Complex assignment not supported for metadata fields - use simple literals only")
 
                         try:
                             value = ast.literal_eval(node.value)
                             # Keep the full __key__ format
-                            metadata[target.id] = str(value) if not isinstance(value, (list, dict)) else value
+                            metadata[target.id] = str(value) if not isinstance(value, list | dict) else value
                         except (ValueError, TypeError):
                             # Non-literal expressions
                             raise WorkflowMetadataError("Complex assignment not supported for metadata fields - use simple literals only")
@@ -239,7 +239,7 @@ def validate_workflow_structure(workflow_dir: Path) -> dict[str, Any]:
             try:
                 version = get_workflow_version_from_init(workflow_dir)
                 validation['init_version'] = version
-            except WorkflowVersionError as e:
+            except WorkflowVersionError:
                 # Keep default version but don't fail validation
                 # Structure validation only checks file presence
                 validation['errors'].append('Failed to parse version from __init__.py')
@@ -285,7 +285,7 @@ def validate_workflow_structure(workflow_dir: Path) -> dict[str, Any]:
 def _has_version_constant(init_file: Path) -> bool:
     """Check if __init__.py contains a __version__ constant."""
     try:
-        with open(init_file, 'r', encoding='utf-8') as f:
+        with open(init_file, encoding='utf-8') as f:
             content = f.read()
             
         tree = ast.parse(content)
@@ -302,12 +302,12 @@ def _has_version_constant(init_file: Path) -> bool:
                 node.targets[0].id == '__version__'):
                 
                 # Only accept module-level assignments
-                if hasattr(node, 'parent') and isinstance(node.parent, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)):
+                if hasattr(node, 'parent') and isinstance(node.parent, ast.FunctionDef | ast.ClassDef | ast.AsyncFunctionDef):
                     continue
                     
                 return True
                 
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
     
     return False

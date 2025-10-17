@@ -11,27 +11,24 @@ This module tests all core functionality including:
 - Complete startup orchestration
 """
 
-import asyncio
 import os
-import pytest
-from datetime import datetime
-from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Import the module under test
 from lib.utils.startup_orchestration import (
     ComponentRegistries,
-    StartupServices,
     StartupResults,
+    StartupServices,
     batch_component_discovery,
+    build_runtime_summary,
+    get_startup_display_with_results,
     initialize_knowledge_base,
     initialize_other_services,
-    run_version_synchronization,
     orchestrated_startup,
-    get_startup_display_with_results,
-    build_runtime_summary,
+    run_version_synchronization,
 )
 
 

@@ -5,7 +5,7 @@ These are placeholders that satisfy import requirements.
 """
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class UninstallCommands:
@@ -16,12 +16,10 @@ class UninstallCommands:
     
     def uninstall_current_workspace(self) -> bool:
         """Uninstall current workspace."""
-        print("🗑️ Uninstalling current workspace")
         return True
     
     def uninstall_global(self) -> bool:
         """Uninstall global installation."""
-        print("🗑️ Uninstalling global installation")
         return True
     
     def execute(self) -> bool:

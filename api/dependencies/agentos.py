@@ -7,7 +7,6 @@ from typing import Any
 from lib.config.settings import HiveSettings
 from lib.services.agentos_service import AgentOSService
 
-
 _SERVICE_CACHE: AgentOSService | None = None
 _CACHE_KEY: tuple[Any, ...] | None = None
 

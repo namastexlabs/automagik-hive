@@ -13,7 +13,7 @@ Test Categories:
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, call
+from unittest.mock import patch
 
 import pytest
 
@@ -21,7 +21,7 @@ import pytest
 try:
     from cli.commands.uninstall import UninstallCommands
 except ImportError:
-    pytest.skip(f"Module cli.commands.uninstall not available", allow_module_level=True)
+    pytest.skip("Module cli.commands.uninstall not available", allow_module_level=True)
 
 
 class TestUninstallCommandsInitialization:
@@ -73,7 +73,7 @@ class TestUninstallCurrentWorkspace:
         
         # Mock an exception during uninstallation
         with patch('builtins.print', side_effect=Exception("Print failed")):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 uninstall_cmd.uninstall_current_workspace()
 
     def test_uninstall_current_workspace_return_type(self):
@@ -107,7 +107,7 @@ class TestUninstallGlobal:
         
         # Mock an exception during global uninstallation
         with patch('builtins.print', side_effect=Exception("Global uninstall failed")):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 uninstall_cmd.uninstall_global()
 
     def test_uninstall_global_return_type(self):
@@ -232,7 +232,7 @@ class TestUninstallCommandsEdgeCases:
         result3 = uninstall_cmd.uninstall_current_workspace()
         
         # Should fail initially - idempotency not guaranteed
-        assert result1 == result2 == result3 == True
+        assert result1 == result2 == result3 is True
 
     def test_uninstall_global_idempotency(self):
         """Test global uninstall can be called multiple times safely."""
@@ -244,14 +244,14 @@ class TestUninstallCommandsEdgeCases:
         result3 = uninstall_cmd.uninstall_global()
         
         # Should fail initially - global uninstall idempotency not guaranteed
-        assert result1 == result2 == result3 == True
+        assert result1 == result2 == result3 is True
 
     def test_uninstall_commands_with_different_workspace_states(self):
         """Test uninstall commands work with different workspace configurations."""
         # Test with different workspace paths
         workspaces = [
             Path("."),
-            Path("/tmp/test-workspace"),
+            Path("/tmp/test-workspace"),  # noqa: S108 - Test/script temp file
             Path("/nonexistent/workspace")
         ]
         
@@ -296,7 +296,7 @@ class TestUninstallCommandsEdgeCases:
         
         for method_name in methods_to_test:
             with patch.object(uninstall_cmd, method_name, side_effect=Exception(f"{method_name} failed")):
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     getattr(uninstall_cmd, method_name)()
 
 

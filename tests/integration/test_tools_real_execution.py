@@ -5,13 +5,13 @@ This demonstrates the evolution from mocked unit tests to real system validation
 Tests actual MCP tool connections, database queries, and cross-service integration.
 """
 
-import os
 import asyncio
-import pytest
-from typing import List, Dict, Any
+import os
 
-from lib.tools.registry import ToolRegistry
+import pytest
+
 from lib.mcp import MCPCatalog
+from lib.tools.registry import ToolRegistry
 
 
 class TestRealToolsExecution:
@@ -24,7 +24,6 @@ class TestRealToolsExecution:
         
         # Should discover actual servers from configuration
         assert isinstance(available_servers, list)
-        print(f"🔍 Discovered MCP servers: {available_servers}")
         
         # Verify expected servers are available (if configured)
         expected_servers = ["postgres", "automagik-forge"]
@@ -32,7 +31,6 @@ class TestRealToolsExecution:
             if catalog.has_server(server):
                 config = catalog.get_server_config(server)
                 assert config is not None
-                print(f"✅ Server {server} configured: {config}")
 
     @pytest.mark.asyncio
     async def test_real_tool_loading_with_actual_connections(self):
@@ -46,8 +44,6 @@ class TestRealToolsExecution:
         
         tools, loaded_names = ToolRegistry.load_tools(tool_configs)
         
-        print(f"🔍 Successfully loaded tools: {loaded_names}")
-        print(f"🔍 Total tools loaded: {len(tools)}")
         
         # Verify at least ShellTools loads (always available)
         assert "ShellTools" in loaded_names
@@ -55,14 +51,13 @@ class TestRealToolsExecution:
         
         # Test each loaded tool
         for i, tool in enumerate(tools):
-            tool_name = loaded_names[i]
-            print(f"🔍 Testing tool {tool_name}: {type(tool)}")
+            loaded_names[i]
             
             # Verify tool has expected methods
-            if hasattr(tool, '__call__'):
-                print(f"✅ Tool {tool_name} is callable")
+            if callable(tool):
+                pass
             elif hasattr(tool, 'get_tool_function'):
-                print(f"✅ Tool {tool_name} has get_tool_function")
+                pass
 
     @pytest.mark.asyncio  
     async def test_postgres_tool_actual_connection(self):
@@ -81,14 +76,12 @@ class TestRealToolsExecution:
         if postgres_tool is None:
             pytest.skip("PostgreSQL tool not available - server might be down")
             
-        print(f"✅ PostgreSQL tool resolved: {type(postgres_tool)}")
         
         # Test basic tool validation
         try:
             postgres_tool.validate_name("mcp__postgres__query") 
-            print("✅ PostgreSQL tool validation passed")
-        except Exception as e:
-            print(f"⚠️ PostgreSQL tool validation failed: {e}")
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
+            pass
             # Don't fail test - connection issues are expected in test environments
 
     @pytest.mark.asyncio
@@ -104,14 +97,12 @@ class TestRealToolsExecution:
         if forge_tool is None:
             pytest.skip("Automagik Forge tool not available - server might be down")
             
-        print(f"✅ Automagik Forge tool resolved: {type(forge_tool)}")
         
         # Test basic tool validation
         try:
             forge_tool.validate_name("mcp__automagik_forge__list_projects")
-            print("✅ Automagik Forge tool validation passed")
-        except Exception as e:
-            print(f"⚠️ Automagik Forge tool validation failed: {e}")
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
+            pass
             # Don't fail test - connection issues are expected in test environments
 
     def test_shell_tools_real_execution(self):
@@ -122,13 +113,11 @@ class TestRealToolsExecution:
         assert "ShellTools" in loaded_names
         shell_tool = tools[0]
         
-        print(f"✅ ShellTools loaded: {type(shell_tool)}")
         
         # Test that shell tool has expected interface
         # Note: We don't actually execute commands in tests for security
         # ShellTools from Agno has different interface than expected
         assert hasattr(shell_tool, 'run_shell_command') or hasattr(shell_tool, 'functions')
-        print("✅ ShellTools has expected interface")
 
     def test_tool_registry_resilience_with_real_failures(self):
         """Test tool registry handles real connection failures gracefully."""
@@ -142,7 +131,6 @@ class TestRealToolsExecution:
         
         tools, loaded_names = ToolRegistry.load_tools(tool_configs)
         
-        print(f"🔍 Loaded tools with real failures: {loaded_names}")
         
         # Should always load ShellTools at minimum
         assert "ShellTools" in loaded_names
@@ -170,8 +158,7 @@ class TestRealToolsExecution:
         results = await asyncio.gather(*tasks)
         
         # All loads should succeed and return consistent results
-        for i, (tools, loaded_names) in enumerate(results):
-            print(f"🔍 Concurrent load {i}: {loaded_names}")
+        for _i, (tools, loaded_names) in enumerate(results):
             assert "ShellTools" in loaded_names  # Should always be available
             assert len(tools) >= 1
 
@@ -188,8 +175,6 @@ class TestRealToolsExecution:
         tool2 = ToolRegistry.resolve_mcp_tool("mcp__postgres__query") 
         cache_size_2 = len(ToolRegistry._mcp_tools_cache)
         
-        print(f"🔍 Cache size after first load: {cache_size_1}")
-        print(f"🔍 Cache size after second load: {cache_size_2}")
         
         # Cache size should not increase on second load
         assert cache_size_2 == cache_size_1
@@ -197,7 +182,6 @@ class TestRealToolsExecution:
         # If tool was available, both should be identical (cached)
         if tool1 is not None and tool2 is not None:
             assert tool1 is tool2
-            print("✅ Tool caching working correctly")
 
     def test_mcp_server_configuration_validation(self):
         """Test validation of actual MCP server configurations."""
@@ -206,7 +190,6 @@ class TestRealToolsExecution:
         
         for server_name in available_servers:
             config = catalog.get_server_config(server_name)
-            print(f"🔍 Validating server {server_name}: {config}")
             
             # Basic configuration validation
             assert config is not None
@@ -214,21 +197,17 @@ class TestRealToolsExecution:
             # Check server type detection
             if config.is_command_server:
                 assert config.command is not None
-                print(f"✅ Command server {server_name}: {config.command}")
             elif config.is_sse_server: 
                 assert config.url is not None
-                print(f"✅ SSE server {server_name}: {config.url}")
             else:
-                print(f"⚠️ Unknown server type for {server_name}")
+                pass
 
     def test_end_to_end_tool_discovery_and_loading(self):
         """Test complete end-to-end tool discovery and loading process."""
-        print("🚀 Starting end-to-end tool test...")
         
         # 1. Discover available MCP servers
         catalog = MCPCatalog()
         servers = catalog.list_servers()
-        print(f"🔍 Step 1 - Discovered servers: {servers}")
         
         # 2. Build tool configs for discovered servers
         tool_configs = []
@@ -238,47 +217,27 @@ class TestRealToolsExecution:
         # 3. Add always-available native tool
         tool_configs.append({"name": "ShellTools"})
         
-        print(f"🔍 Step 2 - Tool configs: {[c['name'] for c in tool_configs]}")
         
         # 4. Load tools
         tools, loaded_names = ToolRegistry.load_tools(tool_configs)
-        print(f"🔍 Step 3 - Loaded tools: {loaded_names}")
         
         # 5. Verify results
         assert len(tools) >= 1  # At least ShellTools should load
         assert "ShellTools" in loaded_names
         
-        print("✅ End-to-end tool discovery and loading completed")
 
     def test_real_vs_mocked_comparison(self):
         """Demonstrate the difference between mocked and real testing."""
-        print("🎭 COMPARISON: Mocked vs Real Testing")
-        print("=" * 50)
         
         # This would be a mocked test (what we had before):
-        print("📋 MOCKED TEST (Unit Test):")
-        print("  - Uses unittest.mock.patch to simulate MCP tools")
-        print("  - Returns predetermined mock objects")
-        print("  - Fast execution (~10ms)")
-        print("  - No external dependencies")
-        print("  - Tests code paths but not real integration")
         
-        print("\n🌐 REAL TEST (Integration Test):")
-        print("  - Connects to actual MCP servers")
-        print("  - Tests real network connections and failures")
-        print("  - Slower execution (~100-1000ms)")
-        print("  - Requires actual services running")
-        print("  - Validates end-to-end system functionality")
         
         # Demonstrate with actual test
         import time
-        start_time = time.time()
+        time.time()
         tools, loaded_names = ToolRegistry.load_tools([{"name": "ShellTools"}])
-        end_time = time.time()
+        time.time()
 
-        print(f"\n⏱️ Real test execution time: {(end_time - start_time) * 1000:.1f}ms")
-        print(f"✅ Real tools loaded: {loaded_names}")
-        print(f"🔗 This validates actual system integration, not just code paths")
 
 
 class TestToolsRegistryEvolutionStrategy:
@@ -286,33 +245,10 @@ class TestToolsRegistryEvolutionStrategy:
     
     def test_testing_evolution_documentation(self):
         """Document how our testing has evolved across the three PRs."""
-        print("📈 TESTING STRATEGY EVOLUTION")
-        print("=" * 40)
         
-        print("🔴 PR #9 - Tools Registry Tests (BEFORE):")
-        print("  - Pure unit tests with extensive mocking")
-        print("  - Tests error handling and edge cases") 
-        print("  - Fast, isolated, no external dependencies")
-        print("  - Coverage: Code paths and error scenarios")
         
-        print("\n🟡 PR #9 - Tools Registry Tests (AFTER - This Enhancement):")
-        print("  - ADDED: Real integration tests with live MCP connections")
-        print("  - ADDED: Actual database and service connection tests")
-        print("  - ADDED: Concurrent loading and caching validation")
-        print("  - KEPT: All original unit tests for regression coverage")
-        print("  - Coverage: Code paths + Real system integration")
         
-        print("\n🟢 PR #10 - Agents Registry Tests (PLANNED Enhancement):")
-        print("  - Will ADD: Real agent instantiation with live models")
-        print("  - Will ADD: Cross-model provider testing (Gemini, OpenAI)")
-        print("  - Will ADD: Agent-to-tool integration validation")
-        print("  - Will KEEP: Existing unit tests for speed")
         
-        print("\n🚀 OVERALL STRATEGY:")
-        print("  - Unit Tests (70%): Fast feedback, isolated components")
-        print("  - Integration Tests (20%): Real system validation") 
-        print("  - E2E Tests (10%): User journey validation")
-        print("  - This creates a robust testing pyramid")
         
         # This test always passes - it's documentation
         assert True
@@ -346,17 +282,9 @@ class TestToolsRegistryEvolutionStrategy:
             }
         }
         
-        print("🎯 TESTING MATURITY PROGRESSION")
-        print("=" * 45)
         
-        for stage, details in evolution_stages.items():
-            print(f"\n{stage}:")
-            print(f"  📝 {details['description']}")
-            print(f"  ✅ Pros: {', '.join(details['pros'])}")
-            print(f"  ⚠️  Cons: {', '.join(details['cons'])}")
-            print(f"  💡 Example: {details['example']}")
+        for _stage, _details in evolution_stages.items():
+            pass
         
-        print(f"\n🎯 CURRENT POSITION: We're implementing Stage 4")
-        print(f"🎯 NEXT STEPS: Apply same strategy to agents registry in PR #10")
         
         assert True  # Documentation test always passes

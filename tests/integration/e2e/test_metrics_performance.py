@@ -55,7 +55,7 @@ class TestMetricsServicePerformance:
                 except (TimeoutError, asyncio.CancelledError):
                     pass  # Expected for cancelled tasks
             service._initialized = False
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass  # Ignore cleanup errors in tests
 
     @pytest.mark.asyncio

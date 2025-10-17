@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Tests for DockerManager."""
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from cli.docker_manager import DockerManager
 

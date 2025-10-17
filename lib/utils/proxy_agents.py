@@ -413,8 +413,8 @@ class AgnoAgentProxy:
         across Agno updates.
         """
         from lib.config.models import resolve_model
-        from lib.utils.dynamic_model_resolver import filter_model_parameters
         from lib.config.provider_registry import get_provider_registry
+        from lib.utils.dynamic_model_resolver import filter_model_parameters
         
         # Debug: Log the incoming model config to trace the issue
         # Escape curly braces to prevent Loguru formatting from interpreting dict braces
@@ -437,7 +437,7 @@ class AgnoAgentProxy:
             
             if detected_provider:
                 # Get the specific model class for this provider/model
-                provider_classes = registry.get_provider_classes(detected_provider)
+                registry.get_provider_classes(detected_provider)
                 model_class = registry.resolve_model_class(detected_provider, model_id or "default")
                 
                 # Use our dynamic model resolver to filter parameters

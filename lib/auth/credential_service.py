@@ -18,7 +18,6 @@ DESIGN PRINCIPLES:
 
 import secrets
 from pathlib import Path
-from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 from lib.auth.env_file_manager import EnvFileManager
@@ -74,7 +73,7 @@ class CredentialService:
         self.env_file = self.env_manager.primary_env_path
         self.master_env_file = self.env_manager.master_env_path
         self.postgres_user_var = "POSTGRES_USER"
-        self.postgres_password_var = "POSTGRES_PASSWORD"
+        self.postgres_password_var = "POSTGRES_PASSWORD"  # noqa: S105
         self.postgres_db_var = "POSTGRES_DB"
         self.database_url_var = "HIVE_DATABASE_URL"
         self.api_key_var = "HIVE_API_KEY"
@@ -154,7 +153,7 @@ class CredentialService:
 
         return api_key
     
-    def generate_credentials(self) -> Dict[str, str]:
+    def generate_credentials(self) -> dict[str, str]:
         """
         Generate complete credential set for single-instance Automagik Hive.
         
@@ -238,7 +237,7 @@ class CredentialService:
             create_if_missing: Create .env file if it doesn't exist
         """
         logger.info("Saving credentials to .env file")
-        updates: Dict[str, str] = {}
+        updates: dict[str, str] = {}
 
         if postgres_creds and postgres_creds.get("url"):
             updates[self.database_url_var] = postgres_creds["url"]
@@ -487,7 +486,7 @@ class CredentialService:
 
         return complete_creds
 
-    def extract_base_ports_from_env(self) -> Dict[str, int]:
+    def extract_base_ports_from_env(self) -> dict[str, int]:
         """
         Extract base ports from .env file or return defaults.
         
@@ -503,7 +502,7 @@ class CredentialService:
         logger.info("Base ports extracted", ports=ports)
         return ports
     
-    def calculate_ports(self, mode: str, base_ports: Dict[str, int]) -> Dict[str, int]:
+    def calculate_ports(self, mode: str, base_ports: dict[str, int]) -> dict[str, int]:
         """Compatibility method - returns base ports for workspace."""
         if mode != "workspace":
             raise ValueError(f"Only 'workspace' mode is supported, got: {mode}")
@@ -511,9 +510,9 @@ class CredentialService:
     
     def derive_mode_credentials(
         self, 
-        master_credentials: Dict[str, str], 
+        master_credentials: dict[str, str], 
         mode: str
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Derive mode-specific credentials from master credentials.
         
@@ -601,14 +600,14 @@ class CredentialService:
             # integrate with the database initialization system
             logger.info(f"Schema creation for {mode} mode - integrate with Agno framework")
     
-    def detect_existing_containers(self) -> Dict[str, bool]:
+    def detect_existing_containers(self) -> dict[str, bool]:
         """Detect existing Docker containers for shared approach."""
         import subprocess
         
         containers_status = {}
         
-        for mode, container_info in self.CONTAINERS.items():
-            for service, container_name in container_info.items():
+        for _mode, container_info in self.CONTAINERS.items():
+            for _service, container_name in container_info.items():
                 try:
                     # Check if container exists and is running
                     result = subprocess.run(
@@ -646,7 +645,7 @@ class CredentialService:
         else:
             logger.info("No migration needed - using shared database approach")
 
-    def generate_master_credentials(self) -> Dict[str, str]:
+    def generate_master_credentials(self) -> dict[str, str]:
         """
         Generate the SINGLE SET of master credentials used across all modes.
         
@@ -679,10 +678,10 @@ class CredentialService:
     
     def install_all_modes(
         self, 
-        modes: List[str] = None,
+        modes: list[str] = None,
         force_regenerate: bool = False,
         sync_mcp: bool = False
-    ) -> Dict[str, Dict[str, str]]:
+    ) -> dict[str, dict[str, str]]:
         """
         SIMPLIFIED INSTALLATION FUNCTION: Install credentials for single instance.
         
@@ -747,7 +746,7 @@ class CredentialService:
         logger.info(f"Credential installation complete for modes: {modes}")
         return all_mode_credentials
         
-    def _extract_existing_master_credentials(self) -> Optional[Dict[str, str]]:
+    def _extract_existing_master_credentials(self) -> dict[str, str] | None:
         """Extract existing master credentials from main .env file."""
         if not self.master_env_file.exists():
             return None
@@ -811,8 +810,8 @@ class CredentialService:
         return None
         
     def _normalize_master_credentials_payload(
-        self, master_credentials: Dict[str, str] | None
-    ) -> Dict[str, str]:
+        self, master_credentials: dict[str, str] | None
+    ) -> dict[str, str]:
         """Normalize incoming payloads to the master credential schema."""
         if not master_credentials:
             raise ValueError("Master credentials payload cannot be empty")
@@ -847,7 +846,7 @@ class CredentialService:
 
         return normalized
 
-    def _save_master_credentials(self, master_credentials: Dict[str, str]) -> None:
+    def _save_master_credentials(self, master_credentials: dict[str, str]) -> None:
         """Save master credentials to main .env file."""
         logger.info("Saving master credentials to main .env file")
         master_credentials = self._normalize_master_credentials_payload(master_credentials)
@@ -923,7 +922,7 @@ HIVE_DEV_MODE=true
 HIVE_DEFAULT_MODEL=gpt-4.1-mini
 """
         
-    def _create_mode_env_file(self, mode: str, credentials: Dict[str, str]) -> None:
+    def _create_mode_env_file(self, mode: str, credentials: dict[str, str]) -> None:
         """Create environment file for a specific mode."""
         if mode == "workspace":
             # Workspace uses main .env file (already created by _save_master_credentials)

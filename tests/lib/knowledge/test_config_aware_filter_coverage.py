@@ -5,8 +5,9 @@ This test suite covers business unit detection, configuration loading,
 document filtering, and performance settings with comprehensive edge cases.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter, test_config_filter
 
@@ -670,7 +671,7 @@ class TestEdgeCasesAndErrorHandling:
                     # If this doesn't raise an exception, then exception handling was improved
                     # We can't expect specific behavior here since implementation may change
                     assert isinstance(filtered, list)  # Should return a list
-                except Exception:
+                except Exception:  # noqa: S110 - Silent exception handling is intentional
                     # Current implementation allows exceptions to bubble up
                     # This is acceptable behavior to test
                     pass
@@ -678,7 +679,6 @@ class TestEdgeCasesAndErrorHandling:
     def test_concurrent_access_safety(self):
         """Test that the filter handles concurrent access safely."""
         import threading
-        import time
         
         mock_config = {
             "business_units": {

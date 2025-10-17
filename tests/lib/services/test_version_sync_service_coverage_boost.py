@@ -6,14 +6,11 @@ error conditions, and edge cases.
 """
 
 import asyncio
-import glob
 import os
-import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, mock_open
-from unittest.mock import call as mock_call
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 import yaml
@@ -372,7 +369,7 @@ class TestYAMLProcessingMethods:
             mock_dir.iterdir.return_value = [mock_file]
             mock_iterdir.return_value = [mock_dir]
             
-            with patch('builtins.open', side_effect=IOError("Permission denied")):
+            with patch('builtins.open', side_effect=OSError("Permission denied")):
                 result = await service.get_yaml_component_versions("agent")
         
         assert result == []
@@ -931,7 +928,7 @@ class TestYAMLUpdateMethods:
         with patch('shutil.copy2') as mock_copy, \
              patch('builtins.open', mock_open()) as mock_file, \
              patch('yaml.dump') as mock_yaml_dump, \
-             patch.object(service, 'validate_yaml_update') as mock_validate:
+             patch.object(service, 'validate_yaml_update'):
             
             await service.update_yaml_from_agno("test.yaml", "test-agent", "agent")
         
@@ -1048,7 +1045,7 @@ class TestYAMLUpdateMethods:
         """Test YAML validation with read error."""
         service = AgnoVersionSyncService(db_url="test_url")
         
-        with patch('builtins.open', side_effect=IOError("Read error")):
+        with patch('builtins.open', side_effect=OSError("Read error")):
             with pytest.raises(ValueError, match="YAML validation failed"):
                 service.validate_yaml_update("test.yaml", {'test': 'config'})
 
@@ -1385,7 +1382,7 @@ class TestEdgeCasesAndErrorConditions:
 
     def test_component_id_extraction_patterns(self):
         """Test various component ID extraction patterns."""
-        service = AgnoVersionSyncService(db_url="test_url")
+        AgnoVersionSyncService(db_url="test_url")
         
         # Test patterns from sync_single_component
         test_configs = [

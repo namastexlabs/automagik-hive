@@ -7,11 +7,10 @@ error handling, and pattern matching for the provider registry system.
 Target: 50%+ coverage for lib/config/provider_registry.py (143 lines, 19% current)
 """
 
-import importlib
 import os
 import threading
 import time
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -384,7 +383,7 @@ class TestConcurrencyAndThreadSafety:
         def read_cache_worker():
             try:
                 registry.get_available_providers()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass  # Ignore exceptions from race conditions
         
         # Start multiple clear and read operations
@@ -444,13 +443,12 @@ class TestEdgeCasesAndErrorHandling:
         registry = ProviderRegistry()
         
         # Patch the method to simulate the exception handling
-        original_method = registry.get_available_providers
         
         def mock_get_available_providers():
             # Simulate the exception path in the actual method
             try:
                 raise Exception("Unexpected error")
-            except (ImportError, Exception) as e:
+            except (ImportError, Exception):
                 # This is the fallback logic from the actual implementation
                 import os
                 default_provider = os.getenv("HIVE_DEFAULT_PROVIDER", "openai")

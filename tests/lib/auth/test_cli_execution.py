@@ -15,29 +15,28 @@ Test Categories:
 OBJECTIVE: Execute ALL CLI authentication command paths to achieve maximum source code coverage.
 """
 
-import pytest
-import os
-import sys
-import subprocess
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
-from contextlib import contextmanager
-import importlib
 import io
+import os
+import subprocess
+import sys
+from contextlib import contextmanager
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the module under test
 try:
     import lib.auth.cli as auth_cli
     from lib.auth.cli import (
-        show_current_key,
-        regenerate_key, 
-        show_auth_status,
-        generate_postgres_credentials,
-        generate_complete_workspace_credentials,
         generate_agent_credentials,
+        generate_complete_workspace_credentials,
+        generate_postgres_credentials,
+        regenerate_key,
+        show_auth_status,
         show_credential_status,
-        sync_mcp_credentials
+        show_current_key,
+        sync_mcp_credentials,
     )
 except ImportError:
     pytest.skip("Module lib.auth.cli not available", allow_module_level=True)
@@ -341,7 +340,7 @@ class TestCliBackwardCompatibility:
         """Test backward compatibility for direct action arguments."""
         with mock_sys_argv(['cli.py', 'show']):
             import argparse
-            parser = argparse.ArgumentParser()
+            argparse.ArgumentParser()
             
             # Simulate backward compatibility handling
             args = argparse.Namespace()
@@ -395,8 +394,8 @@ class TestCliErrorHandling:
             subparsers = parser.add_subparsers(dest="command")
             
             # Add parsers but no arguments
-            auth_parser = subparsers.add_parser("auth")
-            cred_parser = subparsers.add_parser("credentials")
+            subparsers.add_parser("auth")
+            subparsers.add_parser("credentials")
             
             args = parser.parse_args([])
             
@@ -759,7 +758,7 @@ class TestCliSourceCodeExecution:
         """Test execution of function call paths."""
         with patch('lib.auth.cli.AuthInitService') as mock_auth_service_class:
             with patch('lib.auth.cli.CredentialService') as mock_cred_service_class:
-                with patch('lib.auth.cli.logger') as mock_logger:
+                with patch('lib.auth.cli.logger'):
                     # Setup mocks
                     mock_auth_service = Mock()
                     mock_auth_service.get_current_key.return_value = "path_test_key"
@@ -822,7 +821,7 @@ class TestCliSourceCodeExecution:
     def test_path_object_handling_execution(self):
         """Test execution of Path object handling code."""
         with patch('lib.auth.cli.CredentialService') as mock_cred_service_class:
-            with patch('lib.auth.cli.logger') as mock_logger:
+            with patch('lib.auth.cli.logger'):
                 # Setup mock
                 mock_cred_service = Mock()
                 mock_cred_service.generate_postgres_credentials.return_value = {"path": "object_test"}

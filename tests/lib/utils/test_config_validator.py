@@ -3,8 +3,6 @@
 Tests the simplified config validator with inheritance system removed.
 """
 
-import pytest
-from unittest.mock import Mock
 
 from lib.utils.config_validator import AGNOConfigValidator, ValidationResult
 

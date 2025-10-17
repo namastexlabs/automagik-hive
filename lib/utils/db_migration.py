@@ -57,7 +57,7 @@ def _find_alembic_config() -> Path:
     # Strategy 4: Search common locations where workspace might be
     common_locations = [
         Path.home() / "workspace",
-        Path("/tmp"),
+        Path("/tmp"),  # noqa: S108
         Path("/workspace"),  # Docker context
     ]
 

@@ -5,16 +5,17 @@ Tests the real MCP tool integration that connects to actual MCP servers
 using the proper connection manager.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
+import pytest
+
+from lib.mcp.exceptions import MCPConnectionError
 from lib.tools.mcp_integration import (
     RealMCPTool,
-    validate_mcp_name,
     create_mcp_tool,
     get_available_mcp_servers,
+    validate_mcp_name,
 )
-from lib.mcp.exceptions import MCPConnectionError
 
 
 class TestRealMCPTool:

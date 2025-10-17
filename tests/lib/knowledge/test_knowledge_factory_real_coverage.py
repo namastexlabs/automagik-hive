@@ -6,18 +6,17 @@ with minimal mocking to achieve real coverage metrics.
 """
 
 import os
-import tempfile
+from unittest.mock import Mock, mock_open, patch
+
 import pytest
-from pathlib import Path
-from unittest.mock import patch, Mock, mock_open
 
 # Direct imports to trigger coverage
 import lib.knowledge.factories.knowledge_factory as factory_module
 from lib.knowledge.factories.knowledge_factory import (
-    _load_knowledge_config,
     _check_knowledge_base_exists,
+    _load_knowledge_config,
     create_knowledge_base,
-    get_knowledge_base
+    get_knowledge_base,
 )
 
 
@@ -219,7 +218,7 @@ knowledge:
                             mock_loader.return_value = mock_loader_instance
                             
                             # Test with custom CSV path
-                            result = create_knowledge_base(csv_path=custom_path)
+                            create_knowledge_base(csv_path=custom_path)
                             
                             # Verify the custom path was used
                             mock_kb_class.assert_called_once()
@@ -256,7 +255,7 @@ knowledge:
                                 mock_loader.return_value = mock_loader_instance
                                 
                                 # Test relative path handling
-                                result = create_knowledge_base(csv_path=relative_path)
+                                create_knowledge_base(csv_path=relative_path)
                                 
                                 # Verify the path was handled correctly
                                 mock_kb_class.assert_called_once()
@@ -279,7 +278,7 @@ knowledge:
             ({'strategy': 'unknown', 'status': 'completed'}, 'success with unknown strategy')
         ]
         
-        for smart_result, description in fallback_scenarios:
+        for smart_result, _description in fallback_scenarios:
             factory_module._shared_kb = None  # Reset for each test
             
             with patch.dict(os.environ, {'HIVE_DATABASE_URL': 'postgresql://test:pass@localhost:5432/test'}):

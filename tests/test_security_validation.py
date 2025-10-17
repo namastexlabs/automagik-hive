@@ -4,9 +4,10 @@ This test validates that all PostgreSQL connections in the test suite
 are properly mocked and no real database connections can be established.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # SAFETY: Mock psycopg2 at import level - prevent any real imports
 mock_psycopg2 = MagicMock()
@@ -141,7 +142,7 @@ class TestSecurityValidation:
             # Force a reload to test if our mock persists
             reloaded_psycopg2 = reload(psycopg2)
             assert isinstance(reloaded_psycopg2, MagicMock), f"Reloaded module should still be mocked, got {type(reloaded_psycopg2)}"
-        except Exception as e:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # If reload fails, that's actually fine - it means our mock is solid
             pass
     

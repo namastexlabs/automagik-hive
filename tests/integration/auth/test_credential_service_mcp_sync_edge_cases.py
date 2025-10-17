@@ -5,9 +5,8 @@ Additional edge case tests for CredentialService MCP sync behavior.
 RED PHASE TESTS: These tests focus on edge cases, error conditions, and integration scenarios.
 """
 
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call, Mock
+from unittest.mock import patch
+
 import pytest
 
 from lib.auth.credential_service import CredentialService
@@ -136,7 +135,6 @@ class TestCredentialServiceMcpSyncIntegration:
         Expected behavior: Concurrent calls should not interfere with each other.
         """
         import threading
-        import time
         
         # Create service with temp directory
         service = CredentialService(project_root=tmp_path)

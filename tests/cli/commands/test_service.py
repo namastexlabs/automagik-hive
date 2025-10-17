@@ -405,7 +405,7 @@ class TestServiceManagerEnvironmentSetup:
             with patch('lib.auth.credential_service.CredentialService') as mock_credential_service_class:
                 credential_instance = mock_credential_service_class.return_value
                 credential_instance.install_all_modes.return_value = {}
-                with patch.object(manager, 'main_service') as mock_main:
+                with patch.object(manager, 'main_service'):
                     with patch.object(manager, '_setup_local_hybrid_deployment', return_value=True) as mock_local:
                         result = manager.install_full_environment(str(ai_dir))
 

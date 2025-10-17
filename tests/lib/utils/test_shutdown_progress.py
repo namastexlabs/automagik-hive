@@ -3,7 +3,6 @@ Tests for shutdown progress display utility
 """
 
 import io
-import sys
 import time
 from unittest.mock import patch
 

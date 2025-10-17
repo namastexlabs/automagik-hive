@@ -3,13 +3,13 @@
 Tests the simplified version factory with inheritance system removed.
 """
 
-import pytest
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
-from lib.utils.version_factory import VersionFactory
+import pytest
+
 from lib.utils.user_context_helper import create_user_context_state
+from lib.utils.version_factory import VersionFactory
 
 
 class TestVersionFactory:

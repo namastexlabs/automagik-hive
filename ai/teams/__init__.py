@@ -4,10 +4,10 @@
 # No manual imports needed - just use the registry functions
 
 from .registry import (
-    get_team_registry,
     get_team,
-    list_available_teams,
+    get_team_registry,
     is_team_registered,
+    list_available_teams,
 )
 
 __all__ = [

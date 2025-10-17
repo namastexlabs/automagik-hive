@@ -9,7 +9,8 @@ This ensures compatibility with any Agno version automatically.
 """
 
 import inspect
-from typing import Any, Dict, Set, Type
+from typing import Any
+
 from lib.logging import logger
 
 
@@ -23,9 +24,9 @@ class DynamicModelResolver:
     """
     
     def __init__(self):
-        self._param_cache: Dict[str, Set[str]] = {}
+        self._param_cache: dict[str, set[str]] = {}
         
-    def get_valid_parameters(self, model_class: Type) -> Set[str]:
+    def get_valid_parameters(self, model_class: type) -> set[str]:
         """
         Get the set of valid parameters for a model class.
         
@@ -70,9 +71,9 @@ class DynamicModelResolver:
     
     def filter_parameters_for_model(
         self, 
-        model_class: Type,
-        parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        model_class: type,
+        parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Filter parameters to only include those accepted by the model class.
         
@@ -104,9 +105,9 @@ class DynamicModelResolver:
     
     def _filter_by_trial(
         self,
-        model_class: Type,
-        parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        model_class: type,
+        parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Fallback approach: try instantiation and progressively remove problematic parameters.
         
@@ -123,7 +124,7 @@ class DynamicModelResolver:
             try:
                 # Try to instantiate with current parameters
                 # Note: We only test the constructor, we don't need a working instance
-                test_instance = model_class(**filtered_params)
+                model_class(**filtered_params)
                 
                 # Success! Return the working parameter set
                 logger.debug(
@@ -157,7 +158,7 @@ class DynamicModelResolver:
                 elif "takes" in error_msg and "positional argument" in error_msg:
                     # Handle cases where too many positional args provided
                     # This is less common but can happen with certain parameter combinations
-                    logger.debug(f"Positional argument error, trying to remove least essential parameters")
+                    logger.debug("Positional argument error, trying to remove least essential parameters")
                     # Remove non-essential parameters in order of importance
                     for param_to_try in ['timeout', 'retries', 'max_tokens']:
                         if param_to_try in filtered_params:
@@ -205,7 +206,7 @@ class DynamicModelResolver:
 _resolver = DynamicModelResolver()
 
 
-def filter_model_parameters(model_class: Type, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def filter_model_parameters(model_class: type, parameters: dict[str, Any]) -> dict[str, Any]:
     """
     Filter parameters to only include those accepted by the model class.
     

@@ -37,7 +37,7 @@ class ProviderRegistry:
         self._pattern_cache: dict[str, str] | None = None
         self._class_cache: dict[str, list[str]] = {}
 
-    @cache
+    @cache  # noqa: B019 - Intentional cache for singleton
     def get_available_providers(self) -> set[str]:
         """
         Dynamically discover all available Agno providers by scanning the module namespace.
@@ -93,7 +93,7 @@ class ProviderRegistry:
         self._providers_cache = providers
         return providers
 
-    @lru_cache(maxsize=128)
+    @lru_cache(maxsize=128)  # noqa: B019
     def get_provider_patterns(self) -> dict[str, str]:
         """
         Generate dynamic provider detection patterns based on discovered providers.
@@ -192,7 +192,7 @@ class ProviderRegistry:
 
         return patterns
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def detect_provider(self, model_id: str) -> str | None:
         """
         Detect provider from model ID using dynamically generated patterns.
@@ -234,7 +234,7 @@ class ProviderRegistry:
         )
         return None
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def get_provider_classes(self, provider: str) -> list[str]:
         """
         Dynamically discover model classes for a given provider.
@@ -304,7 +304,7 @@ class ProviderRegistry:
             provider, [provider.title(), f"{provider.title()}Chat"]
         )
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def resolve_model_class(self, provider: str, model_id: str) -> type | None:
         """
         Resolve the appropriate model class for a provider and model ID.

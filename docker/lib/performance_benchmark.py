@@ -360,7 +360,7 @@ class DockerBenchmark:
                 pass
             else:
                 pass
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
 
         # Test 2: Invalid operation

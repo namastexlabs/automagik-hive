@@ -3,7 +3,7 @@
 import csv
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agno.vectordb.base import VectorDb
@@ -121,7 +121,7 @@ def test_missing_csv_file(mock_vector_db):
 def test_reload_from_csv(mock_load, temp_csv_file, mock_vector_db):
     """Test CSV reload functionality"""
     kb = RowBasedCSVKnowledgeBase(csv_path=temp_csv_file, vector_db=mock_vector_db)
-    original_count = len(kb.documents)
+    len(kb.documents)
     
     # Test reload
     kb.reload_from_csv()
@@ -337,7 +337,7 @@ def test_malformed_csv_handling(mock_vector_db):
         kb = RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
         # Should handle gracefully and create what documents it can
         assert len(kb.documents) >= 0  # At least shouldn't crash
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         # It's acceptable if some malformed CSV causes exceptions
         pass
     finally:

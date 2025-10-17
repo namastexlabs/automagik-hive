@@ -12,17 +12,18 @@ Test Categories:
 OBJECTIVE: Execute ALL remaining CLI authentication code paths to achieve 100% coverage.
 """
 
-import pytest
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the module under test
 try:
     import lib.auth.cli as auth_cli
     from lib.auth.cli import (
-        show_current_key,
         show_auth_status,
+        show_current_key,
     )
 except ImportError:
     pytest.skip("Module lib.auth.cli not available", allow_module_level=True)

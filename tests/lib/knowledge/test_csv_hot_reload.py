@@ -610,7 +610,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager.get_status.return_value = {"status": "stopped"}
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with(str(self.csv_file))
         mock_manager.get_status.assert_called_once()
@@ -630,7 +630,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager = Mock()
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with(str(self.csv_file))
         mock_manager.force_reload.assert_called_once()
@@ -650,7 +650,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager = Mock()
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with(str(self.csv_file))
         mock_manager.start_watching.assert_called_once()
@@ -671,7 +671,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager.get_status.return_value = {"status": "stopped"}
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with("knowledge/knowledge_rag.csv")
 

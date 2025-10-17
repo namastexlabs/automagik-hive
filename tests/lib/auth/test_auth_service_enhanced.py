@@ -13,8 +13,9 @@ Test Categories:
 """
 
 import os
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 from lib.auth.service import AuthService
 

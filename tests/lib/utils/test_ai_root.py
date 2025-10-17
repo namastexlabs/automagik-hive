@@ -14,22 +14,20 @@ This test suite drives the implementation of:
 All tests are designed to FAIL initially to guide TDD implementation.
 """
 
-import os
-import tempfile
 import shutil
+import tempfile
 import threading
 import time
 from pathlib import Path
 from unittest.mock import Mock, patch
-from typing import Optional
 
 import pytest
 
 from lib.utils.ai_root import (
     AIRootError,
+    get_ai_subdirectory,
     resolve_ai_root,
     validate_ai_structure,
-    get_ai_subdirectory,
 )
 
 
@@ -690,7 +688,7 @@ class TestAIRootEdgeCases:
             time.sleep(0.1)
             try:
                 (temp_ai_structure / "new_dir").mkdir()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass  # Ignore errors during concurrent modification
 
         # Start modification in background

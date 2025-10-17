@@ -4,9 +4,9 @@ Testing proxy system functionality, singleton patterns, and lazy loading.
 Target: 50%+ coverage with failing tests that guide TDD implementation.
 """
 
+from unittest.mock import AsyncMock, Mock, call, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock, call, AsyncMock
-from typing import Any
 
 # Import the module under test
 from lib.utils import agno_proxy
@@ -444,7 +444,7 @@ class TestErrorHandlingAndEdgeCases:
             mock_team = Mock()
             mock_team_class.return_value = mock_team
             
-            team_proxy = agno_proxy.get_agno_team_proxy()
+            agno_proxy.get_agno_team_proxy()
             assert agno_proxy._agno_team_proxy is mock_team
         
         # Try to create failing proxy

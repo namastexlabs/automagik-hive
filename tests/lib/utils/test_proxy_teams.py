@@ -1200,7 +1200,7 @@ class TestAgnoTeamProxyIntegration:
     async def test_full_team_creation_workflow(self, proxy, comprehensive_config):
         """Test complete team creation workflow with all features."""
         mock_agents = [MagicMock(), MagicMock(), MagicMock()]
-        mock_model = MagicMock()
+        MagicMock()
         mock_db = MagicMock()
         mock_memory = MagicMock()
         mock_metrics_service = MagicMock()
@@ -1215,7 +1215,7 @@ class TestAgnoTeamProxyIntegration:
             patch(
                 "lib.utils.agno_storage_utils.create_dynamic_storage"
             ) as mock_create_storage,
-            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
+            patch("agno.db.postgres.PostgresDb"),
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch("lib.utils.proxy_teams.logger") as mock_logger,
@@ -1292,7 +1292,7 @@ class TestAgnoTeamProxyIntegration:
             patch(
                 "lib.utils.agno_storage_utils.create_dynamic_storage"
             ) as mock_create_storage,
-            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
+            patch("agno.db.postgres.PostgresDb"),
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
         ):

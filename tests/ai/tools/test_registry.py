@@ -1,17 +1,10 @@
 """Tests for ai.tools.registry module."""
 
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from pathlib import Path
-import yaml
-import importlib.util
-from ai.tools.registry import (
-    ToolRegistry,
-    get_tool,
-    get_all_tools,
-    list_available_tools,
-    _discover_tools
-)
+
+from ai.tools.registry import ToolRegistry, _discover_tools, get_all_tools, get_tool, list_available_tools
 
 
 class TestToolsRegistry:

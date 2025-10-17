@@ -12,21 +12,19 @@ Tests focus on:
 """
 
 import os
-import pytest
 import threading
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from sqlalchemy import create_engine
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 # Import the functions we want to test
 from lib.knowledge.factories.knowledge_factory import (
-    create_knowledge_base,
-    get_knowledge_base,
     _check_knowledge_base_exists,
     _load_knowledge_config,
-    _shared_kb,
-    _kb_lock
+    create_knowledge_base,
+    get_knowledge_base,
 )
 
 
@@ -82,7 +80,7 @@ class TestKnowledgeFactoryComprehensive:
         """Test database check when table exists and has data"""
         mock_engine = Mock()
         mock_conn = Mock()
-        mock_result = Mock()
+        Mock()
         
         # Mock table exists query
         table_exists_result = Mock()

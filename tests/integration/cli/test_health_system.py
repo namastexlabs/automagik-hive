@@ -4,10 +4,7 @@ Tests the current health system based on AgentEnvironment and HealthChecker
 from the cli.commands.health and cli.core.agent_environment modules.
 """
 
-import json
-import time
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 

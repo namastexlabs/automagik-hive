@@ -6,11 +6,8 @@ functionality with emphasis on security validation, file operations, and
 edge case handling.
 """
 
-import os
-import secrets
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
-from urllib.parse import urlparse
+from unittest.mock import patch
 
 import pytest
 
@@ -61,7 +58,7 @@ class TestCredentialServiceInitialization:
         service = CredentialService()
         
         assert service.postgres_user_var == "POSTGRES_USER"
-        assert service.postgres_password_var == "POSTGRES_PASSWORD"
+        assert service.postgres_password_var == "POSTGRES_PASSWORD"  # noqa: S105 - Test fixture password
         assert service.postgres_db_var == "POSTGRES_DB"
         assert service.database_url_var == "HIVE_DATABASE_URL"
         assert service.api_key_var == "HIVE_API_KEY"
@@ -158,7 +155,7 @@ class TestCredentialGeneration:
         normalized = service._normalize_master_credentials_payload(legacy_payload)
 
         assert normalized["postgres_user"] == "legacy_user"
-        assert normalized["postgres_password"] == "legacy_pass"
+        assert normalized["postgres_password"] == "legacy_pass"  # noqa: S105 - Test fixture password
         assert normalized["api_key_base"] == "workspace_normalizedtoken"
 
 
@@ -179,7 +176,7 @@ OTHER_VAR=value
         creds = service.extract_postgres_credentials_from_env()
         
         assert creds["user"] == "user123"
-        assert creds["password"] == "pass456"
+        assert creds["password"] == "pass456"  # noqa: S105 - Test fixture password
         assert creds["host"] == "localhost"
         assert creds["port"] == "5532"
         assert creds["database"] == "hive"
@@ -607,7 +604,7 @@ class TestMasterCredentialFlow:
         mode_creds = service.derive_mode_credentials(master_creds, "workspace")
         
         assert mode_creds["postgres_user"] == "testuser123"
-        assert mode_creds["postgres_password"] == "testpass456"
+        assert mode_creds["postgres_password"] == "testpass456"  # noqa: S105 - Test fixture password
         assert mode_creds["api_key"] == "hive_workspace_testapikey789"
         assert mode_creds["schema"] == "public"
         assert "options=-csearch_path" not in mode_creds["database_url"]  # No schema override
@@ -652,12 +649,12 @@ class TestErrorHandlingAndEdgeCases:
     
     def test_extract_credentials_file_read_error(self, tmp_path):
         """Test handling file read errors during credential extraction."""
-        env_file = tmp_path / ".env"
+        tmp_path / ".env"
         
         service = CredentialService(project_root=tmp_path)
         
         # Mock file operations to raise exception
-        with patch("builtins.open", side_effect=IOError("Permission denied")):
+        with patch("builtins.open", side_effect=OSError("Permission denied")):
             creds = service.extract_postgres_credentials_from_env()
             
             # Should return None values instead of crashing
@@ -670,7 +667,7 @@ class TestErrorHandlingAndEdgeCases:
         postgres_creds = {"url": "postgresql+psycopg://test:test@host:5432/db"}
         
         # Mock write to raise exception
-        with patch.object(Path, "write_text", side_effect=IOError("Disk full")):
+        with patch.object(Path, "write_text", side_effect=OSError("Disk full")):
             with pytest.raises(IOError):
                 service.save_credentials_to_env(postgres_creds)
                 
@@ -814,7 +811,7 @@ class TestSecurityValidation:
             keys.add(key)
             
             # Each key should be unique
-            assert len(keys) == len([k for k in keys])
+            assert len(keys) == len(list(keys))
             
         # Should have 10 unique keys
         assert len(keys) == 10

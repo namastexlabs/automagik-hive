@@ -12,8 +12,6 @@ Tests for development mode environment control, including:
 import os
 from unittest.mock import patch
 
-import pytest
-
 from lib.versioning.dev_mode import DevMode
 
 

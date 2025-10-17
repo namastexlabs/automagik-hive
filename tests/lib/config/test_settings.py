@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 from unittest.mock import patch
+
 import pytest
 
 # Import the module under test
@@ -16,7 +17,7 @@ try:
         validate_environment,
     )
 except ImportError:
-    pytest.skip(f"Module lib.config.settings not available", allow_module_level=True)
+    pytest.skip("Module lib.config.settings not available", allow_module_level=True)
 
 
 class TestSettings:

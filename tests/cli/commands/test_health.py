@@ -1,7 +1,7 @@
 """Tests for CLI health commands."""
 
-import pytest
 from pathlib import Path
+
 from cli.commands.health import HealthChecker
 
 

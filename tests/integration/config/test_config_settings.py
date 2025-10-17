@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -10,10 +10,10 @@ from pydantic import ValidationError
 from lib.config.settings import (
     PROJECT_ROOT,
     HiveSettings,
+    get_legacy_settings,
     get_project_root,
     get_setting,
     settings,
-    get_legacy_settings,
     validate_environment,
 )
 
@@ -138,7 +138,7 @@ class TestSettings:
         with patch.dict(os.environ, mock_invalid_env_vars):
             # Should raise ValidationError due to invalid values
             with pytest.raises(ValidationError) as exc_info:
-                test_settings = Settings()
+                Settings()
             
             # Verify specific validation errors
             error_messages = str(exc_info.value)
@@ -183,7 +183,7 @@ class TestSettings:
                 # LANGWATCH_ENDPOINT not set (will be None)
             },
         ):
-            test_settings = Settings()
+            Settings()
 
             # Only non-None values should be in config - needs langwatch_config property
             # This test is disabled until langwatch_config property is implemented in source
@@ -354,7 +354,7 @@ class TestSettingsEdgeCases:
 
     def test_settings_supported_languages(self, clean_singleton):
         """Test supported languages configuration."""
-        test_settings = Settings()
+        Settings()
 
         # These properties need to be implemented in source code
         # assert test_settings.supported_languages == ["pt-BR", "en-US"]

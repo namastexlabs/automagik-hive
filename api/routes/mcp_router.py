@@ -1,12 +1,15 @@
 """MCP Status API Routes with runtime diagnostics helpers."""
 
 import inspect
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException
 
 from lib.logging import logger
 from lib.mcp import MCPCatalog, get_mcp_tools
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 router = APIRouter(prefix="/mcp", tags=["MCP Status"])
 

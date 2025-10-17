@@ -4,10 +4,9 @@ Testing workflow proxy functionality, configuration processing, and parameter ma
 Target: 50%+ coverage with thorough edge case testing.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-import inspect
-from typing import Any, Callable
 
 from lib.utils.proxy_workflows import AgnoWorkflowProxy
 
@@ -17,7 +16,7 @@ class MockWorkflow:
 
     def __init__(
         self,
-        id: str | None = None,
+        id: str | None = None,  # noqa: A002
         name: str | None = None,
         description: str | None = None,
         db=None,
@@ -150,7 +149,7 @@ class TestDiscoverWorkflowParameters:
         """Test parameter discovery logs the discovered parameters."""
         with patch('lib.utils.proxy_workflows.Workflow', MockWorkflow):
             with patch('lib.utils.proxy_workflows.logger') as mock_logger:
-                proxy = AgnoWorkflowProxy()
+                AgnoWorkflowProxy()
                 
                 # Should log discovered parameters
                 mock_logger.debug.assert_called()

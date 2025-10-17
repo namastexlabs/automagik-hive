@@ -1,9 +1,9 @@
 """Tests for ai.teams.template-team.team module."""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 import importlib.util
 from pathlib import Path
+
+import pytest
 
 # Import from hyphenated directory using importlib
 # From tests/ai/teams/template-team/test_team.py, go up to project root then to ai/teams/template-team/team.py

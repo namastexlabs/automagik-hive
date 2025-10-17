@@ -14,20 +14,18 @@ Focuses on:
 """
 
 import asyncio
+from unittest.mock import AsyncMock, MagicMock, Mock, mock_open, patch
+
 import pytest
-import tempfile
 import yaml
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock, mock_open
-from typing import Any
 
 from ai.agents.registry import (
     _discover_agents,
     get_agent,
+    get_mcp_server_info,
     get_team_agents,
     list_mcp_servers,
-    get_mcp_server_info,
-    reload_mcp_catalog
+    reload_mcp_catalog,
 )
 
 
@@ -414,7 +412,7 @@ class TestEdgeCasesAndErrors:
             
             mock_path_class.return_value = mock_agents_dir
             
-            with patch('builtins.open', side_effect=IOError("Permission denied")), \
+            with patch('builtins.open', side_effect=OSError("Permission denied")), \
                  patch('ai.agents.registry.logger') as mock_logger:
                 
                 result = _discover_agents()

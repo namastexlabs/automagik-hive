@@ -9,8 +9,7 @@ import glob
 import os
 import shutil
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -50,7 +49,7 @@ class AgnoVersionSyncService:
                     dry_run_command="uv run python scripts/agno_db_migrate_v2.py --dry-run",
                     v2_sessions=settings.hive_agno_v2_sessions_table,
                 )
-        except Exception:  # pragma: no cover - settings loader should not break the service
+        except Exception:  # pragma: no cover - settings loader should not break the service  # noqa: S110
             pass
 
         # Component type mappings - now dynamic
@@ -70,7 +69,7 @@ class AgnoVersionSyncService:
         from lib.services.database_service import DatabaseService
         return DatabaseService(self.db_url)
 
-    async def get_yaml_component_versions(self, component_type: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def get_yaml_component_versions(self, component_type: str | None = None) -> list[dict[str, Any]]:
         """
         Get component versions from YAML files.
         
@@ -109,7 +108,7 @@ class AgnoVersionSyncService:
                             continue
                         
                         try:
-                            with open(config_file, 'r', encoding='utf-8') as f:
+                            with open(config_file, encoding='utf-8') as f:
                                 config = yaml.safe_load(f)
                             
                             if not config or not isinstance(config, dict):
@@ -141,7 +140,7 @@ class AgnoVersionSyncService:
                             # Only process the first valid config file per directory
                             break
                             
-                        except (yaml.YAMLError, IOError, OSError) as e:
+                        except (yaml.YAMLError, OSError) as e:
                             logger.warning(f"Error reading YAML file {config_file}: {e}")
                             continue
                         
@@ -151,7 +150,7 @@ class AgnoVersionSyncService:
         
         return versions
 
-    async def get_db_component_versions(self, component_type: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def get_db_component_versions(self, component_type: str | None = None) -> list[dict[str, Any]]:
         """
         Get component versions from database.
         
@@ -201,7 +200,7 @@ class AgnoVersionSyncService:
             logger.error(f"Error fetching component versions from database: {e}")
             return []
 
-    async def sync_component_to_db(self, component_data: Dict[str, Any]) -> None:
+    async def sync_component_to_db(self, component_data: dict[str, Any]) -> None:
         """
         Sync a single component to database.
         
@@ -265,7 +264,7 @@ class AgnoVersionSyncService:
             logger.error(f"Error syncing component to database: {e}")
             raise
 
-    async def sync_yaml_to_db(self, component_type: Optional[str] = None) -> Dict[str, Any]:
+    async def sync_yaml_to_db(self, component_type: str | None = None) -> dict[str, Any]:
         """
         Sync YAML components to database.
         
@@ -310,7 +309,7 @@ class AgnoVersionSyncService:
                 'error': str(e)
             }
 
-    async def get_sync_status(self, component_type: Optional[str] = None) -> Dict[str, Any]:
+    async def get_sync_status(self, component_type: str | None = None) -> dict[str, Any]:
         """
         Get synchronization status between YAML and database.
         
@@ -801,7 +800,7 @@ class AgnoVersionSyncService:
                 if existing_id == component_id:
                     return yaml_file
 
-            except Exception:
+            except Exception:  # noqa: S112 - Continue after exception is intentional
                 continue
 
         return None

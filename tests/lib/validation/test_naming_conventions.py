@@ -4,16 +4,17 @@ Tests for naming convention validation system.
 CRITICAL PREVENTION TESTING: Ensures zero tolerance enforcement for forbidden naming patterns.
 """
 
+
 import pytest
-from pathlib import Path
+
 from lib.validation.naming_conventions import (
     NamingConventionValidator,
     NamingViolation,
+    naming_validator,
     validate_before_creation,
+    validate_class_creation,
     validate_file_creation,
     validate_function_creation,
-    validate_class_creation,
-    naming_validator
 )
 
 
@@ -132,7 +133,7 @@ class TestNamingConventionValidator:
             ("util_improved.py", "util_operations.py")
         ]
         
-        for problematic_name, expected_pattern in test_cases:
+        for problematic_name, _expected_pattern in test_cases:
             alternative = self.validator.generate_purpose_based_alternative(problematic_name)
             assert "fixed" not in alternative.lower()
             assert "enhanced" not in alternative.lower()
@@ -291,4 +292,4 @@ class TestEdgeCases:
             # Note: Some of these may still fail based on current patterns - this tests the boundary
             # The test documents expected behavior for refinement
             if not is_valid:
-                print(f"Note: {name} failed validation - may need pattern refinement")
+                pass

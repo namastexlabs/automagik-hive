@@ -1,7 +1,6 @@
 # Generic Tool Registry for Multi-Tool Systems
 # Filesystem-driven tool loading via version factory pattern
 
-from pathlib import Path
 from typing import Any
 
 from lib.config.settings import get_settings

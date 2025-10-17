@@ -37,14 +37,20 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.config.server_config import get_server_config
-from lib.config.settings import settings
-from lib.exceptions import ComponentLoadingError
+from lib.config.server_config import (  # noqa: E402 - Path setup required before import
+    get_server_config,  # noqa: E402 - Logging must be initialized before importing application modules
+)
+from lib.config.settings import (  # noqa: E402 - Path setup required before import
+    settings,  # noqa: E402 - Logging must be initialized before importing application modules
+)
+from lib.exceptions import (  # noqa: E402 - Path setup required before import
+    ComponentLoadingError,  # noqa: E402 - Logging must be initialized before importing application modules
+)
 
 # Configure unified logging system AFTER environment variables are loaded
-from lib.logging import initialize_logging, logger
-from lib.utils.startup_display import create_startup_display
-from lib.utils.version_reader import get_api_version
+from lib.logging import initialize_logging, logger  # noqa: E402 - Startup orchestration after logging setup
+from lib.utils.startup_display import create_startup_display  # noqa: E402 - Startup orchestration after logging setup
+from lib.utils.version_reader import get_api_version  # noqa: E402 - Startup orchestration after logging setup
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
@@ -90,17 +96,17 @@ except Exception as e:
 # Import teams via dynamic registry (removed hardcoded ana import)
 
 # Import workflow registry for dynamic loading
-from ai.workflows.registry import get_workflow
+from ai.workflows.registry import get_workflow  # noqa: E402 - Conditional import based on runtime configuration
 
 # Import CSV hot reload manager
 # Import orchestrated startup infrastructure
-from lib.utils.startup_orchestration import (
+from lib.utils.startup_orchestration import (  # noqa: E402 - Conditional import based on runtime configuration
     get_startup_display_with_results,
     orchestrated_startup,
 )
 
 # Import team registry for dynamic loading
-from lib.utils.version_factory import create_team
+from lib.utils.version_factory import create_team  # noqa: E402 - Conditional import based on runtime configuration
 
 
 def create_lifespan(startup_display: Any = None) -> Callable:
@@ -599,12 +605,12 @@ async def _async_create_automagik_api():
     
     # Add AGUI support if enabled
     if settings().hive_enable_agui:
-        from agno.app.agui.app import AGUIApp
         from agno.agent.agent import Agent
-        from lib.config.models import resolve_model
-        
+        from agno.app.agui.app import AGUIApp
+
         # Use the same dynamic agent loading as playground
         from ai.agents.registry import AgentRegistry
+        from lib.config.models import resolve_model
         
         # Get agent ID from environment or default to first available
         agui_agent_id = os.getenv("HIVE_AGUI_AGENT", None)
@@ -710,7 +716,6 @@ async def _async_create_automagik_api():
 
         if is_development and not is_reloader_context:
             # Add development URLs
-            get_server_config().port
             from rich.console import Console
             from rich.table import Table
 
@@ -788,8 +793,8 @@ async def _async_create_automagik_api():
     return app
 
 
-# Lazy app creation to prevent import-time execution
-app = None
+# Global app instance for lazy loading
+_app_instance = None
 
 
 def create_automagik_api() -> FastAPI:
@@ -821,10 +826,6 @@ def create_automagik_api() -> FastAPI:
         # No event loop running, safe to use asyncio.run()
         logger.debug("No event loop detected, using direct async initialization")
         return asyncio.run(_async_create_automagik_api())
-
-
-# Global app instance for lazy loading
-_app_instance = None
 
 
 def get_app() -> FastAPI:

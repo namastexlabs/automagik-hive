@@ -4,9 +4,7 @@ This module provides thorough test coverage for the AgnoVersionService class,
 focusing on version management operations, model conversions, and YAML synchronization.
 """
 
-import json
 from datetime import datetime
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -14,7 +12,11 @@ from pydantic import BaseModel
 
 from lib.services.component_version_service import (
     ComponentVersion as DBComponentVersion,
+)
+from lib.services.component_version_service import (
     ComponentVersionService,
+)
+from lib.services.component_version_service import (
     VersionHistory as DBVersionHistory,
 )
 from lib.versioning.agno_version_service import (
@@ -828,7 +830,7 @@ class TestAgnoVersionService:
             is_active=True,
         )
         
-        with patch.object(service, "get_version", side_effect=[None, created_version]) as mock_get, \
+        with patch.object(service, "get_version", side_effect=[None, created_version]), \
              patch.object(service, "create_version") as mock_create, \
              patch.object(service, "set_active_version") as mock_activate:
             
@@ -1063,13 +1065,13 @@ class TestAgnoVersionServiceEdgeCases:
     def test_version_info_model_validation(self):
         """Test VersionInfo Pydantic model validation."""
         # Test with missing required fields (should raise ValidationError)
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(Exception):  # Pydantic ValidationError  # noqa: B017
             VersionInfo(component_id="test")  # Missing other required fields
 
     def test_version_history_model_validation(self):
         """Test VersionHistory Pydantic model validation."""
         # Test with missing required fields (should raise ValidationError)  
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(Exception):  # Pydantic ValidationError  # noqa: B017
             VersionHistory(component_id="test")  # Missing other required fields
 
     @pytest.mark.asyncio
@@ -1162,7 +1164,11 @@ class TestAgnoVersionServiceIntegration:
         """Test that service dependencies are properly imported."""
         from lib.services.component_version_service import (
             ComponentVersion as DBComponentVersion,
+        )
+        from lib.services.component_version_service import (
             ComponentVersionService,
+        )
+        from lib.services.component_version_service import (
             VersionHistory as DBVersionHistory,
         )
         

@@ -11,10 +11,9 @@ This test suite provides comprehensive coverage for:
 - Complex workflow creation scenarios
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-import inspect
-from typing import Any, Callable
 
 from lib.utils.proxy_workflows import AgnoWorkflowProxy
 
@@ -24,7 +23,7 @@ class MockWorkflow:
 
     def __init__(
         self,
-        id: str | None = None,
+        id: str | None = None,  # noqa: A002
         name: str | None = None,
         description: str | None = None,
         db=None,

@@ -1,13 +1,13 @@
 """Tests for lib.models.version_history module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.models.version_history
+    import lib.models.version_history  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.models.version_history not available", allow_module_level=True)
+    pytest.skip("Module lib.models.version_history not available", allow_module_level=True)
 
 
 class TestVersionHistory:

@@ -4,11 +4,9 @@ Test suite for tool registry error handling.
 Tests graceful handling of missing MCP tools during agent initialization.
 """
 
-import pytest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from lib.tools.registry import ToolRegistry
-from lib.tools.mcp_integration import RealMCPTool
 
 
 class TestToolRegistryErrorHandling:
@@ -106,13 +104,13 @@ class TestToolRegistryErrorHandling:
     def test_validate_tool_config(self):
         """Test tool configuration validation."""
         # Valid string format
-        assert ToolRegistry._validate_tool_config("mcp__postgres__query") == True
+        assert ToolRegistry._validate_tool_config("mcp__postgres__query")
         
         # Valid dict format
-        assert ToolRegistry._validate_tool_config({"name": "mcp__postgres__query"}) == True
+        assert ToolRegistry._validate_tool_config({"name": "mcp__postgres__query"})
         
         # Invalid formats
-        assert ToolRegistry._validate_tool_config("") == False
-        assert ToolRegistry._validate_tool_config({}) == False
-        assert ToolRegistry._validate_tool_config(None) == False
-        assert ToolRegistry._validate_tool_config(123) == False
+        assert not ToolRegistry._validate_tool_config("")
+        assert not ToolRegistry._validate_tool_config({})
+        assert not ToolRegistry._validate_tool_config(None)
+        assert not ToolRegistry._validate_tool_config(123)

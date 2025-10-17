@@ -1,19 +1,17 @@
 """Tests for lib.knowledge.metadata_csv_reader module."""
 
 import csv
-import os
 import tempfile
 from pathlib import Path
 
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
+    import lib.knowledge.metadata_csv_reader  # noqa: F401 - Availability test import
     from lib.knowledge.metadata_csv_reader import MetadataCSVReader
-    import lib.knowledge.metadata_csv_reader
 except ImportError:
-    pytest.skip(f"Module lib.knowledge.metadata_csv_reader not available", allow_module_level=True)
+    pytest.skip("Module lib.knowledge.metadata_csv_reader not available", allow_module_level=True)
 
 
 class TestMetadataCsvReader:
@@ -113,7 +111,7 @@ class TestMetadataCsvReaderEdgeCases:
         try:
             documents = reader.read(self.csv_file)
             assert documents == []
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # It's okay if it raises an exception for empty files
             pass
 
@@ -138,7 +136,7 @@ class TestMetadataCsvReaderEdgeCases:
             documents = reader.read(self.csv_file)
             # Should handle gracefully, not crash
             assert isinstance(documents, list)
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # It's OK if it raises an exception, as long as it doesn't crash the test runner
             pass
 

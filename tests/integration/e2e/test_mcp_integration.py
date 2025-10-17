@@ -4,11 +4,12 @@ Test suite for MCP integration error handling.
 Tests graceful handling of missing MCP servers instead of crashing.
 """
 
-import pytest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from lib.tools.mcp_integration import RealMCPTool, create_mcp_tool
+import pytest
+
 from lib.mcp.exceptions import MCPConnectionError
+from lib.tools.mcp_integration import RealMCPTool, create_mcp_tool
 
 
 class TestMCPIntegrationErrorHandling:
@@ -61,7 +62,7 @@ class TestMCPIntegrationErrorHandling:
     def test_name_validation(self):
         """Test MCP tool name validation."""
         tool = RealMCPTool("mcp__postgres__query")
-        assert tool.validate_name() == True
+        assert tool.validate_name()
         
         with pytest.raises(ValueError):
             RealMCPTool("invalid_name")

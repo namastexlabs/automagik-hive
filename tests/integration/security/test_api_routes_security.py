@@ -19,9 +19,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.routes.health import health_check_router
-from api.routes.mcp_router import router as mcp_router
 from api.routes.v1_router import v1_router
-from api.routes.version_router import router as version_router
 
 
 class TestHealthEndpointSecurity:

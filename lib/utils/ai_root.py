@@ -19,7 +19,7 @@ Precedence order for AI root resolution:
 
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any
+from typing import Any
 
 
 class AIRootError(Exception):
@@ -39,8 +39,8 @@ class AIRootError(Exception):
         return self.message
 
 
-def resolve_ai_root(explicit_path: Optional[Union[str, Path]] = None,
-                   settings: Optional[Any] = None) -> Path:
+def resolve_ai_root(explicit_path: str | Path | None = None,
+                   settings: Any | None = None) -> Path:
     """
     Resolve AI root directory with 4-level precedence handling.
 
@@ -84,7 +84,7 @@ def resolve_ai_root(explicit_path: Optional[Union[str, Path]] = None,
     # Level 3: Settings object hive_ai_root attribute
     if resolved_path is None and settings is not None:
         if hasattr(settings, 'hive_ai_root'):
-            settings_path = getattr(settings, 'hive_ai_root')
+            settings_path = settings.hive_ai_root
             if settings_path:
                 resolved_path = Path(settings_path)
                 logger.debug("AI root resolution", step="settings", resolved_path=resolved_path)
@@ -124,7 +124,7 @@ def resolve_ai_root(explicit_path: Optional[Union[str, Path]] = None,
         return absolute_path
 
 
-def validate_ai_structure(ai_root: Path) -> Dict[str, Any]:
+def validate_ai_structure(ai_root: Path) -> dict[str, Any]:
     """
     Validate AI directory structure and return detailed validation report.
 

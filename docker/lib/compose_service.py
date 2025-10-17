@@ -12,7 +12,6 @@ Key Features:
 - Cross-platform UID/GID handling
 """
 
-import os
 from pathlib import Path
 
 import yaml

@@ -77,7 +77,7 @@ class ApiSettings(BaseSettings):
 
             if isinstance(raw_origins, str):
                 candidates = raw_origins.split(",")
-            elif isinstance(raw_origins, (list, tuple, set)):
+            elif isinstance(raw_origins, list | tuple | set):
                 candidates = list(raw_origins)
             else:
                 candidates = [raw_origins]

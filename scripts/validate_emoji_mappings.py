@@ -117,7 +117,7 @@ class EmojiMappingValidator:
                     )
                     detected["services"].update(service_matches)
 
-                except Exception:
+                except Exception:  # noqa: S110 - Silent exception handling is intentional
                     # Skip files that can't be read
                     pass
 

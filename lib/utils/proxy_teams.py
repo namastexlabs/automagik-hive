@@ -352,8 +352,8 @@ class AgnoTeamProxy:
         Uses runtime introspection instead of hardcoded parameter lists.
         """
         from lib.config.models import resolve_model
-        from lib.utils.dynamic_model_resolver import filter_model_parameters
         from lib.config.provider_registry import get_provider_registry
+        from lib.utils.dynamic_model_resolver import filter_model_parameters
         
         model_id = model_config.get("id")
         if not model_id:

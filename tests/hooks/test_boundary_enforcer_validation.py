@@ -4,8 +4,6 @@ Test script for the enhanced test_boundary_enforcer.py hook
 """
 import json
 import subprocess
-import tempfile
-import os
 from pathlib import Path
 
 try:
@@ -102,10 +100,6 @@ def test_hook_allows_non_testing_agent():
 
 def main():
     """Legacy main function for backward compatibility."""
-    print("Testing Enhanced Hook - test_boundary_enforcer.py")
-    print("=" * 50)
-    print("Tests converted to pytest format - run with: pytest tests/hooks/test_boundary_enforcer_validation.py")
-    print("Note: Test case 2 is temporarily skipped pending hook fix (task-330ed5e0-4fc2-4612-b95c-9c654b212583)")
 
 
 if __name__ == "__main__":

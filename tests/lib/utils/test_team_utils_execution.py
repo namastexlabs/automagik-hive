@@ -4,8 +4,7 @@ Focus: EXECUTE all team utility functions to achieve 50%+ source code coverage
 Target: Test ALL utility functions with realistic team management scenarios
 """
 
-import pytest
-from lib.utils.team_utils import TeamUtils, ResponseFormatter, team_utils, response_formatter
+from lib.utils.team_utils import ResponseFormatter, TeamUtils, response_formatter, team_utils
 
 
 class TestTeamUtilsExecution:
@@ -197,7 +196,7 @@ class TestTeamUtilsExecution:
             "comunicacao da equipe"
         ]
         
-        for message, expected in zip(team_messages, expected_results):
+        for message, expected in zip(team_messages, expected_results, strict=False):
             result = TeamUtils.normalize_text(message)
             assert result == expected
 

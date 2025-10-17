@@ -11,13 +11,8 @@ Focus: ACTUAL method calls with realistic scenarios
 
 import json
 import os
-import re
-import subprocess
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open, MagicMock
-from urllib.parse import urlparse
-
-import pytest
+from unittest.mock import Mock, patch
 
 from lib.auth.credential_service import CredentialService
 
@@ -47,7 +42,7 @@ class TestCredentialExtractionExceptionHandling:
         service = CredentialService(project_root=tmp_path)
         
         # Mock read_text to raise an exception to execute lines 285-286
-        with patch.object(Path, "read_text", side_effect=IOError("File read error")):
+        with patch.object(Path, "read_text", side_effect=OSError("File read error")):
             api_key = service.extract_hive_api_key_from_env()
             
             # Should execute exception handler and return None

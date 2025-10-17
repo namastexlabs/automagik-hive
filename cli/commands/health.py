@@ -5,7 +5,7 @@ These are placeholders that satisfy import requirements.
 """
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class HealthChecker:
@@ -18,13 +18,12 @@ class HealthChecker:
         """Check system health."""
         try:
             if component:
-                print(f"🔍 Checking health of: {component}")
+                pass
             else:
-                print("🔍 Checking system health")
+                pass
             # Stub implementation - would check health
             return True
-        except Exception as e:
-            print(f"❌ Health check failed: {e}")
+        except Exception:
             return False
     
     def execute(self) -> bool:

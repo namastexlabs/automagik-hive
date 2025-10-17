@@ -41,22 +41,21 @@ def pytest_keyboard_interrupt(excinfo):
     if 'unittest/mock.py' in tb_text and '_patch_stopall' in tb_text:
         # This is from mock cleanup, not a real Ctrl+C
         # Suppress it and continue testing
-        print("\n[pytest] Suppressing KeyboardInterrupt from mock cleanup", file=sys.stderr)
         return True  # Suppress the interrupt
 
     # Real Ctrl+C from user - let it through
     return None
 
 
-import pytest_asyncio
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from httpx import ASGITransport, AsyncClient
+import pytest_asyncio  # noqa: E402 - After pytest hooks
+from fastapi import FastAPI  # noqa: E402 - After pytest hooks
+from fastapi.testclient import TestClient  # noqa: E402 - After pytest hooks
+from httpx import ASGITransport, AsyncClient  # noqa: E402 - After pytest hooks
 
 # Add project root to Python path to fix module import issues
 project_root = Path(__file__).parent.parent.absolute()
 if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+    sys.path.insert(0, str(project_root))  # Path setup required before imports
 
 # ============================================================================
 # GLOBAL TEST ISOLATION ENFORCEMENT
@@ -152,7 +151,7 @@ def enforce_global_test_isolation(request, tmp_path, monkeypatch):
                         category=UserWarning,
                         stacklevel=2,
                     )
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # If we can't validate, skip the check
             pass
 
@@ -277,7 +276,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
                     task.cancel()
                 # Run the loop briefly to allow cancelled tasks to complete
                 loop.run_until_complete(asyncio.gather(*pending_tasks, return_exceptions=True))
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Ignore cleanup errors to prevent test failures
             pass
         finally:
@@ -298,7 +297,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
                     return ""
 
                 builtins.input = safe_input
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Fail silently to avoid affecting test results
             pass
 
@@ -393,7 +392,7 @@ def mock_component_registries() -> Generator[dict[str, dict[str, dict[str, Any]]
         except ImportError:
             # Skip patches for modules that can't be imported
             continue
-        except Exception:
+        except Exception:  # noqa: S112 - Continue after exception is intentional
             # Skip patches that can't be created
             continue
 
@@ -402,7 +401,7 @@ def mock_component_registries() -> Generator[dict[str, dict[str, dict[str, Any]]
         try:
             p.start()
             started_patches.append(p)
-        except Exception:
+        except Exception:  # noqa: S112 - Continue after exception is intentional
             # Skip patches that can't be started
             continue
 
@@ -411,7 +410,7 @@ def mock_component_registries() -> Generator[dict[str, dict[str, dict[str, Any]]
     for p in started_patches:
         try:
             p.stop()
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Ignore cleanup errors to prevent test failures
             pass
 
@@ -633,7 +632,7 @@ def mock_startup_orchestration() -> Generator[Mock, None, None]:
         try:
             p.start()
             started_patches.append(p)
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Skip patches that can't be started
             pass
 
@@ -644,7 +643,7 @@ def mock_startup_orchestration() -> Generator[Mock, None, None]:
         for p in started_patches:
             try:
                 p.stop()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # Ignore cleanup errors
                 pass
 
@@ -847,7 +846,7 @@ def mock_external_dependencies():
         except ImportError:
             # Skip patches for modules that can't be imported
             continue
-        except Exception:
+        except Exception:  # noqa: S112 - Continue after exception is intentional
             # Skip patches that can't be created
             continue
 
@@ -857,7 +856,7 @@ def mock_external_dependencies():
             try:
                 p.start()
                 started_patches.append(p)
-            except Exception:
+            except Exception:  # noqa: S112 - Continue after exception is intentional
                 # Skip patches that can't be started
                 continue
         yield
@@ -866,7 +865,7 @@ def mock_external_dependencies():
         for p in reversed(started_patches):
             try:
                 p.stop()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # Ignore cleanup errors to prevent test failures
                 pass
 

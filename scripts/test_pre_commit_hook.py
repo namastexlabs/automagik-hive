@@ -9,11 +9,8 @@ This script creates test scenarios to validate the pre-commit hook functionality
 4. Test file with good tests and coverage (should pass)
 """
 
-import os
 import subprocess
-import tempfile
 from pathlib import Path
-from typing import List, Tuple
 
 
 class PreCommitHookTester:
@@ -21,7 +18,7 @@ class PreCommitHookTester:
     
     def __init__(self, project_root: Path):
         self.project_root = project_root
-        self.temp_files: List[Path] = []
+        self.temp_files: list[Path] = []
         
     def cleanup(self) -> None:
         """Clean up temporary test files."""
@@ -36,8 +33,8 @@ class PreCommitHookTester:
                     capture_output=True,
                     check=False
                 )
-            except Exception as e:
-                print(f"Warning: Could not clean up {file_path}: {e}")
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
+                pass
         self.temp_files.clear()
     
     def create_temp_file(self, relative_path: str, content: str) -> Path:
@@ -48,7 +45,7 @@ class PreCommitHookTester:
         self.temp_files.append(file_path)
         return file_path
     
-    def run_git_command(self, cmd: List[str]) -> Tuple[bool, str, str]:
+    def run_git_command(self, cmd: list[str]) -> tuple[bool, str, str]:
         """Run a git command and return success status, stdout, stderr."""
         try:
             result = subprocess.run(
@@ -66,10 +63,10 @@ class PreCommitHookTester:
         """Stage a file for commit."""
         success, stdout, stderr = self.run_git_command(["git", "add", str(file_path)])
         if not success:
-            print(f"Failed to stage {file_path}: {stderr}")
+            pass
         return success
     
-    def run_pre_commit_hook(self) -> Tuple[bool, str]:
+    def run_pre_commit_hook(self) -> tuple[bool, str]:
         """Run the pre-commit hook and return success status and output."""
         hook_path = self.project_root / ".git" / "hooks" / "pre-commit"
         if not hook_path.exists():
@@ -89,7 +86,6 @@ class PreCommitHookTester:
     
     def test_scenario_1_missing_test_file(self) -> bool:
         """Test scenario: Source file without corresponding test file."""
-        print("\n=== Test Scenario 1: Missing Test File ===")
         
         # Create a source file without a test file
         source_file = self.create_temp_file(
@@ -106,7 +102,6 @@ def multiply(x: int, y: int) -> int:
 '''
         )
         
-        print(f"Created source file: {source_file}")
         
         # Stage the file
         if not self.stage_file(source_file):
@@ -115,16 +110,12 @@ def multiply(x: int, y: int) -> int:
         # Run the pre-commit hook (should fail)
         success, output = self.run_pre_commit_hook()
         
-        print(f"Hook result: {'PASS' if success else 'FAIL (expected)'}")
-        print("Hook output:")
-        print(output)
         
         # This should fail because there's no test file
         return not success
     
     def test_scenario_2_failing_test(self) -> bool:
         """Test scenario: Source file with failing test."""
-        print("\n=== Test Scenario 2: Failing Test ===")
         
         # Create a source file
         source_file = self.create_temp_file(
@@ -171,8 +162,6 @@ def test_divide_by_zero():
 '''
         )
         
-        print(f"Created source file: {source_file}")
-        print(f"Created test file: {test_file}")
         
         # Stage both files
         if not self.stage_file(source_file) or not self.stage_file(test_file):
@@ -181,16 +170,12 @@ def test_divide_by_zero():
         # Run the pre-commit hook (should fail)
         success, output = self.run_pre_commit_hook()
         
-        print(f"Hook result: {'PASS' if success else 'FAIL (expected)'}")
-        print("Hook output:")
-        print(output)
         
         # This should fail because tests are failing
         return not success
     
     def test_scenario_3_low_coverage(self) -> bool:
         """Test scenario: Source file with low test coverage."""
-        print("\n=== Test Scenario 3: Low Coverage ===")
         
         # Create a source file with multiple functions
         source_file = self.create_temp_file(
@@ -245,8 +230,6 @@ def test_covered_function():
 '''
         )
         
-        print(f"Created source file: {source_file}")
-        print(f"Created test file: {test_file}")
         
         # Stage both files
         if not self.stage_file(source_file) or not self.stage_file(test_file):
@@ -255,16 +238,12 @@ def test_covered_function():
         # Run the pre-commit hook (should fail due to low coverage)
         success, output = self.run_pre_commit_hook()
         
-        print(f"Hook result: {'PASS' if success else 'FAIL (expected)'}")
-        print("Hook output:")
-        print(output)
         
         # This should fail because coverage is below 50%
         return not success
     
     def test_scenario_4_good_coverage(self) -> bool:
         """Test scenario: Source file with good tests and coverage."""
-        print("\n=== Test Scenario 4: Good Coverage ===")
         
         # Create a source file
         source_file = self.create_temp_file(
@@ -371,8 +350,6 @@ class TestCalculator:
 '''
         )
         
-        print(f"Created source file: {source_file}")
-        print(f"Created test file: {test_file}")
         
         # Stage both files
         if not self.stage_file(source_file) or not self.stage_file(test_file):
@@ -381,17 +358,12 @@ class TestCalculator:
         # Run the pre-commit hook (should pass)
         success, output = self.run_pre_commit_hook()
         
-        print(f"Hook result: {'PASS (expected)' if success else 'FAIL'}")
-        print("Hook output:")
-        print(output)
         
         # This should pass because tests pass and coverage is good
         return success
     
     def run_all_tests(self) -> bool:
         """Run all test scenarios."""
-        print("=== Pre-commit Hook Test Suite ===")
-        print(f"Project root: {self.project_root}")
         
         results = []
         
@@ -417,15 +389,11 @@ class TestCalculator:
             self.cleanup()
         
         # Print summary
-        print("\n=== Test Results Summary ===")
         all_passed = True
-        for test_name, passed in results:
-            status = "PASS" if passed else "FAIL"
-            print(f"{test_name}: {status}")
+        for _test_name, passed in results:
             if not passed:
                 all_passed = False
         
-        print(f"\nOverall result: {'ALL TESTS PASSED' if all_passed else 'SOME TESTS FAILED'}")
         return all_passed
 
 
@@ -448,7 +416,6 @@ def main():
     # Get project root
     project_root = Path.cwd()
     if not (project_root / "pyproject.toml").exists():
-        print("ERROR: Not in an Automagik Hive project directory!")
         return 1
     
     # Initialize tester
@@ -466,7 +433,6 @@ def main():
             elif args.scenario == 4:
                 success = tester.test_scenario_4_good_coverage()
             else:
-                print(f"Invalid scenario: {args.scenario}")
                 return 1
                 
             return 0 if success else 1

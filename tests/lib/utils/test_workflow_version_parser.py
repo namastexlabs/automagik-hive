@@ -12,11 +12,10 @@ This test suite drives the TDD RED phase implementation of:
 - discover_workflows_with_versions(workflows_dir: Path) -> dict
 """
 
-import ast
 import tempfile
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -1363,8 +1362,8 @@ class TestWorkflowParserEdgeCases:
 
     def test_concurrent_workflow_discovery(self):
         """Test concurrent access to workflow discovery functions."""
-        import threading
         import queue
+        import threading
         
         with tempfile.TemporaryDirectory() as temp_dir:
             workflows_dir = Path(temp_dir)

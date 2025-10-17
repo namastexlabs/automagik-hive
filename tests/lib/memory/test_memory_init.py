@@ -1,6 +1,5 @@
 """Tests for lib.memory module initialization."""
 
-import pytest
 
 
 class TestMemoryModuleInit:

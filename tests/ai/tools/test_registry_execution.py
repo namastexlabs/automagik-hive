@@ -5,23 +5,16 @@ This test suite focuses on EXECUTING all registry code paths to achieve high cov
 by actually calling every method and function with realistic scenarios.
 """
 
-import pytest
-from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch, MagicMock, mock_open
-import tempfile
-import os
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
 import yaml
 
+from ai.tools.base_tool import BaseTool
+
 # Import the registry module to test
-from ai.tools.registry import (
-    _discover_tools,
-    ToolRegistry,
-    get_tool,
-    get_all_tools,
-    list_available_tools
-)
-from ai.tools.base_tool import BaseTool, ToolConfig
+from ai.tools.registry import ToolRegistry, _discover_tools, get_all_tools, get_tool, list_available_tools
 
 
 class MockTestTool(BaseTool):

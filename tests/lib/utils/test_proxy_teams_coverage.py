@@ -13,13 +13,9 @@ This test file focuses on the specific areas that need coverage:
 8. Team lifecycle and coordination patterns
 """
 
-import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Any
 
 import pytest
-from agno.agent import Agent
-from agno.team import Team
 
 from lib.utils.proxy_teams import AgnoTeamProxy
 
@@ -172,7 +168,8 @@ class TestAgnoTeamProxyNativeToolsHandling:
     
     def test_handle_tools_config_non_dict_tools(self, proxy):
         """Test handling of non-dictionary tool configurations."""
-        custom_function = lambda x: x  # Custom tool function
+        def custom_function(x):
+            return x  # Custom tool function
         tool_instance = MagicMock()
         
         tools_config = [custom_function, tool_instance, "string_config"]

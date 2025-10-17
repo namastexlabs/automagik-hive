@@ -2,7 +2,6 @@
 
 import importlib.util
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
 from agno.workflow import Workflow

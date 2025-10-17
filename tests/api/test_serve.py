@@ -9,7 +9,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -25,7 +25,7 @@ _db_migration_patcher = patch("lib.utils.db_migration.check_and_run_migrations",
 _db_migration_patcher.start()
 
 # Create proper module stubs using types.ModuleType
-import types
+import types  # noqa: E402 - Path setup required before imports
 
 # Create agno.os.config module with AgentOSConfig
 agno_os_config = types.ModuleType('agno.os.config')
@@ -236,7 +236,7 @@ class Logger:
     def debug(self, *args, **kwargs): pass
     def warning(self, *args, **kwargs): pass
     def error(self, *args, **kwargs): pass
-    def setLevel(self, level): pass
+    def set_level(self, level): pass
 
 # Create logger instances that can be used as both functions and objects
 agent_logger_instance = Logger()
@@ -248,9 +248,9 @@ def team_logger(*args, **kwargs): return team_logger_instance
 def workflow_logger(*args, **kwargs): return workflow_logger_instance
 
 # Set the logger instances as attributes so they can be accessed directly
-agent_logger.setLevel = agent_logger_instance.setLevel
-team_logger.setLevel = team_logger_instance.setLevel
-workflow_logger.setLevel = workflow_logger_instance.setLevel
+agent_logger.set_level = agent_logger_instance.set_level
+team_logger.set_level = team_logger_instance.set_level
+workflow_logger.set_level = workflow_logger_instance.set_level
 
 agno_utils_log.logger = Logger()
 agno_utils_log.agent_logger = agent_logger
@@ -389,7 +389,7 @@ class TestServeModuleImports:
 
     def test_logging_setup(self):
         """Test logging setup in serve module."""
-        with patch("lib.logging.setup_logging") as mock_setup:
+        with patch("lib.logging.setup_logging"):
             with patch("lib.logging.logger"):
                 # Re-import to trigger logging setup
                 import importlib
@@ -535,7 +535,7 @@ class TestServeModuleFunctions:
     def test_main_function_execution(self):
         """Test main function with different scenarios."""
         # Test main function with mocked environment
-        with patch("uvicorn.run") as mock_uvicorn:
+        with patch("uvicorn.run"):
             with patch("sys.argv", ["api.serve", "--port", "8001"]):
                 with patch("api.serve.get_app") as mock_get_app:
                     mock_app = MagicMock()
@@ -560,6 +560,7 @@ class TestServeModuleFunctions:
         with patch.dict(os.environ, env_vars):
             # Re-import to pick up environment changes
             import importlib
+
             import api.serve
             
             # Ensure module is in sys.modules before reloading
@@ -633,7 +634,7 @@ class TestServeLifespanManagement:
         
         with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "production"}):
             with patch("lib.mcp.MCPCatalog") as mock_catalog:
-                with patch("common.startup_notifications.send_startup_notification") as mock_notify:
+                with patch("common.startup_notifications.send_startup_notification"):
                     with patch("asyncio.create_task") as mock_create_task:
                         mock_catalog.return_value.list_servers.return_value = []
                         # Mock task to avoid actual background task creation
@@ -830,13 +831,14 @@ class TestServeDatabaseMigrations:
     
     def test_migration_success_at_startup(self):
         """Test successful migration execution at startup."""
-        with patch("api.serve.check_and_run_migrations") as mock_migrations:
+        with patch("api.serve.check_and_run_migrations"):
             with patch("asyncio.get_running_loop", side_effect=RuntimeError("No loop")):
                 with patch("asyncio.run") as mock_run:
                     mock_run.return_value = True
                     
                     # Re-import serve to trigger migration code
                     import importlib
+
                     import api.serve
                     importlib.reload(api.serve)
 
@@ -847,17 +849,19 @@ class TestServeDatabaseMigrations:
                 with patch("asyncio.run", side_effect=Exception("Migration failed")):
                     # Should handle migration failures gracefully
                     import importlib
+
                     import api.serve
                     importlib.reload(api.serve)
 
     def test_migration_with_event_loop_present(self):
         """Test migration handling when event loop is present."""
-        with patch("api.serve.check_and_run_migrations") as mock_migrations:
+        with patch("api.serve.check_and_run_migrations"):
             with patch("asyncio.get_running_loop") as mock_loop:
                 mock_loop.return_value = MagicMock()
                 
                 # Should detect event loop and schedule migration appropriately
                 import importlib
+
                 import api.serve
                 importlib.reload(api.serve)
 
@@ -895,6 +899,7 @@ class TestServeErrorHandling:
         with patch("api.serve.load_dotenv", side_effect=ImportError("No module named 'dotenv'")):
             # Should silently continue without dotenv - tested by reimporting module
             import importlib
+
             import api.serve
             # Force reload to test import error path
             importlib.reload(api.serve)
@@ -937,6 +942,7 @@ class TestServeErrorHandling:
                 with patch("asyncio.run", side_effect=Exception("Migration failed")):
                     # Should handle migration failures gracefully and log warning
                     import importlib
+
                     import api.serve
                     
                     # Ensure module is in sys.modules before reloading
@@ -1013,7 +1019,7 @@ class TestServeIntegration:
     def test_full_server_workflow(self):
         """Test complete server workflow."""
         # This tests the complete workflow from app creation to serving
-        with patch("uvicorn.run") as mock_uvicorn:
+        with patch("uvicorn.run"):
             with patch("sys.argv", ["api.serve"]):
                 # Should be able to run main without errors
                 try:
@@ -1238,12 +1244,12 @@ class TestServeCommandLine:
         test_args = [
             ["api.serve"],
             ["api.serve", "--port", "8080"],
-            ["api.serve", "--host", "0.0.0.0"],
+            ["api.serve", "--host", "0.0.0.0"],  # noqa: S104
         ]
         
         for args in test_args:
             with patch("sys.argv", args):
-                with patch("uvicorn.run") as mock_uvicorn:
+                with patch("uvicorn.run"):
                     try:
                         api.serve.main()
                     except SystemExit:
@@ -1260,7 +1266,7 @@ class TestServeCommandLine:
                     api.serve.main()
                 except Exception as e:
                     # Should either handle gracefully or exit
-                    assert isinstance(e, (SystemExit, Exception))
+                    assert isinstance(e, SystemExit | Exception)
     
     def test_factory_app_function(self):
         """Test app factory function for uvicorn (line 612)."""
@@ -1301,8 +1307,9 @@ class TestPerformance:
 
     def test_request_handling_performance(self, api_client):
         """Test request handling performance."""
-        from tests.api.conftest import create_mock_startup_results
         import time
+
+        from tests.api.conftest import create_mock_startup_results
 
         # Clear cached app instance to ensure proper mocking
         api.serve._app_instance = None
@@ -1370,7 +1377,7 @@ class TestStartupDisplayErrorHandling:
                                 assert isinstance(result, FastAPI)
                                 # Verify display_simple_status was called for fallback display
                                 mock_simple.assert_called_once()
-                            except Exception:
+                            except Exception:  # noqa: S110 - Silent exception handling is intentional
                                 # If startup fails due to complex dependencies, just verify the mock was called
                                 # This test is specifically about the display error fallback logic
                                 pass
@@ -1445,7 +1452,8 @@ class TestDevelopmentModeFeatures:
 # TEST HELPERS
 # ============================================================================
 
-from contextlib import contextmanager
+from contextlib import contextmanager  # noqa: E402 - Conditional import within test function
+
 
 @contextmanager
 def mock_serve_startup(
@@ -1561,7 +1569,6 @@ def clear_app_instance_globally():
     """
     # Stop the global orchestrated_startup patch from conftest if it exists
     # This prevents AsyncMock pollution across tests
-    import unittest.mock
 
     # Clear before test
     api.serve._app_instance = None
@@ -1572,7 +1579,7 @@ def clear_app_instance_globally():
     try:
         if hasattr(api.serve, 'orchestrated_startup') and isinstance(api.serve.orchestrated_startup, AsyncMock):
             api.serve.orchestrated_startup.reset_mock()
-    except:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
     yield
@@ -1584,7 +1591,7 @@ def clear_app_instance_globally():
     try:
         if hasattr(api.serve, 'orchestrated_startup') and isinstance(api.serve.orchestrated_startup, AsyncMock):
             api.serve.orchestrated_startup.reset_mock()
-    except:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
 

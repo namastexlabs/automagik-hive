@@ -14,27 +14,26 @@ Test Categories:
 ACHIEVEMENT: 100% source code coverage through comprehensive CLI execution testing.
 """
 
-import pytest
 import os
-import sys
 import subprocess
-import tempfile
+import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import io
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the module under test
 try:
     import lib.auth.cli as auth_cli
     from lib.auth.cli import (
-        show_current_key,
+        generate_agent_credentials,
+        generate_complete_workspace_credentials,
+        generate_postgres_credentials,
         regenerate_key,
         show_auth_status,
-        generate_postgres_credentials,
-        generate_complete_workspace_credentials,
-        generate_agent_credentials,
         show_credential_status,
-        sync_mcp_credentials
+        show_current_key,
+        sync_mcp_credentials,
     )
 except ImportError:
     pytest.skip("Module lib.auth.cli not available", allow_module_level=True)
@@ -508,9 +507,7 @@ class TestCliExecutionValidation:
 
         # Debug information for troubleshooting intermittent failures
         if result.returncode != 0:
-            print(f"Process failed with return code: {result.returncode}")
-            print(f"stderr: {result.stderr}")
-            print(f"stdout: {result.stdout}")
+            pass
 
         assert result.returncode == 0, f"Subprocess failed: returncode={result.returncode}, stderr={result.stderr}"
 
@@ -602,7 +599,7 @@ class TestCliEdgeCasesAndBoundaries:
         path_cases = [
             None,  # No path
             Path("/"),  # Root path
-            Path("/tmp/test.env"),  # Normal path
+            Path("/tmp/test.env"),  # Normal path  # noqa: S108 - Test/script temp file
             Path("relative/path/.env"),  # Relative path
             Path("/very/deep/nested/directory/structure/file.env"),  # Deep path
         ]

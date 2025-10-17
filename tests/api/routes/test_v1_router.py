@@ -5,11 +5,11 @@ Tests router composition, authentication, sub-router integration,
 and error handling patterns for TDD development workflow.
 """
 
+from unittest.mock import patch
+
 import pytest
 from fastapi import status
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
-from unittest.mock import patch, Mock, AsyncMock
 
 
 class TestV1RouterComposition:
@@ -295,7 +295,7 @@ class TestV1RouterIntegrationPatterns:
             "content-length",
         ]
         
-        present_headers = [
+        [
             header for header in possible_headers
             if header in [h.lower() for h in response.headers.keys()]
         ]
@@ -344,7 +344,7 @@ class TestV1RouterPerformance:
     def test_router_memory_efficiency(self, test_client):
         """Test router doesn't leak memory with multiple requests."""
         # Make many requests through router
-        for i in range(10):
+        for _i in range(10):
             response = test_client.get("/api/v1/health")
             assert response.status_code == status.HTTP_200_OK
             
@@ -394,7 +394,7 @@ class TestV1RouterConfiguration:
                 status.HTTP_404_NOT_FOUND,
                 status.HTTP_401_UNAUTHORIZED,
             ]
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Docs endpoint might not be configured - that's acceptable
             pass
 

@@ -19,10 +19,10 @@ variables. This clean service respects boundaries and only validates existing co
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
-from lib.config.settings import get_settings, HiveSettings
+from lib.config.settings import get_settings
 from lib.logging import logger
 
 
@@ -44,7 +44,7 @@ class CleanCredentialService:
     4. Replace the massive credential_service.py that violated architecture
     """
     
-    def __init__(self, project_root: Optional[Path] = None, env_file: Optional[Path] = None) -> None:
+    def __init__(self, project_root: Path | None = None, env_file: Path | None = None) -> None:
         """
         Initialize clean credential service.
         
@@ -83,7 +83,7 @@ class CleanCredentialService:
         
         return exists
     
-    def validate_database_credentials(self) -> Dict[str, Any]:
+    def validate_database_credentials(self) -> dict[str, Any]:
         """
         Validate database credentials from centralized settings.
         
@@ -137,7 +137,7 @@ class CleanCredentialService:
                 'error': f'Database credential validation error: {str(e)}'
             }
     
-    def validate_api_credentials(self) -> Dict[str, Any]:
+    def validate_api_credentials(self) -> dict[str, Any]:
         """
         Validate API credentials from centralized settings.
         
@@ -194,7 +194,7 @@ class CleanCredentialService:
                 'error': f'API credential validation error: {str(e)}'
             }
     
-    def validate_all_credentials(self) -> Dict[str, Any]:
+    def validate_all_credentials(self) -> dict[str, Any]:
         """
         Validate all credentials comprehensively.
         
@@ -249,7 +249,7 @@ class CleanCredentialService:
         
         return result
     
-    def get_connection_info(self) -> Dict[str, Any]:
+    def get_connection_info(self) -> dict[str, Any]:
         """
         Get connection information for service health checks.
         
@@ -295,7 +295,7 @@ class CleanCredentialService:
                 }
             }
     
-    def check_configuration_health(self) -> Dict[str, Any]:
+    def check_configuration_health(self) -> dict[str, Any]:
         """
         Comprehensive configuration health check.
         

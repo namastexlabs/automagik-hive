@@ -4,9 +4,7 @@ Properly tested implementation following TDD principles.
 """
 
 import subprocess
-import sys
 from pathlib import Path
-from typing import List, Optional
 
 try:
     import httpx
@@ -23,7 +21,7 @@ class GenieCommands:
     def __init__(self):
         self.console = Console() if RICH_AVAILABLE else None
 
-    def list_wishes(self, api_base: Optional[str] = None, api_key: Optional[str] = None) -> bool:
+    def list_wishes(self, api_base: str | None = None, api_key: str | None = None) -> bool:
         """List available Genie wishes from the API.
 
         Args:
@@ -34,7 +32,6 @@ class GenieCommands:
             bool: True if successful, False otherwise
         """
         if not RICH_AVAILABLE:
-            print("❌ This command requires httpx and rich. Install with: uv add httpx rich", file=sys.stderr)
             return False
 
         # Default API base
@@ -78,16 +75,13 @@ class GenieCommands:
             return True
 
         except httpx.ConnectError:
-            print(f"❌ Could not connect to API at {api_base}. Is the server running?", file=sys.stderr)
             return False
-        except httpx.HTTPStatusError as e:
-            print(f"❌ API request failed: {e.response.status_code} {e.response.reason_phrase}", file=sys.stderr)
+        except httpx.HTTPStatusError:
             return False
-        except Exception as e:
-            print(f"❌ Failed to list wishes: {e}", file=sys.stderr)
+        except Exception:
             return False
 
-    def launch_claude(self, extra_args: List[str] = None) -> bool:
+    def launch_claude(self, extra_args: list[str] = None) -> bool:
         """Launch claude with AGENTS.md as system prompt."""
         try:
             # Find AGENTS.md file
@@ -100,15 +94,13 @@ class GenieCommands:
                         agents_md_path = candidate
                         break
                 else:
-                    print("❌ AGENTS.md not found in current directory or parent directories", file=sys.stderr)
                     return False
             
             # Read AGENTS.md content
             try:
-                with open(agents_md_path, 'r', encoding='utf-8') as f:
+                with open(agents_md_path, encoding='utf-8') as f:
                     agents_content = f.read()
-            except Exception as e:
-                print(f"❌ Failed to read AGENTS.md: {e}", file=sys.stderr)
+            except Exception:
                 return False
             
             # Build claude command
@@ -124,21 +116,14 @@ class GenieCommands:
             if extra_args:
                 claude_cmd.extend(extra_args)
             
-            print(f"🤖 Launching claude with AGENTS personality...")
-            print(f"📖 Using AGENTS.md from: {agents_md_path}")
-            print(f"🚀 Command: {' '.join(claude_cmd)}")
-            print()
             
             # Launch claude
             result = subprocess.run(claude_cmd)
             return result.returncode == 0
             
         except FileNotFoundError:
-            print("❌ claude command not found. Please ensure claude is installed and in PATH", file=sys.stderr)
             return False
         except KeyboardInterrupt:
-            print("\n🛑 Interrupted by user")
             return True  # Not really an error
-        except Exception as e:
-            print(f"❌ Failed to launch claude: {e}", file=sys.stderr)
+        except Exception:
             return False

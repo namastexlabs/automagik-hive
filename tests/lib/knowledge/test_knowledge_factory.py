@@ -3,11 +3,11 @@ Tests for knowledge_factory.py
 Testing RowBasedCSVKnowledgeBase functionality
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
+from lib.knowledge.factories.knowledge_factory import create_knowledge_base
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
-from lib.knowledge.factories.knowledge_factory import create_knowledge_base, get_knowledge_base
+
 
 # Clear the singleton before each test class
 def setup_module():

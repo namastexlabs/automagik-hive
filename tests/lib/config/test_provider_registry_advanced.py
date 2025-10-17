@@ -9,21 +9,20 @@ Targeting 50% minimum coverage with focus on:
 - Integration with environment variables
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-import importlib
-from unittest.mock import Mock, patch, MagicMock
-from functools import lru_cache
 
 # Import the module under test
 try:
     from lib.config.provider_registry import (
         ProviderRegistry,
-        get_provider_registry,
+        clear_provider_cache,
         detect_provider,
         get_provider_classes,
-        resolve_model_class,
+        get_provider_registry,
         list_available_providers,
-        clear_provider_cache
+        resolve_model_class,
     )
 except ImportError:
     pytest.skip("Module lib.config.provider_registry not available", allow_module_level=True)
@@ -187,7 +186,7 @@ class TestPatternGeneration:
         assert r'^openai$' in patterns
         
         # All patterns should map to 'openai'
-        for pattern, provider in patterns.items():
+        for _pattern, provider in patterns.items():
             assert provider == 'openai'
 
     def test_generate_provider_patterns_anthropic(self):
@@ -200,7 +199,7 @@ class TestPatternGeneration:
         assert r'^claude\.' in patterns
         assert r'^anthropic$' in patterns
         
-        for pattern, provider in patterns.items():
+        for _pattern, provider in patterns.items():
             assert provider == 'anthropic'
 
     def test_generate_provider_patterns_google(self):
@@ -224,7 +223,7 @@ class TestPatternGeneration:
         assert r'^unknown_provider-' in patterns
         assert r'^unknown_provider$' in patterns
         
-        for pattern, provider in patterns.items():
+        for _pattern, provider in patterns.items():
             assert provider == 'unknown_provider'
 
     def test_generate_provider_patterns_all_known_providers(self):
@@ -342,14 +341,14 @@ class TestProviderDetection:
             mock_patterns.return_value = {r'^test-': 'test_provider'}
             
             # Test successful detection logging
-            provider = registry.detect_provider('test-model')
+            registry.detect_provider('test-model')
             mock_logger.debug.assert_called()
             
             # Test failed detection logging
             with patch.object(registry, 'get_available_providers') as mock_providers:
                 mock_providers.return_value = {'test_provider'}
                 
-                provider = registry.detect_provider('unknown-model')
+                registry.detect_provider('unknown-model')
                 mock_logger.debug.assert_called()
 
 
@@ -361,15 +360,15 @@ class TestProviderClassDiscovery:
     def test_get_provider_classes_success(self, mock_logger, mock_import):
         """Test get_provider_classes successful discovery."""
         # Create actual class types for testing
-        OpenAIChatClass = type('OpenAIChat', (), {})
-        OpenAIClass = type('OpenAI', (), {})
-        PrivateClass = type('_private_class', (), {})
+        OpenAIChatClass = type('OpenAIChat', (), {})  # noqa: N806
+        OpenAIClass = type('OpenAI', (), {})  # noqa: N806
+        PrivateClass = type('_private_class', (), {})  # noqa: N806
         
         # Mock module with these classes as attributes
         mock_module = Mock()
         mock_module.OpenAIChat = OpenAIChatClass
         mock_module.OpenAI = OpenAIClass
-        mock_module._private_class = PrivateClass
+        mock_module._PrivateClass = PrivateClass
         mock_module.lowercase_func = lambda: None
         mock_module.CONSTANT = 'value'
         
@@ -671,7 +670,7 @@ class TestIntegrationAndEdgeCases:
                 ]
                 
                 # Get patterns (should call _generate_provider_patterns)
-                patterns = registry.get_provider_patterns()
+                registry.get_provider_patterns()
                 
                 # Detect provider using patterns
                 provider = registry.detect_provider('gpt-4')
@@ -723,7 +722,7 @@ class TestIntegrationAndEdgeCases:
                     patterns = registry.get_provider_patterns()
                     # If it doesn't raise an exception, it should return a dict
                     assert isinstance(patterns, dict)
-                except Exception:
+                except Exception:  # noqa: S110 - Silent exception handling is intentional
                     # If it raises an exception, that's also acceptable behavior for this test
                     # since we're testing resilience, not necessarily that it recovers
                     pass

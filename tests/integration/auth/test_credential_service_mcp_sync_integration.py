@@ -6,11 +6,8 @@ RED PHASE TESTS: These tests validate real-world integration scenarios and ensur
 the MCP sync behavior works correctly with the broader system.
 """
 
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call, Mock
-import pytest
 import json
+from unittest.mock import patch
 
 from lib.auth.credential_service import CredentialService
 

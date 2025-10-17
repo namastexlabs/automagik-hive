@@ -1,28 +1,27 @@
 """Tests for common.startup_notifications module."""
 
-import pytest
-import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
-from datetime import datetime
+from unittest.mock import MagicMock, patch
 
-from common.startup_notifications import (
-    send_startup_notification,
-    send_shutdown_notification,
-    send_error_notification,
-    send_mcp_server_error,
-    send_health_check_notification,
-    notify_system_event,
-    notify_critical_error,
-    notify_performance_issue,
-    notify_user_action,
-    notify_security_event,
-    notify_info,
-    notify_warning,
-    notify_error,
-    notify_critical,
-    _build_startup_message,
-)
+import pytest
+
 from common.notifications import NotificationLevel
+from common.startup_notifications import (
+    _build_startup_message,
+    notify_critical,
+    notify_critical_error,
+    notify_error,
+    notify_info,
+    notify_performance_issue,
+    notify_security_event,
+    notify_system_event,
+    notify_user_action,
+    notify_warning,
+    send_error_notification,
+    send_health_check_notification,
+    send_mcp_server_error,
+    send_shutdown_notification,
+    send_startup_notification,
+)
 
 
 class TestStartupNotificationFunctions:

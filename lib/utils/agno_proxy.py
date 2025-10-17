@@ -3,7 +3,10 @@
 import asyncio
 import os
 from copy import deepcopy
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from agno.agent import Agent
 
 from lib.logging import logger
 
@@ -224,7 +227,7 @@ def create_sample_agent(config_override: dict[str, Any] | None = None) -> "Agent
     """Synchronous helper for smoke scripts (legacy compatibility)."""
 
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(create_sample_agent_async(config_override=config_override))
 

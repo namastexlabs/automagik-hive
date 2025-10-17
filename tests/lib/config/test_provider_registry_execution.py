@@ -12,21 +12,18 @@ Strategy: Execute actual code paths with realistic data
 
 import os
 import re
-import importlib
-import sys
-import tempfile
-from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 import pytest
 
 from lib.config.provider_registry import (
     ProviderRegistry,
-    get_provider_registry,
+    clear_provider_cache,
     detect_provider,
     get_provider_classes,
-    resolve_model_class,
+    get_provider_registry,
     list_available_providers,
-    clear_provider_cache,
+    resolve_model_class,
 )
 
 
@@ -550,7 +547,7 @@ class TestProviderRegistryIntegrationExecution:
                 try:
                     classes = registry.get_provider_classes(f'provider_{i}')
                     results.append(classes)
-                except Exception:
+                except Exception:  # noqa: S110 - Silent exception handling is intentional
                     # Should handle failures gracefully with fallbacks
                     pass
             

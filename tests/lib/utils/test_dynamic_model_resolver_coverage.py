@@ -4,16 +4,15 @@ Testing dynamic parameter resolution, introspection, and trial-based filtering.
 Target: 50%+ coverage with failing tests that guide TDD implementation.
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-import inspect
-from typing import Any, Dict, Set, Type
 
 from lib.utils.dynamic_model_resolver import (
-    DynamicModelResolver, 
-    filter_model_parameters, 
+    DynamicModelResolver,
+    _resolver,
     clear_resolver_cache,
-    _resolver
+    filter_model_parameters,
 )
 
 
@@ -39,7 +38,7 @@ class MockModelWithError:
     
     def __init__(self, good_param: str, bad_param: str = None):
         if bad_param is not None:
-            raise TypeError(f"unexpected keyword argument 'bad_param'")
+            raise TypeError("unexpected keyword argument 'bad_param'")
         self.good_param = good_param
 
 
@@ -279,14 +278,8 @@ class TestFilterByTrial:
             def __init__(self, good1: str, good2: int = 5):
                 pass
         
-        resolver = DynamicModelResolver()
+        DynamicModelResolver()
         
-        input_params = {
-            "good1": "test",
-            "good2": 10,
-            "bad1": "error1",
-            "bad2": "error2"
-        }
         
         # Mock the model to raise TypeErrors for bad params
         def mock_init(**kwargs):
@@ -339,11 +332,10 @@ class TestFilterByTrial:
 
     def test_filter_by_trial_positional_argument_error(self):
         """Test trial method handles positional argument errors."""
-        resolver = DynamicModelResolver()
+        DynamicModelResolver()
         
         # This is a complex edge case that would need specific mocking
         # to test the "takes X positional argument" error handling
-        input_params = {"timeout": 30, "retries": 3, "max_tokens": 100}
         
         # The method should attempt to remove less essential parameters
         # when encountering positional argument errors
@@ -429,7 +421,7 @@ class TestErrorParsing:
     
     def test_unexpected_keyword_argument_parsing(self):
         """Test parsing of 'unexpected keyword argument' errors."""
-        resolver = DynamicModelResolver()
+        DynamicModelResolver()
         
         # Mock a model that raises specific TypeError
         class SpecificErrorModel:
@@ -494,8 +486,8 @@ class TestEdgeCasesAndComplexScenarios:
         resolver = DynamicModelResolver()
         
         # Get params for different classes
-        params1 = resolver.get_valid_parameters(MockModel)
-        params2 = resolver.get_valid_parameters(MockModelWithKwargs)
+        resolver.get_valid_parameters(MockModel)
+        resolver.get_valid_parameters(MockModelWithKwargs)
         
         # Should have separate cache entries
         assert len(resolver._param_cache) == 2
@@ -598,13 +590,6 @@ class TestDynamicModelResolverIntegration:
         filtered = resolver.filter_parameters_for_model(RealWorldModel, large_config)
         
         # Should keep all valid parameters
-        expected_filtered = {
-            "name": "test_model",
-            "timeout": 60,
-            "debug": True,
-            "config": {"setting1": "value1"},
-            "extra": "extra_value"  # Should be mapped to **extra
-        }
         
         # Note: The actual behavior with **kwargs might be different
         # This test documents the expected behavior

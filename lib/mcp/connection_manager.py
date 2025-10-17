@@ -5,8 +5,8 @@ Clean, direct MCP tools creation without overengineering.
 Replaces the old overengineered connection manager with simple factory functions.
 """
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncContextManager
 
 from agno.tools.mcp import MCPTools
 
@@ -28,7 +28,7 @@ def get_catalog() -> MCPCatalog:
 
 
 @asynccontextmanager
-async def get_mcp_tools(server_name: str) -> AsyncContextManager[MCPTools]:
+async def get_mcp_tools(server_name: str) -> AsyncIterator[MCPTools]:
     """
     Get MCP tools for a server.
 
@@ -98,7 +98,7 @@ def create_mcp_tools_sync(server_name: str) -> MCPTools | None:
 
     try:
         server_config = catalog.get_server_config(server_name)
-    except Exception as e:
+    except Exception:
         logger.warning(f"🌐 MCP server '{server_name}' not configured in .mcp.json - tool will be unavailable")
         return None
 

@@ -5,19 +5,16 @@ This test suite covers the dynamic provider discovery, pattern matching,
 class resolution, and caching functionality with edge cases and error conditions.
 """
 
-import importlib
-import re
-from unittest.mock import Mock, patch, MagicMock
-import pytest
+from unittest.mock import Mock, patch
 
 from lib.config.provider_registry import (
     ProviderRegistry,
-    get_provider_registry,
+    clear_provider_cache,
     detect_provider,
     get_provider_classes,
-    resolve_model_class,
+    get_provider_registry,
     list_available_providers,
-    clear_provider_cache,
+    resolve_model_class,
 )
 
 
@@ -66,7 +63,7 @@ class TestProviderDiscovery:
     
     def test_get_available_providers_with_agno_models(self):
         """Test provider discovery when agno.models is available."""
-        mock_modules = [
+        [
             Mock(name="openai", ispkg=True),
             Mock(name="anthropic", ispkg=True),
             Mock(name="google", ispkg=True),
@@ -387,7 +384,7 @@ class TestModelClassResolution:
         test_class = type("TestClass", (), {})
         mock_module.TestClass = test_class
         
-        with patch('importlib.import_module', return_value=mock_module) as mock_import:
+        with patch('importlib.import_module', return_value=mock_module):
             with patch.object(registry, 'get_provider_classes', return_value=["TestClass"]):
                 result1 = registry.resolve_model_class("test", "model")
                 result2 = registry.resolve_model_class("test", "model")
@@ -483,7 +480,6 @@ class TestEdgeCasesAndErrorHandling:
     def test_concurrent_access_safety(self):
         """Test that the registry handles concurrent access safely."""
         import threading
-        import time
         
         registry = ProviderRegistry()
         results = []

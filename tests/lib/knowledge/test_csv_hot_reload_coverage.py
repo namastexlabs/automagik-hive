@@ -6,11 +6,10 @@ knowledge base management, and error handling scenarios.
 """
 
 import os
-import tempfile
 import threading
-import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import Mock, patch
+
 import pytest
 
 from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
@@ -42,7 +41,7 @@ class TestCSVHotReloadManagerInitialization:
             manager = CSVHotReloadManager()
             
             # Should construct path using config and current file directory
-            expected_path = Path(__file__).parent.parent.parent / "lib/knowledge/custom_knowledge.csv"
+            Path(__file__).parent.parent.parent / "lib/knowledge/custom_knowledge.csv"
             assert manager.csv_path.name == "custom_knowledge.csv"
             
     def test_init_fallback_when_config_fails(self):
@@ -59,7 +58,7 @@ class TestCSVHotReloadManagerInitialization:
         csv_path.write_text("id,content\n1,test content\n")
         
         with patch.object(CSVHotReloadManager, '_initialize_knowledge_base') as mock_init:
-            manager = CSVHotReloadManager(csv_path=str(csv_path))
+            CSVHotReloadManager(csv_path=str(csv_path))
             mock_init.assert_called_once()
 
 
@@ -120,7 +119,7 @@ class TestKnowledgeBaseInitialization:
             with patch('lib.knowledge.csv_hot_reload.OpenAIEmbedder') as mock_embedder:
                 with patch('lib.knowledge.csv_hot_reload.PgVector'):
                     with patch('lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase'):
-                        manager = CSVHotReloadManager()
+                        CSVHotReloadManager()
                         
                         # Should fall back to default embedder
                         mock_embedder.assert_called_with(id="text-embedding-3-small")
@@ -136,7 +135,7 @@ class TestKnowledgeBaseInitialization:
                         mock_kb_instance = Mock()
                         mock_kb.return_value = mock_kb_instance
                         
-                        manager = CSVHotReloadManager(csv_path="/nonexistent/file.csv")
+                        CSVHotReloadManager(csv_path="/nonexistent/file.csv")
                         
                         # Should create knowledge base but not load non-existent file
                         mock_kb_instance.load.assert_not_called()
@@ -405,7 +404,7 @@ class TestMainFunction:
                 mock_manager.get_status.return_value = {"status": "stopped", "csv_path": str(csv_path)}
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager and call get_status
                 mock_manager_class.assert_called_with(str(csv_path))
@@ -423,7 +422,7 @@ class TestMainFunction:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager and call force_reload
                 mock_manager_class.assert_called_with(str(csv_path))
@@ -441,7 +440,7 @@ class TestMainFunction:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager and start watching
                 mock_manager_class.assert_called_with(str(csv_path))
@@ -457,7 +456,7 @@ class TestMainFunction:
                 mock_manager.get_status.return_value = {"status": "stopped"}
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager with default path
                 mock_manager_class.assert_called_with("knowledge/knowledge_rag.csv")
@@ -750,7 +749,7 @@ class TestIntegrationScenarios:
             }
         ]
         
-        for i, config in enumerate(configs):
+        for _i, config in enumerate(configs):
             with patch('lib.knowledge.csv_hot_reload.load_global_knowledge_config') as mock_load:
                 mock_load.return_value = config
                 

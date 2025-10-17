@@ -1,9 +1,10 @@
 """Tests for ai.tools.base_tool module."""
 
-import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
 from typing import Any
+from unittest.mock import mock_open, patch
+
+import pytest
 
 from ai.tools.base_tool import BaseTool, ToolConfig
 
@@ -170,7 +171,7 @@ category: testing
         mock_exists.return_value = True
         config_path = Path("/test/invalid_config.yaml")
         
-        with pytest.raises(Exception):  # YAML parsing error
+        with pytest.raises(Exception):  # YAML parsing error  # noqa: B017
             ConcreteTestTool(config_path=config_path)
 
     @patch("ai.tools.base_tool.Path.exists")
@@ -264,7 +265,7 @@ class TestBaseToolErrorHandling:
         mock_exists.return_value = True
         config_path = Path("/test/empty_config.yaml")
         
-        with pytest.raises(Exception):  # Should fail due to missing required fields
+        with pytest.raises(Exception):  # Should fail due to missing required fields  # noqa: B017
             ConcreteTestTool(config_path=config_path)
 
     def test_base_tool_invalid_config_path_type(self):

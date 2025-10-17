@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Iterable, Optional
 from urllib.parse import urlparse
 
 from lib.logging import logger
@@ -35,9 +34,9 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
 
     def __init__(
         self,
-        project_root: Optional[Path] = None,
-        env_file: Optional[Path] = None,
-        alias_file: Optional[Path] = None,
+        project_root: Path | None = None,
+        env_file: Path | None = None,
+        alias_file: Path | None = None,
     ) -> None:
         resolved_root = self._resolve_project_root(project_root, env_file)
         self.project_root = resolved_root
@@ -51,7 +50,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
         )
 
     def _resolve_project_root(
-        self, project_root: Optional[Path], env_file: Optional[Path]
+        self, project_root: Path | None, env_file: Path | None
     ) -> Path:
         if project_root is not None:
             return Path(project_root)
@@ -60,7 +59,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
         return Path.cwd()
 
     def _resolve_env_path(
-        self, env_file: Optional[Path], default_name: str
+        self, env_file: Path | None, default_name: str
     ) -> Path:
         if env_file is None:
             return self.project_root / default_name
@@ -75,7 +74,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
             return self.alias_env_path
         return self.primary_env_path
 
-    def refresh_primary(self, create_if_missing: bool = True) -> Optional[Path]:
+    def refresh_primary(self, create_if_missing: bool = True) -> Path | None:
         """Ensure primary env file exists and return its path."""
         if self.primary_env_path.exists():
             return self.primary_env_path
@@ -163,7 +162,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
             return []
 
     def update_values(
-        self, updates: Dict[str, str], create_if_missing: bool = True
+        self, updates: dict[str, str], create_if_missing: bool = True
     ) -> bool:
         """Update key/value pairs in env files, creating from template if needed."""
         target_path = self.refresh_primary(create_if_missing=create_if_missing)
@@ -219,8 +218,8 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
 
     def extract_postgres_credentials(
         self, database_url_var: str
-    ) -> Dict[str, Optional[str]]:
-        credentials: Dict[str, Optional[str]] = {
+    ) -> dict[str, str | None]:
+        credentials: dict[str, str | None] = {
             "user": None,
             "password": None,
             "database": None,
@@ -260,7 +259,7 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
 
         return credentials
 
-    def extract_api_key(self, api_key_var: str) -> Optional[str]:
+    def extract_api_key(self, api_key_var: str) -> str | None:
         path = self.master_env_path
         if not path.exists():
             logger.warning("Environment file not found", env_file=str(path))
@@ -285,10 +284,10 @@ HIVE_DEFAULT_MODEL=gpt-4.1-mini
 
     def extract_base_ports(
         self,
-        defaults: Dict[str, int],
+        defaults: dict[str, int],
         database_url_var: str,
         api_port_var: str,
-    ) -> Dict[str, int]:
+    ) -> dict[str, int]:
         base_ports = defaults.copy()
         path = self.master_env_path
         if not path.exists():

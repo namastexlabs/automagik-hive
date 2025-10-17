@@ -11,7 +11,6 @@ from api.settings import api_settings
 from lib.auth.dependencies import get_auth_service, require_api_key
 from lib.logging import initialize_logging, logger
 
-
 # Ensure unified logging is initialized for standalone FastAPI entrypoints
 initialize_logging(surface="api.main")
 

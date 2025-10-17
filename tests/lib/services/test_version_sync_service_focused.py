@@ -6,10 +6,8 @@ to achieve 50%+ coverage by testing the most important untested methods.
 
 import asyncio
 import os
-import tempfile
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 import yaml

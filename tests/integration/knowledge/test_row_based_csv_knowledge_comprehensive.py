@@ -416,7 +416,7 @@ class TestRowBasedCSVErrorHandling:
             kb = RowBasedCSVKnowledgeBase(str(malformed_csv), self.mock_vector_db)
             # If it doesn't crash, that's good
             assert isinstance(kb.documents, list)
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # If it does throw an exception, that's also acceptable
             # as long as it's handled appropriately
             pass

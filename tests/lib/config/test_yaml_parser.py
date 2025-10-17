@@ -12,14 +12,15 @@ This test suite covers:
 """
 
 import tempfile
+from pathlib import Path
+from unittest.mock import Mock
+
 import pytest
 import yaml
-from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
 
+from lib.config.schemas import MCPToolConfig
 from lib.config.yaml_parser import YAMLConfigParser
 from lib.mcp.catalog import MCPCatalog
-from lib.config.schemas import MCPToolConfig
 
 
 class TestYAMLConfigParserInitialization:
@@ -517,7 +518,7 @@ class TestConfigValidation:
         
         # Debug: print result if test fails
         if not result["valid"]:
-            print(f"Validation failed. Errors: {result.get('errors', [])}")
+            pass
             
         assert result["valid"] is True
         assert result["config_path"] == valid_config_file

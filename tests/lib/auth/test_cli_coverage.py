@@ -9,25 +9,24 @@ Targeting 50% minimum coverage with focus on:
 - Edge cases and boundary conditions
 """
 
-import pytest
 import os
-import sys
-import argparse
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call, mock_open
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the module under test
 try:
     import lib.auth.cli as auth_cli
     from lib.auth.cli import (
-        show_current_key,
-        regenerate_key, 
-        show_auth_status,
-        generate_postgres_credentials,
-        generate_complete_workspace_credentials,
         generate_agent_credentials,
+        generate_complete_workspace_credentials,
+        generate_postgres_credentials,
+        regenerate_key,
+        show_auth_status,
         show_credential_status,
-        sync_mcp_credentials
+        show_current_key,
+        sync_mcp_credentials,
     )
 except ImportError:
     pytest.skip("Module lib.auth.cli not available", allow_module_level=True)
@@ -225,7 +224,7 @@ class TestGeneratePostgresCredentials:
         mock_service.generate_postgres_credentials.return_value = test_creds
         mock_service_class.return_value = mock_service
         
-        env_file = Path("/tmp/test.env")
+        env_file = Path("/tmp/test.env")  # noqa: S108 - Test/script temp file
         result = generate_postgres_credentials(
             host="remote.db.host",
             port=3306,
@@ -539,8 +538,8 @@ class TestCliMainExecution:
         assert isinstance(test_path, TestPath)
         
         # Test that argparse would have access to needed types
-        assert int(5532) == 5532  # Port type conversion
-        assert str("localhost") == "localhost"  # Host parameter
+        assert 5532 == 5532  # Port type conversion
+        assert "localhost" == "localhost"  # Host parameter
 
     @patch('lib.auth.cli.show_current_key')
     def test_auth_command_routing(self, mock_show_key):
@@ -597,7 +596,7 @@ class TestCliMainExecution:
         mock_generate_agent()
         mock_generate_agent.assert_called_once()
 
-    @patch('sys.argv', ['cli.py', 'credentials', 'workspace', '/tmp'])
+    @patch('sys.argv', ['cli.py', 'credentials', 'workspace', '/tmp'])  # noqa: S108 - Test/script temp file
     @patch('lib.auth.cli.generate_complete_workspace_credentials')
     def test_main_credentials_workspace_command(self, mock_generate_workspace):
         """Test main execution with credentials workspace command."""
@@ -653,7 +652,7 @@ class TestErrorHandlingAndEdgeCases:
             generate_agent_credentials: dict
         }
         
-        for func, expected_type in functions_with_returns.items():
+        for func, _expected_type in functions_with_returns.items():
             # We can't test actual returns without mocking, but we can verify callable
             assert callable(func)
             
@@ -661,7 +660,7 @@ class TestErrorHandlingAndEdgeCases:
         """Test Path object handling in functions."""
         # Test that Path objects can be created for function parameters
         test_paths = [
-            Path("/tmp/test.env"),
+            Path("/tmp/test.env"),  # noqa: S108 - Test/script temp file
             Path("./relative.env"),
             Path("/absolute/path/to/workspace"),
             Path("/custom/mcp.json")

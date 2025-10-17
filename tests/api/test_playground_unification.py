@@ -89,9 +89,10 @@ class TestPlaygroundUnification:
         # Enable authentication in environment for this test
         with patch.dict(os.environ, {"HIVE_AUTH_DISABLED": "false", "HIVE_ENVIRONMENT": "development"}, clear=False):
             # Re-create the app with auth enabled
-            from api.main import create_app
             from starlette.testclient import TestClient
+
             import lib.auth.dependencies
+            from api.main import create_app
             from lib.auth.service import AuthService
 
             # Force reload of global auth_service singleton to pick up new environment

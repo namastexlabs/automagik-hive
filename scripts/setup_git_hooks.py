@@ -11,13 +11,12 @@ import stat
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 
 class GitHookManager:
     """Manages git hooks for the Automagik Hive project."""
     
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path.cwd()
         self.git_dir = self.project_root / ".git"
         self.hooks_dir = self.git_dir / "hooks"
@@ -31,7 +30,7 @@ class GitHookManager:
         """Check if we're in an Automagik Hive project."""
         return (self.project_root / "pyproject.toml").exists()
     
-    def get_git_status(self) -> Tuple[List[str], List[str], List[str]]:
+    def get_git_status(self) -> tuple[list[str], list[str], list[str]]:
         """Get git status for staged, modified, and untracked files."""
         try:
             # Get staged files
@@ -66,8 +65,7 @@ class GitHookManager:
             
             return staged, modified, untracked
             
-        except subprocess.CalledProcessError as e:
-            print(f"Error getting git status: {e}")
+        except subprocess.CalledProcessError:
             return [], [], []
     
     def check_hook_exists(self) -> bool:
@@ -83,27 +81,22 @@ class GitHookManager:
     def make_hook_executable(self) -> bool:
         """Make the pre-commit hook executable."""
         if not self.check_hook_exists():
-            print("ERROR: Pre-commit hook does not exist!")
             return False
         
         try:
             # Add execute permissions
             current_permissions = os.stat(self.pre_commit_hook).st_mode
             os.chmod(self.pre_commit_hook, current_permissions | stat.S_IEXEC)
-            print("✓ Made pre-commit hook executable")
             return True
-        except OSError as e:
-            print(f"ERROR: Could not make hook executable: {e}")
+        except OSError:
             return False
     
     def test_hook(self, dry_run: bool = True) -> bool:
         """Test the pre-commit hook."""
         if not self.check_hook_exists():
-            print("ERROR: Pre-commit hook does not exist!")
             return False
             
         if not self.check_hook_executable():
-            print("WARNING: Pre-commit hook is not executable. Fixing...")
             if not self.make_hook_executable():
                 return False
         
@@ -111,22 +104,17 @@ class GitHookManager:
         staged, _, _ = self.get_git_status()
         
         if not staged:
-            print("INFO: No staged files found.")
             if not dry_run:
-                print("INFO: Staging a test file to demonstrate the hook...")
                 # Create a temporary test file
                 test_file = self.project_root / "test_hook_temp.py"
                 test_file.write_text("# Temporary test file\ndef hello():\n    return 'world'\n")
                 
                 try:
                     subprocess.run(["git", "add", str(test_file)], cwd=self.project_root, check=True)
-                    print(f"✓ Staged temporary test file: {test_file}")
-                except subprocess.CalledProcessError as e:
-                    print(f"ERROR: Could not stage test file: {e}")
+                except subprocess.CalledProcessError:
                     test_file.unlink(missing_ok=True)
                     return False
         
-        print("Running pre-commit hook test...")
         try:
             # Run the hook directly
             result = subprocess.run(
@@ -138,14 +126,11 @@ class GitHookManager:
             )
             
             if result.returncode == 0:
-                print("✅ Pre-commit hook test PASSED")
                 return True
             else:
-                print(f"❌ Pre-commit hook test FAILED (exit code: {result.returncode})")
                 return False
                 
-        except Exception as e:
-            print(f"ERROR: Could not run pre-commit hook: {e}")
+        except Exception:
             return False
         finally:
             # Clean up temporary test file if it was created
@@ -155,45 +140,28 @@ class GitHookManager:
                     try:
                         subprocess.run(["git", "reset", "HEAD", str(test_file)], cwd=self.project_root, check=True)
                         test_file.unlink()
-                        print("✓ Cleaned up temporary test file")
                     except subprocess.CalledProcessError:
-                        print("WARNING: Could not clean up temporary test file")
+                        pass
     
     def show_hook_status(self) -> None:
         """Show the current status of git hooks."""
-        print("=== Automagik Hive Git Hook Status ===")
-        print(f"Project root: {self.project_root}")
-        print(f"Git repository: {'✓' if self.check_git_repo() else '✗'}")
-        print(f"Automagik project: {'✓' if self.check_automagik_project() else '✗'}")
-        print(f"Hooks directory: {self.hooks_dir}")
-        print(f"Pre-commit hook exists: {'✓' if self.check_hook_exists() else '✗'}")
-        print(f"Pre-commit hook executable: {'✓' if self.check_hook_executable() else '✗'}")
         
         # Show git status
         staged, modified, untracked = self.get_git_status()
-        print(f"\nGit Status:")
-        print(f"  Staged files: {len(staged)}")
-        print(f"  Modified files: {len(modified)}")  
-        print(f"  Untracked files: {len(untracked)}")
         
         if staged:
-            print(f"  Staged Python files: {len([f for f in staged if f.endswith('.py')])}")
+            pass
         
-        print()
     
     def enable_hook(self) -> bool:
         """Enable the pre-commit hook."""
         if not self.check_git_repo():
-            print("ERROR: Not in a git repository!")
             return False
             
         if not self.check_automagik_project():
-            print("ERROR: Not in an Automagik Hive project!")
             return False
         
         if not self.check_hook_exists():
-            print("ERROR: Pre-commit hook file does not exist!")
-            print(f"Expected location: {self.pre_commit_hook}")
             return False
             
         return self.make_hook_executable()
@@ -201,17 +169,14 @@ class GitHookManager:
     def disable_hook(self) -> bool:
         """Disable the pre-commit hook."""
         if not self.check_hook_exists():
-            print("INFO: Pre-commit hook does not exist.")
             return True
             
         try:
             # Remove execute permissions
             current_permissions = os.stat(self.pre_commit_hook).st_mode
             os.chmod(self.pre_commit_hook, current_permissions & ~stat.S_IEXEC)
-            print("✓ Disabled pre-commit hook")
             return True
-        except OSError as e:
-            print(f"ERROR: Could not disable hook: {e}")
+        except OSError:
             return False
 
 

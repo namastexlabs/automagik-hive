@@ -131,7 +131,7 @@ class TestSettingsEdgeCases:
         with patch.dict(os.environ, {"HIVE_METRICS_BATCH_SIZE": "invalid"}):
             # Should raise ValidationError for invalid integer parsing
             with pytest.raises(ValidationError) as exc_info:
-                test_settings = Settings()
+                Settings()
             
             # Verify the specific validation error
             error_messages = str(exc_info.value)
@@ -154,7 +154,7 @@ class TestSettingsEdgeCases:
                 # The test expects this to work with defaults, but Pydantic validation
                 # will fail on invalid integer. Need to catch ValidationError.
                 with pytest.raises(ValidationError) as exc_info:
-                    test_settings = Settings()
+                    Settings()
                 
                 # Verify the error is about the metrics batch size
                 error = exc_info.value
@@ -228,7 +228,7 @@ class TestSettingsEdgeCases:
         with patch.dict(os.environ, required_env_vars, clear=True):
             # Current behavior: Pydantic validators raise ValidationError instead of clamping
             with pytest.raises(ValidationError) as exc_info:
-                test_settings = Settings()
+                Settings()
             
             # Verify the error contains information about all three validation failures
             error = exc_info.value

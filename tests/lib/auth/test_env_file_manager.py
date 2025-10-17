@@ -7,7 +7,6 @@ Focused unit tests for EnvFileManager covering:
 """
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -16,7 +15,7 @@ from lib.auth.env_file_manager import EnvFileManager
 
 class TestEnvFileResolution:
     def test_master_env_path_prefers_alias(self, tmp_path: Path):
-        primary = tmp_path / ".env"
+        tmp_path / ".env"
         alias = tmp_path / ".env.master"
 
         # Only alias exists
@@ -27,7 +26,7 @@ class TestEnvFileResolution:
 
         # read_master_lines should read from alias
         lines = mgr.read_master_lines()
-        assert any(l.startswith("HIVE_API_KEY=") for l in lines)
+        assert any(line.startswith("HIVE_API_KEY=") for line in lines)
 
     def test_refresh_primary_hydrates_from_alias(self, tmp_path: Path):
         primary = tmp_path / ".env"
@@ -85,7 +84,7 @@ class TestValueUpdates:
         assert (tmp_path / ".env.master").exists()
 
         lines = (tmp_path / ".env").read_text().splitlines()
-        assert any(l == "HIVE_API_KEY=hive_abc" for l in lines)
+        assert any(line == "HIVE_API_KEY=hive_abc" for line in lines)
 
     def test_update_values_fails_when_create_disabled(self, tmp_path: Path):
         mgr = EnvFileManager(project_root=tmp_path)
@@ -134,7 +133,7 @@ class TestExtractionHelpers:
         mgr = EnvFileManager(project_root=tmp_path)
         creds = mgr.extract_postgres_credentials("HIVE_DATABASE_URL")
         assert creds["user"] == "user"
-        assert creds["password"] == "pass"
+        assert creds["password"] == "pass"  # noqa: S105 - Test fixture password
         assert creds["port"] == "6000"
         assert creds["database"] == "hive"
 

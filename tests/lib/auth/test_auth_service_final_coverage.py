@@ -11,8 +11,9 @@ Test Categories:
 """
 
 import os
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from lib.auth.service import AuthService
 

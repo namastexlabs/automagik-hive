@@ -4,14 +4,12 @@ This test suite focuses on achieving >50% coverage for the code understanding to
 testing symbol finding, reference analysis, and code overview functionality.
 """
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+
 import pytest
 
 # Create a simple test wrapper that avoids the Agno tool decorator issues
-import ai.agents.tools.code_understanding_toolkit as toolkit_module
 
 # Simple mock functions that simulate expected behavior for testing
 def find_symbol_func(symbol_name, symbol_type=None, file_pattern=None, case_sensitive=True):
@@ -62,10 +60,10 @@ def get_symbols_overview_func(file_or_directory, symbol_types=None, include_priv
             return f"Symbol Overview for {file_or_directory}:\n📄 test.py\n  " + "\n  ".join(symbols)
         else:
             return f"Symbol Overview for {file_or_directory}:\n📄 test.py"
-from ai.agents.tools.code_understanding_toolkit import (
-    _detect_symbol_type,
+from ai.agents.tools.code_understanding_toolkit import (  # noqa: E402 - Conditional import within test function
     _analyze_reference_context,
     _analyze_usage_pattern,
+    _detect_symbol_type,
     _extract_symbols_from_file,
     _parse_symbol_definition,
 )
@@ -757,15 +755,12 @@ my_var = "test"
             # Debug: Test _parse_symbol_definition directly on each line
             content = temp_path.read_text()
             lines = content.splitlines()
-            print(f"DEBUG: Testing line by line parsing:")
             for i, line in enumerate(lines, 1):
                 stripped = line.strip()
                 if stripped and not stripped.startswith('#') and not stripped.startswith('"""'):
-                    result = _parse_symbol_definition(stripped, i)
-                    print(f"  Line {i}: {stripped!r} -> {result}")
+                    _parse_symbol_definition(stripped, i)
             
             symbol_names = [s['name'] for s in symbols]
-            print(f"DEBUG: Found symbols: {symbol_names}")
             
             # The current implementation may have limitations, so let's be flexible
             # Check if any symbols were found at all
@@ -790,7 +785,6 @@ my_var = "test"
                     
             # For now, pass the test if the function doesn't crash
             # This ensures we're testing the existing behavior, not demanding changes
-            print(f"DEBUG: Test passed with {len(symbols)} symbols found")
             
         finally:
             if temp_path.exists():
@@ -817,8 +811,7 @@ class _PrivateClass:
         try:
             # Test excluding private symbols
             symbols = _extract_symbols_from_file(temp_path, None, False)
-            symbol_names = [s['name'] for s in symbols]
-            print(f"DEBUG: Private filter symbols: {symbol_names}")  # Debug output
+            [s['name'] for s in symbols]
             
             # Known issue: _extract_symbols_from_file has a bug and returns empty list
             # even when symbols are correctly parsed. Test that function doesn't crash.
@@ -834,12 +827,10 @@ class _PrivateClass:
                     if result:
                         parsed_symbols.append(result)
             
-            print(f"DEBUG: Direct parsing found {len(parsed_symbols)} symbols")
             
             # The extraction function has a bug, but parsing works
             # Test passes if no exceptions are thrown
             assert isinstance(symbols, list), "Should return a list"
-            print(f"DEBUG: Private filter test completed - function didn't crash")
             
         finally:
             if temp_path.exists():
@@ -862,8 +853,7 @@ test_var = "value"
         try:
             # Test filtering to only functions
             symbols = _extract_symbols_from_file(temp_path, ['function'], True)
-            symbol_types = [s['type'] for s in symbols]
-            print(f"DEBUG: Type filter symbols: {[s['name'] for s in symbols]}")  # Debug output
+            [s['type'] for s in symbols]
             
             # Known issue: _extract_symbols_from_file has a bug and returns empty list
             content = temp_path.read_text()
@@ -878,7 +868,6 @@ test_var = "value"
                     if result and result['type'] == 'function':
                         parsed_symbols.append(result)
             
-            print(f"DEBUG: Direct parsing found {len(parsed_symbols)} function symbols")
             
             # If symbols were extracted (when bug is fixed), validate them
             if symbols:
@@ -887,7 +876,6 @@ test_var = "value"
             
             # Test passes if no exceptions are thrown
             assert isinstance(symbols, list), "Should return a list"
-            print(f"DEBUG: Type filter test completed - function didn't crash")
             
         finally:
             if temp_path.exists():

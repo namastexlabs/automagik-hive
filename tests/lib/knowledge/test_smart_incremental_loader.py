@@ -13,22 +13,19 @@ Target: Boost coverage from 23% to 50%+ minimum
 
 import csv
 import hashlib
-import os
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, mock_open, call
+from unittest.mock import MagicMock, mock_open, patch
 
 import pandas as pd
 import pytest
-import yaml
 
 # Import the module under test
 try:
-    from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
     import lib.knowledge.smart_incremental_loader
+    from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
 except ImportError:
-    pytest.skip(f"Module lib.knowledge.smart_incremental_loader not available", allow_module_level=True)
+    pytest.skip("Module lib.knowledge.smart_incremental_loader not available", allow_module_level=True)
 
 
 class TestSmartIncrementalLoaderCore:
@@ -248,7 +245,7 @@ class TestSmartIncrementalLoaderHashing:
         
         # Verify it matches expected MD5
         content_str = f"{content['problem']}{content['solution']}{content['typification']}{content['business_unit']}"
-        expected_hash = hashlib.md5(content_str.encode('utf-8')).hexdigest()
+        expected_hash = hashlib.md5(content_str.encode('utf-8')).hexdigest()  # noqa: S324 - Content hashing, not cryptographic
         assert hash1 == expected_hash
 
 
@@ -524,7 +521,7 @@ class TestSmartIncrementalLoaderCSVProcessing:
         mock_yaml_load.return_value = self.test_config
         
         # Create empty CSV file
-        with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
+        with open(self.csv_file, "w", newline="", encoding="utf-8"):
             pass  # Empty file
         
         with patch('lib.logging.logger'):

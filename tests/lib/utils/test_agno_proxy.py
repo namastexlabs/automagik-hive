@@ -3,9 +3,9 @@ Comprehensive test suite for lib/utils/agno_proxy.py
 Testing core proxy system functionality to ensure 50%+ coverage.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Any
 
 # Import the module under test
 from lib.utils import agno_proxy
@@ -230,7 +230,7 @@ class TestErrorHandling:
         with patch('lib.utils.proxy_agents.AgnoAgentProxy') as mock_agent_class:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
-            agent_proxy = agno_proxy.get_agno_proxy()
+            agno_proxy.get_agno_proxy()
             assert agno_proxy._agno_agent_proxy is mock_agent
         
         # Reset should clear everything

@@ -73,8 +73,8 @@ class TestDevModeWorkflow:
                 ):
                     with patch("yaml.safe_load", return_value=expected_config):
                         # Mock database services to prevent real connections
-                        with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                        with patch("lib.versioning.AgnoVersionService"):
+                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                                 factory = VersionFactory()
 
                                 # In dev mode, should load from YAML only without DB interaction
@@ -101,8 +101,8 @@ class TestDevModeWorkflow:
                 mock_path.return_value = mock_path_instance
 
                 # Mock database services to prevent real connections
-                with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                    with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                with patch("lib.versioning.AgnoVersionService"):
+                    with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                         factory = VersionFactory()
 
                         with pytest.raises(ValueError, match="Config file not found"):
@@ -129,8 +129,8 @@ class TestDevModeWorkflow:
                 ):
                     with patch("yaml.safe_load", return_value=invalid_config):
                         # Mock database services to prevent real connections
-                        with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                        with patch("lib.versioning.AgnoVersionService"):
+                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                                 factory = VersionFactory()
 
                                 with pytest.raises(ValueError, match="missing 'agent' section"):
@@ -465,8 +465,8 @@ class TestCompleteIntegrationScenarios:
                 ):
                     with patch("yaml.safe_load", return_value=component_config):
                         # Mock database services to prevent real connections
-                        with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                        with patch("lib.versioning.AgnoVersionService"):
+                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                                 dev_factory = VersionFactory()
                                 dev_config = await dev_factory._load_from_yaml_only(
                                     "migration-agent", "agent"
@@ -500,7 +500,7 @@ class TestCompleteIntegrationScenarios:
                     with patch.object(
                         sync_engine, "_load_yaml_config", return_value=component_config
                     ):
-                        with patch.object(sync_engine, "_create_db_version") as mock_create:
+                        with patch.object(sync_engine, "_create_db_version"):
                             prod_config = await prod_factory._load_with_bidirectional_sync(
                                 "migration-agent", "agent"
                             )
@@ -650,6 +650,6 @@ async def test_store_integration_patterns():
     """Store successful integration test patterns in memory."""
     try:
         pass
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         # If memory storage fails, just pass - this is not critical for test functionality
         pass

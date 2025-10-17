@@ -8,8 +8,6 @@ and provides analysis of the Pydantic V1/V2 compatibility issues.
 import sys
 from pathlib import Path
 
-import pytest
-
 
 def test_production_code_import_analysis():
     """Document the production code import compatibility status for coverage analysis."""

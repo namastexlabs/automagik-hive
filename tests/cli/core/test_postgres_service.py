@@ -5,10 +5,8 @@ service operations, status monitoring, and error handling.
 All tests are designed with RED phase compliance for TDD workflow.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-import subprocess
+from unittest.mock import Mock, patch
 
 from cli.core.postgres_service import PostgreSQLService
 
@@ -133,9 +131,9 @@ class TestPostgreSQLServiceStatus:
         service = PostgreSQLService(temp_workspace)
         
         # Mock the container operations to simulate a running PostgreSQL container
-        with patch.object(service.postgres_commands, '_get_postgres_container_for_workspace', return_value='hive-postgres-workspace') as mock_container, \
-             patch.object(service.postgres_commands.docker_manager, '_container_exists', return_value=True) as mock_exists, \
-             patch.object(service.postgres_commands.docker_manager, '_container_running', return_value=True) as mock_running, \
+        with patch.object(service.postgres_commands, '_get_postgres_container_for_workspace', return_value='hive-postgres-workspace'), \
+             patch.object(service.postgres_commands.docker_manager, '_container_exists', return_value=True), \
+             patch.object(service.postgres_commands.docker_manager, '_container_running', return_value=True), \
              patch.object(service.postgres_commands.docker_manager, '_run_command') as mock_run:
             
             # Mock command outputs for health and port info

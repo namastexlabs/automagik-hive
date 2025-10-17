@@ -23,13 +23,14 @@ load_dotenv()
 
 # Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
 
-from lib.utils.yaml_cache import (
-    get_yaml_cache_manager,
+from lib.utils.yaml_cache import (  # noqa: E402 - Dynamic conditional imports based on configuration
     load_yaml_cached,
 )
-from lib.versioning import AgnoVersionService
-from lib.versioning.bidirectional_sync import BidirectionalSync
-from lib.versioning.dev_mode import DevMode
+from lib.versioning import AgnoVersionService  # noqa: E402 - Dynamic conditional imports based on configuration
+from lib.versioning.bidirectional_sync import (  # noqa: E402 - Conditional import
+    BidirectionalSync,  # noqa: E402 - Dynamic conditional imports based on configuration
+)
+from lib.versioning.dev_mode import DevMode  # noqa: E402 - Dynamic conditional imports based on configuration
 
 
 def load_global_knowledge_config():

@@ -7,13 +7,13 @@ and error handling scenarios with comprehensive edge cases.
 
 import os
 import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
+
 import pytest
 import yaml
 
+from lib.config.schemas import AgentConfigMCP, MCPToolConfig, TeamConfig
 from lib.config.yaml_parser import YAMLConfigParser
-from lib.config.schemas import AgentConfig, AgentConfigMCP, MCPToolConfig, TeamConfig
 from lib.mcp.catalog import MCPCatalog
 
 
@@ -389,7 +389,7 @@ class TestConfigurationUpdates:
         parser.update_agent_config(str(config_file), updates)
         
         # Read and verify updated content
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             updated_config = yaml.safe_load(f)
         
         assert updated_config["agent_id"] == "test-agent"  # Unchanged
@@ -411,7 +411,7 @@ class TestConfigurationUpdates:
         
         parser = YAMLConfigParser()
         
-        with patch('builtins.open', side_effect=IOError("Read error")):
+        with patch('builtins.open', side_effect=OSError("Read error")):
             with pytest.raises(ValueError, match="Error updating configuration file"):
                 parser.update_agent_config(str(config_file), {"name": "test"})
                 
@@ -424,7 +424,7 @@ class TestConfigurationUpdates:
         
         with patch('builtins.open', mock_open()) as mock_file:
             # Make write fail
-            mock_file.return_value.__enter__.return_value.write.side_effect = IOError("Write error")
+            mock_file.return_value.__enter__.return_value.write.side_effect = OSError("Write error")
             
             with pytest.raises(ValueError, match="Error updating configuration file"):
                 parser.update_agent_config(str(config_file), {"name": "test"})
@@ -628,7 +628,6 @@ class TestEdgeCasesAndErrorHandling:
     def test_concurrent_parsing_safety(self):
         """Test that parser handles concurrent parsing safely."""
         import threading
-        import tempfile
         
         parser = YAMLConfigParser()
         results = []

@@ -1,8 +1,7 @@
 """Tests for ai.agents.tools.code_understanding_toolkit module."""
 
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from ai.agents.tools.code_understanding_toolkit import *
 
 
 class TestCodeUnderstandingToolkit:

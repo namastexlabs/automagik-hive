@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from agno.os.config import AgentOSConfig
 from agno.os.schema import (
@@ -14,13 +15,8 @@ from agno.os.schema import (
     WorkflowSummaryResponse,
 )
 
-from typing import TYPE_CHECKING
-
-
 if TYPE_CHECKING:  # pragma: no cover - import only for type checkers
-    from ai.agents.registry import AgentRegistry
-    from ai.teams.registry import list_available_teams
-    from ai.workflows.registry import list_available_workflows
+    pass
 
 from lib.agentos import load_agentos_config
 from lib.agentos.config_models import collect_component_metadata
@@ -215,7 +211,7 @@ class AgentOSService:
             return str(self._settings.hive_control_pane_base_url).rstrip("/")
 
         host = self._settings.hive_api_host
-        display_host = "localhost" if host in {"0.0.0.0", "::"} else host
+        display_host = "localhost" if host in {"0.0.0.0", "::"} else host  # noqa: S104
         return f"http://{display_host}:{self._settings.hive_api_port}"
 
     def _resolve_playground_route(self, base_url: str) -> str | None:

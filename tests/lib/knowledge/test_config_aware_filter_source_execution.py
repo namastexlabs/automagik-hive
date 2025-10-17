@@ -9,7 +9,6 @@ Approach: Source code execution with realistic configurations and document filte
 """
 
 from unittest.mock import Mock, patch
-from pathlib import Path
 
 import pytest
 
@@ -565,6 +564,6 @@ class TestRealConfigIntegrationExecution:
             filter_instance = BusinessUnitFilter()
             # If it succeeds, verify it has basic structure
             assert hasattr(filter_instance, 'business_units')
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Exception propagation is also acceptable behavior
             pass

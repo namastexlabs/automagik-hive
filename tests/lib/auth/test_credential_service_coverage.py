@@ -10,12 +10,10 @@ Targeting 50% minimum coverage with focus on:
 - Mode-specific credential derivation
 """
 
-import pytest
-import secrets
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open, MagicMock, call
-from urllib.parse import urlparse
+from unittest.mock import Mock, call, patch
+
+import pytest
 
 # Import the module under test
 try:
@@ -35,7 +33,7 @@ class TestCredentialServiceInit:
         assert service.master_env_file == Path.cwd() / ".env"
         assert service.env_file == service.master_env_file
         assert service.postgres_user_var == "POSTGRES_USER"
-        assert service.postgres_password_var == "POSTGRES_PASSWORD"
+        assert service.postgres_password_var == "POSTGRES_PASSWORD"  # noqa: S105 - Test fixture password
 
     def test_init_with_project_root(self):
         """Test initialization with project root."""
@@ -83,7 +81,7 @@ class TestPostgresCredentialGeneration:
             creds = service.generate_postgres_credentials()
             
             assert creds['user'] == 'test_user_16ch'
-            assert creds['password'] == 'test_pass_16ch'
+            assert creds['password'] == 'test_pass_16ch'  # noqa: S105 - Test fixture password
             assert creds['database'] == 'hive'
             assert creds['host'] == 'localhost'
             assert creds['port'] == '5532'
@@ -122,7 +120,7 @@ class TestPostgresCredentialGeneration:
         with patch.object(service, '_generate_secure_token') as mock_token:
             mock_token.side_effect = ['user123', 'pass456']
             
-            creds = service.generate_postgres_credentials()
+            service.generate_postgres_credentials()
             
             mock_logger.info.assert_any_call("Generating secure PostgreSQL credentials")
             mock_logger.info.assert_any_call(
@@ -210,7 +208,7 @@ class TestEnvironmentCredentialExtraction:
         creds = service.extract_postgres_credentials_from_env()
 
         assert creds['user'] == 'testuser'
-        assert creds['password'] == 'testpass'
+        assert creds['password'] == 'testpass'  # noqa: S105 - Test fixture password
         assert creds['host'] == 'testhost'
         assert creds['port'] == '5432'
         assert creds['database'] == 'testdb'
@@ -612,7 +610,7 @@ class TestSecureTokenGeneration:
         
         token = service._generate_secure_token(8, safe_chars=True)
         
-        assert token == 'abcdefgh'  # Dashes and underscores removed
+        assert token == 'abcdefgh'  # Dashes and underscores removed  # noqa: S105 - Test fixture password
         assert len(token) == 8
         mock_token.assert_called_once_with(16)  # length + 8 for extra
 
@@ -624,7 +622,7 @@ class TestSecureTokenGeneration:
         
         token = service._generate_secure_token(12)
         
-        assert token == 'normal_token'
+        assert token == 'normal_token'  # noqa: S105 - Test fixture password
         mock_token.assert_called_once_with(12)
 
     @patch('secrets.token_urlsafe')
@@ -930,7 +928,7 @@ class TestMasterCredentialExtraction:
                 
                 assert master_creds is not None
                 assert master_creds['postgres_user'] == 'master_user'
-                assert master_creds['postgres_password'] == 'master_pass'
+                assert master_creds['postgres_password'] == 'master_pass'  # noqa: S105 - Test fixture password
                 assert master_creds['api_key_base'] == 'secure_api_key_base'  # Without hive_ prefix
 
     def test_extract_existing_master_credentials_no_file(self):
@@ -1104,7 +1102,7 @@ class TestMasterCredentialManagement:
             master_creds = service.generate_master_credentials()
             
             assert master_creds['postgres_user'] == 'master_user'
-            assert master_creds['postgres_password'] == 'master_pass'
+            assert master_creds['postgres_password'] == 'master_pass'  # noqa: S105 - Test fixture password
             assert master_creds['api_key_base'] == 'master_token_base'
             
             mock_logger.info.assert_any_call("Generating MASTER credentials (single source of truth)")
@@ -1132,7 +1130,7 @@ class TestMasterCredentialManagement:
                 mode_creds = service.derive_mode_credentials(master_creds, 'workspace')
                 
                 assert mode_creds['postgres_user'] == 'master_user'
-                assert mode_creds['postgres_password'] == 'master_pass'
+                assert mode_creds['postgres_password'] == 'master_pass'  # noqa: S105 - Test fixture password
                 assert mode_creds['postgres_database'] == 'hive'
                 assert mode_creds['postgres_port'] == '5532'
                 assert mode_creds['api_port'] == '8886'

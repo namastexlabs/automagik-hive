@@ -346,7 +346,7 @@ class TestDocumentFilteringEdgeCases:
         """Test filtering with None documents input."""
         # Should handle gracefully without crashing
         try:
-            filtered = simple_filter.filter_documents_by_business_unit(None, "test")
+            simple_filter.filter_documents_by_business_unit(None, "test")
             # Implementation may vary - either empty list or exception
         except (TypeError, AttributeError):
             # Expected behavior for None input
@@ -412,7 +412,7 @@ class TestConfigurationErrorHandling:
                 assert hasattr(filter_instance, 'business_units')
                 assert hasattr(filter_instance, 'search_config')
                 assert hasattr(filter_instance, 'performance')
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # If exception propagates, that's also acceptable behavior
                 pass
 

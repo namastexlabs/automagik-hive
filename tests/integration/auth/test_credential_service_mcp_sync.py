@@ -11,9 +11,8 @@ Key test scenarios:
 4. Test that agent installations do trigger MCP sync when requested
 """
 
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import patch
+
 import pytest
 
 from lib.auth.credential_service import CredentialService

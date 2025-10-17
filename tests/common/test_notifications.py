@@ -2,22 +2,22 @@
 
 import os
 import time
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from common.notifications import (
+    LogProvider,
     NotificationLevel,
     NotificationMessage,
     NotificationProvider,
-    WhatsAppProvider,
-    LogProvider,
     NotificationService,
+    WhatsAppProvider,
     get_notification_service,
-    send_notification,
     send_critical_alert,
-    send_warning_alert,
     send_error_alert,
+    send_notification,
+    send_warning_alert,
 )
 
 

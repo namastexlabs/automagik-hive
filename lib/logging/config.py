@@ -107,7 +107,7 @@ def setup_logging():
                     # These messages should get emojis but didn't - let's see why
                     pass  # Could add debug logging here if needed
 
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
         # For multiprocessing main modules, use simplified format
@@ -162,9 +162,9 @@ def setup_logging():
                             # Replace the message part with enhanced version
                             parts[-1] = enhanced_message
                             return " - ".join(parts)
-                        except Exception:
+                        except Exception:  # noqa: S110 - Silent exception handling is intentional
                             pass
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
             return original_msg

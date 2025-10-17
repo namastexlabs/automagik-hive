@@ -81,7 +81,7 @@ def create_dynamic_storage(
         table_name_override or f"{component_mode}_{safe_component}_sessions"
     )
 
-    for param_name, param in signature.parameters.items():
+    for param_name, _param in signature.parameters.items():
         if param_name == "self":
             continue
 

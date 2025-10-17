@@ -1,8 +1,8 @@
 """Pytest configuration for AI workflows tests."""
 
-import pytest
-from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 
 @pytest.fixture

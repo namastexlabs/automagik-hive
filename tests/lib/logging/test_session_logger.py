@@ -1,13 +1,13 @@
 """Tests for lib.logging.session_logger module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.logging.session_logger
+    import lib.logging.session_logger  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.logging.session_logger not available", allow_module_level=True)
+    pytest.skip("Module lib.logging.session_logger not available", allow_module_level=True)
 
 
 class TestSessionLogger:

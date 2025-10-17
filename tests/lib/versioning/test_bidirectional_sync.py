@@ -9,17 +9,14 @@ Tests for YAML-Database synchronization engine, including:
 - Configuration validation
 """
 
-import os
-import tempfile
-from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 import yaml
 
-from lib.versioning.bidirectional_sync import BidirectionalSync
 from lib.versioning.agno_version_service import VersionInfo
+from lib.versioning.bidirectional_sync import BidirectionalSync
 
 
 @pytest.fixture

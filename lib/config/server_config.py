@@ -27,7 +27,7 @@ class ServerConfig:
     def __init__(self):
         """Initialize server configuration with environment variables."""
         # Server host and port configuration
-        self.host = os.getenv("HIVE_API_HOST", "0.0.0.0")
+        self.host = os.getenv("HIVE_API_HOST", "0.0.0.0")  # noqa: S104
         port_str = os.getenv("HIVE_API_PORT")
         if not port_str:
             raise ValueError(
@@ -118,7 +118,7 @@ class ServerConfig:
     def get_base_url(self) -> str:
         """Get the base URL for the server."""
         # Use localhost for local development, otherwise use the configured host
-        display_host = "localhost" if self.host in ["0.0.0.0", "::"] else self.host
+        display_host = "localhost" if self.host in ["0.0.0.0", "::"] else self.host  # noqa: S104
         return f"http://{display_host}:{self.port}"
 
     def get_playground_url(self) -> str | None:

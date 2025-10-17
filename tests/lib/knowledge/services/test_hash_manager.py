@@ -5,7 +5,7 @@ Validates row hashing and hash comparison logic.
 """
 
 import pandas as pd
-import pytest
+
 from lib.knowledge.services.hash_manager import HashManager
 
 

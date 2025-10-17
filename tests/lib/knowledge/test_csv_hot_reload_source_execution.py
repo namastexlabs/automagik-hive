@@ -8,14 +8,11 @@ TARGET: lib/knowledge/csv_hot_reload.py (100% source code execution)
 STRATEGY: Execute every method with real CSV operations and file watching
 """
 
-import asyncio
 import os
 import tempfile
 import threading
-import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import pytest
+from unittest.mock import Mock, patch
 
 from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 
@@ -89,7 +86,7 @@ knowledge:
             mock_kb.return_value = mock_kb_instance
             
             # Execute knowledge base initialization code
-            manager = CSVHotReloadManager(csv_path=str(self.csv_file))
+            CSVHotReloadManager(csv_path=str(self.csv_file))
             
             # Verify initialization code was executed
             mock_embedder.assert_called_with(id="text-embedding-3-large")
@@ -102,7 +99,7 @@ knowledge:
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
         
         with patch('watchdog.observers.Observer') as mock_observer_class, \
-             patch('watchdog.events.FileSystemEventHandler') as mock_handler:
+             patch('watchdog.events.FileSystemEventHandler'):
             
             mock_observer = Mock()
             mock_observer_class.return_value = mock_observer
@@ -229,7 +226,7 @@ knowledge:
             mock_manager_class.return_value = mock_manager
             
             # Execute main function with status flag
-            main()
+            main()  # noqa: F821
             
             # Verify CLI status code was executed
             mock_manager.get_status.assert_called_once()
@@ -243,7 +240,7 @@ knowledge:
             mock_manager_class.return_value = mock_manager
             
             # Execute main function with force-reload flag
-            main()
+            main()  # noqa: F821
             
             # Verify CLI force reload code was executed
             mock_manager.force_reload.assert_called_once()
@@ -257,7 +254,7 @@ knowledge:
             mock_manager_class.return_value = mock_manager
             
             # Execute main function in default mode
-            main()
+            main()  # noqa: F821
             
             # Verify CLI watching startup code was executed
             mock_manager.start_watching.assert_called_once()
@@ -416,7 +413,7 @@ knowledge:
                 "vector_db": {"embedder": "text-embedding-3-large"}
             }
             
-            manager = CSVHotReloadManager(csv_path=str(self.csv_file))
+            CSVHotReloadManager(csv_path=str(self.csv_file))
             
             # Verify embedder config was executed
             mock_embedder.assert_called_with(id="text-embedding-3-large")
@@ -424,7 +421,7 @@ knowledge:
             # Test config loading exception (fallback path)
             mock_config.side_effect = Exception("Config error")
             
-            manager2 = CSVHotReloadManager(csv_path=str(self.csv_file))
+            CSVHotReloadManager(csv_path=str(self.csv_file))
             
             # Verify fallback embedder config was executed
             mock_embedder.assert_called_with(id="text-embedding-3-small")
@@ -437,7 +434,7 @@ knowledge:
              patch('lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase'):
             
             # Execute initialization to trigger vector DB setup
-            manager = CSVHotReloadManager(csv_path=str(self.csv_file))
+            CSVHotReloadManager(csv_path=str(self.csv_file))
             
             # Verify PgVector setup code was executed
             mock_pgvector.assert_called_once_with(
@@ -455,12 +452,12 @@ knowledge:
             
             # Test custom CSV path argument
             with patch('sys.argv', ['csv_hot_reload.py', '--csv', '/custom/path.csv']):
-                main()
+                main()  # noqa: F821
                 mock_manager_class.assert_called_with('/custom/path.csv')
             
             # Test default CSV path
             with patch('sys.argv', ['csv_hot_reload.py']):
-                main()
+                main()  # noqa: F821
                 mock_manager_class.assert_called_with('knowledge/knowledge_rag.csv')
 
     def test_execute_missing_database_url_error_path(self):

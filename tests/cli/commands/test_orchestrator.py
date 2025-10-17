@@ -1,7 +1,7 @@
 """Tests for CLI orchestrator commands."""
 
-import pytest
 from pathlib import Path
+
 from cli.commands.orchestrator import WorkflowOrchestrator
 
 

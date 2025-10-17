@@ -1,15 +1,15 @@
 """Tests for lib.logging.batch_logger module."""
 
 import tempfile
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
+    import lib.logging.batch_logger  # noqa: F401 - Availability test import
     from lib.logging.batch_logger import BatchLogger
-    import lib.logging.batch_logger
 except ImportError:
-    pytest.skip(f"Module lib.logging.batch_logger not available", allow_module_level=True)
+    pytest.skip("Module lib.logging.batch_logger not available", allow_module_level=True)
 
 
 class TestBatchLogger:
@@ -89,7 +89,7 @@ class TestBatchLogger:
         # Test output methods if they exist
         if hasattr(logger, "get_batch_summary"):
             summary = logger.get_batch_summary()
-            assert isinstance(summary, (dict, str))
+            assert isinstance(summary, dict | str)
 
         if hasattr(logger, "clear_batches"):
             logger.clear_batches()
@@ -133,7 +133,7 @@ class TestBatchLoggerEdgeCases:
             logger.log_agent_inheritance(123)
             # Should handle gracefully
             assert True
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Some exceptions might be expected for invalid inputs
             pass
 

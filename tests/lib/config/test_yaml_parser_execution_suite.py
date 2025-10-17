@@ -9,15 +9,13 @@ Focus: Source code EXECUTION, not test repairs.
 Target: ALL parsing methods, error paths, and workflows.
 """
 
-import tempfile
+from unittest.mock import Mock
+
 import pytest
 import yaml
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from typing import Any
 
+from lib.config.schemas import AgentConfigMCP, MCPToolConfig, TeamConfig
 from lib.config.yaml_parser import YAMLConfigParser
-from lib.config.schemas import AgentConfig, AgentConfigMCP, MCPToolConfig, TeamConfig
 from lib.mcp.catalog import MCPCatalog
 
 
@@ -309,7 +307,7 @@ class TestExecuteAllYAMLParsingMethods:
         parser.update_agent_config(str(config_file), updates)
         
         # Verify updates were applied by reading file
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             updated_config = yaml.safe_load(f)
         
         assert updated_config["agent"]["name"] == "Updated Agent"
@@ -681,7 +679,7 @@ class TestExecuteFileOperationPaths:
         parser.update_agent_config(str(config_file), complex_updates)
         
         # Verify complex data was written correctly
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             updated = yaml.safe_load(f)
             
         assert updated["nested"]["level1"]["level2"]["level3"] == "deep_value"

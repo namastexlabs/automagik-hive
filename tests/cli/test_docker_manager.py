@@ -13,11 +13,11 @@ Safety guarantees:
 - No external dependencies
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open, call, ANY
 import subprocess
-import yaml
+from pathlib import Path
+from unittest.mock import ANY, MagicMock, mock_open, patch
+
+import pytest
 
 from cli.docker_manager import DockerManager
 
@@ -1165,7 +1165,7 @@ class TestBoundaryConditions:
         # Current behavior: TimeoutExpired will propagate up (source code issue)
         # Expected behavior after fix: should return None gracefully
         with pytest.raises(subprocess.TimeoutExpired):
-            result = manager._run_command(["docker", "ps"], capture_output=True)
+            manager._run_command(["docker", "ps"], capture_output=True)
 
     def test_large_log_tail_value(self):
         """Test log retrieval with large tail value."""

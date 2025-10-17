@@ -43,7 +43,7 @@ class EmojiLoader:
         """Check if text already has emoji."""
         return bool(self._emoji_regex.search(text))
 
-    @lru_cache(maxsize=500)
+    @lru_cache(maxsize=500)  # noqa: B019 - Intentional cache for singleton
     def get_emoji(self, file_path: str = "", message: str = "") -> str:
         """
         Get emoji for file path or message content.

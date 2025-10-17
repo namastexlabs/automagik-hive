@@ -8,9 +8,8 @@ This module provides comprehensive validation to prevent naming convention viola
 """
 
 import re
-from pathlib import Path
-from typing import List, Tuple, Optional
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -67,7 +66,7 @@ class NamingConventionValidator:
         "test_makefile_uninstall_improved.py": "test_makefile_uninstall_advanced.py"
     }
     
-    def validate_name(self, name: str, name_type: str = "general") -> Tuple[bool, List[NamingViolation]]:
+    def validate_name(self, name: str, name_type: str = "general") -> tuple[bool, list[NamingViolation]]:
         """
         Validate a name against forbidden patterns.
         
@@ -102,7 +101,7 @@ class NamingConventionValidator:
         
         return len(violations) == 0, violations
     
-    def validate_file_path(self, file_path: str) -> Tuple[bool, List[NamingViolation]]:
+    def validate_file_path(self, file_path: str) -> tuple[bool, list[NamingViolation]]:
         """
         Validate a file path for naming convention compliance.
         
@@ -115,15 +114,15 @@ class NamingConventionValidator:
         path = Path(file_path)
         return self.validate_name(path.name, "file")
     
-    def validate_function_name(self, function_name: str) -> Tuple[bool, List[NamingViolation]]:
+    def validate_function_name(self, function_name: str) -> tuple[bool, list[NamingViolation]]:
         """Validate a function name for naming convention compliance."""
         return self.validate_name(function_name, "function")
     
-    def validate_class_name(self, class_name: str) -> Tuple[bool, List[NamingViolation]]:
+    def validate_class_name(self, class_name: str) -> tuple[bool, list[NamingViolation]]:
         """Validate a class name for naming convention compliance."""
         return self.validate_name(class_name, "class")
     
-    def validate_variable_name(self, variable_name: str) -> Tuple[bool, List[NamingViolation]]:
+    def validate_variable_name(self, variable_name: str) -> tuple[bool, list[NamingViolation]]:
         """Validate a variable name for naming convention compliance."""
         return self.validate_name(variable_name, "variable")
     
@@ -177,7 +176,7 @@ class NamingConventionValidator:
             else:
                 return "implementation.py"
     
-    def get_violation_report(self, violations: List[NamingViolation], name: str) -> str:
+    def get_violation_report(self, violations: list[NamingViolation], name: str) -> str:
         """
         Generate a detailed violation report for behavioral learning.
         
@@ -276,7 +275,7 @@ def validate_class_creation(class_name: str) -> None:
     validate_before_creation(class_name, "class")
 
 
-def log_violation_prevention(name: str, name_type: str, violations: List[NamingViolation]) -> None:
+def log_violation_prevention(name: str, name_type: str, violations: list[NamingViolation]) -> None:
     """
     Log prevented violations for behavioral learning and system improvement.
     
@@ -287,6 +286,5 @@ def log_violation_prevention(name: str, name_type: str, violations: List[NamingV
     """
     # This would integrate with the behavioral learning system
     # For now, we'll use simple logging
-    print(f"🛡️ VIOLATION PREVENTED: {name_type} '{name}' - {len(violations)} violations blocked")
-    for violation in violations:
-        print(f"   - {violation.violation_type}: {violation.forbidden_pattern}")
+    for _violation in violations:
+        pass

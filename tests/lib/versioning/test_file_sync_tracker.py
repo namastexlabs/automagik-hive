@@ -10,9 +10,8 @@ Tests for file synchronization tracking functionality, including:
 - Error handling for missing files and permissions
 """
 
-import os
 import tempfile
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -60,7 +59,7 @@ class TestFileSyncTracker:
             
             # Mock the specific agent path to exist
             def path_exists_side_effect(self):
-                return str(self) == str(agent_path)
+                return str(self) == str(agent_path)  # noqa: B023
             
             with patch.object(Path, "exists", path_exists_side_effect):
                 result = tracker._get_yaml_path("test-agent")
@@ -274,7 +273,7 @@ class TestFileSyncTrackerEdgeCases:
         # YAML file time (naive, assumed local)
         yaml_mtime = datetime(2025, 1, 15, 12, 0, 0)
         # Database time in different timezone (equivalent to UTC)
-        db_created_at = datetime(2025, 1, 15, 7, 0, 0, tzinfo=timezone.utc)  # UTC
+        db_created_at = datetime(2025, 1, 15, 7, 0, 0, tzinfo=UTC)  # UTC
         
         with patch.object(tracker, "_get_yaml_path") as mock_path:
             mock_path.return_value = Path("/test/config.yaml")
@@ -325,7 +324,7 @@ class TestFileSyncTrackerEdgeCases:
             agent_path = Path(f"/test/base/ai/agents/{component_id}/config.yaml")
             
             def path_exists_side_effect(self):
-                return str(self) == str(agent_path)
+                return str(self) == str(agent_path)  # noqa: B023
             
             with patch.object(Path, "exists", path_exists_side_effect):
                 result = tracker._get_yaml_path(component_id)

@@ -1,13 +1,13 @@
 """Tests for lib.models.component_versions module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.models.component_versions
+    import lib.models.component_versions  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.models.component_versions not available", allow_module_level=True)
+    pytest.skip("Module lib.models.component_versions not available", allow_module_level=True)
 
 
 class TestComponentVersions:

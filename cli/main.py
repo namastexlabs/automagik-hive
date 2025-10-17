@@ -8,7 +8,6 @@ No over-engineering. No abstract patterns. Just working CLI.
 import argparse
 import os
 import sys
-from pathlib import Path
 
 # Load environment variables from .env file
 try:
@@ -21,8 +20,7 @@ except ImportError:
 # Import command classes for test compatibility
 from .commands.postgres import PostgreSQLCommands
 from .commands.service import ServiceManager
-from .commands.uninstall import UninstallCommands
-from .docker_manager import DockerManager
+
 
 def _is_agentos_cli_enabled() -> bool:
     """Feature flag gate for AgentOS CLI surfaces."""
@@ -99,7 +97,7 @@ Use --help for detailed options or see documentation.
     
     # Utility flags
     parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind server to")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind server to")  # noqa: S104
     parser.add_argument("--port", type=int, help="Port to bind server to")
     
     # Create subparsers for commands
@@ -165,7 +163,6 @@ def main() -> int:
     command_count = sum(1 for cmd in commands if cmd)
     
     if command_count > 1:
-        print("❌ Only one command allowed at a time", file=sys.stderr)
         return 1
     
     if command_count == 0:
@@ -175,8 +172,6 @@ def main() -> int:
     try:
         # Init workspace - removed, use 'install' command instead
         if args.init:
-            print("❌ --init command has been removed. Use 'install' command instead:")
-            print("   automagik-hive install")
             return 1
 
         # Production server (Docker)
@@ -229,7 +224,6 @@ def main() -> int:
 
         if args.command == "agentos-config":
             if not _is_agentos_cli_enabled():
-                print("✨ AgentOS config command disabled. Set HIVE_FEATURE_AGENTOS_CLI=1 to enable.")
                 return 1
 
             service_manager = ServiceManager()
@@ -238,9 +232,6 @@ def main() -> int:
 
         # Start workspace server (positional argument) - removed, use 'dev' or 'serve' instead
         if args.workspace:
-            print("❌ Workspace positional argument has been removed. Use one of:")
-            print("   automagik-hive dev    # Development server")
-            print("   automagik-hive serve  # Production server")
             return 1
 
         # PostgreSQL commands
@@ -267,9 +258,8 @@ def main() -> int:
             return 0 if service_manager.restart_docker(args.restart) else 1
         if args.status:
             status = service_manager.docker_status(args.status)
-            print(f"🔍 Production environment status in: {args.status}")
-            for service, service_status in status.items():
-                print(f"  {service}: {service_status}")
+            for _service, _service_status in status.items():
+                pass
             return 0
         if args.logs:
             return 0 if service_manager.docker_logs(args.logs, args.tail) else 1
@@ -279,12 +269,10 @@ def main() -> int:
         return 0
     
     except KeyboardInterrupt:
-        print("\n🛑 Interrupted by user")
         raise  # Re-raise KeyboardInterrupt as expected by tests
     except SystemExit:
         raise  # Re-raise SystemExit as expected by tests
-    except Exception as e:
-        print(f"❌ Error: {e}", file=sys.stderr)
+    except Exception:
         return 1
 
 

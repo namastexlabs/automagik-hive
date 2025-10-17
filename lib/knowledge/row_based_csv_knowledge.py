@@ -476,16 +476,15 @@ class RowBasedCSVKnowledgeBase:
 
                         # Check if we're already in an async context
                         try:
-                            loop = asyncio.get_running_loop()
+                            asyncio.get_running_loop()
                             # We're in an async context - use run_until_complete
                             # This will block but allow the loop to progress
                             import concurrent.futures
-                            import threading
 
                             # Run in a thread pool to avoid blocking the event loop
                             with concurrent.futures.ThreadPoolExecutor() as executor:
                                 future = executor.submit(asyncio.run, coro)
-                                result = future.result()
+                                future.result()
                             return
                         except RuntimeError:
                             # No running loop - we can use asyncio.run()
@@ -519,13 +518,13 @@ class RowBasedCSVKnowledgeBase:
 
                     # Check if we're already in an async context
                     try:
-                        loop = asyncio.get_running_loop()
+                        asyncio.get_running_loop()
                         # We're in an async context - run in thread pool
                         import concurrent.futures
 
                         with concurrent.futures.ThreadPoolExecutor() as executor:
                             future = executor.submit(asyncio.run, coro)
-                            result = future.result()
+                            future.result()
                         return
                     except RuntimeError:
                         # No running loop - we can use asyncio.run()
@@ -561,7 +560,6 @@ class RowBasedCSVKnowledgeBase:
         if hasattr(vector_db, "async_insert"):
             try:
                 import asyncio
-                import inspect
 
                 # Get the coroutine
                 coro = vector_db.async_insert(
@@ -570,13 +568,13 @@ class RowBasedCSVKnowledgeBase:
 
                 # Check if we're already in an async context
                 try:
-                    loop = asyncio.get_running_loop()
+                    asyncio.get_running_loop()
                     # We're in an async context - run in thread pool
                     import concurrent.futures
 
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         future = executor.submit(asyncio.run, coro)
-                        result = future.result()
+                        future.result()
                     return
                 except RuntimeError:
                     # No running loop - we can use asyncio.run()

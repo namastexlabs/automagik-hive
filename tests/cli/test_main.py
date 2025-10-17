@@ -3,12 +3,12 @@
 Focused tests for the main CLI entry point functionality.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 import sys
-from pathlib import Path
+from unittest.mock import patch
 
-from cli.main import main, create_parser
+import pytest
+
+from cli.main import create_parser, main
 
 
 class TestVersionCommand:
@@ -71,7 +71,7 @@ class TestParser:
         # Parse --version argument
         with pytest.raises(SystemExit):
             # ArgumentParser exits on --version, so we expect SystemExit
-            args = parser.parse_args(["--version"])
+            parser.parse_args(["--version"])
 
 
 class TestStartCommand:

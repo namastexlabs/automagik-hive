@@ -13,9 +13,9 @@ Focus areas:
 """
 
 import os
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
 import pytest
 
 from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
@@ -85,7 +85,7 @@ class TestKnowledgeBaseInitialization:
     
     def test_knowledge_base_initialization_success(self, setup_environment):
         """Test successful knowledge base initialization."""
-        csv_path = Path("/tmp/test.csv")
+        csv_path = Path("/tmp/test.csv")  # noqa: S108 - Test/script temp file
         
         mock_config = {"vector_db": {"embedder": "text-embedding-ada-002"}}
         
@@ -97,7 +97,7 @@ class TestKnowledgeBaseInitialization:
                             mock_kb_instance = Mock()
                             mock_kb_class.return_value = mock_kb_instance
                             
-                            manager = CSVHotReloadManager(csv_path=str(csv_path))
+                            CSVHotReloadManager(csv_path=str(csv_path))
                             
                             # Should use configured embedder
                             mock_embedder.assert_called_with(id="text-embedding-ada-002")
@@ -312,7 +312,7 @@ class TestMainFunctionCLI:
                     mock_manager.get_status.return_value = test_status
                     mock_manager_class.return_value = mock_manager
                     
-                    main()
+                    main()  # noqa: F821
                     
                     # Should create manager and get status
                     mock_manager_class.assert_called_with('test.csv')
@@ -328,7 +328,7 @@ class TestMainFunctionCLI:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager and call force_reload
                 mock_manager_class.assert_called_with('test.csv')
@@ -343,7 +343,7 @@ class TestMainFunctionCLI:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager and start watching
                 mock_manager_class.assert_called_with('test.csv')
@@ -359,7 +359,7 @@ class TestMainFunctionCLI:
                 mock_manager.get_status.return_value = {"status": "stopped"}
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should use default path
                 mock_manager_class.assert_called_with("knowledge/knowledge_rag.csv")
@@ -379,7 +379,7 @@ class TestEdgeCasesAndErrorHandling:
             manager.knowledge_base = mock_kb
             
             # Test multiple rapid reloads
-            for i in range(5):
+            for _i in range(5):
                 manager._reload_knowledge_base()
             
             # Should handle multiple calls without issues

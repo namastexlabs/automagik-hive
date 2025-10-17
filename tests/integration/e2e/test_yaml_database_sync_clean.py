@@ -651,6 +651,6 @@ async def test_store_successful_patterns():
     """Store successful test creation patterns in memory."""
     try:
         pass
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         # If memory storage fails, just pass - this is not critical for test functionality
         pass

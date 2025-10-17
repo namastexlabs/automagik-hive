@@ -259,7 +259,7 @@ class AGNOConfigValidator:
                     team_config = yaml.safe_load(f)
                 members = team_config.get("members") or []
                 all_team_members.update(members)
-            except Exception:
+            except Exception:  # noqa: S112 - Continue after exception is intentional
                 continue
 
         all_agents = {
@@ -285,7 +285,7 @@ class AGNOConfigValidator:
             try:
                 with open(team_path) as f:
                     configs[f"team:{team_id}"] = yaml.safe_load(f)
-            except Exception:
+            except Exception:  # noqa: S112 - Continue after exception is intentional
                 continue
 
         # Collect agent configs
@@ -294,7 +294,7 @@ class AGNOConfigValidator:
             try:
                 with open(agent_path) as f:
                     configs[f"agent:{agent_id}"] = yaml.safe_load(f)
-            except Exception:
+            except Exception:  # noqa: S112 - Continue after exception is intentional
                 continue
 
         return configs
@@ -349,7 +349,7 @@ class AGNOConfigValidator:
                     team_config = yaml.safe_load(f)
                 members = team_config.get("members") or []
                 all_team_members.update(members)
-            except Exception:
+            except Exception:  # noqa: S112 - Continue after exception is intentional
                 continue
 
         all_agents = {

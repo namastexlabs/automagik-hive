@@ -1,9 +1,10 @@
 """Pytest configuration for API tests."""
 
-import pytest
 from dataclasses import dataclass
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
+
+import pytest
 
 
 @dataclass

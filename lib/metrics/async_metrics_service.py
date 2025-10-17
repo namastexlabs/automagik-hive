@@ -431,7 +431,7 @@ class AsyncMetricsService:
                 # Wait for cancellation to complete
                 try:
                     await asyncio.wait_for(self.processing_task, timeout=1.0)
-                except (asyncio.TimeoutError, asyncio.CancelledError):
+                except (TimeoutError, asyncio.CancelledError):
                     pass
             except asyncio.CancelledError:
                 logger.debug("Processing task was cancelled during shutdown")

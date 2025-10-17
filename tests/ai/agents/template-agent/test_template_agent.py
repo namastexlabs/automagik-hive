@@ -8,13 +8,13 @@ Agent Under Test: ai/agents/template-agent/agent.py
 Pattern: Simple Agent.from_yaml() with config file path manipulation
 """
 
-import pytest
-from unittest.mock import Mock, patch
+import importlib.util
+import os
 
 # Import the module under test using importlib for better isolation
-import sys
-import os
-import importlib.util
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Set test database URL BEFORE loading any modules
 os.environ['HIVE_DATABASE_URL'] = 'sqlite:///test.db'
@@ -67,7 +67,7 @@ class TestTemplateAgentFactory:
             mock_agent_instance = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
             
-            result = get_template_agent()
+            get_template_agent()
             
             # Verify path replacement logic
             call_args = mock_agent_class.from_yaml.call_args
@@ -230,7 +230,7 @@ class TestTemplateAgentIntegration:
         RED phase: Tests module exports for template agent API.
         """
         # Use the loaded module instead of direct import due to hyphen in module name
-        module_all = getattr(template_agent_module, '__all__')
+        module_all = template_agent_module.__all__
         
         assert "get_template_agent" in module_all, "Template factory function should be exported"
 

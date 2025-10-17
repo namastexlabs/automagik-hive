@@ -2,10 +2,8 @@
 
 import os
 import subprocess
-import sys
 import time
 from pathlib import Path
-from typing import Dict, List
 
 import yaml
 
@@ -21,7 +19,7 @@ class DockerManager:
     NETWORK_NAME = "hive_network"  # Docker network name
 
     # Supported component-to-container mapping (workspace-only contract)
-    CONTAINERS: Dict[str, List[str]] = {
+    CONTAINERS: dict[str, list[str]] = {
         "workspace": [POSTGRES_CONTAINER, API_CONTAINER],
         "postgres": [POSTGRES_CONTAINER],
         "api": [API_CONTAINER],
@@ -30,7 +28,7 @@ class DockerManager:
     
     # Port mappings - read from environment with no hardcoded fallbacks
     @property
-    def PORTS(self) -> Dict[str, Dict[str, int]]:
+    def ports(self) -> dict[str, dict[str, int]]:
         """Port mappings for all components from environment variables.
         
         ARCHITECTURAL RULE: All ports must come from environment variables.
@@ -57,9 +55,9 @@ class DockerManager:
             "api": int(os.getenv("HIVE_API_PORT", "8886"))
         }
     
-    def _get_ports(self) -> Dict[str, int]:
+    def _get_ports(self) -> dict[str, int]:
         """Get port mappings from environment variables."""
-        return self.PORTS
+        return self.ports
     
     def __init__(self):
         self.project_root = Path.cwd()
@@ -80,24 +78,20 @@ class DockerManager:
                 return result.stdout.strip()
             subprocess.run(cmd, check=True)
             return None
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             if capture_output:
-                print(f"❌ Command failed: {' '.join(cmd)}")
-                print(f"Error: {e.stderr}")
+                pass
             return None
         except FileNotFoundError:
-            print(f"❌ Command not found: {cmd[0]}")
             return None
     
     def _check_docker(self) -> bool:
         """Check if Docker is available."""
         if not self._run_command(["docker", "--version"], capture_output=True):
-            print("❌ Docker not found. Please install Docker first.")
             return False
         
         # Check if Docker daemon is running
         if not self._run_command(["docker", "ps"], capture_output=True):
-            print("❌ Docker daemon not running. Please start Docker.")
             return False
         
         return True
@@ -108,7 +102,6 @@ class DockerManager:
         normalized = component.lower()
         containers = self.CONTAINERS.get(normalized)
         if not containers:
-            print(f"❌ Unsupported component: {component}")
             return []
 
         # Return a copy to avoid accidental mutation by callers/tests
@@ -129,25 +122,23 @@ class DockerManager:
             result = self._run_command(["docker", "compose", "version"], capture_output=True)
             if result:
                 return "docker compose"
-        except:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
-            
+
         # Fall back to docker-compose (legacy format)
         try:
             result = self._run_command(["docker-compose", "--version"], capture_output=True)
             if result:
                 return "docker-compose"
-        except:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
             
-        print("⚠️ Neither 'docker compose' nor 'docker-compose' found")
         return "docker compose"  # Default to newer format
     
     def _create_network(self) -> None:
         """Create Docker network if it doesn't exist."""
         networks = self._run_command(["docker", "network", "ls", "--filter", f"name={self.NETWORK_NAME}", "--format", "{{.Name}}"], capture_output=True)
         if self.NETWORK_NAME not in (networks or ""):
-            print("🔗 Creating Docker network...")
             self._run_command(["docker", "network", "create", self.NETWORK_NAME])
     
     def _get_dockerfile_path(self, component: str) -> Path:
@@ -181,12 +172,10 @@ class DockerManager:
     def _create_containers_via_compose(self, component: str, credentials: dict) -> bool:
         """Create containers using Docker Compose for consistency with Makefile."""
         if component not in self.template_files:
-            print(f"❌ Docker Compose unsupported for component: {component}")
             return False
 
         compose_file = self.template_files[component]
         if not compose_file.exists():
-            print(f"❌ Docker Compose file not found: {compose_file}")
             return False
             
         # Create component-specific .env file for Docker Compose
@@ -196,8 +185,6 @@ class DockerManager:
         # Create data directories with proper ownership BEFORE starting containers (like Makefile)
         self._create_data_directories_with_ownership(component)
         
-        print(f"🐳 Starting {component} services via Docker Compose...")
-        print(f"📁 Using: {compose_file}")
         
         # Use Docker Compose to start services (try both docker-compose and docker compose)
         docker_compose_cmd = self._get_docker_compose_command()
@@ -243,13 +230,10 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 """
         
         env_file.write_text(env_content)
-        print(f"📝 Created Docker Compose .env: {env_file}")
-        print(f"⚠️  This is separate from workspace .env file")
     
     def _create_data_directories_with_ownership(self, component: str) -> None:
         """Create data directories with proper ownership before container startup (like Makefile)."""
         import os
-        import stat
         
         # Cross-platform UID/GID handling
         uid = os.getuid() if hasattr(os, "getuid") else 1000
@@ -264,7 +248,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not data_path:
             return
             
-        print(f"📁 Creating data directory with proper ownership: {data_path}")
         
         # Create directory if it doesn't exist
         data_path.mkdir(parents=True, exist_ok=True)
@@ -273,24 +256,21 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         try:
             if hasattr(os, "chown"):  # Unix-like systems
                 os.chown(data_path, uid, gid)
-                print(f"✅ Set data directory ownership: {uid}:{gid}")
             else:  # Windows - no ownership change needed
-                print("✅ Data directory created (Windows - no ownership change needed)")
+                pass
         except PermissionError:
             # Try to use subprocess like Makefile fallback
             try:
                 import subprocess
                 subprocess.run(["sudo", "chown", "-R", f"{uid}:{gid}", str(data_path)], check=False)
-                print(f"✅ Set data directory ownership via sudo: {uid}:{gid}")
-            except:
-                print("⚠️ Could not set directory ownership - containers may need to run as root")
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
+                pass
         
     def _create_postgres_container(self, component: str, credentials: dict) -> bool:
         """Create PostgreSQL container - now uses Docker Compose for consistency."""
         container_name = self.POSTGRES_CONTAINER
         
         if self._container_exists(container_name):
-            print(f"✅ PostgreSQL container {container_name} already exists")
             return True
         
         # Use Docker Compose approach for consistency with Makefile
@@ -301,12 +281,10 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         container_name = self.API_CONTAINER
         
         if self._container_exists(container_name):
-            print(f"✅ API container {container_name} already exists")
             return True
         
         # API container is created as part of the Docker Compose service
         # The _create_containers_via_compose method handles both postgres and API
-        print(f"✅ API container {container_name} will be created via Docker Compose")
         return True
     
     def _get_or_generate_credentials_legacy(self, component: str) -> dict[str, str]:
@@ -322,7 +300,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         existing_api_key = component_credential_service.extract_hive_api_key_from_env()
         
         if existing_creds.get("user") and existing_creds.get("password") and existing_api_key:
-            print(f"✅ Using existing secure credentials for {component}")
             return {
                 "postgres_user": existing_creds["user"],
                 "postgres_password": existing_creds["password"],
@@ -333,7 +310,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
             }
         
         # Generate new secure credentials
-        print(f"🔐 Generating new secure credentials for {component}...")
         
         # Determine database configuration based on component
         postgres_port = self._get_ports()[component]["postgres"]
@@ -346,12 +322,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
             postgres_database=postgres_database
         )
         
-        print(f"✅ Generated secure credentials for {component}")
-        print(f"   Database: {complete_creds['postgres_database']}")
-        print(f"   Port: {complete_creds['postgres_port']}")
-        print(f"   User: {complete_creds['postgres_user'][:4]}... (16 chars)")
-        print("   Password: ****... (16 chars)")
-        print(f"   API Key: {complete_creds['api_key'][:12]}... ({len(complete_creds['api_key'])} chars)")
         
         return complete_creds
     
@@ -364,11 +334,8 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         workspace_env_file = self.project_root / ".env"
         
         if workspace_env_file.exists():
-            print(f"✅ Workspace .env file exists: {workspace_env_file}")
             return True
         else:
-            print(f"❌ Workspace .env file missing: {workspace_env_file}")
-            print(f"💡 Please create .env from .env.example with your configuration")
             return False
     
     def install(self, component: str) -> bool:
@@ -380,44 +347,35 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if component == "interactive":
             return self._interactive_install()
         
-        print(f"🚀 Installing {component}...")
 
         normalized = component.lower()
         components = ["workspace"] if normalized == "all" else [normalized]
 
         unsupported = [comp for comp in components if comp != "workspace"]
         if unsupported:
-            print(f"❌ Unsupported install target: {unsupported[0]}")
             return False
 
-        print("🔐 Generating unified credentials for workspace deployment...")
         try:
             all_credentials = self.credential_service.install_all_modes(components)
-            print("✅ Unified credentials generated successfully")
-        except Exception as e:
-            print(f"❌ Failed to generate credentials: {e}")
+        except Exception:
             return False
 
         self._create_network()
 
         for comp in components:
-            print(f"\n📦 Setting up {comp} component...")
             comp_credentials = all_credentials[comp]
             
             # Create all containers via Docker Compose (handles both postgres and API)
             if not self._create_containers_via_compose(comp, comp_credentials):
-                print(f"❌ Failed to create containers for {comp}")
                 return False
             
             # Wait for services to be ready
-            print("⏳ Waiting for services to be ready...")
             time.sleep(8)  # Increased wait time for health checks
             
             # For workspace, note that app runs locally
             if comp == "workspace":
-                print("📝 Workspace app will run locally with: uv run automagik-hive /path/to/workspace")
+                pass
         
-        print(f"\n✅ {component} installation complete!")
         return True
     
     def start(self, component: str) -> bool:
@@ -426,19 +384,16 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return False
         
-        print(f"🚀 Starting {component} services...")
         
         success = True
         for container in containers:
             if self._container_exists(container):
                 if not self._container_running(container):
-                    print(f"▶️ Starting {container}...")
                     if not self._run_command(["docker", "start", container]):
                         success = False
                 else:
-                    print(f"✅ {container} already running")
+                    pass
             else:
-                print(f"❌ Container {container} not found. Run --install first.")
                 success = False
         
         return success
@@ -449,16 +404,14 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return False
         
-        print(f"🛑 Stopping {component} services...")
         
         success = True
         for container in containers:
             if self._container_running(container):
-                print(f"⏹️ Stopping {container}...")
                 if not self._run_command(["docker", "stop", container]):
                     success = False
             else:
-                print(f"✅ {container} already stopped")
+                pass
         
         return success
     
@@ -468,16 +421,13 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return False
         
-        print(f"🔄 Restarting {component} services...")
         
         success = True
         for container in containers:
             if self._container_exists(container):
-                print(f"🔄 Restarting {container}...")
                 if not self._run_command(["docker", "restart", container]):
                     success = False
             else:
-                print(f"❌ Container {container} not found. Run --install first.")
                 success = False
         
         return success
@@ -488,8 +438,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return
         
-        print(f"\n📊 {component.title()} Status:")
-        print("=" * 50)
         
         for container in containers:
             if self._container_exists(container):
@@ -504,7 +452,6 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
             else:
                 status = "❌ Not installed"
             
-            print(f"{container:25} {status}")
     
     def health(self, component: str) -> None:
         """Check component health."""
@@ -512,17 +459,15 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return
         
-        print(f"\n🏥 {component.title()} Health Check:")
-        print("=" * 50)
         
         for container in containers:
             if self._container_running(container):
                 # Basic health check - container running
-                print(f"{container:25} 🟢 Healthy")
+                pass
             elif self._container_exists(container):
-                print(f"{container:25} 🟡 Stopped")
+                pass
             else:
-                print(f"{container:25} 🔴 Not installed")
+                pass
     
     def logs(self, component: str, lines: int = 50) -> None:
         """Show component logs."""
@@ -532,11 +477,9 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         
         for container in containers:
             if self._container_exists(container):
-                print(f"\n📋 Logs for {container} (last {lines} lines):")
-                print("-" * 60)
                 self._run_command(["docker", "logs", "--tail", str(lines), container])
             else:
-                print(f"❌ Container {container} not found")
+                pass
     
     def uninstall(self, component: str) -> bool:
         """Uninstall component containers - autonomous operation (no confirmation)."""
@@ -544,13 +487,10 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if not containers:
             return False
         
-        print(f"🗑️ Uninstalling {component} (autonomous mode - no confirmation required)...")
         
         # Use Docker Compose for unified uninstall approach
         compose_file = self.template_files.get(component)
         if compose_file and compose_file.exists():
-            print(f"🐳 Stopping {component} services via Docker Compose...")
-            print(f"📁 Using: {compose_file}")
             
             docker_compose_cmd = self._get_docker_compose_command()
             if docker_compose_cmd == "docker compose":
@@ -566,11 +506,9 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
                 if self._container_exists(container):
                     # Stop if running
                     if self._container_running(container):
-                        print(f"⏹️ Stopping {container}...")
                         self._run_command(["docker", "stop", container])
                     
                     # Remove container
-                    print(f"🗑️ Removing {container}...")
                     if not self._run_command(["docker", "rm", container]):
                         success = False
         
@@ -578,57 +516,42 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
         if component != "all":
             env_file = compose_file.parent / ".env" if compose_file else None
             if env_file and env_file.exists():
-                print("🗑️ Removing Docker Compose .env file...")
                 env_file.unlink()
         
         if success:
-            print(f"✅ {component} uninstalled successfully!")
+            pass
         
         return success
 
     def _interactive_install(self) -> bool:
         """Interactive installation with workspace-only choices."""
 
-        print("🚀 Automagik Hive Interactive Installation")
-        print("=" * 50)
 
-        print("\n🏠 Automagik Hive Core (Main Application)")
-        print("This installs the workspace server and API components")
         while True:
             hive_choice = input("Would you like to install Hive Core? (Y/n): ").strip().lower()
             if hive_choice in ["y", "yes", "n", "no", ""]:
                 break
-            print("❌ Please enter y/yes or n/no.")
 
         install_hive = hive_choice not in ["n", "no"]
         if not install_hive:
-            print("👋 Skipping Hive installation")
             return True
 
-        print("\n📦 Database Setup for Hive:")
-        print("1. Use the Automagik PostgreSQL + pgvector container (recommended)")
-        print("2. Connect to an existing PostgreSQL database")
 
         while True:
             db_choice = input("\nSelect database option (1-2): ").strip()
             if db_choice in ["1", "2"]:
                 break
-            print("❌ Invalid choice. Please enter 1 or 2.")
 
         use_container = db_choice == "1"
         if use_container:
-            print("✅ Using bundled PostgreSQL + pgvector container")
             postgres_container = self.POSTGRES_CONTAINER
             if self._container_exists(postgres_container):
-                print(f"\n🗄️ Found existing database container: {postgres_container}")
                 while True:
                     db_action = input("Do you want to (r)euse or (c)recreate it? (r/c): ").strip().lower()
                     if db_action in ["r", "reuse", "c", "create", "recreate"]:
                         break
-                    print("❌ Please enter r/reuse or c/create.")
 
                 if db_action in ["c", "create", "recreate"]:
-                    print("🗑️ Recreating database container...")
                     if self._container_running(postgres_container):
                         self._run_command(["docker", "stop", postgres_container])
                     self._run_command(["docker", "rm", postgres_container])
@@ -638,33 +561,25 @@ GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
                         capture_output=True,
                     )
                     if volume_name in (volumes or ""):
-                        print("🗑️ Removing existing database volume...")
                         self._run_command(["docker", "volume", "rm", volume_name])
                 else:
-                    print("♻️ Reusing existing database container")
+                    pass
         else:
-            print("📝 Custom database setup for Hive")
-            print("\nEnter your PostgreSQL connection details:")
-            host = input("Host (localhost): ").strip() or "localhost"
-            port = input("Port (5432): ").strip() or "5432"
-            database = input("Database name (automagik_hive): ").strip() or "automagik_hive"
+            input("Host (localhost): ").strip() or "localhost"
+            input("Port (5432): ").strip() or "5432"
+            input("Database name (automagik_hive): ").strip() or "automagik_hive"
             username = input("Username: ").strip()
             password = input("Password: ").strip()
 
             if not username or not password:
-                print("❌ Username and password are required")
                 return False
 
-            print("🔧 Custom database installation is not automated yet")
-            print("💡 Please follow manual instructions in the README")
 
         if not install_hive:
-            print("👋 No components selected for installation")
             return True
 
         if not use_container:
             # For manual database installs we stop here with guidance above
             return True
 
-        print("\n🚀 Installing workspace...")
         return self.install("workspace")

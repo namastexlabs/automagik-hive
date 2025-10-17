@@ -18,25 +18,22 @@ Usage:
     --help, -h: Show this help message
 """
 
-import os
-import sys
-import shutil
 import fnmatch
-from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
-from dataclasses import dataclass, field
-from collections import defaultdict
 import json
+import os
 import re
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass
 class TestIssue:
     """Container for a specific test structure issue with confidence scoring."""
     issue_type: str  # 'missing', 'orphaned', 'misplaced', 'naming'
-    current_path: Optional[Path] = None
-    expected_path: Optional[Path] = None
-    source_path: Optional[Path] = None
+    current_path: Path | None = None
+    expected_path: Path | None = None
+    source_path: Path | None = None
     severity: str = 'medium'  # 'low', 'medium', 'high', 'critical', 'suggestion'
     description: str = ''
     recommendation: str = ''
@@ -48,40 +45,40 @@ class TestIssue:
 @dataclass
 class TestAnalysis:
     """Container for comprehensive test analysis results."""
-    source_files: Set[Path] = field(default_factory=set)
-    test_files: Set[Path] = field(default_factory=set)
-    issues: List[TestIssue] = field(default_factory=list)
-    coverage_map: Dict[Path, Path] = field(default_factory=dict)
-    directory_stats: Dict[str, Dict] = field(default_factory=dict)
+    source_files: set[Path] = field(default_factory=set)
+    test_files: set[Path] = field(default_factory=set)
+    issues: list[TestIssue] = field(default_factory=list)
+    coverage_map: dict[Path, Path] = field(default_factory=dict)
+    directory_stats: dict[str, dict] = field(default_factory=dict)
     confidence_threshold: float = 0.7
     
     @property
-    def high_confidence_issues(self) -> List[TestIssue]:
+    def high_confidence_issues(self) -> list[TestIssue]:
         return [issue for issue in self.issues if issue.confidence >= self.confidence_threshold]
     
     @property
-    def suggestions(self) -> List[TestIssue]:
+    def suggestions(self) -> list[TestIssue]:
         return [issue for issue in self.issues if issue.confidence < self.confidence_threshold]
     
     @property
-    def missing_tests(self) -> List[TestIssue]:
+    def missing_tests(self) -> list[TestIssue]:
         return [issue for issue in self.high_confidence_issues if issue.issue_type == 'missing']
     
     @property
-    def orphaned_tests(self) -> List[TestIssue]:
+    def orphaned_tests(self) -> list[TestIssue]:
         return [issue for issue in self.high_confidence_issues if issue.issue_type == 'orphaned']
     
     @property
-    def integration_tests(self) -> List[TestIssue]:
+    def integration_tests(self) -> list[TestIssue]:
         """Integration tests that don't need source mirrors (low confidence orphans)."""
         return [issue for issue in self.suggestions if issue.issue_type == 'orphaned']
     
     @property
-    def misplaced_tests(self) -> List[TestIssue]:
+    def misplaced_tests(self) -> list[TestIssue]:
         return [issue for issue in self.high_confidence_issues if issue.issue_type == 'misplaced']
     
     @property
-    def naming_issues(self) -> List[TestIssue]:
+    def naming_issues(self) -> list[TestIssue]:
         return [issue for issue in self.high_confidence_issues if issue.issue_type == 'naming']
     
     @property
@@ -101,7 +98,7 @@ class TestAnalysis:
         return self.total_issues == 0
     
     @property
-    def stats(self) -> Dict:
+    def stats(self) -> dict:
         return {
             "total_source_files": len(self.source_files),
             "total_test_files": len(self.test_files),
@@ -157,7 +154,7 @@ class TestStructureAnalyzer:
     def should_require_test(self, source_path: Path) -> bool:
         """Intelligent analysis of whether a file actually needs tests."""
         try:
-            with open(source_path, 'r', encoding='utf-8') as f:
+            with open(source_path, encoding='utf-8') as f:
                 content = f.read()
         except Exception:
             return True  # Default to requiring tests if we can't read
@@ -174,7 +171,7 @@ class TestStructureAnalyzer:
         
         # Count different types of content
         import_lines = sum(1 for line in lines if line.startswith(('import ', 'from ')))
-        comment_lines = sum(1 for line in lines if line.startswith('#'))
+        sum(1 for line in lines if line.startswith('#'))
         constant_lines = sum(1 for line in lines if '=' in line and re.match(r'^[A-Z_][A-Z0-9_]*\s*=', line))
         function_defs = content.count('def ')
         class_defs = content.count('class ')
@@ -213,7 +210,7 @@ class TestStructureAnalyzer:
         
         # Analyze content for additional context
         try:
-            with open(test_path, 'r', encoding='utf-8') as f:
+            with open(test_path, encoding='utf-8') as f:
                 content = f.read()
             
             # Look for integration test indicators
@@ -234,12 +231,12 @@ class TestStructureAnalyzer:
             if mock_count > 3:
                 return 'unit'  # Heavy mocking usually means unit tests
                 
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
         
         return 'unit'  # Default assumption
     
-    def find_related_tests(self, source_path: Path) -> List[Path]:
+    def find_related_tests(self, source_path: Path) -> list[Path]:
         """Find tests related to a source file using flexible patterns."""
         source_name = source_path.stem
         base_patterns = [
@@ -272,7 +269,7 @@ class TestStructureAnalyzer:
         
         return related_tests
     
-    def calculate_issue_confidence(self, issue: TestIssue) -> Tuple[float, str]:
+    def calculate_issue_confidence(self, issue: TestIssue) -> tuple[float, str]:
         """Calculate confidence level for this issue being a real problem."""
         confidence = 1.0
         reasoning_parts = []
@@ -319,7 +316,7 @@ class TestStructureAnalyzer:
         name = path.name
         return name.startswith('test_') or name.endswith('_test.py')
     
-    def get_expected_test_path(self, source_path: Path) -> Optional[Path]:
+    def get_expected_test_path(self, source_path: Path) -> Path | None:
         """Get expected test file path for a source file using mirror structure."""
         try:
             relative_path = source_path.relative_to(self.project_root)
@@ -334,7 +331,7 @@ class TestStructureAnalyzer:
         test_path = self.tests_dir / relative_path.parent / f"test_{relative_path.name}"
         return test_path
     
-    def get_expected_source_path(self, test_path: Path) -> Optional[Path]:
+    def get_expected_source_path(self, test_path: Path) -> Path | None:
         """Get expected source file for a test file using intelligent layered strategies."""
         try:
             relative_path = test_path.relative_to(self.tests_dir)
@@ -376,7 +373,7 @@ class TestStructureAnalyzer:
         return ('ai/agents/' in path_str and 
                 test_path.name.endswith('_agent.py'))
     
-    def _find_agent_file(self, test_relative_path: Path) -> Optional[Path]:
+    def _find_agent_file(self, test_relative_path: Path) -> Path | None:
         """Find agent.py file in corresponding agent directory."""
         # For tests/ai/agents/genie-quality/test_genie_quality_agent.py
         # Look for ai/agents/genie-quality/agent.py
@@ -386,7 +383,7 @@ class TestStructureAnalyzer:
             return agent_file
         return None
     
-    def _find_single_module_in_dir(self, source_dir: Path) -> Optional[Path]:
+    def _find_single_module_in_dir(self, source_dir: Path) -> Path | None:
         """Find single Python module in directory (excluding __init__.py)."""
         try:
             python_files = [f for f in source_dir.glob('*.py') 
@@ -395,23 +392,23 @@ class TestStructureAnalyzer:
             # If exactly one module found, it's likely the intended target
             if len(python_files) == 1:
                 return python_files[0]
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
         return None
     
-    def _load_ignored_tests(self) -> Set[str]:
+    def _load_ignored_tests(self) -> set[str]:
         """Load ignored test files from .test_analyzer_ignore file."""
         ignored = set()
         ignore_file = self.project_root / '.test_analyzer_ignore'
         
         if ignore_file.exists():
             try:
-                with open(ignore_file, 'r', encoding='utf-8') as f:
+                with open(ignore_file, encoding='utf-8') as f:
                     for line in f:
                         line = line.strip()
                         if line and not line.startswith('#'):
                             ignored.add(line)
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
         
         return ignored
@@ -424,7 +421,7 @@ class TestStructureAnalyzer:
         except ValueError:
             return False
     
-    def collect_python_files(self) -> Tuple[Set[Path], Set[Path]]:
+    def collect_python_files(self) -> tuple[set[Path], set[Path]]:
         """Collect all Python files, categorized as source or test files."""
         source_files = set()
         test_files = set()
@@ -502,7 +499,7 @@ class TestStructureAnalyzer:
                     self.analysis.issues.append(issue)
         
         # Integration and support directories that don't need source mirrors
-        INTEGRATION_PATTERNS = {'integration', 'fixtures', 'mocks', 'utilities', 'e2e', 'scenarios'}
+        integration_patterns = {'integration', 'fixtures', 'mocks', 'utilities', 'e2e', 'scenarios'}
         
         # Analyze test files for orphans, misplaced, and naming issues
         for test_file in test_files:
@@ -535,7 +532,7 @@ class TestStructureAnalyzer:
             
             # Check if this is an integration or support test
             path_parts = test_file.parts
-            is_integration = any(part in INTEGRATION_PATTERNS for part in path_parts)
+            any(part in integration_patterns for part in path_parts)
             
             # Check if this test has an expected source file
             expected_source = self.get_expected_source_path(test_file)
@@ -601,11 +598,11 @@ class TestStructureAnalyzer:
         
         return self.analysis
     
-    def generate_report(self, format: str = 'text') -> str:
+    def generate_report(self, format_: str = 'text') -> str:
         """Generate comprehensive analysis report with confidence-based filtering."""
-        if format == 'json':
+        if format_ == 'json':
             return self._generate_json_report()
-        elif format == 'ops':
+        elif format_ == 'ops':
             return self._generate_ops_report()
         else:
             return self._generate_text_report()
@@ -693,7 +690,7 @@ class TestStructureAnalyzer:
             lines.append("  1. Focus on high-confidence issues only (reduces false positive noise)")
             lines.append(f"  2. Address {len(self.analysis.missing_tests)} missing tests for core functionality")
             lines.append(f"  3. Review {len(self.analysis.orphaned_tests)} truly orphaned tests")
-            lines.append(f"  4. Consider suggestions only if they align with your testing strategy")
+            lines.append("  4. Consider suggestions only if they align with your testing strategy")
             lines.append("  5. Adjust --confidence threshold (0.0-1.0) to tune sensitivity")
         
         lines.append("")
@@ -704,7 +701,7 @@ class TestStructureAnalyzer:
     
     def _generate_json_report(self) -> str:
         """Generate comprehensive JSON report with confidence data."""
-        def path_to_str(path: Optional[Path]) -> Optional[str]:
+        def path_to_str(path: Path | None) -> str | None:
             return str(path.relative_to(self.project_root)) if path else None
         
         issues_data = []
@@ -794,16 +791,15 @@ def main():
     
     # Validate confidence threshold
     if not 0.0 <= args.confidence <= 1.0:
-        print("Error: Confidence threshold must be between 0.0 and 1.0")
         sys.exit(1)
     
     # Determine output format
     if args.json:
-        format = 'json'
+        format_ = 'json'
     elif args.ops:
-        format = 'ops'
+        format_ = 'ops'
     else:
-        format = 'text'
+        format_ = 'text'
     
     # Create analyzer with confidence threshold
     project_root = Path.cwd()
@@ -811,11 +807,10 @@ def main():
     analyzer.analyze()
     
     # Generate and print report
-    report = analyzer.generate_report(format=format)
-    print(report)
+    analyzer.generate_report(format=format)
     
     # Exit codes
-    if format == 'ops':
+    if format_ == 'ops':
         sys.exit(0)
     elif analyzer.analysis.is_perfect_structure:
         sys.exit(0)  # Perfect structure

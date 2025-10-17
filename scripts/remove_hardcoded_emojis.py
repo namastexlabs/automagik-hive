@@ -88,7 +88,7 @@ def find_python_files_with_emojis(root_dir: Path) -> list[Path]:
             if logger_with_emoji:
                 emoji_files.append(py_file)
 
-        except Exception:
+        except Exception:  # noqa: S112 - Continue after exception is intentional
             continue
 
     return emoji_files

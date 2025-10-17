@@ -1,13 +1,13 @@
 """Tests for lib.models.agent_metrics module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.models.agent_metrics
+    import lib.models.agent_metrics  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.models.agent_metrics not available", allow_module_level=True)
+    pytest.skip("Module lib.models.agent_metrics not available", allow_module_level=True)
 
 
 class TestAgentMetrics:

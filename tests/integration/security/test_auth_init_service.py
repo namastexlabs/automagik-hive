@@ -494,7 +494,7 @@ class TestAuthInitServiceErrorHandling:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Make directory read-only
             if os.name == "posix":
-                os.chmod(temp_dir, 0o555)
+                os.chmod(temp_dir, 0o555)  # noqa: S103 - Intentional file permissions
 
             env_file = Path(temp_dir) / ".env"
             service = AuthInitService()
@@ -507,7 +507,7 @@ class TestAuthInitServiceErrorHandling:
 
             # Reset permissions for cleanup
             if os.name == "posix":
-                os.chmod(temp_dir, 0o755)
+                os.chmod(temp_dir, 0o755)  # noqa: S103 - Intentional file permissions
 
     def test_disk_full_simulation(self, clean_environment):
         """Test behavior when disk is full (simulated)."""

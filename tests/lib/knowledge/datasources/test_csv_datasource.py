@@ -7,8 +7,9 @@ Validates CSV reading and row processing logic with StringIO temp file handling.
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 import pandas as pd
-import pytest
+
 from lib.knowledge.datasources.csv_datasource import CSVDataSource
 
 
@@ -107,7 +108,7 @@ class TestCSVDataSource:
         with patch('lib.knowledge.row_based_csv_knowledge.RowBasedCSVKnowledgeBase') as mock_kb_class:
             mock_kb_class.return_value = mock_temp_kb
             
-            result = csv_datasource.process_single_row(row_data, mock_kb, lambda data, hash: True)
+            result = csv_datasource.process_single_row(row_data, mock_kb, lambda data, hash_: True)
             
             assert result is True
             mock_temp_kb.load.assert_called_once_with(recreate=False, upsert=True)
@@ -132,7 +133,7 @@ class TestCSVDataSource:
         with patch('lib.knowledge.row_based_csv_knowledge.RowBasedCSVKnowledgeBase') as mock_kb_class:
             mock_kb_class.return_value = mock_temp_kb
             
-            result = csv_datasource.process_single_row(row_data, mock_kb, lambda data, hash: True)
+            csv_datasource.process_single_row(row_data, mock_kb, lambda data, hash_: True)
             
             # Verify temp knowledge base was created with proper csv_path argument
             mock_kb_class.assert_called_once()
@@ -162,7 +163,7 @@ class TestCSVDataSource:
         with patch('lib.knowledge.row_based_csv_knowledge.RowBasedCSVKnowledgeBase') as mock_kb_class:
             mock_kb_class.return_value = mock_temp_kb
             
-            result = csv_datasource.process_single_row(row_data, mock_kb, lambda data, hash: True)
+            result = csv_datasource.process_single_row(row_data, mock_kb, lambda data, hash_: True)
             
             assert result is False
             
@@ -191,7 +192,7 @@ class TestCSVDataSource:
         csv_path = self.create_test_csv(test_data)
         
         csv_datasource = CSVDataSource(csv_path, self.mock_hash_manager)
-        result = csv_datasource.get_csv_rows_with_hashes()
+        csv_datasource.get_csv_rows_with_hashes()
         
         # Verify hash manager was called for each row
         assert self.mock_hash_manager.hash_row.call_count == 1

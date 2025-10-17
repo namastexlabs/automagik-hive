@@ -13,7 +13,7 @@ Test Categories:
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -21,7 +21,7 @@ import pytest
 try:
     from cli.commands.postgres import PostgreSQLCommands
 except ImportError:
-    pytest.skip(f"Module cli.commands.postgres not available", allow_module_level=True)
+    pytest.skip("Module cli.commands.postgres not available", allow_module_level=True)
 
 
 class TestPostgreSQLCommandsInitialization:
@@ -143,7 +143,7 @@ class TestPostgreSQLServiceLifecycle:
         
         # Mock exception in start method
         with patch.object(postgres_cmd, 'postgres_start', side_effect=Exception("Service failed")):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 postgres_cmd.postgres_start("/test/workspace")
 
 
@@ -208,7 +208,7 @@ class TestPostgreSQLServiceStatus:
         postgres_cmd = PostgreSQLCommands()
         
         with patch.object(postgres_cmd, 'postgres_status', side_effect=Exception("Status check failed")):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 postgres_cmd.postgres_status("/test/workspace")
 
 
@@ -260,7 +260,7 @@ class TestPostgreSQLLogsManagement:
         postgres_cmd = PostgreSQLCommands()
         
         with patch.object(postgres_cmd, 'postgres_logs', side_effect=Exception("Log retrieval failed")):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 postgres_cmd.postgres_logs("/test/workspace")
 
 

@@ -1,6 +1,5 @@
 """Test the genie commands."""
 
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -90,7 +89,6 @@ class TestGenieCommands:
             mock_run.return_value = MagicMock(returncode=0)
             
             # Mock the exists check properly
-            original_exists = Path.exists
             def mock_exists(self):
                 return self == parent_dir / "AGENTS.md"
             
@@ -105,7 +103,7 @@ class TestGenieCommands:
         
         with patch('pathlib.Path.cwd', return_value=test_dir), \
              patch.object(Path, 'exists', return_value=True), \
-             patch('builtins.open', side_effect=IOError("Permission denied")):
+             patch('builtins.open', side_effect=OSError("Permission denied")):
             
             result = genie_cmd.launch_claude()
             

@@ -4,20 +4,19 @@ Testing template tool functionality, configuration, execution, and error handlin
 Target: 50%+ coverage with failing tests that guide TDD implementation.
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from typing import Any
-
 # Import TemplateTool from the template-tool module (dash in module name)
 # Python imports with dashes need to use importlib or __import__
 import importlib
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+
 template_tool_module = importlib.import_module('ai.tools.template-tool')
 TemplateTool = template_tool_module.TemplateTool
 
 # For patching purposes, get the tool module
 tool_module = importlib.import_module('ai.tools.template-tool.tool')
-from ai.tools.base_tool import ToolConfig
 
 
 class TestTemplateTool:
@@ -84,7 +83,7 @@ class TestTemplateTool:
 
     def test_execute_successful_processing(self):
         """Test successful execution with input processing."""
-        with patch.object(tool_module, 'logger') as mock_logger:
+        with patch.object(tool_module, 'logger'):
             tool = TemplateTool()
             
             result = tool.execute("test input data", {"transform": "uppercase"})

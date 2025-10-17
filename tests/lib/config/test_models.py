@@ -10,6 +10,7 @@ This test suite focuses on:
 
 import os
 from unittest.mock import Mock, patch
+
 import pytest
 
 # Import the module under test
@@ -24,7 +25,7 @@ try:
         validate_model,
     )
 except ImportError:
-    pytest.skip(f"Module lib.config.models not available", allow_module_level=True)
+    pytest.skip("Module lib.config.models not available", allow_module_level=True)
 
 
 class TestModelResolutionError:
@@ -111,10 +112,6 @@ class TestDefaultProviderResolution:
 
     def test_get_default_provider_no_env_vars(self):
         """Test provider detection when HIVE_DEFAULT_PROVIDER is not set."""
-        env_vars_to_clear = [
-            "HIVE_DEFAULT_PROVIDER", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", 
-            "AZURE_OPENAI_API_KEY", "COHERE_API_KEY", "REPLICATE_API_TOKEN"
-        ]
         with patch.dict(os.environ, {}, clear=True):
             if callable(get_default_provider):
                 # Should either return a default or raise an appropriate error

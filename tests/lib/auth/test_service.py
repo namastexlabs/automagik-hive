@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """Tests for CredentialService enhancements."""
 
-import tempfile
-from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -57,19 +54,9 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5433/hive
         """Test port calculation for workspace mode."""
         service = CredentialService()
         base_ports = {"db": 5532, "api": 8886}
-        
-        calculated = service.calculate_ports("workspace", base_ports)
-        
-        # Workspace has no prefix
-        assert calculated == {"db": 5532, "api": 8886}
 
-    def test_calculate_ports_workspace(self):
-        """Test port calculation for workspace mode."""
-        service = CredentialService()
-        base_ports = {"db": 5532, "api": 8886}
-        
         calculated = service.calculate_ports("workspace", base_ports)
-        
+
         # Workspace uses base ports as-is
         assert calculated == {"db": 5532, "api": 8886}
 
@@ -230,7 +217,7 @@ HIVE_API_KEY=hive_AFtzRGH5r01t2l291d4sivlizsd6EgYcfpUAW57te-I
         
         assert credentials is not None
         assert credentials["postgres_user"] == "hive_user"
-        assert credentials["postgres_password"] == "real_secure_password123"
+        assert credentials["postgres_password"] == "real_secure_password123"  # noqa: S105 - Test fixture password
         assert credentials["api_key_base"] == "AFtzRGH5r01t2l291d4sivlizsd6EgYcfpUAW57te-I"
 
     def test_extract_existing_master_credentials_detects_various_placeholders(self, tmp_path):

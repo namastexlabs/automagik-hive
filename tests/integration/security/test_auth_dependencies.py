@@ -17,7 +17,6 @@ from fastapi.testclient import TestClient
 
 from lib.auth.dependencies import (
     api_key_header,
-    auth_service,
     get_auth_service,
     optional_api_key,
     require_api_key,

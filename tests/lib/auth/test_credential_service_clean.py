@@ -10,9 +10,10 @@ This replaces the massive credential_service.py that inappropriately generated
 ".env > docker compose yaml specific overrides, and THATS IT"
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
 
 from lib.auth.credential_service_clean import CleanCredentialService
 from lib.config.settings import HiveSettings
@@ -115,7 +116,7 @@ class TestCleanCredentialService:
         mock_settings = Mock(spec=HiveSettings)
         mock_settings.hive_api_key = "hive_test_key_12345678901234567890123456"
         mock_settings.hive_api_port = 8886
-        mock_settings.hive_api_host = "0.0.0.0"  # Add missing attribute
+        mock_settings.hive_api_host = "0.0.0.0"  # Add missing attribute  # noqa: S104
         
         with patch('lib.auth.credential_service_clean.get_settings', return_value=mock_settings):
             result = self.service.validate_api_credentials()
@@ -185,7 +186,7 @@ class TestCleanCredentialService:
         mock_settings = Mock(spec=HiveSettings)
         mock_settings.hive_database_url = "postgresql+psycopg://testuser:testpass@localhost:5532/testdb"
         mock_settings.hive_api_port = 8886
-        mock_settings.hive_api_host = "0.0.0.0"
+        mock_settings.hive_api_host = "0.0.0.0"  # noqa: S104 - Server binding to all interfaces
         
         with patch('lib.auth.credential_service_clean.get_settings', return_value=mock_settings):
             result = self.service.get_connection_info()
@@ -197,7 +198,7 @@ class TestCleanCredentialService:
         # Password should not be exposed in connection info
         assert 'password' not in result['database']
         
-        assert result['api']['host'] == "0.0.0.0"
+        assert result['api']['host'] == "0.0.0.0"  # noqa: S104 - Server binding to all interfaces
         assert result['api']['port'] == 8886
     
     def test_get_connection_info_with_invalid_database_url(self):
@@ -205,7 +206,7 @@ class TestCleanCredentialService:
         mock_settings = Mock(spec=HiveSettings)
         mock_settings.hive_database_url = "invalid://url"
         mock_settings.hive_api_port = 8886
-        mock_settings.hive_api_host = "0.0.0.0"
+        mock_settings.hive_api_host = "0.0.0.0"  # noqa: S104 - Server binding to all interfaces
         
         with patch('lib.auth.credential_service_clean.get_settings', return_value=mock_settings):
             result = self.service.get_connection_info()

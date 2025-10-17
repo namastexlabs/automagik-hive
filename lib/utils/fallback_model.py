@@ -6,8 +6,8 @@ instead of crashing when API keys are invalid or expired.
 """
 
 import asyncio
-from collections.abc import Iterator
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator, Iterator
+from typing import Any
 
 from lib.logging import logger
 
@@ -145,8 +145,7 @@ class FallbackModel:
         Yields:
             Error message chunks
         """
-        for chunk in self.stream(messages, **kwargs):
-            yield chunk
+        yield from self.stream(messages, **kwargs)
 
     # Mock required properties/methods that Agno models might expect
     @property

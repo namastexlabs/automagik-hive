@@ -8,8 +8,9 @@ Tests updated to work with current HiveSettings implementation:
 """
 
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
 from pydantic_core import ValidationError
 
 from lib.config.settings import HiveSettings

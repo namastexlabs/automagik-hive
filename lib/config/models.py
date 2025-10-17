@@ -74,7 +74,7 @@ class ModelResolver:
         )
         return default_model
 
-    @lru_cache(maxsize=128)
+    @lru_cache(maxsize=128)  # noqa: B019 - Intentional cache for singleton
     def _detect_provider(self, model_id: str) -> str:
         """
         Detect provider from model ID using dynamic registry.
@@ -107,7 +107,7 @@ class ModelResolver:
         )
         return provider
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def _discover_model_class(self, provider: str, model_id: str):
         """
         Dynamically discover and import Agno model class using registry.

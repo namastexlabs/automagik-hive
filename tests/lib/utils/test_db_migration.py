@@ -66,7 +66,7 @@ class TestCheckAndRunMigrations:
         """Test migration check when HIVE_DATABASE_URL is not set."""
         with patch.dict(os.environ, {}, clear=True):
             # Patch _ensure_environment_loaded to prevent .env loading
-            with patch("lib.utils.db_migration._ensure_environment_loaded") as mock_env_load:
+            with patch("lib.utils.db_migration._ensure_environment_loaded"):
                 with patch("lib.utils.db_migration.logger") as mock_logger:
                     result = await check_and_run_migrations()
 

@@ -6,15 +6,9 @@ status monitoring, log retrieval, and cross-platform compatibility.
 All tests are designed with RED phase compliance for TDD workflow.
 """
 
-import os
-import shutil
 import subprocess
-import tempfile
-import time
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, call, patch
-
-import pytest
+from unittest.mock import Mock, patch
 
 from cli.core.main_service import MainService
 
@@ -670,7 +664,7 @@ class TestMainServiceStatus:
         ]
         
         service = MainService(temp_workspace)
-        status = service.get_main_status(str(temp_workspace))
+        service.get_main_status(str(temp_workspace))
         
         # Verify it used the docker/main compose file
         expected_compose_file = str(docker_main_dir / "docker-compose.yml")
@@ -1092,7 +1086,7 @@ class TestMainServiceEdgeCases:
         with patch('subprocess.run', side_effect=error):
             try:
                 result = service._setup_main_containers(str(temp_workspace))
-                assert False, "_setup_main_containers should raise PermissionError, not return False"
+                raise AssertionError("_setup_main_containers should raise PermissionError, not return False")
             except PermissionError:
                 pass  # This is expected behavior - PermissionError propagates up
         
@@ -1113,7 +1107,7 @@ class TestMainServiceEdgeCases:
         with patch('subprocess.run', side_effect=error):
             try:
                 result = service._setup_main_containers(str(temp_workspace))
-                assert False, "_setup_main_containers should raise OSError, not return False"
+                raise AssertionError("_setup_main_containers should raise OSError, not return False")
             except OSError:
                 pass  # This is expected behavior - OSError propagates up
 

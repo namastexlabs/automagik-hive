@@ -341,7 +341,7 @@ class DockerSDKManager:
         except APIError:
             return False
 
-    def list_containers(self, all: bool = False) -> list[ContainerInfo]:
+    def list_containers(self, all_: bool = False) -> list[ContainerInfo]:
         """List containers using Docker SDK.
 
         Args:
@@ -380,7 +380,7 @@ class DockerSDKManager:
                     )
                     container_list.append(info)
 
-                except Exception:
+                except Exception:  # noqa: S112 - Continue after exception is intentional
                     continue
 
             return container_list
@@ -465,7 +465,7 @@ def demonstrate_sdk_vs_subprocess():
     # Example 1: List containers with rich metadata
     containers = sdk.list_containers(all=True)
 
-    for container in containers[:3]:  # Show first 3
+    for _container in containers[:3]:  # Show first 3
         pass
 
     # Example 2: Type-safe error handling
@@ -474,7 +474,7 @@ def demonstrate_sdk_vs_subprocess():
         info = sdk.get_container_info("non-existent-container")
         if info is None:
             pass
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
     # Example 3: Programmatic access to container metadata

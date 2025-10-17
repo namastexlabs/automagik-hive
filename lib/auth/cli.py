@@ -12,9 +12,11 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from lib.auth.credential_service import CredentialService
-from lib.auth.init_service import AuthInitService
-from lib.logging import logger
+from lib.auth.credential_service import (  # noqa: E402 - Path setup required
+    CredentialService,  # noqa: E402 - Environment setup required before module imports
+)
+from lib.auth.init_service import AuthInitService  # noqa: E402 - Environment setup required before module imports
+from lib.logging import logger  # noqa: E402 - Environment setup required before module imports
 
 
 def show_current_key() -> None:

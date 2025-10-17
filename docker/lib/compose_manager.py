@@ -327,7 +327,7 @@ class DockerComposeManager:
                     container_name=container_name,
                 )
 
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
 
         return services

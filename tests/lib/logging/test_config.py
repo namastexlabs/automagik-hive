@@ -1,13 +1,13 @@
 """Tests for lib.logging.config module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.logging.config
+    import lib.logging.config  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.logging.config not available", allow_module_level=True)
+    pytest.skip("Module lib.logging.config not available", allow_module_level=True)
 
 
 class TestConfig:

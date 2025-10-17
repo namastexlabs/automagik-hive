@@ -6,9 +6,9 @@ Focus on missing coverage areas to improve from 55% to 60%+
 import csv
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from tqdm import tqdm
 from agno.vectordb.base import VectorDb
 
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
@@ -117,7 +117,7 @@ class TestPathResolutionAndErrorHandling:
     
     def test_csv_path_resolution_without_stored_path(self, mock_vector_db):
         """Test _load_csv_as_documents when no stored path is available (lines 51-57)"""
-        kb = RowBasedCSVKnowledgeBase("/tmp/nonexistent.csv", mock_vector_db)
+        kb = RowBasedCSVKnowledgeBase("/tmp/nonexistent.csv", mock_vector_db)  # noqa: S108 - Test/script temp file
         
         # Clear the stored path to test the error condition
         object.__setattr__(kb, "_csv_path", None)
@@ -381,7 +381,7 @@ class TestVectorDatabaseLoading:
             assert calls["kwargs"]["filters"] == kb.documents[0].meta_data
 
             # Ensure sync upsert was not called and async_insert not used
-            assert not getattr(mock_vector_db, 'upsert').called if hasattr(mock_vector_db, 'upsert') else True
+            assert not mock_vector_db.upsert.called if hasattr(mock_vector_db, 'upsert') else True
             assert hasattr(mock_vector_db, 'async_insert')
             assert mock_vector_db.async_insert.await_count == 0
 
@@ -603,7 +603,7 @@ class TestCategoryProcessingAndLogging:
             csv_path = f.name
         
         try:
-            kb = RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
+            RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
             
             # Check that category counting debug messages were called
             debug_calls = [call for call in mock_logger.debug.call_args_list 
@@ -661,7 +661,7 @@ class TestFinalCoverageEdgeCases:
             csv_path = f.name
         
         try:
-            kb = RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
+            RowBasedCSVKnowledgeBase(csv_path=csv_path, vector_db=mock_vector_db)
             
             # Create a mock log record to test the filter
             mock_record = MagicMock()

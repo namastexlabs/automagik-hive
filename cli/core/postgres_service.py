@@ -5,7 +5,7 @@ This service coordinates with PostgreSQL commands for unified container manageme
 """
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..commands.postgres import PostgreSQLCommands
 

@@ -13,16 +13,13 @@ CLEAN ARCHITECTURE COMPLIANCE:
 - Type-safe configuration with Pydantic validation
 """
 
-import os
 from pathlib import Path
-from typing import List, Optional
 
 from pydantic import Field, ValidationError, field_validator, model_validator
-from pydantic_settings import BaseSettings
 from pydantic.networks import HttpUrl
+from pydantic_settings import BaseSettings
 
 from lib.logging import logger
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -45,7 +42,7 @@ class HiveSettings(BaseSettings):
     # =========================================================================
     # SERVER & API CONFIGURATION (Required)
     # =========================================================================
-    hive_api_host: str = Field("0.0.0.0", description="API server bind host")
+    hive_api_host: str = Field("0.0.0.0", description="API server bind host")  # noqa: S104
     hive_api_port: int = Field(..., description="API server port")
     hive_api_workers: int = Field(1, description="API worker processes")
     
@@ -67,12 +64,12 @@ class HiveSettings(BaseSettings):
     hive_default_model: str = Field("gpt-4.1-mini", description="Default AI model")
     
     # AI Provider Keys (Optional - may not be needed in all environments)
-    anthropic_api_key: Optional[str] = Field(None, description="Anthropic API key")
-    gemini_api_key: Optional[str] = Field(None, description="Google Gemini API key")
-    openai_api_key: Optional[str] = Field(None, description="OpenAI API key")
-    grok_api_key: Optional[str] = Field(None, description="Grok API key")
-    groq_api_key: Optional[str] = Field(None, description="Groq API key")
-    cohere_api_key: Optional[str] = Field(None, description="Cohere API key")
+    anthropic_api_key: str | None = Field(None, description="Anthropic API key")
+    gemini_api_key: str | None = Field(None, description="Google Gemini API key")
+    openai_api_key: str | None = Field(None, description="OpenAI API key")
+    grok_api_key: str | None = Field(None, description="Grok API key")
+    groq_api_key: str | None = Field(None, description="Groq API key")
+    cohere_api_key: str | None = Field(None, description="Cohere API key")
     
     # =========================================================================
     # DEVELOPMENT & OPERATIONAL SETTINGS
@@ -101,11 +98,11 @@ class HiveSettings(BaseSettings):
     )
     
     # Optional settings with defaults
-    hive_log_dir: Optional[str] = Field(None, description="Log directory path")
-    langwatch_api_key: Optional[str] = Field(None, description="LangWatch API key")
+    hive_log_dir: str | None = Field(None, description="Log directory path")
+    langwatch_api_key: str | None = Field(None, description="LangWatch API key")
     hive_enable_langwatch: bool = Field(True, description="LangWatch integration enabled")
     hive_whatsapp_notifications_enabled: bool = Field(False, description="WhatsApp notifications")
-    whatsapp_notification_group: Optional[str] = Field(None, description="WhatsApp group ID")
+    whatsapp_notification_group: str | None = Field(None, description="WhatsApp group ID")
     
     # =========================================================================
     # PERFORMANCE & LIMITS (Optional with defaults)
@@ -184,7 +181,7 @@ class HiveSettings(BaseSettings):
         return Path(__file__).parent.parent.parent
     
     @property
-    def BASE_DIR(self) -> Path:
+    def base_dir(self) -> Path:
         """Alias for project_root for FileSyncTracker compatibility."""
         return self.project_root
     
@@ -498,7 +495,7 @@ class HiveSettings(BaseSettings):
     }
 
 
-def load_settings(env_file: Optional[Path] = None) -> HiveSettings:
+def load_settings(env_file: Path | None = None) -> HiveSettings:
     """
     Load and validate Hive settings with clear error handling.
     
@@ -554,7 +551,7 @@ def load_settings(env_file: Optional[Path] = None) -> HiveSettings:
         raise SystemExit(1) from e
 
 
-def get_cors_origins_list(settings: HiveSettings) -> List[str]:
+def get_cors_origins_list(settings: HiveSettings) -> list[str]:
     """
     Parse CORS origins string into list.
     
@@ -595,9 +592,9 @@ def validate_ai_provider_keys(settings: HiveSettings) -> dict:
 # =========================================================================
 # SINGLETON INSTANCE (Application-wide configuration access)
 # =========================================================================
-_settings: Optional[HiveSettings] = None
+_settings: HiveSettings | None = None
 
-def get_settings(reload: bool = False, env_file: Optional[Path] = None) -> HiveSettings:
+def get_settings(reload: bool = False, env_file: Path | None = None) -> HiveSettings:
     """
     Get application settings singleton.
     

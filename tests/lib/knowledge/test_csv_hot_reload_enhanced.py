@@ -12,10 +12,8 @@ This test suite focuses on the missing coverage areas identified:
 """
 
 import os
-import tempfile
-import time
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open, call
+from unittest.mock import Mock, patch
+
 import pytest
 
 from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
@@ -130,7 +128,7 @@ class TestFileWatchingCoverageEnhancement:
         
         with patch('lib.knowledge.csv_hot_reload.logger') as mock_logger:
             with patch('watchdog.observers.Observer') as mock_observer_class:
-                with patch('watchdog.events.FileSystemEventHandler') as mock_handler_class:
+                with patch('watchdog.events.FileSystemEventHandler'):
                     mock_observer = Mock()
                     mock_observer_class.return_value = mock_observer
                     
@@ -171,7 +169,7 @@ class TestFileWatchingCoverageEnhancement:
         
         # Test the SimpleHandler class that's created inside start_watching
         with patch('watchdog.observers.Observer') as mock_observer_class:
-            with patch('watchdog.events.FileSystemEventHandler') as mock_handler_class:
+            with patch('watchdog.events.FileSystemEventHandler'):
                 mock_observer = Mock()
                 mock_observer_class.return_value = mock_observer
                 
@@ -329,7 +327,7 @@ class TestMainFunctionCoverage:
                 mock_manager_class.return_value = mock_manager
                 
                 try:
-                    main()
+                    main()  # noqa: F821
                 except SystemExit:
                     pass  # ArgumentParser might call sys.exit
                 
@@ -359,7 +357,7 @@ class TestMainFunctionCoverage:
                 mock_manager_class.return_value = mock_manager
                 
                 with patch('lib.knowledge.csv_hot_reload.logger') as mock_logger:
-                    main()
+                    main()  # noqa: F821
                     
                     # Should create manager (line 212)
                     mock_manager_class.assert_called_with("test.csv")
@@ -386,7 +384,7 @@ class TestMainFunctionCoverage:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager (line 212)
                 mock_manager_class.assert_called_with("test.csv")
@@ -410,7 +408,7 @@ class TestMainFunctionCoverage:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
                 
-                main()
+                main()  # noqa: F821
                 
                 # Should create manager (line 212)
                 mock_manager_class.assert_called_with("test.csv")
@@ -476,14 +474,14 @@ class TestRealWorldScenarios:
             manager.knowledge_base = Mock()
             
             # Test multiple rapid reloads
-            for i in range(10):
+            for _i in range(10):
                 manager._reload_knowledge_base()
             
             # Should handle multiple reloads without issues
             assert manager.knowledge_base.load.call_count == 10
             
             # Test status calls during operations
-            for i in range(5):
+            for _i in range(5):
                 status = manager.get_status()
                 assert status["csv_path"] == str(csv_path)
     

@@ -1,13 +1,13 @@
 """Tests for lib.auth.init_service module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.auth.init_service
+    import lib.auth.init_service  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.auth.init_service not available", allow_module_level=True)
+    pytest.skip("Module lib.auth.init_service not available", allow_module_level=True)
 
 
 class TestInitService:

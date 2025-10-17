@@ -1,13 +1,13 @@
 """Tests for lib.logging.progress module."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.logging.progress
+    import lib.logging.progress  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.logging.progress not available", allow_module_level=True)
+    pytest.skip("Module lib.logging.progress not available", allow_module_level=True)
 
 
 class TestProgress:

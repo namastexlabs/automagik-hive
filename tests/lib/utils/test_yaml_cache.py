@@ -10,7 +10,6 @@ import threading
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
 import yaml
 
 from lib.utils.yaml_cache import (
@@ -330,6 +329,7 @@ class TestYAMLCacheManager:
         """Test thread safety of cache operations."""
         import concurrent.futures
         import tempfile
+
         import yaml
         
         # Create a real temporary file for thread safety testing
@@ -351,7 +351,7 @@ class TestYAMLCacheManager:
             
             # Verify all threads got the same data
             assert len(results) == 10
-            for thread_id, result in results:
+            for _thread_id, result in results:
                 assert result == test_data
                 
             # Verify cache has only one entry for the file

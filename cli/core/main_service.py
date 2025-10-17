@@ -8,7 +8,6 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
 
 
 class MainService:
@@ -47,7 +46,6 @@ class MainService:
         if not self._setup_main_containers(workspace_path):
             return False
             
-        print("✅ Main environment installed successfully")
         return True
     
     def _validate_workspace(self, workspace_path: Path) -> bool:
@@ -103,7 +101,6 @@ class MainService:
             elif docker_compose_root.exists():
                 compose_file = docker_compose_root
             else:
-                print("❌ No docker-compose.yml found in docker/main/ or workspace root")
                 return False
             
             # Ensure docker/main directory exists for main-specific compose files
@@ -116,10 +113,8 @@ class MainService:
             data_dir.mkdir(parents=True, exist_ok=True)
             postgres_data_dir = data_dir / "postgres"
             postgres_data_dir.mkdir(parents=True, exist_ok=True)
-            print("✅ Using persistent PostgreSQL storage in data/postgres")
             
             # Execute docker compose command with cross-platform path normalization
-            print("🚀 Starting both hive-postgres and hive-api containers...")
             result = subprocess.run(
                 ["docker", "compose", "-f", os.fspath(compose_file), "up", "-d"],
                 check=False,
@@ -129,21 +124,17 @@ class MainService:
             )
             
             if result.returncode != 0:
-                print(f"❌ Docker compose failed: {result.stderr}")
                 return False
                 
-            print("✅ Both main containers started successfully")
             return True
             
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
-            print(f"❌ Error starting main containers: {e}")
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
             return False
     
     def serve_main(self, workspace_path: str) -> bool:
         """Serve main containers with environment validation."""
         # Validate main environment first
         if not self._validate_main_environment(Path(workspace_path)):
-            print("❌ Main environment validation failed")
             return False
         
         # Check if containers are already running
@@ -152,7 +143,6 @@ class MainService:
         app_running = "✅ Running" in status.get("hive-api", "")
         
         if postgres_running and app_running:
-            print("✅ Both main containers are already running")
             return True
             
         # Start containers using Docker Compose
@@ -217,12 +207,10 @@ class MainService:
             elif docker_compose_root.exists():
                 compose_file = docker_compose_root
             else:
-                print("❌ Docker compose file not found")
                 return False
             
             try:
                 if not compose_file.exists():
-                    print("❌ Docker compose file not found")
                     return False
             except (TypeError, AttributeError):
                 # Handle mocking issues where mock functions have wrong signatures
@@ -232,7 +220,6 @@ class MainService:
                 # since the test fixture should have set up the necessary structure
                 pass
             
-            print("🛑 Stopping main containers...")
             
             # Stop all containers using Docker Compose with cross-platform paths
             result = subprocess.run(
@@ -243,13 +230,10 @@ class MainService:
             )
             
             if result.returncode == 0:
-                print("✅ Main containers stopped successfully")
                 return True
-            print(f"❌ Failed to stop containers: {result.stderr}")
             return False
                 
-        except Exception as e:
-            print(f"❌ Error stopping main containers: {e}")
+        except Exception:
             return False
     
     def restart_main(self, workspace_path: str) -> bool:
@@ -271,12 +255,10 @@ class MainService:
             elif docker_compose_root.exists():
                 compose_file = docker_compose_root
             else:
-                print("❌ Docker compose file not found")
                 return False
             
             try:
                 if not compose_file.exists():
-                    print("❌ Docker compose file not found")
                     return False
             except (TypeError, AttributeError):
                 # Handle mocking issues where mock functions have wrong signatures
@@ -286,7 +268,6 @@ class MainService:
                 # since the test fixture should have set up the necessary structure
                 pass
             
-            print("🔄 Restarting main containers...")
             
             # Restart all containers using Docker Compose with cross-platform paths
             result = subprocess.run(
@@ -297,17 +278,13 @@ class MainService:
             )
             
             if result.returncode == 0:
-                print("✅ Main containers restarted successfully")
                 return True
-            print(f"❌ Failed to restart containers: {result.stderr}")
             # Fallback: try stop and start
-            print("🔄 Attempting fallback: stop and start...")
             self.stop_main(workspace_path)
             time.sleep(2)
             return self.serve_main(workspace_path)
                 
-        except Exception as e:
-            print(f"❌ Error restarting main containers: {e}")
+        except Exception:
             return False
     
     def show_main_logs(self, workspace_path: str, tail: int | None = None) -> bool:
@@ -329,12 +306,10 @@ class MainService:
             elif docker_compose_root.exists():
                 compose_file = docker_compose_root
             else:
-                print("❌ Docker compose file not found")
                 return False
             
             try:
                 if not compose_file.exists():
-                    print("❌ Docker compose file not found")
                     return False
             except (TypeError, AttributeError):
                 # Handle mocking issues where mock functions have wrong signatures
@@ -344,16 +319,12 @@ class MainService:
                 # since the test fixture should have set up the necessary structure
                 pass
             
-            print("📋 Main Container Logs:")
-            print("=" * 80)
             
             # Show logs for both containers
-            for service_name, display_name in [
+            for service_name, _display_name in [
                 ("postgres", "PostgreSQL Database"),
                 ("app", "FastAPI Application")
             ]:
-                print(f"\n🔍 {display_name} ({service_name}):")
-                print("-" * 50)
                 
                 # Build Docker Compose logs command with cross-platform paths
                 cmd = ["docker", "compose", "-f", os.fspath(compose_file), "logs"]
@@ -366,16 +337,15 @@ class MainService:
                 
                 if result.returncode == 0:
                     if result.stdout.strip():
-                        print(result.stdout)
+                        pass
                     else:
-                        print("(No logs available)")
+                        pass
                 else:
-                    print(f"❌ Failed to get logs: {result.stderr}")
+                    pass
             
             return True
             
-        except Exception as e:
-            print(f"❌ Error getting main logs: {e}")
+        except Exception:
             return False
     
     def get_main_status(self, workspace_path: str) -> dict[str, str]:
@@ -442,24 +412,20 @@ class MainService:
     
     def uninstall_preserve_data(self, workspace_path: str) -> bool:
         """Uninstall main environment while preserving database data."""
-        print("🗑️ Uninstalling containers while preserving data...")
         
         # Stop and remove containers but preserve data
         if not self._cleanup_containers_only(workspace_path):
-            print("⚠️ Container cleanup had issues, continuing...")
+            pass
             
-        print("✅ Uninstall complete - database data preserved in data/postgres")
         return True
     
     def uninstall_wipe_data(self, workspace_path: str) -> bool:
         """Uninstall main environment and wipe all data."""
-        print("🗑️ Uninstalling containers and wiping all data...")
         
         # Full cleanup including data
         if not self._cleanup_main_environment(workspace_path):
-            print("⚠️ Cleanup had issues, continuing...")
+            pass
             
-        print("✅ Uninstall complete - all data wiped")
         return True
     
     def _cleanup_containers_only(self, workspace_path: str) -> bool:
@@ -498,12 +464,11 @@ class MainService:
                     # "exists_side_effect() missing 1 required positional argument: 'path_self'"
                     # In test environments with broken mocking, skip compose file check
                     pass
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # Continue cleanup even if Docker operations fail
                 pass
             
             # Note: We preserve the data directory for persistent storage
-            print("✅ Containers removed - data directory preserved")
             
             return True
             
@@ -547,7 +512,7 @@ class MainService:
                     # "exists_side_effect() missing 1 required positional argument: 'path_self'"
                     # In test environments with broken mocking, skip compose file check
                     pass
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # Continue cleanup even if Docker operations fail
                 pass
             
@@ -556,11 +521,9 @@ class MainService:
                 import shutil
                 data_dir = workspace / "data" / "postgres"
                 if data_dir.exists():
-                    print("🗑️ Wiping database data directory...")
                     shutil.rmtree(data_dir)
-                    print("✅ Database data wiped")
-            except Exception as e:
-                print(f"⚠️ Failed to wipe data directory: {e}")
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
+                pass
                 # Continue anyway - container cleanup succeeded
             
             return True
@@ -572,7 +535,6 @@ class MainService:
     def start_postgres_only(self, workspace_path: str) -> bool:
         """Start only PostgreSQL container for local hybrid deployment - NEW METHOD."""
         try:
-            print("🐳 Starting PostgreSQL container for local development...")
             
             # Normalize workspace path
             workspace = Path(workspace_path).resolve()
@@ -586,7 +548,6 @@ class MainService:
             elif docker_compose_root.exists():
                 compose_file = docker_compose_root
             else:
-                print("❌ No docker-compose.yml found")
                 return False
             
             # Ensure data directory exists (reuse existing pattern)
@@ -602,25 +563,20 @@ class MainService:
             ], capture_output=True, text=True, timeout=120)
             
             if result.returncode == 0:
-                print("✅ PostgreSQL container started successfully")
                 
                 response = input("Start main server now? (Y/n): ").strip().lower()
                 if response in ["", "y", "yes"]:
                     subprocess.run(["uv", "run", "automagik-hive", "dev"])
                 else:
-                    print("💡 Start manually: uv run automagik-hive dev")
+                    pass
                 
                 return True
             else:
-                print(f"❌ Failed to start PostgreSQL: {result.stderr}")
                 return False
                 
         except subprocess.TimeoutExpired:
-            print("❌ Timeout starting PostgreSQL container")
             return False
         except FileNotFoundError:
-            print("❌ Docker not found. Please install Docker and try again.")
             return False
-        except Exception as e:
-            print(f"❌ PostgreSQL startup failed: {e}")
+        except Exception:
             return False

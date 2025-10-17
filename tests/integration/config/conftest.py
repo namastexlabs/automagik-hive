@@ -15,9 +15,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch  # noqa: E402 - Path setup required before imports
 
-import pytest
+import pytest  # noqa: E402 - Path setup required before imports
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def clean_singleton() -> Generator[None, None, None]:
     """Clean singleton instances before and after tests."""
     # Import here to avoid circular imports
     from lib.config.settings import HiveSettings
-    Settings = HiveSettings  # Alias for compatibility
+    Settings = HiveSettings  # Alias for compatibility  # noqa: N806
 
     # Clear any existing singleton instance before test
     if hasattr(Settings, "_instance"):
@@ -173,7 +173,7 @@ def clean_server_singleton() -> Generator[None, None, None]:
 def server_mock_env_vars() -> dict[str, str]:
     """Mock environment variables for server config testing."""
     return {
-        "HIVE_HOST": "0.0.0.0",
+        "HIVE_HOST": "0.0.0.0",  # noqa: S104
         "HIVE_PORT": "8888",
         "HIVE_WORKERS": "4",
         "HIVE_ENVIRONMENT": "development",

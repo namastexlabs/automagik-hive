@@ -11,24 +11,24 @@ Test Categories:
 - Integration tests: Service interactions and filesystem operations
 """
 
-import pytest
 import os
-import argparse
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the module under test
 try:
     import lib.auth.cli as auth_cli
     from lib.auth.cli import (
-        show_current_key,
+        generate_agent_credentials,
+        generate_complete_workspace_credentials,
+        generate_postgres_credentials,
         regenerate_key,
         show_auth_status,
-        generate_postgres_credentials,
-        generate_complete_workspace_credentials,
-        generate_agent_credentials,
         show_credential_status,
-        sync_mcp_credentials
+        show_current_key,
+        sync_mcp_credentials,
     )
 except ImportError:
     pytest.skip("Module lib.auth.cli not available", allow_module_level=True)
@@ -96,7 +96,7 @@ class TestShowCurrentKey:
         mock_auth_service.side_effect = Exception("Service initialization failed")
         
         # Should fail initially - exception handling not implemented
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             show_current_key()
 
 
@@ -129,7 +129,7 @@ class TestRegenerateKey:
         mock_auth_service.side_effect = Exception("Regeneration failed")
         
         # Should fail initially - exception handling not implemented
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             regenerate_key()
 
     @patch('lib.auth.cli.AuthInitService')
@@ -284,7 +284,7 @@ class TestGeneratePostgresCredentials:
         mock_service_class.side_effect = Exception("Credential generation failed")
         
         # Should fail initially - exception handling not implemented
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             generate_postgres_credentials()
 
     @patch('lib.auth.cli.CredentialService')
@@ -432,7 +432,7 @@ class TestGenerateAgentCredentials:
         mock_service_class.side_effect = Exception("Agent credential generation failed")
         
         # Should fail initially - exception handling not implemented
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             generate_agent_credentials()
 
 
@@ -512,7 +512,7 @@ class TestShowCredentialStatus:
         mock_service_class.side_effect = Exception("Status retrieval failed")
         
         # Should fail initially - exception handling not implemented
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             show_credential_status()
 
 
@@ -562,7 +562,7 @@ class TestSyncMcpCredentials:
         mock_service_class.side_effect = Exception("MCP sync failed")
         
         # Should fail initially - exception handling not implemented
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             sync_mcp_credentials()
 
     @patch('lib.auth.cli.CredentialService')
@@ -574,7 +574,7 @@ class TestSyncMcpCredentials:
         mock_service_class.return_value = mock_service
         
         # Should fail initially - sync exception handling not implemented
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             sync_mcp_credentials()
 
 
@@ -703,7 +703,7 @@ class TestIntegrationScenarios:
         mock_service_class.return_value = mock_service
         
         # First attempt should fail
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             generate_postgres_credentials()
         
         # Should fail initially - error recovery not implemented

@@ -13,12 +13,12 @@ Comprehensive integration tests for version management workflows, including:
 
 import asyncio
 import tempfile
-import yaml
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import yaml
 
 from lib.versioning.agno_version_service import AgnoVersionService, VersionInfo
 from lib.versioning.bidirectional_sync import BidirectionalSync
@@ -258,7 +258,7 @@ class TestVersionLifecycleIntegration:
                 
                 # Sync all components
                 results = []
-                for component_id, component_type, expected_config in components:
+                for component_id, component_type, _expected_config in components:
                     result = await sync_engine.sync_component(component_id, component_type)
                     results.append(result)
                 
@@ -296,7 +296,7 @@ class TestVersionLifecycleIntegration:
             assert "PRODUCTION MODE" in DevMode.get_mode_description()
             
             # In production mode, write_back_to_yaml should write to file
-            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService"):
                 with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                     mock_instance = MagicMock()
                     mock_instance.BASE_DIR = Path(str(temp_workspace))
@@ -331,7 +331,7 @@ class TestVersionLifecycleIntegration:
                 yaml.dump(test_config, f)
             
             # In dev mode, write_back_to_yaml should NOT write to file
-            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService"):
                 with patch("lib.versioning.file_sync_tracker.settings") as mock_settings:
                     mock_instance = MagicMock()
                     mock_instance.BASE_DIR = Path(str(temp_workspace))
@@ -619,7 +619,7 @@ class TestVersionLifecycleErrorScenarios:
                     # Mock YAML is not newer than DB (should trigger DB→YAML sync)
                     with patch.object(sync_engine.file_tracker, "yaml_newer_than_db", return_value=False):
                         # This should raise an exception due to permission error
-                        with pytest.raises(Exception):
+                        with pytest.raises(Exception):  # noqa: B017
                             await sync_engine.sync_component("permission-test-agent", "agent")
         
         finally:
