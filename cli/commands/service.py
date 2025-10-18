@@ -164,6 +164,99 @@ class ServiceManager:
         except Exception:
             return False
 
+    def init_workspace(self, workspace_name: str = "my-hive-workspace") -> bool:
+        """Initialize a new workspace with AI component templates.
+
+        Lightweight template copying - NOT full workspace scaffolding.
+        Creates basic directory structure and copies template files only.
+        User must still run 'install' for full environment setup.
+
+        Args:
+            workspace_name: Name of the workspace directory to create
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            import shutil
+            workspace_path = Path(workspace_name)
+
+            # Check if workspace already exists
+            if workspace_path.exists():
+                print(f"❌ Directory '{workspace_name}' already exists")
+                return False
+
+            print(f"🏗️  Initializing workspace: {workspace_name}")
+            print("📋 This will copy AI component templates only")
+            print("💡 You'll need to run 'install' afterwards for full setup\n")
+
+            # Create directory structure
+            (workspace_path / "ai" / "agents").mkdir(parents=True)
+            (workspace_path / "ai" / "teams").mkdir(parents=True)
+            (workspace_path / "ai" / "workflows").mkdir(parents=True)
+            (workspace_path / "knowledge").mkdir(parents=True)
+
+            # Locate project root templates
+            project_root = Path(__file__).parent.parent.parent
+            templates_copied = 0
+
+            # Copy template-agent
+            template_agent = project_root / "ai" / "agents" / "template-agent"
+            if template_agent.exists():
+                shutil.copytree(
+                    template_agent,
+                    workspace_path / "ai" / "agents" / "template-agent"
+                )
+                print("  ✅ Agent template")
+                templates_copied += 1
+
+            # Copy template-team
+            template_team = project_root / "ai" / "teams" / "template-team"
+            if template_team.exists():
+                shutil.copytree(
+                    template_team,
+                    workspace_path / "ai" / "teams" / "template-team"
+                )
+                print("  ✅ Team template")
+                templates_copied += 1
+
+            # Copy template-workflow
+            template_workflow = project_root / "ai" / "workflows" / "template-workflow"
+            if template_workflow.exists():
+                shutil.copytree(
+                    template_workflow,
+                    workspace_path / "ai" / "workflows" / "template-workflow"
+                )
+                print("  ✅ Workflow template")
+                templates_copied += 1
+
+            # Copy .env.example
+            env_example = project_root / ".env.example"
+            if env_example.exists():
+                shutil.copy(env_example, workspace_path / ".env.example")
+                print("  ✅ Environment template (.env.example)")
+
+            # Create knowledge directory marker
+            (workspace_path / "knowledge" / ".gitkeep").touch()
+
+            if templates_copied == 0:
+                print("⚠️  Warning: No templates were copied (not found in project)")
+                return False
+
+            print(f"\n✅ Workspace initialized: {workspace_name}")
+            print(f"\n📂 Next steps:")
+            print(f"   cd {workspace_name}")
+            print(f"   cp .env.example .env")
+            print(f"   # Edit .env with your API keys and settings")
+            print(f"   automagik-hive install")
+            print(f"   automagik-hive dev")
+
+            return True
+
+        except Exception as e:
+            print(f"❌ Failed to initialize workspace: {e}")
+            return False
+
     def install_full_environment(self, workspace: str = ".") -> bool:
         """Complete environment setup with deployment choice - ENHANCED METHOD."""
         try:
