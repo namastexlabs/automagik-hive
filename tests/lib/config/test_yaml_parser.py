@@ -26,7 +26,7 @@ from lib.mcp.catalog import MCPCatalog
 @pytest.fixture(autouse=True)
 def mock_mcp_catalog_init():
     """Mock MCPCatalog initialization to avoid .mcp.json dependency."""
-    with patch('lib.config.yaml_parser.MCPCatalog') as mock_catalog_class:
+    with patch("lib.config.yaml_parser.MCPCatalog") as mock_catalog_class:
         mock_instance = Mock(spec=MCPCatalog)
         mock_instance.has_server.return_value = True
         mock_instance.list_servers.return_value = []
