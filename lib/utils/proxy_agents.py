@@ -786,6 +786,8 @@ class AgnoAgentProxy:
                 if server_config.args:
                     command_parts.extend(server_config.args)
                 mcp_params.update({"command": " ".join(command_parts), "transport": "stdio"})
+            elif server_config.is_http_server:
+                mcp_params.update({"url": server_config.url, "transport": "streamable-http"})
             else:
                 logger.warning(
                     f"🌐 Unknown server type for '{server_name}' for agent {component_id} - tool will be skipped"
