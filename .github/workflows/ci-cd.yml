@@ -199,7 +199,9 @@ jobs:
         with:
           context: .
           file: docker/main/Dockerfile
-          push: true
+          # Only push to registry on non-PR events (main branch, tags, releases)
+          # PRs will build and validate but not push (avoids permission issues)
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -209,7 +211,9 @@ jobs:
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             GIT_SHA=${{ github.sha }}
 
+      # Trivy scans the pushed image, so only run on non-PR events
       - name: Run Trivy container scan
+        if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@master
         continue-on-error: true
         with:
@@ -218,8 +222,8 @@ jobs:
           output: 'trivy-container-results.sarif'
 
       - name: Upload container scan results
+        if: github.event_name != 'pull_request' && hashFiles('trivy-container-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('trivy-container-results.sarif') != ''
         with:
           sarif_file: 'trivy-container-results.sarif'
 
