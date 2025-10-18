@@ -613,9 +613,7 @@ class TestServiceManagerInitWorkspace:
         manager = ServiceManager()
 
         # Mock input to confirm overwrite
-        with patch('builtins.input', return_value='yes'), \
-             patch('shutil.copytree'), \
-             patch('shutil.copy'):
+        with patch("builtins.input", return_value="yes"), patch("shutil.copytree"), patch("shutil.copy"):
             result = manager.init_workspace(str(workspace_path), force=True)
 
             assert result is True
@@ -632,7 +630,7 @@ class TestServiceManagerInitWorkspace:
         manager = ServiceManager()
 
         # Mock input to cancel overwrite
-        with patch('builtins.input', return_value='no'):
+        with patch("builtins.input", return_value="no"):
             result = manager.init_workspace(str(workspace_path), force=True)
 
             assert result is False
@@ -643,7 +641,7 @@ class TestServiceManagerInitWorkspace:
         """Test workspace initialization handles exceptions gracefully."""
         manager = ServiceManager()
 
-        with patch.object(Path, 'exists', side_effect=Exception("File system error")):
+        with patch.object(Path, "exists", side_effect=Exception("File system error")):
             result = manager.init_workspace("test-workspace")
 
             assert result is False
@@ -656,10 +654,8 @@ class TestServiceManagerInitWorkspace:
         manager = ServiceManager()
 
         # Mock to avoid actual file copying
-        with patch('shutil.copytree'), \
-             patch('shutil.copy'), \
-             patch.object(manager, '_create_workspace_metadata'):
-            result = manager.init_workspace(str(workspace_path))
+        with patch("shutil.copytree"), patch("shutil.copy"), patch.object(manager, "_create_workspace_metadata"):
+            manager.init_workspace(str(workspace_path))
 
             # Should create the workspace directory
             assert workspace_path.exists()
@@ -692,6 +688,7 @@ class TestServiceManagerInitWorkspace:
 
         # Verify metadata content
         import yaml
+
         with open(metadata_file) as f:
             metadata = yaml.safe_load(f)
 

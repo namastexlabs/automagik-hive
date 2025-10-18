@@ -153,9 +153,7 @@ class TestToolRegistryErrorHandling:
             "discover_agno_tools",
             return_value={"DummyTools": _DummyToolkitWithDefaults},
         ):
-            tools, loaded = ToolRegistry.load_tools(
-                [{"name": "DummyTools", "instructions": "conte uma piada"}]
-            )
+            tools, loaded = ToolRegistry.load_tools([{"name": "DummyTools", "instructions": "conte uma piada"}])
 
         assert loaded == ["DummyTools"]
         dummy = tools[0]

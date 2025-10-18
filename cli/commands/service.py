@@ -7,6 +7,7 @@ Supports both local development (uvicorn) and production Docker modes.
 import asyncio
 import os
 import subprocess
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -182,20 +183,19 @@ class ServiceManager:
         """
         try:
             import shutil
-            import sys
-            from datetime import datetime, timezone
+
             workspace_path = Path(workspace_name)
 
             # Check if workspace already exists
             if workspace_path.exists():
                 if not force:
                     print(f"❌ Directory '{workspace_name}' already exists")
-                    print(f"💡 Use --force to overwrite existing workspace")
+                    print("💡 Use --force to overwrite existing workspace")
                     return False
 
                 # Confirm overwrite
                 print(f"⚠️  Directory '{workspace_name}' already exists")
-                print(f"🗑️  This will DELETE the existing workspace and create a new one")
+                print("🗑️  This will DELETE the existing workspace and create a new one")
                 try:
                     response = input("Type 'yes' to confirm overwrite: ").strip().lower()
                     if response != "yes":
@@ -207,7 +207,7 @@ class ServiceManager:
 
                 # Remove existing workspace
                 shutil.rmtree(workspace_path)
-                print(f"🗑️  Removed existing workspace\n")
+                print("🗑️  Removed existing workspace\n")
 
             print(f"🏗️  Initializing workspace: {workspace_name}")
             print("📋 This will copy AI component templates only")
@@ -233,30 +233,21 @@ class ServiceManager:
             # Copy template-agent
             template_agent = template_root / "agents" / "template-agent"
             if template_agent.exists():
-                shutil.copytree(
-                    template_agent,
-                    workspace_path / "ai" / "agents" / "template-agent"
-                )
+                shutil.copytree(template_agent, workspace_path / "ai" / "agents" / "template-agent")
                 print("  ✅ Agent template")
                 templates_copied += 1
 
             # Copy template-team
             template_team = template_root / "teams" / "template-team"
             if template_team.exists():
-                shutil.copytree(
-                    template_team,
-                    workspace_path / "ai" / "teams" / "template-team"
-                )
+                shutil.copytree(template_team, workspace_path / "ai" / "teams" / "template-team")
                 print("  ✅ Team template")
                 templates_copied += 1
 
             # Copy template-workflow
             template_workflow = template_root / "workflows" / "template-workflow"
             if template_workflow.exists():
-                shutil.copytree(
-                    template_workflow,
-                    workspace_path / "ai" / "workflows" / "template-workflow"
-                )
+                shutil.copytree(template_workflow, workspace_path / "ai" / "workflows" / "template-workflow")
                 print("  ✅ Workflow template")
                 templates_copied += 1
 
@@ -278,12 +269,12 @@ class ServiceManager:
                 return False
 
             print(f"\n✅ Workspace initialized: {workspace_name}")
-            print(f"\n📂 Next steps:")
+            print("\n📂 Next steps:")
             print(f"   cd {workspace_name}")
-            print(f"   cp .env.example .env")
-            print(f"   # Edit .env with your API keys and settings")
-            print(f"   automagik-hive install")
-            print(f"   automagik-hive dev")
+            print("   cp .env.example .env")
+            print("   # Edit .env with your API keys and settings")
+            print("   automagik-hive install")
+            print("   automagik-hive dev")
 
             return True
 
@@ -297,7 +288,6 @@ class ServiceManager:
         Returns:
             Path to templates directory or None if not found
         """
-        import sys
 
         # Try source directory first (for development)
         project_root = Path(__file__).parent.parent.parent
@@ -307,13 +297,9 @@ class ServiceManager:
 
         # Try package resources (for uvx/pip install)
         try:
-            if sys.version_info >= (3, 9):
-                from importlib.resources import files
-                template_path = files('automagik_hive') / 'templates'
-            else:
-                from importlib.resources import path as resource_path
-                with resource_path('automagik_hive', 'templates') as p:
-                    template_path = Path(p)
+            from importlib.resources import files
+
+            template_path = files("automagik_hive") / "templates"
 
             if template_path.exists() and (template_path / "agents" / "template-agent").exists():
                 return template_path
@@ -328,11 +314,13 @@ class ServiceManager:
         Args:
             workspace_path: Path to the workspace directory
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         import yaml
 
         try:
             from lib.utils.version_reader import get_project_version
+
             hive_version = get_project_version()
         except Exception:
             hive_version = "unknown"
@@ -340,12 +328,12 @@ class ServiceManager:
         metadata = {
             "template_version": "1.0.0",
             "hive_version": hive_version,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "description": "Automagik Hive workspace metadata"
+            "created_at": datetime.now(UTC).isoformat(),
+            "description": "Automagik Hive workspace metadata",
         }
 
         metadata_file = workspace_path / ".automagik-hive-workspace.yml"
-        with open(metadata_file, 'w') as f:
+        with open(metadata_file, "w") as f:
             yaml.dump(metadata, f, default_flow_style=False)
 
     def install_full_environment(self, workspace: str = ".") -> bool:

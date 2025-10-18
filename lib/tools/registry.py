@@ -63,7 +63,6 @@ class ToolRegistry:
         sorted_tool_configs = sorted(tool_configs, key=get_tool_name)
 
         for tool_config in sorted_tool_configs:
-
             if not ToolRegistry._validate_tool_config(tool_config):
                 logger.warning(f"Invalid tool config: {tool_config}")
                 continue
@@ -77,7 +76,6 @@ class ToolRegistry:
                 tool_options = {k: v for k, v in tool_config.items() if k != "name"}
 
             try:
-
                 # Determine tool type and load accordingly
                 if tool_name.startswith("mcp__"):
                     try:
@@ -247,9 +245,9 @@ class ToolRegistry:
                 logger.debug(f"🔧 Loading auto-discovered tool: {tool_name}")
 
                 # Handle instructions
-                if 'instructions' in tool_options:
+                if "instructions" in tool_options:
                     # User explicitly provided instructions
-                    instructions = tool_options['instructions']
+                    instructions = tool_options["instructions"]
 
                     # Normalize single string to list
                     if isinstance(instructions, str):
@@ -262,25 +260,22 @@ class ToolRegistry:
                     else:
                         logger.info(f"🔧 {tool_name}: using {len(instructions)} custom instructions")
                         # Enable instruction injection into system prompt
-                        tool_options['add_instructions'] = True
+                        tool_options["add_instructions"] = True
 
-                    tool_options['instructions'] = instructions
+                    tool_options["instructions"] = instructions
 
                 else:
                     # Use toolkit-provided instructions when the class defines them
                     auto_instructions = ToolRegistry._extract_tool_instructions(tool_class, tool_name)
                     if auto_instructions:
-                        tool_options['instructions'] = auto_instructions
-                        tool_options['add_instructions'] = True  # Enable instruction injection
+                        tool_options["instructions"] = auto_instructions
+                        tool_options["add_instructions"] = True  # Enable instruction injection
 
-                        if isinstance(auto_instructions, (list, tuple, set)):
+                        if isinstance(auto_instructions, list | tuple | set):
                             count = len(auto_instructions)
                         else:
                             count = 1
-                        logger.info(
-                            f"🔧 {tool_name}: detected {count} built-in instruction"
-                            f"{'s' if count != 1 else ''}"
-                        )
+                        logger.info(f"🔧 {tool_name}: detected {count} built-in instruction{'s' if count != 1 else ''}")
 
                 # Instantiate with options
                 tool_instance = tool_class(**tool_options)
@@ -341,9 +336,9 @@ class ToolRegistry:
             import agno.tools
 
             # Discover all modules in agno.tools package
-            for importer, modname, ispkg in pkgutil.iter_modules(agno.tools.__path__, agno.tools.__name__ + '.'):
+            for _importer, modname, ispkg in pkgutil.iter_modules(agno.tools.__path__, agno.tools.__name__ + "."):
                 # Skip packages and specific modules we don't want
-                if ispkg or modname.endswith('_toolkit') or modname.startswith('agno.tools.base'):
+                if ispkg or modname.endswith("_toolkit") or modname.startswith("agno.tools.base"):
                     continue
 
                 try:
@@ -351,9 +346,9 @@ class ToolRegistry:
 
                     # Find tool classes using inspect for better performance
                     for name, obj in inspect.getmembers(module, inspect.isclass):
-                        if (name.endswith('Tools') and
-                            name != 'BaseTools' and
-                            obj.__module__ == modname):  # Only classes defined in this module
+                        if (
+                            name.endswith("Tools") and name != "BaseTools" and obj.__module__ == modname
+                        ):  # Only classes defined in this module
                             discovered_tools[name] = obj
                             logger.debug(f"🔧 Discovered Agno tool: {name}")
 
