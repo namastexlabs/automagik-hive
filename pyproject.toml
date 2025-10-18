@@ -51,6 +51,12 @@ package = true
 [tool.hatch.build.targets.wheel]
 packages = ["ai", "api", "lib", "cli", "common"]
 
+[tool.hatch.build.targets.wheel.shared-data]
+"ai/agents/template-agent" = "automagik_hive/templates/agents/template-agent"
+"ai/teams/template-team" = "automagik_hive/templates/teams/template-team"
+"ai/workflows/template-workflow" = "automagik_hive/templates/workflows/template-workflow"
+".env.example" = "automagik_hive/templates/.env.example"
+
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
