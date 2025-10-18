@@ -52,9 +52,7 @@ class YAMLCacheManager:
     modification times.
     """
 
-    def __init__(
-        self, max_cache_size: int = 1000, enable_hot_reload: bool | None = None
-    ):
+    def __init__(self, max_cache_size: int = 1000, enable_hot_reload: bool | None = None):
         """
         Initialize the YAML cache manager.
 
@@ -79,9 +77,7 @@ class YAMLCacheManager:
             f"🐛 🚀 YAML Cache Manager initialized (max_size={max_cache_size}, hot_reload={self._enable_hot_reload})"
         )
 
-    def get_yaml(
-        self, file_path: str, force_reload: bool = False
-    ) -> dict[str, Any] | None:
+    def get_yaml(self, file_path: str, force_reload: bool = False) -> dict[str, Any] | None:
         """
         Get YAML content with intelligent caching.
 
@@ -111,9 +107,7 @@ class YAMLCacheManager:
                 if cached.mtime >= current_mtime:
                     logger.debug(f"🐛 📄 YAML cache hit: {file_path}")
                     return cached.content
-                logger.debug(
-                    f"🐛 📄 YAML cache invalidated (file modified): {file_path}"
-                )
+                logger.debug(f"🐛 📄 YAML cache invalidated (file modified): {file_path}")
 
             # Cache miss or invalidated - load from file
             try:
@@ -134,18 +128,14 @@ class YAMLCacheManager:
                 # Manage cache size
                 self._manage_cache_size()
 
-                logger.debug(
-                    f"🐛 📄 YAML cached successfully: {file_path} ({file_size} bytes)"
-                )
+                logger.debug(f"🐛 📄 YAML cached successfully: {file_path} ({file_size} bytes)")
                 return content
 
             except Exception as e:
                 logger.error(f"🚨 📄 Failed to load YAML file {file_path}: {e}")
                 return None
 
-    def discover_components(
-        self, pattern: str, force_reload: bool = False
-    ) -> list[str]:
+    def discover_components(self, pattern: str, force_reload: bool = False) -> list[str]:
         """
         Discover component files using cached glob patterns.
 
@@ -180,13 +170,9 @@ class YAMLCacheManager:
 
                 # Cache hit - check if directory structure changed
                 if cached.dir_mtime >= current_dir_mtime:
-                    logger.debug(
-                        f"🔍 Glob cache hit: {pattern} ({len(cached.file_paths)} files)"
-                    )
+                    logger.debug(f"🔍 Glob cache hit: {pattern} ({len(cached.file_paths)} files)")
                     return cached.file_paths.copy()
-                logger.debug(
-                    f"🔍 Glob cache invalidated (directory modified): {pattern}"
-                )
+                logger.debug(f"🔍 Glob cache invalidated (directory modified): {pattern}")
 
             # Cache miss or invalidated - scan filesystem
             try:
@@ -198,18 +184,14 @@ class YAMLCacheManager:
                     file_paths=file_paths, dir_mtime=current_dir_mtime, pattern=pattern
                 )
 
-                logger.debug(
-                    f"🔍 Glob cached successfully: {pattern} ({len(file_paths)} files)"
-                )
+                logger.debug(f"🔍 Glob cached successfully: {pattern} ({len(file_paths)} files)")
                 return file_paths.copy()
 
             except Exception as e:
                 logger.error(f"🔍 Failed to scan pattern {pattern}: {e}")
                 return []
 
-    def get_agent_team_mapping(
-        self, agent_id: str, force_reload: bool = False
-    ) -> str | None:
+    def get_agent_team_mapping(self, agent_id: str, force_reload: bool = False) -> str | None:
         """
         Get the team ID for an agent using cached inheritance mapping.
 
@@ -246,9 +228,7 @@ class YAMLCacheManager:
             for member_id in members:
                 self._inheritance_cache[member_id] = team_id
 
-        logger.debug(
-            f"🐛 🔗 Inheritance cache built: {len(self._inheritance_cache)} agent mappings"
-        )
+        logger.debug(f"🐛 🔗 Inheritance cache built: {len(self._inheritance_cache)} agent mappings")
 
     def _manage_cache_size(self):
         """Manage cache size by removing least recently used entries."""
@@ -303,12 +283,8 @@ class YAMLCacheManager:
             Dictionary with cache statistics
         """
         with self._lock:
-            total_yaml_size = sum(
-                cached.size_bytes for cached in self._yaml_cache.values()
-            )
-            total_glob_files = sum(
-                len(cached.file_paths) for cached in self._glob_cache.values()
-            )
+            total_yaml_size = sum(cached.size_bytes for cached in self._yaml_cache.values())
+            total_glob_files = sum(len(cached.file_paths) for cached in self._glob_cache.values())
 
             return {
                 "yaml_cache_entries": len(self._yaml_cache),
@@ -349,9 +325,7 @@ def reset_yaml_cache_manager():
 
 
 # Convenience functions for easy integration
-def load_yaml_cached(
-    file_path: str, force_reload: bool = False
-) -> dict[str, Any] | None:
+def load_yaml_cached(file_path: str, force_reload: bool = False) -> dict[str, Any] | None:
     """
     Load YAML file using the global cache manager.
 

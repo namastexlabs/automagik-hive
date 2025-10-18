@@ -109,8 +109,8 @@ class TestExceptionCatching:
 
     def test_catch_all_as_exception(self):
         """Test catching all custom exceptions as base Exception."""
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             raise AutomagikHiveError("Base error")
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             raise MemoryFactoryError("Memory error")

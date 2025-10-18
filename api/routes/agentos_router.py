@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-
 from agno.os.schema import ConfigResponse
+from fastapi import APIRouter, Depends
 
 from api.dependencies.agentos import get_agentos_service
 from lib.services.agentos_service import AgentOSService
-
 
 agentos_router = APIRouter(prefix="/agentos", tags=["agentos"])
 legacy_agentos_router = APIRouter(tags=["agentos"])

@@ -79,7 +79,9 @@ class ToolRegistry:
                         else:
                             logger.warning(f"🌐 MCP tool unavailable: {tool_name} - tool will be skipped")
                     except Exception as e:
-                        logger.warning(f"🌐 MCP tool {tool_name} unavailable due to connection error: {e} - tool will be skipped")
+                        logger.warning(
+                            f"🌐 MCP tool {tool_name} unavailable due to connection error: {e} - tool will be skipped"
+                        )
                 elif tool_name.startswith("shared__"):
                     shared_tool_name = tool_name[8:]  # Remove "shared__" prefix
                     tool = ToolRegistry._load_shared_tool(shared_tool_name)

@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from pydantic import BaseModel
 
 from lib.config.settings import settings
-
 
 TITLE_PATTERN = re.compile(r"^#+\s*(?P<title>.+?)\s*$")
 STATUS_PATTERN = re.compile(r"^\*\*Status:\*\*\s*(?P<status>.+?)\s*$", re.IGNORECASE)

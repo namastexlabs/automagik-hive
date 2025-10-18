@@ -27,10 +27,17 @@ class TestGetCatalog:
 
         lib.mcp.connection_manager._catalog = None
 
-        catalog1 = get_catalog()
-        catalog2 = get_catalog()
+        with patch("lib.mcp.connection_manager.MCPCatalog") as mock_catalog_class:
+            mock_instance = Mock()
+            mock_catalog_class.return_value = mock_instance
 
-        assert catalog1 is catalog2
+            catalog1 = get_catalog()
+            catalog2 = get_catalog()
+
+            assert catalog1 is catalog2
+            assert catalog1 is mock_instance
+            # Should only be called once due to singleton behavior
+            mock_catalog_class.assert_called_once()
 
     def test_lazy_initialization(self) -> None:
         """Test that catalog is lazily initialized."""
@@ -65,15 +72,37 @@ class TestGetCatalog:
             mock_catalog_class.assert_called_once()
 
 
+class TestMCPServerConfig:
+    """Test MCPServerConfig properties."""
+
+    def test_http_server_detection(self) -> None:
+        """Test that HTTP/streamable-http servers are properly identified."""
+        # Test streamable-http type
+        http_config = MCPServerConfig(name="http-server", type="streamable-http", url="https://docs.agno.com/mcp")
+        assert http_config.is_http_server is True
+        assert http_config.is_sse_server is False
+        assert http_config.is_command_server is False
+
+        # Test http type (normalized to streamable-http)
+        http_config2 = MCPServerConfig(name="http-server", type="http", url="http://localhost:8000/mcp")
+        assert http_config2.is_http_server is True
+        assert http_config2.is_sse_server is False
+        assert http_config2.is_command_server is False
+
+        # Test SSE server is not HTTP
+        sse_config = MCPServerConfig(name="sse-server", type="sse", url="http://localhost:8080/sse")
+        assert sse_config.is_http_server is False
+        assert sse_config.is_sse_server is True
+        assert sse_config.is_command_server is False
+
+
 class TestGetMCPTools:
     """Test async MCP tools creation."""
 
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
-    async def test_sse_server_connection(
-        self, mock_mcp_tools_class, mock_get_catalog
-    ) -> None:
+    async def test_sse_server_connection(self, mock_mcp_tools_class, mock_get_catalog) -> None:
         """Test creating MCP tools for SSE server."""
         # Setup mocks
         mock_catalog = Mock()
@@ -181,6 +210,40 @@ class TestGetMCPTools:
 
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
+    @patch("lib.mcp.connection_manager.MCPTools")
+    async def test_http_server_connection(self, mock_mcp_tools_class, mock_get_catalog) -> None:
+        """Test creating MCP tools for HTTP/streamable-http server."""
+        # Setup mocks
+        mock_catalog = Mock()
+        mock_get_catalog.return_value = mock_catalog
+
+        server_config = MCPServerConfig(
+            name="http-server",
+            type="streamable-http",
+            url="https://docs.agno.com/mcp",
+            env={"API_KEY": "test"},
+        )
+        mock_catalog.get_server_config.return_value = server_config
+
+        # Mock MCPTools and its async context manager
+        mock_tools_instance = Mock()
+        mock_tools_instance.__aenter__ = AsyncMock(return_value=mock_tools_instance)
+        mock_tools_instance.__aexit__ = AsyncMock(return_value=None)
+        mock_mcp_tools_class.return_value = mock_tools_instance
+
+        # Test the async context manager
+        async with get_mcp_tools("http-server") as tools:
+            assert tools is mock_tools_instance
+
+        # Verify MCPTools was created with correct parameters
+        mock_mcp_tools_class.assert_called_once_with(
+            url="https://docs.agno.com/mcp",
+            transport="streamable-http",
+            env={"API_KEY": "test"},
+        )
+
+    @pytest.mark.asyncio
+    @patch("lib.mcp.connection_manager.get_catalog")
     async def test_server_not_found(self, mock_get_catalog) -> None:
         """Test error when server is not found."""
         mock_catalog = Mock()
@@ -198,12 +261,13 @@ class TestGetMCPTools:
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
 
-        # Create a mock server config that returns False for both server type checks
+        # Create a mock server config that returns False for all server type checks
         mock_server_config = Mock()
         mock_server_config.name = "unknown-server"
         mock_server_config.type = "unknown"
         mock_server_config.is_sse_server = False
         mock_server_config.is_command_server = False
+        mock_server_config.is_http_server = False
         mock_catalog.get_server_config.return_value = mock_server_config
 
         with pytest.raises(
@@ -341,6 +405,33 @@ class TestCreateMCPToolsSync:
         )
 
     @patch("lib.mcp.connection_manager.get_catalog")
+    @patch("lib.mcp.connection_manager.MCPTools")
+    def test_sync_http_server(self, mock_mcp_tools_class, mock_get_catalog) -> None:
+        """Test synchronous creation for HTTP/streamable-http server."""
+        mock_catalog = Mock()
+        mock_get_catalog.return_value = mock_catalog
+
+        server_config = MCPServerConfig(
+            name="sync-http",
+            type="streamable-http",
+            url="https://docs.agno.com/mcp",
+            env={"API_KEY": "test-key"},
+        )
+        mock_catalog.get_server_config.return_value = server_config
+
+        mock_tools_instance = Mock()
+        mock_mcp_tools_class.return_value = mock_tools_instance
+
+        result = create_mcp_tools_sync("sync-http")
+
+        assert result is mock_tools_instance
+        mock_mcp_tools_class.assert_called_once_with(
+            url="https://docs.agno.com/mcp",
+            transport="streamable-http",
+            env={"API_KEY": "test-key"},
+        )
+
+    @patch("lib.mcp.connection_manager.get_catalog")
     def test_sync_server_not_found(self, mock_get_catalog) -> None:
         """Test sync graceful handling when server is not found."""
         mock_catalog = Mock()
@@ -357,12 +448,13 @@ class TestCreateMCPToolsSync:
         mock_catalog = Mock()
         mock_get_catalog.return_value = mock_catalog
 
-        # Create a mock server config that returns False for both server type checks
+        # Create a mock server config that returns False for all server type checks
         mock_server_config = Mock()
         mock_server_config.name = "unknown-sync"
         mock_server_config.type = "unknown"
         mock_server_config.is_sse_server = False
         mock_server_config.is_command_server = False
+        mock_server_config.is_http_server = False
         mock_catalog.get_server_config.return_value = mock_server_config
 
         # Sync function should return None gracefully, not raise

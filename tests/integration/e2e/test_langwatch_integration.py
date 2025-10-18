@@ -1,13 +1,12 @@
 """Tests for lib.metrics.langwatch_integration module."""
 
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.metrics.langwatch_integration
+    import lib.metrics.langwatch_integration  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.metrics.langwatch_integration not available", allow_module_level=True)
+    pytest.skip("Module lib.metrics.langwatch_integration not available", allow_module_level=True)
 
 
 class TestLangwatchIntegration:
@@ -16,6 +15,7 @@ class TestLangwatchIntegration:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.metrics.langwatch_integration
+
         assert lib.metrics.langwatch_integration is not None
 
     @pytest.mark.skip(reason="Placeholder test - implement based on actual module functionality")

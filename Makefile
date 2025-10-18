@@ -601,9 +601,85 @@ publish: ## 📦 Build and publish beta release to PyPI
 	echo -e "$(FONT_YELLOW)💡 Wait 5-10 minutes for PyPI propagation$(FONT_RESET)"
 
 # ===========================================
-# 🧹 Phony Targets  
+# 🚀 Release Candidate Publishing
 # ===========================================
-.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish
+.PHONY: bump-rc
+bump-rc: ## 🏷️ Bump release candidate version
+	@$(call print_status,Bumping release candidate version...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	if echo "$$CURRENT_VERSION" | grep -q "rc[0-9]*$$"; then \
+		RC_NUM=$$(echo "$$CURRENT_VERSION" | grep -o "rc[0-9]*$$" | sed 's/rc//'); \
+		NEW_RC_NUM=$$((RC_NUM + 1)); \
+		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/rc[0-9]*$$//'); \
+		NEW_VERSION="$${BASE_VERSION}rc$${NEW_RC_NUM}"; \
+	else \
+		$(call print_status,Creating first release candidate from $$CURRENT_VERSION); \
+		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/b[0-9]*$$//'); \
+		NEW_VERSION="$${BASE_VERSION}rc1"; \
+	fi; \
+	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
+	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
+	$(call print_success,Version bumped to $$NEW_VERSION); \
+	echo -e "$(FONT_CYAN)💡 Next steps:$(FONT_RESET)"; \
+	echo -e "  1. make release-rc    (commit, tag, and trigger GitHub Actions)"; \
+	echo -e "  2. GitHub Actions will automatically publish to TestPyPI then PyPI"
+
+.PHONY: release-rc
+release-rc: ## 🚀 Create release (commit, tag, push) - triggers GitHub Actions publishing
+	@$(call print_status,Creating release...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	if git status --porcelain | grep -q "pyproject.toml"; then \
+		$(call print_status,Committing version bump to v$$CURRENT_VERSION...); \
+		git add pyproject.toml; \
+		git commit -m "release: v$$CURRENT_VERSION" \
+			-m "🚀 Release v$$CURRENT_VERSION" \
+			-m "" \
+			-m "This release will be published via GitHub Actions" \
+			-m "Associated PR: #56" \
+			--trailer "Co-Authored-By: Automagik Genie 🧞 <genie@namastex.ai>"; \
+	else \
+		$(call print_status,No changes to commit - pyproject.toml already committed); \
+	fi; \
+	$(call print_status,Creating git tag v$$CURRENT_VERSION...); \
+	if git tag -l "v$$CURRENT_VERSION" | grep -q "v$$CURRENT_VERSION"; then \
+		$(call print_warning,Tag v$$CURRENT_VERSION already exists - deleting and recreating...); \
+		git tag -d "v$$CURRENT_VERSION"; \
+	fi; \
+	git tag "v$$CURRENT_VERSION" -m "Release v$$CURRENT_VERSION"; \
+	$(call print_status,Pushing to origin...); \
+	git push origin dev; \
+	git push origin "v$$CURRENT_VERSION"; \
+	$(call print_success,Release v$$CURRENT_VERSION created and pushed!); \
+	echo ""; \
+	echo -e "$(FONT_PURPLE)🤖 GitHub Actions Publishing Pipeline Started$(FONT_RESET)"; \
+	echo ""; \
+	echo -e "$(FONT_CYAN)📋 Publishing Steps:$(FONT_RESET)"; \
+	echo -e "  1. ✅ Build package"; \
+	echo -e "  2. ✅ Verify version matches tag"; \
+	echo -e "  3. 🧪 Publish to TestPyPI"; \
+	echo -e "  4. 🧪 Test installation from TestPyPI"; \
+	echo -e "  5. 📦 Publish to PyPI"; \
+	echo -e "  6. 🎉 Update GitHub Release"; \
+	echo ""; \
+	echo -e "$(FONT_CYAN)🔗 Monitor Progress:$(FONT_RESET)"; \
+	echo -e "  $(FONT_PURPLE)https://github.com/namastexlabs/automagik-hive/actions$(FONT_RESET)"; \
+	echo ""; \
+	echo -e "$(FONT_YELLOW)💡 Installation (after ~5-10 minutes):$(FONT_RESET)"; \
+	echo -e "  pip install automagik-hive==$$CURRENT_VERSION"; \
+	echo -e "  uvx automagik-hive@$$CURRENT_VERSION --version"
+
+# ===========================================
+# 🧹 Phony Targets
+# ===========================================
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish bump-rc release-rc
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================

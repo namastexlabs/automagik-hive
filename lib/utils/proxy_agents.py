@@ -31,9 +31,7 @@ class AgnoAgentProxy:
         """Initialize the proxy by introspecting the current Agno Agent class."""
         self._supported_params = self._discover_agent_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.info(
-            f"AgnoAgentProxy initialized with {len(self._supported_params)} Agno parameters"
-        )
+        logger.info(f"AgnoAgentProxy initialized with {len(self._supported_params)} Agno parameters")
 
     _LEGACY_MEMORY_KEY_MAP = {
         "add_history_to_messages": "add_history_to_context",
@@ -53,15 +51,9 @@ class AgnoAgentProxy:
             sig = inspect.signature(Agent.__init__)
 
             # Extract all parameter names except 'self'
-            params = {
-                param_name
-                for param_name, param in sig.parameters.items()
-                if param_name != "self"
-            }
+            params = {param_name for param_name, param in sig.parameters.items() if param_name != "self"}
 
-            logger.debug(
-                f"🤖 Discovered {len(params)} Agno Agent parameters: {sorted(params)}"
-            )
+            logger.debug(f"🤖 Discovered {len(params)} Agno Agent parameters: {sorted(params)}")
             return params
 
         except Exception as e:
@@ -267,9 +259,7 @@ class AgnoAgentProxy:
 
         # Filter to only supported Agno parameters
         filtered_params = {
-            key: value
-            for key, value in agent_params.items()
-            if key in self._supported_params and value is not None
+            key: value for key, value in agent_params.items() if key in self._supported_params and value is not None
         }
 
         logger.debug(f"🤖 Creating agent with {len(filtered_params)} parameters")
@@ -287,9 +277,7 @@ class AgnoAgentProxy:
 
             # Wrap agent.run() method for metrics collection
             if metrics_service and hasattr(metrics_service, "collect_from_response"):
-                agent = self._wrap_agent_with_metrics(
-                    agent, component_id, config, metrics_service
-                )
+                agent = self._wrap_agent_with_metrics(agent, component_id, config, metrics_service)
 
             return agent
 
@@ -298,9 +286,7 @@ class AgnoAgentProxy:
             logger.debug(f"🤖 Attempted parameters: {list(filtered_params.keys())}")
             raise
 
-    def _process_config(
-        self, config: dict[str, Any], component_id: str, db_url: str | None
-    ) -> dict[str, Any]:
+    def _process_config(self, config: dict[str, Any], component_id: str, db_url: str | None) -> dict[str, Any]:
         """
         Process configuration dictionary into Agno Agent parameters.
 
@@ -332,9 +318,7 @@ class AgnoAgentProxy:
                     )
                 except TypeError as exc:
                     if "processed" in str(exc):
-                        handler_result = handler(
-                            value, config, component_id, db_url
-                        )
+                        handler_result = handler(value, config, component_id, db_url)
                     else:
                         raise
                 if isinstance(handler_result, dict):
@@ -358,18 +342,14 @@ class AgnoAgentProxy:
                     processed[key] = value
             else:
                 # Log unknown parameters for debugging
-                logger.debug(
-                    f"🤖 Unknown parameter '{key}' in config for {component_id}"
-                )
+                logger.debug(f"🤖 Unknown parameter '{key}' in config for {component_id}")
 
         # Post-processing: Merge MCP tools with regular tools
         self._merge_mcp_tools_with_regular_tools(processed, component_id)
 
         return processed
 
-    def _merge_mcp_tools_with_regular_tools(
-        self, processed: dict[str, Any], component_id: str
-    ) -> None:
+    def _merge_mcp_tools_with_regular_tools(self, processed: dict[str, Any], component_id: str) -> None:
         """
         Merge MCP tools with regular tools in the processed configuration.
 
@@ -407,56 +387,54 @@ class AgnoAgentProxy:
         **kwargs,
     ):
         """Handle model configuration with dynamic parameter filtering.
-        
+
         Uses runtime introspection to determine which parameters
         belong to the model vs the Agent, ensuring compatibility
         across Agno updates.
         """
         from lib.config.models import resolve_model
-        from lib.utils.dynamic_model_resolver import filter_model_parameters
         from lib.config.provider_registry import get_provider_registry
-        
+        from lib.utils.dynamic_model_resolver import filter_model_parameters
+
         # Debug: Log the incoming model config to trace the issue
         # Escape curly braces to prevent Loguru formatting from interpreting dict braces
         _safe_model_cfg = str(model_config).replace("{", "{{").replace("}", "}}")
         _prov = model_config.get("provider")
         _log = logger.bind(provider=_prov) if _prov is not None else logger
-        _log.debug(
-            f"🔍 Model configuration for {component_id}: {_safe_model_cfg}"
-        )
-        
+        _log.debug(f"🔍 Model configuration for {component_id}: {_safe_model_cfg}")
+
         model_id = model_config.get("id")
         provider = model_config.get("provider")
-        
+
         # Use dynamic introspection to determine model parameters
         # This automatically adapts to ANY Agno updates without requiring code changes
         try:
             # First, get the provider and model class to inspect its parameters
             registry = get_provider_registry()
             detected_provider = registry.detect_provider(model_id) if model_id else provider
-            
+
             if detected_provider:
                 # Get the specific model class for this provider/model
-                provider_classes = registry.get_provider_classes(detected_provider)
+                registry.get_provider_classes(detected_provider)
                 model_class = registry.resolve_model_class(detected_provider, model_id or "default")
-                
+
                 # Use our dynamic model resolver to filter parameters
                 filtered_model_config = filter_model_parameters(model_class, model_config)
-                
+
                 logger.debug(f"🔍 Dynamically filtered model config for {component_id}: {filtered_model_config}")
                 if len(model_config) != len(filtered_model_config):
                     filtered_out = set(model_config.keys()) - set(filtered_model_config.keys())
                     logger.debug(f"🔍 Dynamically filtered out parameters: {filtered_out}")
-                
+
             else:
                 # Fallback: if we can't detect provider, use original config and let resolve_model handle it
                 logger.warning(f"⚠️ Could not detect provider for {model_id}, using original config")
                 filtered_model_config = model_config
-                
+
         except Exception as e:
             logger.warning(f"🔍 Dynamic filtering failed for {component_id}: {e}. Using original config.")
             filtered_model_config = model_config
-        
+
         # Fix: Return model configuration instead of creating instances during startup
         # This prevents multiple Agno model instantiations during bulk component discovery
         if model_id:
@@ -478,9 +456,7 @@ class AgnoAgentProxy:
     ):
         """Handle db configuration using shared utilities."""
         if db_config is None:
-            logger.debug(
-                "🤖 No db configuration provided for agent '%s'", component_id
-            )
+            logger.debug("🤖 No db configuration provided for agent '%s'", component_id)
             return {}
 
         if not isinstance(db_config, dict):
@@ -530,16 +506,12 @@ class AgnoAgentProxy:
     ) -> dict[str, Any]:
         """Handle memory configuration by creating Memory object and flattening memory parameters."""
         if not isinstance(memory_config, dict):
-            logger.warning(
-                f"🤖 Invalid memory config for {component_id}: expected dict, got {type(memory_config)}"
-            )
+            logger.warning(f"🤖 Invalid memory config for {component_id}: expected dict, got {type(memory_config)}")
             return {}
 
         result: dict[str, Any] = {}
 
-        enable_memories = memory_config.get("enable_user_memories") or memory_config.get(
-            "enable_agentic_memory"
-        )
+        enable_memories = memory_config.get("enable_user_memories") or memory_config.get("enable_agentic_memory")
         if enable_memories:
             try:
                 from lib.memory.memory_factory import create_agent_memory
@@ -554,9 +526,7 @@ class AgnoAgentProxy:
                 result["memory_manager"] = memory_manager
                 logger.debug(f"🤖 Created MemoryManager for {component_id}")
             except Exception as exc:
-                logger.error(
-                    f"🤖 Failed to create MemoryManager for {component_id}: {exc}"
-                )
+                logger.error(f"🤖 Failed to create MemoryManager for {component_id}: {exc}")
 
         if enable_memories:
             # Flatten memory parameters to agent level, translating legacy keys first
@@ -621,17 +591,11 @@ class AgnoAgentProxy:
             csv_path_raw = global_knowledge.get("csv_file_path")
             if csv_path_raw:
                 # Resolve relative path to knowledge directory (like knowledge_factory.py)
-                csv_path = str(
-                    Path(__file__).parent.parent / "knowledge" / csv_path_raw
-                )
-                logger.debug(
-                    f"🤖 Resolved CSV path for {component_id}", csv_path=csv_path
-                )
+                csv_path = str(Path(__file__).parent.parent / "knowledge" / csv_path_raw)
+                logger.debug(f"🤖 Resolved CSV path for {component_id}", csv_path=csv_path)
             else:
                 csv_path = None
-            max_results = knowledge_filter.get(
-                "max_results", global_knowledge.get("max_results", 10)
-            )
+            max_results = knowledge_filter.get("max_results", global_knowledge.get("max_results", 10))
 
             # Warn if agent config has csv_file_path (should be removed)
             if "csv_file_path" in knowledge_filter:
@@ -645,7 +609,7 @@ class AgnoAgentProxy:
                 # Use shared knowledge base from factory to avoid duplicate CSV processing
                 try:
                     from lib.knowledge.knowledge_factory import get_knowledge_base
-                
+
                     knowledge_base = get_knowledge_base(
                         config=global_knowledge,
                         db_url=db_url,
@@ -658,9 +622,7 @@ class AgnoAgentProxy:
 
                 return knowledge_base
         except Exception as e:
-            logger.warning(
-                f"🤖 Failed to create knowledge base for {component_id}: {e}"
-            )
+            logger.warning(f"🤖 Failed to create knowledge base for {component_id}: {e}")
 
         return None
 
@@ -687,9 +649,7 @@ class AgnoAgentProxy:
     ) -> dict[str, Any]:
         """Handle display section by flattening display parameters to root level."""
         if not isinstance(display_config, dict):
-            logger.warning(
-                f"🤖 Invalid display config for {component_id}: expected dict, got {type(display_config)}"
-            )
+            logger.warning(f"🤖 Invalid display config for {component_id}: expected dict, got {type(display_config)}")
             return {}
 
         # Flatten display parameters to root level for Agno Agent
@@ -700,9 +660,7 @@ class AgnoAgentProxy:
             else:
                 logger.debug(f"🤖 Unknown display parameter '{key}' for {component_id}")
 
-        logger.debug(
-            f"🤖 Flattened {len(flattened)} display parameters for {component_id}"
-        )
+        logger.debug(f"🤖 Flattened {len(flattened)} display parameters for {component_id}")
         return flattened
 
     def _handle_context_section(
@@ -715,9 +673,7 @@ class AgnoAgentProxy:
     ) -> dict[str, Any]:
         """Handle context section by flattening context parameters to root level."""
         if not isinstance(context_config, dict):
-            logger.warning(
-                f"🤖 Invalid context config for {component_id}: expected dict, got {type(context_config)}"
-            )
+            logger.warning(f"🤖 Invalid context config for {component_id}: expected dict, got {type(context_config)}")
             return {}
 
         # Flatten context parameters to root level for Agno Agent
@@ -728,9 +684,7 @@ class AgnoAgentProxy:
             else:
                 logger.debug(f"🤖 Unknown context parameter '{key}' for {component_id}")
 
-        logger.debug(
-            f"🤖 Flattened {len(flattened)} context parameters for {component_id}"
-        )
+        logger.debug(f"🤖 Flattened {len(flattened)} context parameters for {component_id}")
         return flattened
 
     def _handle_mcp_servers(
@@ -775,18 +729,14 @@ class AgnoAgentProxy:
                     tool_pattern = "*"
 
                 # Create MCPTools with granular control
-                mcp_tool = self._create_mcp_tool_with_filters(
-                    server_name, tool_pattern, component_id
-                )
+                mcp_tool = self._create_mcp_tool_with_filters(server_name, tool_pattern, component_id)
 
                 if mcp_tool:
                     mcp_tools.append(mcp_tool)
                     processed_servers.append(f"{server_name}:{tool_pattern}")
 
             except Exception as e:
-                logger.warning(
-                    f"🌐 Failed to configure MCP server pattern '{server_pattern}' for {component_id}: {e}"
-                )
+                logger.warning(f"🌐 Failed to configure MCP server pattern '{server_pattern}' for {component_id}: {e}")
                 continue
 
         logger.info(
@@ -796,9 +746,7 @@ class AgnoAgentProxy:
         # Return as dictionary to be merged with other tools
         return {"mcp_tools": mcp_tools} if mcp_tools else {}
 
-    def _create_mcp_tool_with_filters(
-        self, server_name: str, tool_pattern: str, component_id: str
-    ) -> object | None:
+    def _create_mcp_tool_with_filters(self, server_name: str, tool_pattern: str, component_id: str) -> object | None:
         """
         Create MCPTools instance with granular tool filtering.
 
@@ -837,9 +785,9 @@ class AgnoAgentProxy:
                 command_parts = [server_config.command]
                 if server_config.args:
                     command_parts.extend(server_config.args)
-                mcp_params.update(
-                    {"command": " ".join(command_parts), "transport": "stdio"}
-                )
+                mcp_params.update({"command": " ".join(command_parts), "transport": "stdio"})
+            elif server_config.is_http_server:
+                mcp_params.update({"url": server_config.url, "transport": "streamable-http"})
             else:
                 logger.warning(
                     f"🌐 Unknown server type for '{server_name}' for agent {component_id} - tool will be skipped"
@@ -851,9 +799,7 @@ class AgnoAgentProxy:
                 # Specific tool pattern: include only the requested tool
                 # Note: The actual tool name in MCP is just the tool name, not prefixed
                 mcp_params["include_tools"] = [tool_pattern]
-                logger.debug(
-                    f"🌐 Filtering MCP server '{server_name}' to include only tool: {tool_pattern}"
-                )
+                logger.debug(f"🌐 Filtering MCP server '{server_name}' to include only tool: {tool_pattern}")
             else:
                 logger.debug(f"🌐 Including all tools from MCP server '{server_name}'")
 
@@ -868,9 +814,7 @@ class AgnoAgentProxy:
             )
             return None
 
-    def _create_metadata(
-        self, config: dict[str, Any], component_id: str
-    ) -> dict[str, Any]:
+    def _create_metadata(self, config: dict[str, Any], component_id: str) -> dict[str, Any]:
         """Create metadata dictionary for the agent."""
         agent_config = config.get("agent", {})
 
@@ -950,23 +894,15 @@ class AgnoAgentProxy:
                                 execution_type="agent",
                                 yaml_overrides=yaml_overrides,
                             )
-                            logger.debug(
-                                f"Metrics collection for {component_id}: {'success' if success else 'failed'}"
-                            )
+                            logger.debug(f"Metrics collection for {component_id}: {'success' if success else 'failed'}")
                             if not success:
-                                logger.debug(
-                                    f"🤖 Metrics collection returned false for agent {component_id}"
-                                )
+                                logger.debug(f"🤖 Metrics collection returned false for agent {component_id}")
                         else:
-                            logger.debug(
-                                f"No collect_from_response method on metrics service for {component_id}"
-                            )
+                            logger.debug(f"No collect_from_response method on metrics service for {component_id}")
 
                     except Exception as metrics_error:
                         # Don't let metrics collection failures break agent execution
-                        logger.warning(
-                            f"Metrics collection error for agent {component_id}: {metrics_error}"
-                        )
+                        logger.warning(f"Metrics collection error for agent {component_id}: {metrics_error}")
                         # Continue execution - metrics failure should not affect agent operation
 
                 return response
@@ -1003,9 +939,7 @@ class AgnoAgentProxy:
                             # Extract YAML overrides for metrics
                             yaml_overrides = self._extract_metrics_overrides(config)
 
-                            logger.debug(
-                                f"Collecting async metrics for agent {component_id}"
-                            )
+                            logger.debug(f"Collecting async metrics for agent {component_id}")
 
                             # Collect metrics from response with validation
                             if hasattr(metrics_service, "collect_from_response"):
@@ -1019,19 +953,13 @@ class AgnoAgentProxy:
                                     f"Async metrics collection for {component_id}: {'success' if success else 'failed'}"
                                 )
                                 if not success:
-                                    logger.debug(
-                                        f"🤖 Async metrics collection returned false for agent {component_id}"
-                                    )
+                                    logger.debug(f"🤖 Async metrics collection returned false for agent {component_id}")
                             else:
-                                logger.debug(
-                                    f"No collect_from_response method on metrics service for {component_id}"
-                                )
+                                logger.debug(f"No collect_from_response method on metrics service for {component_id}")
 
                         except Exception as metrics_error:
                             # Don't let metrics collection failures break agent execution
-                            logger.warning(
-                                f"Async metrics collection error for agent {component_id}: {metrics_error}"
-                            )
+                            logger.warning(f"Async metrics collection error for agent {component_id}: {metrics_error}")
                             # Continue execution - metrics failure should not affect agent operation
 
                     return response
@@ -1042,13 +970,9 @@ class AgnoAgentProxy:
                     raise  # Re-raise the original exception
 
             agent.arun = wrapped_arun
-            logger.debug(
-                f"Both run() and arun() methods wrapped for agent {component_id}"
-            )
+            logger.debug(f"Both run() and arun() methods wrapped for agent {component_id}")
         else:
-            logger.debug(
-                f"Only run() method wrapped for agent {component_id} (no arun method)"
-            )
+            logger.debug(f"Only run() method wrapped for agent {component_id} (no arun method)")
 
         return agent
 

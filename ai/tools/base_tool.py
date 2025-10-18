@@ -20,18 +20,12 @@ class ToolConfig(BaseModel):
     version: int = Field(default=1, description="Tool version number")
     category: str = Field(default="general", description="Tool category")
     tags: list[str] = Field(default_factory=list, description="Tool tags")
-    dependencies: list[str] = Field(
-        default_factory=list, description="Required dependencies"
-    )
+    dependencies: list[str] = Field(default_factory=list, description="Required dependencies")
     enabled: bool = Field(default=True, description="Whether tool is enabled")
 
     # Integration settings
-    integration: dict[str, Any] = Field(
-        default_factory=dict, description="Integration configuration"
-    )
-    parameters: dict[str, Any] = Field(
-        default_factory=dict, description="Tool-specific parameters"
-    )
+    integration: dict[str, Any] = Field(default_factory=dict, description="Integration configuration")
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Tool-specific parameters")
 
 
 class BaseTool(ABC):
@@ -92,9 +86,7 @@ class BaseTool(ABC):
             self.config = ToolConfig(**tool_config)
 
         except Exception as e:
-            logger.error(
-                "Failed to load tool configuration", path=self.config_path, error=str(e)
-            )
+            logger.error("Failed to load tool configuration", path=self.config_path, error=str(e))
             raise
 
     @abstractmethod

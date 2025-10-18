@@ -8,12 +8,12 @@ project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch  # noqa: E402 - Path setup required before imports
 
-import pytest
-import yaml
+import pytest  # noqa: E402 - Path setup required before imports
+import yaml  # noqa: E402 - Path setup required before imports
 
-from ai.agents.registry import (
+from ai.agents.registry import (  # noqa: E402 - Path setup required before imports
     AgentRegistry,
     _discover_agents,
     get_agent,
@@ -131,7 +131,7 @@ class TestAgentDiscovery:
             mock_dir = MagicMock(name=f"agent-{i}", is_dir=lambda: True)
             mock_dir.name = f"agent-{i}"
             mock_config_path = MagicMock(exists=lambda: True)
-            mock_dir.__truediv__ = lambda self, path: mock_config_path
+            mock_dir.__truediv__ = lambda self, path: mock_config_path  # noqa: B023
             mock_agent_dirs.append(mock_dir)
 
         mock_file_system_ops["iterdir"].return_value = mock_agent_dirs
@@ -202,9 +202,7 @@ class TestAgentRegistry:
             assert hasattr(agent, "run") or hasattr(agent, "metadata")
 
     @pytest.mark.asyncio
-    async def test_agent_registry_get_all_agents_with_failures(
-        self, mock_database_layer
-    ):
+    async def test_agent_registry_get_all_agents_with_failures(self, mock_database_layer):
         """Test getting all agents when some fail to load."""
         agent_ids = ["agent-1", "agent-2", "agent-3"]
         mock_agent = mock_database_layer["agent"]
@@ -219,9 +217,7 @@ class TestAgentRegistry:
             with patch(
                 "ai.agents.registry.AgentRegistry.get_agent",
                 side_effect=lambda agent_id, **kwargs: (
-                    (_ for _ in ()).throw(Exception("Failed to create agent"))
-                    if agent_id == "agent-2"
-                    else mock_agent
+                    (_ for _ in ()).throw(Exception("Failed to create agent")) if agent_id == "agent-2" else mock_agent
                 ),
             ):
                 with patch("ai.agents.registry.logger") as mock_logger:

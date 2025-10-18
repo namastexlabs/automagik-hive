@@ -60,13 +60,15 @@ def mock_ensure_environment_loaded():
 class TestCheckAndRunMigrations:
     """Comprehensive tests for check_and_run_migrations function."""
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_no_database_url(self):
         """Test migration check when HIVE_DATABASE_URL is not set."""
         with patch.dict(os.environ, {}, clear=True):
             # Patch _ensure_environment_loaded to prevent .env loading
-            with patch("lib.utils.db_migration._ensure_environment_loaded") as mock_env_load:
+            with patch("lib.utils.db_migration._ensure_environment_loaded"):
                 with patch("lib.utils.db_migration.logger") as mock_logger:
                     result = await check_and_run_migrations()
 
@@ -76,7 +78,9 @@ class TestCheckAndRunMigrations:
                         "This may indicate environment loading issues in UVX environments."
                     )
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_database_connection_failure(self):
         """Test migration check when database connection fails."""
@@ -86,9 +90,7 @@ class TestCheckAndRunMigrations:
             with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                 mock_engine = Mock()
                 mock_connection = Mock()
-                mock_connection.__enter__ = Mock(
-                    side_effect=OperationalError("Connection failed", None, None)
-                )
+                mock_connection.__enter__ = Mock(side_effect=OperationalError("Connection failed", None, None))
                 mock_connection.__exit__ = Mock(return_value=None)
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
@@ -105,7 +107,9 @@ class TestCheckAndRunMigrations:
                     assert "error" in call_kwargs
                     assert "Connection failed" in str(call_kwargs["error"])
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_schema_missing(self):
         """Test migration execution when hive schema is missing."""
@@ -125,21 +129,19 @@ class TestCheckAndRunMigrations:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration execution
-                with patch(
-                    "lib.utils.db_migration._run_migrations"
-                ) as mock_run_migrations:
+                with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                     mock_run_migrations.return_value = True
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with(
-                            "Database schema missing, running migrations..."
-                        )
+                        mock_logger.info.assert_called_with("Database schema missing, running migrations...")
                         mock_run_migrations.assert_called_once()
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_table_missing(self):
         """Test migration execution when component_versions table is missing."""
@@ -167,21 +169,19 @@ class TestCheckAndRunMigrations:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration execution
-                with patch(
-                    "lib.utils.db_migration._run_migrations"
-                ) as mock_run_migrations:
+                with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                     mock_run_migrations.return_value = True
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with(
-                            "Required tables missing, running migrations..."
-                        )
+                        mock_logger.info.assert_called_with("Required tables missing, running migrations...")
                         mock_run_migrations.assert_called_once()
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_migration_needed(self):
         """Test migration execution when database schema is outdated."""
@@ -209,27 +209,23 @@ class TestCheckAndRunMigrations:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration status check
-                with patch(
-                    "lib.utils.db_migration._check_migration_status"
-                ) as mock_check_status:
+                with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
                     mock_check_status.return_value = True  # Migration needed
 
                     # Mock migration execution
-                    with patch(
-                        "lib.utils.db_migration._run_migrations"
-                    ) as mock_run_migrations:
+                    with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                         mock_run_migrations.return_value = True
 
                         with patch("lib.utils.db_migration.logger") as mock_logger:
                             result = await check_and_run_migrations()
 
                             assert result is True
-                            mock_logger.info.assert_called_with(
-                                "Database schema outdated, running migrations..."
-                            )
+                            mock_logger.info.assert_called_with("Database schema outdated, running migrations...")
                             mock_run_migrations.assert_called_once()
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_up_to_date(self):
         """Test migration check when database schema is up to date."""
@@ -257,20 +253,18 @@ class TestCheckAndRunMigrations:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock migration status check
-                with patch(
-                    "lib.utils.db_migration._check_migration_status"
-                ) as mock_check_status:
+                with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
                     mock_check_status.return_value = False  # No migration needed
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is False
-                        mock_logger.debug.assert_called_with(
-                            "Database schema up to date, skipping migrations"
-                        )
+                        mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_check_and_run_migrations_general_exception(self):
         """Test migration check when general exception occurs."""
@@ -284,9 +278,7 @@ class TestCheckAndRunMigrations:
                     result = await check_and_run_migrations()
 
                     assert result is False
-                    mock_logger.error.assert_called_with(
-                        "Migration check failed", error="Unexpected error"
-                    )
+                    mock_logger.error.assert_called_with("Migration check failed", error="Unexpected error")
 
 
 class TestCheckMigrationStatus:
@@ -304,12 +296,8 @@ class TestCheckMigrationStatus:
 
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config"):
-                with patch(
-                    "lib.utils.db_migration.MigrationContext"
-                ) as mock_migration_context:
-                    with patch(
-                        "lib.utils.db_migration.ScriptDirectory"
-                    ) as mock_script_directory:
+                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
+                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
                         # Mock current revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
@@ -342,12 +330,8 @@ class TestCheckMigrationStatus:
 
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config"):
-                with patch(
-                    "lib.utils.db_migration.MigrationContext"
-                ) as mock_migration_context:
-                    with patch(
-                        "lib.utils.db_migration.ScriptDirectory"
-                    ) as mock_script_directory:
+                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
+                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
                         # Mock same revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
@@ -374,12 +358,8 @@ class TestCheckMigrationStatus:
 
             # Mock Alembic components
             with patch("lib.utils.db_migration.Config"):
-                with patch(
-                    "lib.utils.db_migration.MigrationContext"
-                ) as mock_migration_context:
-                    with patch(
-                        "lib.utils.db_migration.ScriptDirectory"
-                    ) as mock_script_directory:
+                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
+                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
                         # Mock no current revision
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = None
@@ -413,9 +393,7 @@ class TestCheckMigrationStatus:
                 result = _check_migration_status(mock_connection)
 
                 assert result is True  # Assume migration needed on error
-                mock_logger.warning.assert_called_with(
-                    "Could not check migration status", error="Config error"
-                )
+                mock_logger.warning.assert_called_with("Could not check migration status", error="Config error")
 
 
 class TestRunMigrations:
@@ -439,9 +417,7 @@ class TestRunMigrations:
                         result = await _run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with(
-                            "Database migrations completed successfully"
-                        )
+                        mock_logger.info.assert_called_with("Database migrations completed successfully")
                         mock_command.upgrade.assert_called_once()
 
     @pytest.mark.asyncio
@@ -462,9 +438,7 @@ class TestRunMigrations:
                         result = await _run_migrations()
 
                         assert result is False
-                        mock_logger.error.assert_any_call(
-                            "Alembic migration failed", error="Alembic error"
-                        )
+                        mock_logger.error.assert_any_call("Alembic migration failed", error="Alembic error")
                         mock_logger.error.assert_any_call("Database migrations failed")
 
     @pytest.mark.asyncio
@@ -472,13 +446,9 @@ class TestRunMigrations:
         """Test migration execution with timeout error."""
         with patch("concurrent.futures.ThreadPoolExecutor") as mock_executor:
             mock_future = Mock()
-            mock_future.result.side_effect = concurrent.futures.TimeoutError(
-                "Migration timed out"
-            )
+            mock_future.result.side_effect = concurrent.futures.TimeoutError("Migration timed out")
             mock_context_manager = Mock()
-            mock_context_manager.__enter__ = Mock(
-                return_value=Mock(submit=Mock(return_value=mock_future))
-            )
+            mock_context_manager.__enter__ = Mock(return_value=Mock(submit=Mock(return_value=mock_future)))
             mock_context_manager.__exit__ = Mock(return_value=None)
             mock_executor.return_value = mock_context_manager
 
@@ -486,9 +456,7 @@ class TestRunMigrations:
                 result = await _run_migrations()
 
                 assert result is False
-                mock_logger.error.assert_called_with(
-                    "Migration execution failed", error="Migration timed out"
-                )
+                mock_logger.error.assert_called_with("Migration execution failed", error="Migration timed out")
 
     @pytest.mark.asyncio
     async def test_run_migrations_general_exception(self):
@@ -501,9 +469,7 @@ class TestRunMigrations:
                 result = await _run_migrations()
 
                 assert result is False
-                mock_logger.error.assert_called_with(
-                    "Migration execution failed", error="Thread pool error"
-                )
+                mock_logger.error.assert_called_with("Migration execution failed", error="Thread pool error")
 
 
 class TestRunMigrationsSync:
@@ -545,7 +511,9 @@ class TestRunMigrationsSync:
 class TestDatabaseMigrationIntegration:
     """Integration tests for database migration workflows."""
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_full_migration_workflow_fresh_database(self):
         """Test complete migration workflow for fresh database."""
@@ -565,20 +533,18 @@ class TestDatabaseMigrationIntegration:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock successful migration
-                with patch(
-                    "lib.utils.db_migration._run_migrations"
-                ) as mock_run_migrations:
+                with patch("lib.utils.db_migration._run_migrations") as mock_run_migrations:
                     mock_run_migrations.return_value = True
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is True
-                        mock_logger.info.assert_called_with(
-                            "Database schema missing, running migrations..."
-                        )
+                        mock_logger.info.assert_called_with("Database schema missing, running migrations...")
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_full_migration_workflow_existing_database(self):
         """Test complete migration workflow for existing up-to-date database."""
@@ -606,24 +572,22 @@ class TestDatabaseMigrationIntegration:
                 mock_create_engine.return_value = mock_engine
 
                 # Mock up-to-date migration status
-                with patch(
-                    "lib.utils.db_migration._check_migration_status"
-                ) as mock_check_status:
+                with patch("lib.utils.db_migration._check_migration_status") as mock_check_status:
                     mock_check_status.return_value = False  # No migration needed
 
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         result = await check_and_run_migrations()
 
                         assert result is False
-                        mock_logger.debug.assert_called_with(
-                            "Database schema up to date, skipping migrations"
-                        )
+                        mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
 
 
 class TestErrorHandlingAndEdgeCases:
     """Test error handling and edge cases in database migration utilities."""
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_database_url_with_different_schemes(self):
         """Test migration check with different database URL schemes."""
@@ -636,14 +600,10 @@ class TestErrorHandlingAndEdgeCases:
 
         for db_url in test_urls:
             with patch.dict(os.environ, {"HIVE_DATABASE_URL": db_url}):
-                with patch(
-                    "lib.utils.db_migration.create_engine"
-                ) as mock_create_engine:
+                with patch("lib.utils.db_migration.create_engine") as mock_create_engine:
                     mock_engine = Mock()
                     mock_connection = Mock()
-                    mock_connection.__enter__ = Mock(
-                        side_effect=OperationalError("Connection failed", None, None)
-                    )
+                    mock_connection.__enter__ = Mock(side_effect=OperationalError("Connection failed", None, None))
                     mock_engine.connect.return_value = mock_connection
                     mock_create_engine.return_value = mock_engine
 
@@ -660,9 +620,7 @@ class TestErrorHandlingAndEdgeCases:
             # Mock path that doesn't exist
             mock_alembic_path = Mock()
             mock_path.return_value.parent.parent.parent = mock_alembic_path
-            mock_alembic_path.__truediv__ = Mock(
-                return_value="/nonexistent/alembic.ini"
-            )
+            mock_alembic_path.__truediv__ = Mock(return_value="/nonexistent/alembic.ini")
 
             with patch("lib.utils.db_migration.Config") as mock_config:
                 mock_config.side_effect = Exception("Config file not found")
@@ -676,7 +634,9 @@ class TestErrorHandlingAndEdgeCases:
                         error="Config file not found",
                     )
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_migration_with_empty_database_url(self):
         """Test migration check with empty database URL."""
@@ -698,9 +658,7 @@ class TestErrorHandlingAndEdgeCases:
         async def run_migration():
             with patch.dict(os.environ, {"HIVE_DATABASE_URL": test_db_url}):
                 with patch("lib.utils.db_migration.create_engine"):
-                    with patch(
-                        "lib.utils.db_migration._run_migrations", return_value=True
-                    ):
+                    with patch("lib.utils.db_migration._run_migrations", return_value=True):
                         return await check_and_run_migrations()
 
         # Run multiple migrations concurrently
@@ -720,12 +678,8 @@ class TestErrorHandlingAndEdgeCases:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             with patch("lib.utils.db_migration.Config"):
-                with patch(
-                    "lib.utils.db_migration.MigrationContext"
-                ) as mock_migration_context:
-                    with patch(
-                        "lib.utils.db_migration.ScriptDirectory"
-                    ) as mock_script_directory:
+                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
+                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "abc123"
                         mock_migration_context.configure.return_value = mock_context
@@ -753,15 +707,15 @@ class TestErrorHandlingAndEdgeCases:
                 result = await _run_migrations()
 
                 assert result is False
-                mock_logger.error.assert_called_with(
-                    "Migration execution failed", error="Thread pool creation failed"
-                )
+                mock_logger.error.assert_called_with("Migration execution failed", error="Thread pool creation failed")
 
 
 class TestLoggingAndMonitoring:
     """Test logging and monitoring aspects of database migration utilities."""
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     @pytest.mark.asyncio
     async def test_migration_logging_levels(self):
         """Test appropriate logging levels are used for different scenarios."""
@@ -787,16 +741,12 @@ class TestLoggingAndMonitoring:
                 mock_engine.connect.return_value = mock_connection
                 mock_create_engine.return_value = mock_engine
 
-                with patch(
-                    "lib.utils.db_migration._check_migration_status", return_value=False
-                ):
+                with patch("lib.utils.db_migration._check_migration_status", return_value=False):
                     with patch("lib.utils.db_migration.logger") as mock_logger:
                         await check_and_run_migrations()
 
                         # Verify debug level used for up-to-date status
-                        mock_logger.debug.assert_called_with(
-                            "Database schema up to date, skipping migrations"
-                        )
+                        mock_logger.debug.assert_called_with("Database schema up to date, skipping migrations")
 
     def test_migration_status_detailed_logging(self):
         """Test detailed logging in migration status checking."""
@@ -808,12 +758,8 @@ class TestLoggingAndMonitoring:
             mock_alembic_path.__truediv__ = Mock(return_value="alembic.ini")
 
             with patch("lib.utils.db_migration.Config"):
-                with patch(
-                    "lib.utils.db_migration.MigrationContext"
-                ) as mock_migration_context:
-                    with patch(
-                        "lib.utils.db_migration.ScriptDirectory"
-                    ) as mock_script_directory:
+                with patch("lib.utils.db_migration.MigrationContext") as mock_migration_context:
+                    with patch("lib.utils.db_migration.ScriptDirectory") as mock_script_directory:
                         mock_context = Mock()
                         mock_context.get_current_revision.return_value = "old_revision"
                         mock_migration_context.configure.return_value = mock_context

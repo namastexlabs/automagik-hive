@@ -31,9 +31,7 @@ class AgnoTeamProxy:
         """Initialize the proxy by introspecting the current Agno Team class."""
         self._supported_params = self._discover_team_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.debug(
-            f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters"
-        )
+        logger.debug(f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters")
 
     _LEGACY_MEMORY_KEY_MAP = {
         "add_history_to_messages": "add_history_to_context",
@@ -53,15 +51,9 @@ class AgnoTeamProxy:
             sig = inspect.signature(Team.__init__)
 
             # Extract all parameter names except 'self'
-            params = {
-                param_name
-                for param_name, param in sig.parameters.items()
-                if param_name != "self"
-            }
+            params = {param_name for param_name, param in sig.parameters.items() if param_name != "self"}
 
-            logger.debug(
-                f"🤖 Discovered {len(params)} Agno Team parameters: {sorted(params)}"
-            )
+            logger.debug(f"🤖 Discovered {len(params)} Agno Team parameters: {sorted(params)}")
             return params
 
         except Exception as e:
@@ -247,9 +239,7 @@ class AgnoTeamProxy:
 
         # Filter to only supported Agno parameters
         filtered_params = {
-            key: value
-            for key, value in team_params.items()
-            if key in self._supported_params and value is not None
+            key: value for key, value in team_params.items() if key in self._supported_params and value is not None
         }
 
         logger.debug(f"🤖 Creating team with {len(filtered_params)} parameters")
@@ -267,9 +257,7 @@ class AgnoTeamProxy:
 
             # Wrap team.run() method for metrics collection
             if metrics_service and hasattr(metrics_service, "collect_from_response"):
-                team = self._wrap_team_with_metrics(
-                    team, component_id, config, metrics_service
-                )
+                team = self._wrap_team_with_metrics(team, component_id, config, metrics_service)
 
             return team
 
@@ -311,9 +299,7 @@ class AgnoTeamProxy:
                         )
                     except TypeError as exc:
                         if "processed" in str(exc):
-                            handler_result = handler(
-                                value, config, component_id, db_url, **kwargs
-                            )
+                            handler_result = handler(value, config, component_id, db_url, **kwargs)
                         else:
                             raise
                 if isinstance(handler_result, dict):
@@ -333,9 +319,7 @@ class AgnoTeamProxy:
                     processed[key] = value
             else:
                 # Log unknown parameters for debugging
-                logger.debug(
-                    f"🤖 Unknown Team parameter '{key}' in config for {component_id}"
-                )
+                logger.debug(f"🤖 Unknown Team parameter '{key}' in config for {component_id}")
 
         return processed
 
@@ -348,37 +332,37 @@ class AgnoTeamProxy:
         **kwargs,
     ):
         """Handle model configuration with truly dynamic provider support.
-        
+
         Uses runtime introspection instead of hardcoded parameter lists.
         """
         from lib.config.models import resolve_model
-        from lib.utils.dynamic_model_resolver import filter_model_parameters
         from lib.config.provider_registry import get_provider_registry
-        
+        from lib.utils.dynamic_model_resolver import filter_model_parameters
+
         model_id = model_config.get("id")
         if not model_id:
             # Use default resolution
             return resolve_model(model_id=None, **model_config)
-        
+
         # Detect provider and get model class
         provider = get_provider_registry().detect_provider(model_id)
         if not provider:
             # Fallback to standard resolution
             return resolve_model(model_id=model_id, **model_config)
-        
+
         # Get the actual model class
         model_class = get_provider_registry().resolve_model_class(provider, model_id)
         if not model_class:
             # Fallback to standard resolution
             return resolve_model(model_id=model_id, **model_config)
-        
+
         # Use dynamic filtering to only pass parameters the model class accepts
         filtered_config = filter_model_parameters(model_class, model_config)
-        
+
         # Ensure teams default to higher temperature if not specified
         if "temperature" not in filtered_config and "temperature" in inspect.signature(model_class.__init__).parameters:
             filtered_config["temperature"] = 1.0  # Teams often use higher temp
-        
+
         # Return configuration for lazy instantiation by Agno Team instead of creating instances
         return {"id": model_id, **filtered_config}
 
@@ -392,9 +376,7 @@ class AgnoTeamProxy:
     ):
         """Handle db configuration using shared utilities."""
         if db_config is None:
-            logger.debug(
-                "🤖 No db configuration provided for team '%s'", component_id
-            )
+            logger.debug("🤖 No db configuration provided for team '%s'", component_id)
             return {}
 
         if not isinstance(db_config, dict):
@@ -453,9 +435,7 @@ class AgnoTeamProxy:
             )
             return {}
 
-        enable_memories = memory_config.get("enable_user_memories") or memory_config.get(
-            "enable_agentic_memory"
-        )
+        enable_memories = memory_config.get("enable_user_memories") or memory_config.get("enable_agentic_memory")
 
         result: dict[str, Any] = {}
         if enable_memories:
@@ -568,9 +548,7 @@ class AgnoTeamProxy:
             return []
 
         # Agno handles MCP integration natively - just pass server names
-        logger.info(
-            f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}"
-        )
+        logger.info(f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}")
         return mcp_servers_config
 
     def _handle_tools_config(
@@ -625,9 +603,7 @@ class AgnoTeamProxy:
                 loaded_tool_names.append(str(tool_config))
 
         if loaded_tool_names:
-            logger.info(
-                f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}"
-            )
+            logger.info(f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}")
 
         return processed_tools
 
@@ -642,9 +618,7 @@ class AgnoTeamProxy:
         """Handle custom parameters that should be stored in metadata only."""
         return
 
-    def _create_metadata(
-        self, config: dict[str, Any], component_id: str
-    ) -> dict[str, Any]:
+    def _create_metadata(self, config: dict[str, Any], component_id: str) -> dict[str, Any]:
         """Create metadata dictionary for the team."""
         team_config = config.get("team", {})
 
@@ -707,15 +681,11 @@ class AgnoTeamProxy:
                                 yaml_overrides=yaml_overrides,
                             )
                             if not success:
-                                logger.debug(
-                                    f"🤖 Metrics collection returned false for team {component_id}"
-                                )
+                                logger.debug(f"🤖 Metrics collection returned false for team {component_id}")
 
                     except Exception as metrics_error:
                         # Don't let metrics collection failures break team execution
-                        logger.warning(
-                            f"🤖 Metrics collection error for team {component_id}: {metrics_error}"
-                        )
+                        logger.warning(f"🤖 Metrics collection error for team {component_id}: {metrics_error}")
                         # Continue execution - metrics failure should not affect team operation
 
                 return response

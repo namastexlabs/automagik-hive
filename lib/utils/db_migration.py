@@ -57,7 +57,7 @@ def _find_alembic_config() -> Path:
     # Strategy 4: Search common locations where workspace might be
     common_locations = [
         Path.home() / "workspace",
-        Path("/tmp"),
+        Path("/tmp"),  # noqa: S108
         Path("/workspace"),  # Docker context
     ]
 
@@ -65,9 +65,7 @@ def _find_alembic_config() -> Path:
         if base_path.exists():
             for potential_workspace in base_path.glob("*/alembic.ini"):
                 if potential_workspace.exists():
-                    logger.debug(
-                        f"Found alembic.ini in common location: {potential_workspace}"
-                    )
+                    logger.debug(f"Found alembic.ini in common location: {potential_workspace}")
                     return potential_workspace
 
     # If all strategies fail, provide helpful error message
@@ -153,9 +151,7 @@ async def check_and_run_migrations() -> bool:
             with engine.connect() as conn:
                 # Check if hive schema exists
                 result = conn.execute(
-                    text(
-                        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'hive'"
-                    )
+                    text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'hive'")
                 )
                 schema_exists = result.fetchone() is not None
 
@@ -192,28 +188,19 @@ async def check_and_run_migrations() -> bool:
             # Provide specific guidance based on error type
             if "password authentication failed" in error_str:
                 logger.error("❌ CRITICAL: Database authentication failed!")
-                logger.error(
-                    "📝 ACTION REQUIRED: Check your database credentials in .env files"
-                )
+                logger.error("📝 ACTION REQUIRED: Check your database credentials in .env files")
                 logger.error("🔧 Steps to fix:")
                 logger.error("   1. Verify HIVE_DATABASE_URL in .env file")
                 logger.error("   2. Ensure PostgreSQL is running on the specified port")
                 logger.error("   3. Confirm username/password are correct")
                 logger.error("   4. Test connection: psql 'your-database-url-here'")
-            elif (
-                "Connection refused" in error_str
-                or "could not connect to server" in error_str
-            ):
+            elif "Connection refused" in error_str or "could not connect to server" in error_str:
                 logger.error("❌ CRITICAL: Database server is not accessible!")
                 logger.error("📝 ACTION REQUIRED: Start your PostgreSQL database")
                 logger.error("🔧 Steps to fix:")
-                logger.error(
-                    "   1. Start PostgreSQL: 'make agent' should start postgres automatically"
-                )
+                logger.error("   1. Start PostgreSQL: 'make agent' should start postgres automatically")
                 logger.error("   2. Check if postgres is running: 'make agent-status'")
-                logger.error(
-                    "   3. Verify DATABASE_URL port matches your postgres instance"
-                )
+                logger.error("   3. Verify DATABASE_URL port matches your postgres instance")
             else:
                 logger.error("❌ CRITICAL: Database connection error!")
                 logger.error("📝 ACTION REQUIRED: Fix database configuration")
@@ -235,9 +222,7 @@ def _check_migration_status(conn) -> bool:
         alembic_cfg = Config(str(alembic_cfg_path))
 
         # Get current database revision (configure with hive schema)
-        context = MigrationContext.configure(
-            conn, opts={"version_table_schema": "hive"}
-        )
+        context = MigrationContext.configure(conn, opts={"version_table_schema": "hive"})
         current_rev = context.get_current_revision()
 
         # Get script directory and head revision

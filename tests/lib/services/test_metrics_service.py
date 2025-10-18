@@ -305,4 +305,5 @@ class TestMetricsServiceIntegration:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.services.metrics_service
+
         assert lib.services.metrics_service is not None

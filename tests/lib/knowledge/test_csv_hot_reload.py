@@ -32,8 +32,7 @@ class TestCSVHotReloadManagerInitialization:
 
         # Create a test CSV file
         self.csv_file.write_text(
-            "content,business_unit,tags,category,priority\n"
-            "Test content,general,test,info,normal\n"
+            "content,business_unit,tags,category,priority\nTest content,general,test,info,normal\n"
         )
 
     def teardown_method(self):
@@ -55,10 +54,7 @@ class TestCSVHotReloadManagerInitialization:
     def test_initialization_with_centralized_config(self, mock_load_config):
         """Test initialization using centralized configuration."""
         # Mock the global config to return our test path and embedder config
-        mock_config = {
-            "csv_file_path": "test_knowledge.csv",
-            "vector_db": {"embedder": "text-embedding-3-small"}
-        }
+        mock_config = {"csv_file_path": "test_knowledge.csv", "vector_db": {"embedder": "text-embedding-3-small"}}
         mock_load_config.return_value = mock_config
 
         # Initialize without explicit path to trigger centralized config loading
@@ -82,9 +78,7 @@ class TestCSVHotReloadManagerInitialization:
     def test_initialization_no_path_no_config(self):
         """Test initialization when no path provided and no config available."""
         # Test the full fallback chain when config loading completely fails
-        with patch(
-            "lib.knowledge.csv_hot_reload.load_global_knowledge_config"
-        ) as mock_config:
+        with patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config") as mock_config:
             mock_config.side_effect = ImportError("Version factory not available")
 
             manager = CSVHotReloadManager()
@@ -92,9 +86,7 @@ class TestCSVHotReloadManagerInitialization:
             # Should use the default fallback path
             assert "knowledge_rag.csv" in str(manager.csv_path)
 
-    @patch.dict(
-        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
-    )
+    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
     @patch("lib.knowledge.csv_hot_reload.PgVector")
     @patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder")
     @patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase")
@@ -128,29 +120,21 @@ class TestCSVHotReloadManagerInitialization:
             db_url="postgresql://test:test@localhost:5432/test",
             embedder=mock_embedder,
         )
-        mock_kb_class.assert_called_once_with(
-            csv_path=str(self.csv_file), vector_db=mock_vector_db
-        )
+        mock_kb_class.assert_called_once_with(csv_path=str(self.csv_file), vector_db=mock_vector_db)
 
         # Verify load was called since file exists
         mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
 
         assert manager.knowledge_base is mock_kb
 
-    @patch.dict(
-        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
-    )
+    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
     @patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config")
-    def test_knowledge_base_initialization_embedder_config_fallback(
-        self, mock_load_config
-    ):
+    def test_knowledge_base_initialization_embedder_config_fallback(self, mock_load_config):
         """Test fallback embedder configuration when global config fails."""
         # Make embedder config loading fail
         mock_load_config.side_effect = Exception("Embedder config failed")
 
-        with patch(
-            "lib.knowledge.csv_hot_reload.OpenAIEmbedder"
-        ) as mock_embedder_class:
+        with patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder") as mock_embedder_class:
             with patch("lib.knowledge.csv_hot_reload.PgVector"):
                 with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"):
                     mock_embedder = Mock()
@@ -161,20 +145,14 @@ class TestCSVHotReloadManagerInitialization:
                     # Should use default embedder
                     mock_embedder_class.assert_called_with(id="text-embedding-3-small")
 
-    @patch.dict(
-        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
-    )
+    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
     def test_embedder_import_error_fallback(self):
         """Test fallback when embedder import fails."""
         # Test the embedder import error handling path
-        with patch(
-            "lib.knowledge.csv_hot_reload.load_global_knowledge_config"
-        ) as mock_config:
+        with patch("lib.knowledge.csv_hot_reload.load_global_knowledge_config") as mock_config:
             mock_config.side_effect = ImportError("OpenAIEmbedder import failed")
 
-            with patch(
-                "lib.knowledge.csv_hot_reload.OpenAIEmbedder"
-            ) as mock_embedder_class:
+            with patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder") as mock_embedder_class:
                 with patch("lib.knowledge.csv_hot_reload.PgVector"):
                     with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"):
                         mock_embedder = Mock()
@@ -183,9 +161,7 @@ class TestCSVHotReloadManagerInitialization:
                         CSVHotReloadManager(csv_path=str(self.csv_file))
 
                         # Should use default embedder when import fails
-                        mock_embedder_class.assert_called_with(
-                            id="text-embedding-3-small"
-                        )
+                        mock_embedder_class.assert_called_with(id="text-embedding-3-small")
 
     def test_knowledge_base_initialization_no_database_url(self):
         """Test knowledge base initialization failure when database URL is missing."""
@@ -196,9 +172,7 @@ class TestCSVHotReloadManagerInitialization:
             # Knowledge base should not be initialized
             assert manager.knowledge_base is None
 
-    @patch.dict(
-        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
-    )
+    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
     @patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase")
     def test_knowledge_base_initialization_general_failure(self, mock_kb_class):
         """Test handling of general initialization failures."""
@@ -343,9 +317,7 @@ class TestCSVHotReloadManagerFileWatching:
 
         with patch.object(manager, "_reload_knowledge_base"):
             with patch("watchdog.observers.Observer"):
-                with patch(
-                    "watchdog.events.FileSystemEventHandler"
-                ) as mock_handler_class:
+                with patch("watchdog.events.FileSystemEventHandler") as mock_handler_class:
                     # Capture the handler instance when start_watching is called
                     handler_instance = None
 
@@ -389,9 +361,21 @@ class TestCSVHotReloadManagerReloading:
         mock_kb = Mock()
         self.manager.knowledge_base = mock_kb
 
-        self.manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader since _reload_knowledge_base uses it
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {
+                "strategy": "incremental_update",
+                "new_rows_processed": 2,
+                "rows_removed": 0,
+            }
+            mock_loader_class.return_value = mock_loader
 
-        mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
+            self.manager._reload_knowledge_base()
+
+            # Verify SmartIncrementalLoader was instantiated with correct params
+            mock_loader_class.assert_called_once_with(csv_path=str(self.csv_file), kb=mock_kb)
+            mock_loader.smart_load.assert_called_once()
 
     def test_reload_knowledge_base_no_knowledge_base(self):
         """Test reload when no knowledge base is initialized."""
@@ -403,13 +387,20 @@ class TestCSVHotReloadManagerReloading:
     def test_reload_knowledge_base_load_error(self):
         """Test handling of errors during knowledge base reload."""
         mock_kb = Mock()
-        mock_kb.load.side_effect = Exception("Load failed")
         self.manager.knowledge_base = mock_kb
 
-        # Should handle error gracefully
-        self.manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader to return error
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {"error": "Load failed"}
+            mock_loader_class.return_value = mock_loader
 
-        mock_kb.load.assert_called_once()
+            # Should handle error gracefully and fall back to basic load
+            with patch.object(mock_kb, "load") as mock_load:
+                self.manager._reload_knowledge_base()
+
+                # Verify fallback to basic load was attempted
+                mock_load.assert_called_once_with(recreate=False, skip_existing=True)
 
     def test_force_reload(self):
         """Test manual force reload functionality."""
@@ -481,8 +472,7 @@ class TestCSVHotReloadManagerIntegration:
 
         # Create initial CSV content
         self.csv_file.write_text(
-            "content,business_unit,tags,category,priority\n"
-            "Initial content,general,test,info,normal\n"
+            "content,business_unit,tags,category,priority\nInitial content,general,test,info,normal\n"
         )
 
     def teardown_method(self):
@@ -491,25 +481,19 @@ class TestCSVHotReloadManagerIntegration:
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    @patch.dict(
-        os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
-    )
+    @patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
     def test_full_workflow_start_watch_reload_stop(self):
         """Test complete workflow of starting, watching, reloading, and stopping."""
         with patch("lib.knowledge.csv_hot_reload.PgVector"):
             with patch("lib.knowledge.csv_hot_reload.OpenAIEmbedder"):
-                with patch(
-                    "lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase"
-                ) as mock_kb_class:
+                with patch("lib.knowledge.csv_hot_reload.RowBasedCSVKnowledgeBase") as mock_kb_class:
                     mock_kb = Mock()
                     mock_kb_class.return_value = mock_kb
 
                     manager = CSVHotReloadManager(csv_path=str(self.csv_file))
 
                     # Verify knowledge base was initialized and loaded
-                    mock_kb.load.assert_called_once_with(
-                        recreate=False, skip_existing=True
-                    )
+                    mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
 
                     # Start watching
                     with patch("watchdog.observers.Observer") as mock_observer_class:
@@ -522,11 +506,19 @@ class TestCSVHotReloadManagerIntegration:
                             assert manager.is_running
                             mock_observer.start.assert_called_once()
 
-                            # Force reload
-                            manager.force_reload()
+                            # Force reload with SmartIncrementalLoader mock
+                            with patch(
+                                "lib.knowledge.smart_incremental_loader.SmartIncrementalLoader"
+                            ) as mock_loader_class:
+                                mock_loader = Mock()
+                                mock_loader.smart_load.return_value = {"strategy": "incremental_update"}
+                                mock_loader_class.return_value = mock_loader
 
-                            # Should have called load again
-                            assert mock_kb.load.call_count == 2
+                                manager.force_reload()
+
+                                # Should have called smart_load
+                                mock_loader_class.assert_called_once()
+                                mock_loader.smart_load.assert_called_once()
 
                             # Stop watching
                             manager.stop_watching()
@@ -610,7 +602,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager.get_status.return_value = {"status": "stopped"}
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with(str(self.csv_file))
         mock_manager.get_status.assert_called_once()
@@ -630,7 +622,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager = Mock()
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with(str(self.csv_file))
         mock_manager.force_reload.assert_called_once()
@@ -650,7 +642,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager = Mock()
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with(str(self.csv_file))
         mock_manager.start_watching.assert_called_once()
@@ -671,7 +663,7 @@ class TestCSVHotReloadCLIInterface:
         mock_manager.get_status.return_value = {"status": "stopped"}
         mock_manager_class.return_value = mock_manager
 
-        main()
+        main()  # noqa: F821
 
         mock_manager_class.assert_called_once_with("knowledge/knowledge_rag.csv")
 
@@ -720,9 +712,7 @@ class TestCSVHotReloadErrorHandling:
 
         # Check that the log message contains expected information
         log_calls = mock_logger.info.call_args_list
-        init_call = next(
-            (call for call in log_calls if "initialized" in str(call)), None
-        )
+        init_call = next((call for call in log_calls if "initialized" in str(call)), None)
         assert init_call is not None
 
     @patch("lib.knowledge.csv_hot_reload.logger")
@@ -752,17 +742,27 @@ class TestCSVHotReloadErrorHandling:
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
         manager.knowledge_base = mock_kb
 
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader for successful reload
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {"strategy": "incremental_update", "new_rows_processed": 2}
+            mock_loader_class.return_value = mock_loader
 
-        # Verify reload success log
-        mock_logger.info.assert_called()
+            manager._reload_knowledge_base()
 
-        # Test error logging
-        mock_kb.load.side_effect = Exception("Test error")
-        manager._reload_knowledge_base()
+            # Verify reload success log
+            mock_logger.info.assert_called()
 
-        # Verify error log
-        mock_logger.error.assert_called()
+        # Test error logging with smart loader error
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.side_effect = Exception("Test error")
+            mock_loader_class.return_value = mock_loader
+
+            manager._reload_knowledge_base()
+
+            # Verify error log
+            mock_logger.error.assert_called()
 
     def test_observer_cleanup_on_error(self):
         """Test that observer is properly cleaned up when errors occur."""
@@ -828,13 +828,20 @@ class TestCSVHotReloadPerformance:
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
         manager.knowledge_base = mock_kb
 
-        # Simulate concurrent reloads
-        manager._reload_knowledge_base()
-        manager._reload_knowledge_base()
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader for all reload calls
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {"strategy": "no_changes"}
+            mock_loader_class.return_value = mock_loader
 
-        # All calls should complete successfully
-        assert mock_kb.load.call_count == 3
+            # Simulate concurrent reloads
+            manager._reload_knowledge_base()
+            manager._reload_knowledge_base()
+            manager._reload_knowledge_base()
+
+            # All calls should complete successfully
+            assert mock_loader_class.call_count == 3
+            assert mock_loader.smart_load.call_count == 3
 
     def test_status_call_performance(self):
         """Test that status calls are fast and don't block."""

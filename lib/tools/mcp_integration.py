@@ -44,20 +44,14 @@ class RealMCPTool:
     def _parse_name(self) -> None:
         """Parse MCP tool name to extract server and tool names."""
         if not self.name.startswith("mcp__"):
-            raise ValueError(
-                f"Invalid MCP tool name: {self.name}. Must start with 'mcp__'"
-            )
+            raise ValueError(f"Invalid MCP tool name: {self.name}. Must start with 'mcp__'")
 
         parts = self.name.split("__")
         if len(parts) < 3:
-            raise ValueError(
-                f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name"
-            )
+            raise ValueError(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
 
         self._server_name = parts[1]
-        self._tool_name = "__".join(
-            parts[2:]
-        )  # Rejoin in case tool name has underscores
+        self._tool_name = "__".join(parts[2:])  # Rejoin in case tool name has underscores
 
     def validate_name(self) -> bool:
         """
@@ -76,9 +70,7 @@ class RealMCPTool:
         # Pattern: mcp__server__tool_name (allows underscores and dashes in server/tool names)
         pattern = r"^mcp__[a-zA-Z0-9_-]+__[a-zA-Z0-9_]+$"
         if not re.match(pattern, self.name):
-            logger.warning(
-                f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name"
-            )
+            logger.warning(f"Invalid MCP tool name format: {self.name}. Expected: mcp__server__tool_name")
             return False
 
         # Validate against actual MCP catalog instead of hardcoded list
@@ -87,9 +79,7 @@ class RealMCPTool:
 
             catalog = MCPCatalog()
             if not catalog.has_server(self._server_name):
-                logger.info(
-                    f"MCP server '{self._server_name}' not in MCP catalog, but format is valid"
-                )
+                logger.info(f"MCP server '{self._server_name}' not in MCP catalog, but format is valid")
         except Exception as e:
             logger.debug(f"Could not validate server against catalog: {e}")
 
@@ -116,9 +106,7 @@ class RealMCPTool:
             logger.warning(f"🌐 Failed to connect to MCP server {self._server_name}: {e}")
             return None
         except Exception as e:
-            logger.warning(
-                f"🌐 Unexpected error connecting to MCP server {self._server_name}: {e}"
-            )
+            logger.warning(f"🌐 Unexpected error connecting to MCP server {self._server_name}: {e}")
             return None
 
     def get_tool_function(self) -> Callable | None:

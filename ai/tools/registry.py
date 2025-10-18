@@ -1,7 +1,6 @@
 # Generic Tool Registry for Multi-Tool Systems
 # Filesystem-driven tool loading via version factory pattern
 
-from pathlib import Path
 from typing import Any
 
 from lib.config.settings import get_settings
@@ -94,9 +93,7 @@ class ToolRegistry:
         spec.loader.exec_module(module)
 
         # Get tool class (assumes class name follows ToolNameTool pattern)
-        tool_class_name = (
-            "".join(word.capitalize() for word in tool_id.split("-")) + "Tool"
-        )
+        tool_class_name = "".join(word.capitalize() for word in tool_id.split("-")) + "Tool"
 
         if not hasattr(module, tool_class_name):
             # Fallback: look for any class that inherits from BaseTool
@@ -105,11 +102,7 @@ class ToolRegistry:
             tool_class = None
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if (
-                    isinstance(attr, type)
-                    and issubclass(attr, BaseTool)
-                    and attr != BaseTool
-                ):
+                if isinstance(attr, type) and issubclass(attr, BaseTool) and attr != BaseTool:
                     tool_class = attr
                     break
 

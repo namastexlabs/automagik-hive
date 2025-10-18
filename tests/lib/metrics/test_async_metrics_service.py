@@ -56,7 +56,5 @@ async def test_collect_from_response_normalizes_metrics(monkeypatch):
     assert normalized["input_tokens"] == 10
     assert normalized["output_tokens"] == 4
     assert normalized["duration"] == 0.25
-    assert normalized["provider_metrics"] == {
-        "groq": {"input_tokens": 10, "output_tokens": 4}
-    }
+    assert normalized["provider_metrics"] == {"groq": {"input_tokens": 10, "output_tokens": 4}}
     assert "prompt_tokens" not in normalized

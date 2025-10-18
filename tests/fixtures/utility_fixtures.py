@@ -216,9 +216,7 @@ class PerformanceTestHelper:
     @staticmethod
     def assert_performance_threshold(execution_time: float, threshold: float):
         """Assert execution time is below threshold."""
-        assert execution_time < threshold, (
-            f"Execution time {execution_time:.4f}s exceeded threshold {threshold}s"
-        )
+        assert execution_time < threshold, f"Execution time {execution_time:.4f}s exceeded threshold {threshold}s"
 
 
 @pytest.fixture

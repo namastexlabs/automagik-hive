@@ -60,9 +60,7 @@ class TestDatabaseServiceConnectionSecurity:
 
     def test_connection_url_security_parameters(self, clean_environment):
         """Test that connection URLs can contain security parameters."""
-        secure_url = (
-            "postgresql://user:pass@host:5432/db?sslmode=require&sslcert=client.crt"
-        )
+        secure_url = "postgresql://user:pass@host:5432/db?sslmode=require&sslcert=client.crt"
         os.environ["HIVE_DATABASE_URL"] = secure_url
 
         service = DatabaseService()
@@ -485,10 +483,10 @@ class TestDatabaseServiceConcurrencySecurity:
         async def execute_transaction(tx_id):
             operations = [
                 (
-                    f"INSERT INTO tx_{tx_id} (value) VALUES (%(value)s)",
+                    f"INSERT INTO tx_{tx_id} (value) VALUES (%(value)s)",  # noqa: S608 - Test/script SQL
                     {"value": f"data_{tx_id}"},
                 ),
-                (f"UPDATE tx_{tx_id} SET status = 'completed'", {}),
+                (f"UPDATE tx_{tx_id} SET status = 'completed'", {}),  # noqa: S608 - Test/script SQL
             ]
             await service.execute_transaction(operations)
             return tx_id

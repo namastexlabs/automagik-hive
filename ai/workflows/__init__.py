@@ -4,10 +4,10 @@
 # No manual imports needed - just use the registry functions
 
 from .registry import (
-    get_workflow_registry,
     get_workflow,
-    list_available_workflows,
+    get_workflow_registry,
     is_workflow_registered,
+    list_available_workflows,
 )
 
 __all__ = [

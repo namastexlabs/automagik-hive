@@ -42,9 +42,7 @@ class TestMemoryFactory:
         assert manager.db is mock_db
 
     @patch("lib.memory.memory_factory.resolve_model")
-    def test_create_memory_instance_requires_db_url_when_not_provided(
-        self, mock_resolve_model: MagicMock
-    ) -> None:
+    def test_create_memory_instance_requires_db_url_when_not_provided(self, mock_resolve_model: MagicMock) -> None:
         mock_resolve_model.return_value = MagicMock()
 
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": ""}):

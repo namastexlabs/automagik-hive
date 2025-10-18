@@ -13,7 +13,7 @@ Test Categories:
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, call
+from unittest.mock import patch
 
 import pytest
 
@@ -21,7 +21,7 @@ import pytest
 try:
     from cli.commands.uninstall import UninstallCommands
 except ImportError:
-    pytest.skip(f"Module cli.commands.uninstall not available", allow_module_level=True)
+    pytest.skip("Module cli.commands.uninstall not available", allow_module_level=True)
 
 
 class TestUninstallCommandsInitialization:
@@ -30,7 +30,7 @@ class TestUninstallCommandsInitialization:
     def test_uninstall_commands_default_initialization(self):
         """Test UninstallCommands initializes with default workspace."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Should fail initially - default path handling not implemented
         assert uninstall_cmd.workspace_path == Path(".")
         assert isinstance(uninstall_cmd.workspace_path, Path)
@@ -39,7 +39,7 @@ class TestUninstallCommandsInitialization:
         """Test UninstallCommands initializes with custom workspace."""
         custom_path = Path("/custom/uninstall/workspace")
         uninstall_cmd = UninstallCommands(custom_path)
-        
+
         # Should fail initially - custom workspace handling not implemented
         assert uninstall_cmd.workspace_path == custom_path
         assert isinstance(uninstall_cmd.workspace_path, Path)
@@ -47,7 +47,7 @@ class TestUninstallCommandsInitialization:
     def test_uninstall_commands_none_workspace_initialization(self):
         """Test UninstallCommands handles None workspace path."""
         uninstall_cmd = UninstallCommands(None)
-        
+
         # Should fail initially - None handling not implemented properly
         assert uninstall_cmd.workspace_path == Path(".")
         assert isinstance(uninstall_cmd.workspace_path, Path)
@@ -56,13 +56,13 @@ class TestUninstallCommandsInitialization:
 class TestUninstallCurrentWorkspace:
     """Test current workspace uninstallation functionality."""
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_uninstall_current_workspace_success(self, mock_print):
         """Test successful current workspace uninstallation."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.uninstall_current_workspace()
-        
+
         # Should fail initially - real workspace uninstallation not implemented
         assert result is True
         mock_print.assert_called_with("🗑️ Uninstalling current workspace")
@@ -70,18 +70,18 @@ class TestUninstallCurrentWorkspace:
     def test_uninstall_current_workspace_exception_handling(self):
         """Test uninstall_current_workspace handles exceptions gracefully."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Mock an exception during uninstallation
-        with patch('builtins.print', side_effect=Exception("Print failed")):
-            with pytest.raises(Exception):
+        with patch("builtins.print", side_effect=Exception("Print failed")):
+            with pytest.raises(Exception):  # noqa: B017
                 uninstall_cmd.uninstall_current_workspace()
 
     def test_uninstall_current_workspace_return_type(self):
         """Test uninstall_current_workspace returns boolean."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.uninstall_current_workspace()
-        
+
         # Should fail initially - consistent return type not enforced
         assert isinstance(result, bool)
         assert result is True
@@ -90,13 +90,13 @@ class TestUninstallCurrentWorkspace:
 class TestUninstallGlobal:
     """Test global installation uninstallation functionality."""
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_uninstall_global_success(self, mock_print):
         """Test successful global uninstallation."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.uninstall_global()
-        
+
         # Should fail initially - real global uninstallation not implemented
         assert result is True
         mock_print.assert_called_with("🗑️ Uninstalling global installation")
@@ -104,18 +104,18 @@ class TestUninstallGlobal:
     def test_uninstall_global_exception_handling(self):
         """Test uninstall_global handles exceptions gracefully."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Mock an exception during global uninstallation
-        with patch('builtins.print', side_effect=Exception("Global uninstall failed")):
-            with pytest.raises(Exception):
+        with patch("builtins.print", side_effect=Exception("Global uninstall failed")):
+            with pytest.raises(Exception):  # noqa: B017
                 uninstall_cmd.uninstall_global()
 
     def test_uninstall_global_return_type(self):
         """Test uninstall_global returns boolean."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.uninstall_global()
-        
+
         # Should fail initially - consistent return type not enforced
         assert isinstance(result, bool)
         assert result is True
@@ -127,9 +127,9 @@ class TestUninstallOtherMethods:
     def test_execute_method_success(self):
         """Test execute method returns success."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.execute()
-        
+
         # Should fail initially - real execute logic not implemented
         assert result is True
         assert isinstance(result, bool)
@@ -137,9 +137,9 @@ class TestUninstallOtherMethods:
     def test_uninstall_agent_method_success(self):
         """Test uninstall_agent method returns success."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.uninstall_agent()
-        
+
         # Should fail initially - real agent uninstallation not implemented
         assert result is True
         assert isinstance(result, bool)
@@ -147,9 +147,9 @@ class TestUninstallOtherMethods:
     def test_uninstall_workspace_method_success(self):
         """Test uninstall_workspace method returns success."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.uninstall_workspace()
-        
+
         # Should fail initially - real workspace uninstallation not implemented
         assert result is True
         assert isinstance(result, bool)
@@ -157,9 +157,9 @@ class TestUninstallOtherMethods:
     def test_status_method_returns_dict(self):
         """Test status method returns structured status data."""
         uninstall_cmd = UninstallCommands()
-        
+
         result = uninstall_cmd.status()
-        
+
         # Should fail initially - real status implementation not done
         assert isinstance(result, dict)
         assert "status" in result
@@ -177,9 +177,9 @@ class TestUninstallCommandsCLIIntegration:
             [sys.executable, "-m", "cli.main", "uninstall", "."],
             capture_output=True,
             text=True,
-            cwd=Path(__file__).parent.parent.parent.parent
+            cwd=Path(__file__).parent.parent.parent.parent,
         )
-        
+
         # Should exit with 1 because confirmation is required and not provided
         assert result.returncode == 1
         output = result.stdout + result.stderr
@@ -193,9 +193,9 @@ class TestUninstallCommandsCLIIntegration:
             [sys.executable, "-m", "cli.main", "uninstall", "."],
             capture_output=True,
             text=True,
-            cwd=Path(__file__).parent.parent.parent.parent
+            cwd=Path(__file__).parent.parent.parent.parent,
         )
-        
+
         # Should exit with 1 because confirmation is required and not provided
         assert result.returncode == 1
         output = result.stdout + result.stderr
@@ -209,9 +209,9 @@ class TestUninstallCommandsCLIIntegration:
             [sys.executable, "-m", "cli.main", "--help"],
             capture_output=True,
             text=True,
-            cwd=Path(__file__).parent.parent.parent.parent
+            cwd=Path(__file__).parent.parent.parent.parent,
         )
-        
+
         # Should succeed - help text should show uninstall subcommand
         assert result.returncode == 0
         # Check that uninstall subcommand is mentioned in help
@@ -225,40 +225,40 @@ class TestUninstallCommandsEdgeCases:
     def test_uninstall_commands_idempotency(self):
         """Test uninstall commands can be called multiple times safely."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Multiple calls should be safe (idempotent)
         result1 = uninstall_cmd.uninstall_current_workspace()
         result2 = uninstall_cmd.uninstall_current_workspace()
         result3 = uninstall_cmd.uninstall_current_workspace()
-        
+
         # Should fail initially - idempotency not guaranteed
-        assert result1 == result2 == result3 == True
+        assert result1 == result2 == result3 is True
 
     def test_uninstall_global_idempotency(self):
         """Test global uninstall can be called multiple times safely."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Multiple global uninstalls should be safe
         result1 = uninstall_cmd.uninstall_global()
         result2 = uninstall_cmd.uninstall_global()
         result3 = uninstall_cmd.uninstall_global()
-        
+
         # Should fail initially - global uninstall idempotency not guaranteed
-        assert result1 == result2 == result3 == True
+        assert result1 == result2 == result3 is True
 
     def test_uninstall_commands_with_different_workspace_states(self):
         """Test uninstall commands work with different workspace configurations."""
         # Test with different workspace paths
         workspaces = [
             Path("."),
-            Path("/tmp/test-workspace"),
-            Path("/nonexistent/workspace")
+            Path("/tmp/test-workspace"),  # noqa: S108 - Test/script temp file
+            Path("/nonexistent/workspace"),
         ]
-        
+
         for workspace in workspaces:
             uninstall_cmd = UninstallCommands(workspace)
             result = uninstall_cmd.uninstall_current_workspace()
-            
+
             # Should fail initially - workspace state handling not implemented
             assert result is True
             assert uninstall_cmd.workspace_path == workspace
@@ -266,19 +266,22 @@ class TestUninstallCommandsEdgeCases:
     def test_all_methods_return_consistent_types(self):
         """Test all uninstall methods return consistent types."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Boolean return methods
         boolean_methods = [
-            'uninstall_current_workspace', 'uninstall_global', 'execute',
-            'uninstall_agent', 'uninstall_workspace'
+            "uninstall_current_workspace",
+            "uninstall_global",
+            "execute",
+            "uninstall_agent",
+            "uninstall_workspace",
         ]
-        
+
         for method_name in boolean_methods:
             method = getattr(uninstall_cmd, method_name)
             result = method()
             # Should fail initially - consistent return types not enforced
             assert isinstance(result, bool), f"Method {method_name} should return bool"
-        
+
         # Dict return methods
         status_result = uninstall_cmd.status()
         # Should fail initially - status method return type not properly structured
@@ -287,16 +290,19 @@ class TestUninstallCommandsEdgeCases:
     def test_uninstall_commands_exception_resilience(self):
         """Test UninstallCommands handles various exception scenarios."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Test with mocked internal exceptions for each method
         methods_to_test = [
-            'uninstall_current_workspace', 'uninstall_global', 
-            'execute', 'uninstall_agent', 'uninstall_workspace'
+            "uninstall_current_workspace",
+            "uninstall_global",
+            "execute",
+            "uninstall_agent",
+            "uninstall_workspace",
         ]
-        
+
         for method_name in methods_to_test:
             with patch.object(uninstall_cmd, method_name, side_effect=Exception(f"{method_name} failed")):
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     getattr(uninstall_cmd, method_name)()
 
 
@@ -307,49 +313,49 @@ class TestUninstallCommandsParameterValidation:
         """Test methods use instance workspace_path correctly."""
         custom_workspace = Path("/custom/uninstall/workspace")
         uninstall_cmd = UninstallCommands(custom_workspace)
-        
+
         # Methods should have access to instance workspace_path
         result_current = uninstall_cmd.uninstall_current_workspace()
         result_execute = uninstall_cmd.execute()
         result_status = uninstall_cmd.status()
-        
+
         # Should fail initially - workspace_path usage not implemented
         assert result_current is True
         assert result_execute is True
         assert isinstance(result_status, dict)
-        
+
         # Workspace should be preserved
         assert uninstall_cmd.workspace_path == custom_workspace
 
     def test_method_parameter_defaults(self):
         """Test method parameter defaults work correctly."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Test methods without explicit parameters
         result_current = uninstall_cmd.uninstall_current_workspace()
         assert result_current is True
-        
+
         result_global = uninstall_cmd.uninstall_global()
         assert result_global is True
-        
+
         result_execute = uninstall_cmd.execute()
         assert result_execute is True
-        
+
         result_status = uninstall_cmd.status()
         assert isinstance(result_status, dict)
 
     def test_status_method_structure_validation(self):
         """Test status method returns properly structured data."""
         uninstall_cmd = UninstallCommands()
-        
+
         status_result = uninstall_cmd.status()
-        
+
         required_keys = ["status", "healthy"]
-        
+
         # Should fail initially - status structure validation not implemented
         for key in required_keys:
             assert key in status_result, f"Missing key {key} in status result"
-        
+
         # Validate data types
         assert isinstance(status_result["status"], str)
         assert isinstance(status_result["healthy"], bool)
@@ -361,11 +367,11 @@ class TestUninstallCommandsCleanupOperations:
     def test_uninstall_operations_order(self):
         """Test uninstall operations can be performed in logical order."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Test logical sequence: current workspace -> global
         result_workspace = uninstall_cmd.uninstall_current_workspace()
         result_global = uninstall_cmd.uninstall_global()
-        
+
         # Should fail initially - operation sequencing not implemented
         assert result_workspace is True
         assert result_global is True
@@ -373,11 +379,11 @@ class TestUninstallCommandsCleanupOperations:
     def test_partial_uninstall_scenarios(self):
         """Test partial uninstallation scenarios."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Test individual component uninstallation
         result_agent = uninstall_cmd.uninstall_agent()
         result_workspace = uninstall_cmd.uninstall_workspace()
-        
+
         # Should fail initially - component-specific uninstallation not implemented
         assert result_agent is True
         assert result_workspace is True
@@ -385,15 +391,15 @@ class TestUninstallCommandsCleanupOperations:
     def test_uninstall_verification(self):
         """Test uninstall operations provide verification of success."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Uninstall operations should provide success confirmation
         result_current = uninstall_cmd.uninstall_current_workspace()
         result_global = uninstall_cmd.uninstall_global()
-        
+
         # Should fail initially - verification mechanisms not implemented
         assert result_current is True  # Currently just returns True
-        assert result_global is True   # Currently just returns True
-        
+        assert result_global is True  # Currently just returns True
+
         # In a complete implementation, this should verify:
         # - Files and directories are removed
         # - Services are stopped and removed
@@ -408,33 +414,39 @@ class TestUninstallCommandsArchitecturalConsistency:
     def test_method_naming_consistency(self):
         """Test method naming follows consistent patterns."""
         uninstall_cmd = UninstallCommands()
-        
+
         # All uninstall methods should follow consistent naming
         uninstall_methods = [
-            'uninstall_current_workspace', 'uninstall_global',
-            'uninstall_agent', 'uninstall_workspace'
+            "uninstall_current_workspace",
+            "uninstall_global",
+            "uninstall_agent",
+            "uninstall_workspace",
         ]
-        
+
         for method_name in uninstall_methods:
             # Should fail initially - consistent method naming not enforced
             assert hasattr(uninstall_cmd, method_name), f"Missing method {method_name}"
             assert callable(getattr(uninstall_cmd, method_name)), f"Method {method_name} not callable"
-            assert method_name.startswith('uninstall_'), f"Method {method_name} doesn't follow naming convention"
+            assert method_name.startswith("uninstall_"), f"Method {method_name} doesn't follow naming convention"
 
     def test_uninstall_completeness(self):
         """Test uninstall operations cover all installation components."""
         uninstall_cmd = UninstallCommands()
-        
+
         # Comprehensive uninstallation should cover all components
         all_methods = [
-            'uninstall_current_workspace', 'uninstall_global',
-            'uninstall_agent', 'uninstall_workspace', 'execute', 'status'
+            "uninstall_current_workspace",
+            "uninstall_global",
+            "uninstall_agent",
+            "uninstall_workspace",
+            "execute",
+            "status",
         ]
-        
+
         for method in all_methods:
             # Should fail initially - complete uninstall coverage not implemented
             assert hasattr(uninstall_cmd, method), f"Missing uninstall method {method}"
-        
+
         # In a complete implementation, this should ensure:
         # - All installation artifacts are removable
         # - Clean uninstallation leaves no traces

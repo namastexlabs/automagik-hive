@@ -6,8 +6,8 @@ instead of crashing when API keys are invalid or expired.
 """
 
 import asyncio
-from collections.abc import Iterator
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator, Iterator
+from typing import Any
 
 from lib.logging import logger
 
@@ -76,7 +76,7 @@ class FallbackModel:
         # Simulate streaming by yielding chunks
         chunk_size = 20
         for i in range(0, len(message), chunk_size):
-            yield message[i:i + chunk_size]
+            yield message[i : i + chunk_size]
 
     async def astream(self, messages: str | list[dict[str, str]] | Any, **kwargs: Any) -> AsyncIterator[str]:
         """
@@ -93,7 +93,7 @@ class FallbackModel:
         # Simulate streaming by yielding chunks with small delays
         chunk_size = 20
         for i in range(0, len(message), chunk_size):
-            yield message[i:i + chunk_size]
+            yield message[i : i + chunk_size]
             await asyncio.sleep(0.01)  # Small delay to simulate streaming
 
     def _format_error_message(self) -> str:
@@ -145,8 +145,7 @@ class FallbackModel:
         Yields:
             Error message chunks
         """
-        for chunk in self.stream(messages, **kwargs):
-            yield chunk
+        yield from self.stream(messages, **kwargs)
 
     # Mock required properties/methods that Agno models might expect
     @property
@@ -175,7 +174,9 @@ class FallbackModel:
         return f"FallbackModel({self.component_id})"
 
     def __repr__(self) -> str:
-        return f"FallbackModel(component_id='{self.component_id}', error='{self.error_response.get('error', 'unknown')}')"
+        return (
+            f"FallbackModel(component_id='{self.component_id}', error='{self.error_response.get('error', 'unknown')}')"
+        )
 
 
 # Export main class

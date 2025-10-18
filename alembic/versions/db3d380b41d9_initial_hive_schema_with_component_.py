@@ -113,12 +113,8 @@ def upgrade() -> None:
     )
 
     # Create indexes for agent_metrics
-    op.create_index(
-        "idx_agent_metrics_timestamp", "agent_metrics", ["timestamp"], schema="hive"
-    )
-    op.create_index(
-        "idx_agent_metrics_agent_name", "agent_metrics", ["agent_name"], schema="hive"
-    )
+    op.create_index("idx_agent_metrics_timestamp", "agent_metrics", ["timestamp"], schema="hive")
+    op.create_index("idx_agent_metrics_agent_name", "agent_metrics", ["agent_name"], schema="hive")
     op.create_index(
         "idx_agent_metrics_execution_type",
         "agent_metrics",

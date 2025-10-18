@@ -37,7 +37,7 @@ class ProviderRegistry:
         self._pattern_cache: dict[str, str] | None = None
         self._class_cache: dict[str, list[str]] = {}
 
-    @cache
+    @cache  # noqa: B019 - Intentional cache for singleton
     def get_available_providers(self) -> set[str]:
         """
         Dynamically discover all available Agno providers by scanning the module namespace.
@@ -93,7 +93,7 @@ class ProviderRegistry:
         self._providers_cache = providers
         return providers
 
-    @lru_cache(maxsize=128)
+    @lru_cache(maxsize=128)  # noqa: B019
     def get_provider_patterns(self) -> dict[str, str]:
         """
         Generate dynamic provider detection patterns based on discovered providers.
@@ -192,7 +192,7 @@ class ProviderRegistry:
 
         return patterns
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def detect_provider(self, model_id: str) -> str | None:
         """
         Detect provider from model ID using dynamically generated patterns.
@@ -234,7 +234,7 @@ class ProviderRegistry:
         )
         return None
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def get_provider_classes(self, provider: str) -> list[str]:
         """
         Dynamically discover model classes for a given provider.
@@ -263,14 +263,10 @@ class ProviderRegistry:
                     if isinstance(attr, type):
                         classes.append(attr_name)
 
-            logger.debug(
-                "Discovered classes for provider", provider=provider, classes=classes
-            )
+            logger.debug("Discovered classes for provider", provider=provider, classes=classes)
 
         except ImportError as e:
-            logger.warning(
-                "Failed to import provider module", provider=provider, error=str(e)
-            )
+            logger.warning("Failed to import provider module", provider=provider, error=str(e))
             # Fallback class names for common providers
             classes = self._get_fallback_classes(provider)
 
@@ -300,11 +296,9 @@ class ProviderRegistry:
             "groq": ["Groq"],
         }
 
-        return fallback_classes.get(
-            provider, [provider.title(), f"{provider.title()}Chat"]
-        )
+        return fallback_classes.get(provider, [provider.title(), f"{provider.title()}Chat"])
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def resolve_model_class(self, provider: str, model_id: str) -> type | None:
         """
         Resolve the appropriate model class for a provider and model ID.
@@ -336,11 +330,7 @@ class ProviderRegistry:
                     return model_class
 
             # If no specific class found, log available classes for debugging
-            available_classes = [
-                name
-                for name in dir(module)
-                if not name.startswith("_") and name[0].isupper()
-            ]
+            available_classes = [name for name in dir(module) if not name.startswith("_") and name[0].isupper()]
             logger.warning(
                 "No suitable model class found",
                 provider=provider,
@@ -371,7 +361,7 @@ class ProviderRegistry:
             self.get_available_providers.cache_clear()
         except AttributeError:
             pass  # @cache decorator doesn't support cache_clear
-        
+
         self.get_provider_patterns.cache_clear()
         self.detect_provider.cache_clear()
         self.get_provider_classes.cache_clear()
