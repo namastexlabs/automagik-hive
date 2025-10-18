@@ -117,6 +117,8 @@ Use --help for detailed options or see documentation.
     init_parser = subparsers.add_parser("init", help="Initialize new workspace with AI templates")
     init_parser.add_argument("workspace", nargs="?", default="my-hive-workspace",
                             help="Workspace name (default: my-hive-workspace)")
+    init_parser.add_argument("--force", action="store_true",
+                            help="Overwrite existing workspace (requires confirmation)")
 
     # Install subcommand
     install_parser = subparsers.add_parser(
@@ -249,7 +251,8 @@ def main() -> int:
         if args.command == "init":
             service_manager = ServiceManager()
             workspace = getattr(args, 'workspace', 'my-hive-workspace') or 'my-hive-workspace'
-            return 0 if service_manager.init_workspace(workspace) else 1
+            force = getattr(args, 'force', False)
+            return 0 if service_manager.init_workspace(workspace, force=force) else 1
 
         # Install subcommand
         if args.command == "install":

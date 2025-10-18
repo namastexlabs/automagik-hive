@@ -595,14 +595,49 @@ class TestServiceManagerInitWorkspace:
     """Test workspace initialization (template copying) functionality."""
 
     def test_init_workspace_already_exists(self, tmp_path):
-        """Test workspace initialization when directory already exists."""
+        """Test workspace initialization when directory already exists without force."""
         workspace_path = tmp_path / "existing-workspace"
         workspace_path.mkdir()
 
         manager = ServiceManager()
-        result = manager.init_workspace(str(workspace_path))
+        result = manager.init_workspace(str(workspace_path), force=False)
 
         assert result is False
+
+    def test_init_workspace_force_overwrite(self, tmp_path):
+        """Test workspace initialization with --force flag."""
+        workspace_path = tmp_path / "existing-workspace"
+        workspace_path.mkdir()
+        (workspace_path / "old-file.txt").write_text("old content")
+
+        manager = ServiceManager()
+
+        # Mock input to confirm overwrite
+        with patch('builtins.input', return_value='yes'), \
+             patch('shutil.copytree'), \
+             patch('shutil.copy'):
+            result = manager.init_workspace(str(workspace_path), force=True)
+
+            assert result is True
+            # Old file should be gone
+            assert not (workspace_path / "old-file.txt").exists()
+            # New structure should exist
+            assert (workspace_path / "ai" / "agents").exists()
+
+    def test_init_workspace_force_cancelled(self, tmp_path):
+        """Test workspace initialization with --force flag but user cancels."""
+        workspace_path = tmp_path / "existing-workspace"
+        workspace_path.mkdir()
+
+        manager = ServiceManager()
+
+        # Mock input to cancel overwrite
+        with patch('builtins.input', return_value='no'):
+            result = manager.init_workspace(str(workspace_path), force=True)
+
+            assert result is False
+            # Directory should still exist
+            assert workspace_path.exists()
 
     def test_init_workspace_exception_handling(self):
         """Test workspace initialization handles exceptions gracefully."""
@@ -622,7 +657,8 @@ class TestServiceManagerInitWorkspace:
 
         # Mock to avoid actual file copying
         with patch('shutil.copytree'), \
-             patch('shutil.copy'):
+             patch('shutil.copy'), \
+             patch.object(manager, '_create_workspace_metadata'):
             result = manager.init_workspace(str(workspace_path))
 
             # Should create the workspace directory
@@ -633,6 +669,36 @@ class TestServiceManagerInitWorkspace:
             assert (workspace_path / "ai" / "workflows").exists()
             assert (workspace_path / "knowledge").exists()
             assert (workspace_path / "knowledge" / ".gitkeep").exists()
+
+    def test_locate_template_root_source(self):
+        """Test template discovery from source directory."""
+        manager = ServiceManager()
+        template_root = manager._locate_template_root()
+
+        # Should find templates in source directory when running tests
+        assert template_root is not None
+        assert (template_root / "agents" / "template-agent").exists()
+
+    def test_create_workspace_metadata(self, tmp_path):
+        """Test workspace metadata file creation."""
+        workspace_path = tmp_path / "test-workspace"
+        workspace_path.mkdir()
+
+        manager = ServiceManager()
+        manager._create_workspace_metadata(workspace_path)
+
+        metadata_file = workspace_path / ".automagik-hive-workspace.yml"
+        assert metadata_file.exists()
+
+        # Verify metadata content
+        import yaml
+        with open(metadata_file) as f:
+            metadata = yaml.safe_load(f)
+
+        assert "template_version" in metadata
+        assert "hive_version" in metadata
+        assert "created_at" in metadata
+        assert metadata["template_version"] == "1.0.0"
 
 
 class TestServiceManagerUninstall:
