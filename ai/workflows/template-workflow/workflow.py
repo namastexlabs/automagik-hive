@@ -86,9 +86,7 @@ def execute_validation_step(step_input: StepInput) -> StepOutput:
     logger.info("Executing template validation step...")
 
     validator = create_validation_agent()
-    response = validator.run(
-        f"Validate this input for template workflow:\n\n{input_message}"
-    )
+    response = validator.run(f"Validate this input for template workflow:\n\n{input_message}")
 
     if not response.content:
         raise ValueError("Invalid validation response")
@@ -102,9 +100,7 @@ def execute_validation_step(step_input: StepInput) -> StepOutput:
         "original_input": input_message,
     }
 
-    logger.info(
-        f"📊 Validation completed - Input length: {validation_data['input_length']} characters"
-    )
+    logger.info(f"📊 Validation completed - Input length: {validation_data['input_length']} characters")
 
     return StepOutput(content=json.dumps(validation_data))
 

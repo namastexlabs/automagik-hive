@@ -35,9 +35,7 @@ class ProductionBaseValidatedRequest(BaseModel):
 class ProductionAgentRequest(ProductionBaseValidatedRequest):
     """Production-equivalent AgentRequest for testing validation logic."""
 
-    message: str = Field(
-        ..., min_length=1, max_length=10000, description="Message to send to the agent"
-    )
+    message: str = Field(..., min_length=1, max_length=10000, description="Message to send to the agent")
     session_id: str | None = Field(
         None,
         pattern=r"^[a-zA-Z0-9_-]+$",
@@ -52,9 +50,7 @@ class ProductionAgentRequest(ProductionBaseValidatedRequest):
         max_length=100,
         description="Optional user ID for personalization",
     )
-    context: dict[str, Any] | None = Field(
-        None, description="Optional context data for the agent"
-    )
+    context: dict[str, Any] | None = Field(None, description="Optional context data for the agent")
     stream: bool = Field(False, description="Whether to stream the response")
 
     @field_validator("message")
@@ -86,9 +82,7 @@ class ProductionAgentRequest(ProductionBaseValidatedRequest):
 class ProductionTeamRequest(ProductionBaseValidatedRequest):
     """Production-equivalent TeamRequest for testing validation logic."""
 
-    task: str = Field(
-        ..., min_length=1, max_length=5000, description="Task description for the team"
-    )
+    task: str = Field(..., min_length=1, max_length=5000, description="Task description for the team")
     team_id: str | None = Field(
         None,
         pattern=r"^[a-zA-Z0-9_-]+$",
@@ -110,9 +104,7 @@ class ProductionTeamRequest(ProductionBaseValidatedRequest):
         max_length=100,
         description="Optional user ID",
     )
-    context: dict[str, Any] | None = Field(
-        default_factory=dict, description="Context data for the team"
-    )
+    context: dict[str, Any] | None = Field(default_factory=dict, description="Context data for the team")
     stream: bool = Field(False, description="Whether to stream the response")
 
     @field_validator("task")
@@ -134,9 +126,7 @@ class ProductionWorkflowRequest(ProductionBaseValidatedRequest):
         max_length=50,
         description="Workflow identifier",
     )
-    input_data: dict[str, Any] = Field(
-        default_factory=dict, description="Input data for workflow execution"
-    )
+    input_data: dict[str, Any] = Field(default_factory=dict, description="Input data for workflow execution")
     session_id: str | None = Field(
         None,
         pattern=r"^[a-zA-Z0-9_-]+$",
@@ -186,9 +176,7 @@ class ProductionErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error message")
     detail: str | None = Field(None, description="Additional error details")
-    error_code: str | None = Field(
-        None, description="Error code for programmatic handling"
-    )
+    error_code: str | None = Field(None, description="Error code for programmatic handling")
 
 
 class ProductionSuccessResponse(BaseModel):
@@ -235,9 +223,7 @@ class TestProductionAgentRequestValidation:
 
     def test_message_sanitization_html_removal(self):
         """Test HTML tag removal - Line coverage: sanitize_message method."""
-        request = ProductionAgentRequest(
-            message='Hello <script>alert("xss")</script> world'
-        )
+        request = ProductionAgentRequest(message='Hello <script>alert("xss")</script> world')
         assert request.message == "Hello scriptalert(xss)/script world"
         assert "<script>" not in request.message
         assert "</script>" not in request.message
@@ -262,10 +248,7 @@ class TestProductionAgentRequestValidation:
             ProductionAgentRequest(message="")
         # Pydantic V2 triggers min_length before custom validator
         error_str = str(exc_info.value)
-        assert (
-            "Message cannot be empty" in error_str
-            or "String should have at least 1 character" in error_str
-        )
+        assert "Message cannot be empty" in error_str or "String should have at least 1 character" in error_str
 
     def test_message_whitespace_only_validation(self):
         """Test whitespace-only message validation - Line coverage: sanitize_message error path."""
@@ -381,10 +364,7 @@ class TestProductionTeamRequestValidation:
             ProductionTeamRequest(task="")
         # Pydantic V2 triggers min_length before custom validator
         error_str = str(exc_info.value)
-        assert (
-            "Task cannot be empty" in error_str
-            or "String should have at least 1 character" in error_str
-        )
+        assert "Task cannot be empty" in error_str or "String should have at least 1 character" in error_str
 
     def test_task_whitespace_validation(self):
         """Test whitespace-only task validation - Line coverage: sanitize_task error path."""
@@ -580,9 +560,7 @@ class TestProductionValidationEdgeCases:
 
     def test_model_serialization(self):
         """Test model serialization - Line coverage: model methods."""
-        request = ProductionAgentRequest(
-            message="test message", session_id="test-session", context={"key": "value"}
-        )
+        request = ProductionAgentRequest(message="test message", session_id="test-session", context={"key": "value"})
 
         data = request.model_dump()
         assert data["message"] == "test message"
@@ -625,11 +603,7 @@ class TestProductionSecurityValidation:
     def test_complex_nested_dangerous_keys(self):
         """Test complex nested dangerous key scenarios - Line coverage: recursive validation."""
         # Test multiple levels of nesting
-        complex_dangerous = {
-            "level1": {
-                "level2": {"level3": {"level4": {"__import__": "deeply_nested_danger"}}}
-            }
-        }
+        complex_dangerous = {"level1": {"level2": {"level3": {"level4": {"__import__": "deeply_nested_danger"}}}}}
 
         with pytest.raises(ValidationError) as exc_info:
             ProductionWorkflowRequest(workflow_id="test", input_data=complex_dangerous)
@@ -764,12 +738,8 @@ def test_production_dangerous_keys_logic():
     ]
 
     for key, should_be_dangerous in test_keys:
-        is_dangerous = any(
-            danger in str(key).lower() for danger in production_dangerous_keys
-        )
-        assert is_dangerous == should_be_dangerous, (
-            f"Dangerous key logic mismatch for {key}"
-        )
+        is_dangerous = any(danger in str(key).lower() for danger in production_dangerous_keys)
+        assert is_dangerous == should_be_dangerous, f"Dangerous key logic mismatch for {key}"
 
 
 def test_production_size_limits():
@@ -788,15 +758,15 @@ def test_production_size_limits():
     # Verify these match the Field definitions in our test models
     # In Pydantic V2, access constraints through the Field metadata
     agent_fields = ProductionAgentRequest.model_fields
-    assert agent_fields["message"].annotation == str
-    assert agent_fields["session_id"].annotation == str | None
+    assert agent_fields["message"].annotation is str
+    assert agent_fields["session_id"].annotation == (str | None)
 
     team_fields = ProductionTeamRequest.model_fields
-    assert team_fields["task"].annotation == str
-    assert team_fields["team_id"].annotation == str | None
+    assert team_fields["task"].annotation is str
+    assert team_fields["team_id"].annotation == (str | None)
 
     workflow_fields = ProductionWorkflowRequest.model_fields
-    assert workflow_fields["workflow_id"].annotation == str
+    assert workflow_fields["workflow_id"].annotation is str
 
     # Test that the constraints work by testing boundary values
     # This indirectly verifies the limits are correctly set

@@ -25,7 +25,7 @@ class TestBaseValidatedRequest:
 
     def test_model_config_extra_forbid(self):
         """Test that extra fields are forbidden."""
-        
+
         class TestModel(BaseValidatedRequest):
             field1: str
 
@@ -36,17 +36,17 @@ class TestBaseValidatedRequest:
         # Extra fields should raise ValidationError
         with pytest.raises(ValidationError) as exc_info:
             TestModel(field1="test", extra_field="not_allowed")
-        
+
         assert "extra_field" in str(exc_info.value)
 
     def test_model_config_validate_assignment(self):
         """Test that assignment validation is enabled."""
-        
+
         class TestModel(BaseValidatedRequest):
             field1: str = Field(min_length=1)
 
         model = TestModel(field1="test")
-        
+
         # Invalid assignment should raise ValidationError
         with pytest.raises(ValidationError):
             model.field1 = ""  # Empty string violates min_length
@@ -67,11 +67,7 @@ class TestAgentRequest:
     def test_valid_agent_request_full(self):
         """Test valid full agent request."""
         request = AgentRequest(
-            message="Hello world",
-            session_id="session_123",
-            user_id="user_456",
-            context={"key": "value"},
-            stream=True
+            message="Hello world", session_id="session_123", user_id="user_456", context={"key": "value"}, stream=True
         )
         assert request.message == "Hello world"
         assert request.session_id == "session_123"
@@ -117,13 +113,13 @@ class TestAgentRequest:
         request = AgentRequest(message='Hello <script>alert("xss")</script> world')
         assert "<" not in request.message
         assert ">" not in request.message
-        assert request.message == 'Hello scriptalert(xss)/script world'
+        assert request.message == "Hello scriptalert(xss)/script world"
 
         # Test quote removal
-        request = AgentRequest(message='Say "hello" and \'goodbye\'')
+        request = AgentRequest(message="Say \"hello\" and 'goodbye'")
         assert '"' not in request.message
         assert "'" not in request.message
-        assert request.message == 'Say hello and goodbye'
+        assert request.message == "Say hello and goodbye"
 
         # Test whitespace trimming
         request = AgentRequest(message="  Hello world  ")
@@ -184,7 +180,7 @@ class TestAgentRequest:
         # Test None context explicitly
         request = AgentRequest(message="test", context=None)
         assert request.context is None
-        
+
         # Valid contexts
         valid_contexts = [
             {"simple": "value"},
@@ -192,7 +188,7 @@ class TestAgentRequest:
             {"multiple": "values", "with": {"nested": "data"}},
             {"numbers": 123, "booleans": True},
         ]
-        
+
         for context in valid_contexts:
             request = AgentRequest(message="test", context=context)
             assert request.context == context
@@ -201,7 +197,7 @@ class TestAgentRequest:
         """Test context size validation."""
         # Create large context
         large_context = {"key": "a" * 5000}
-        
+
         # Should be rejected
         with pytest.raises(ValidationError) as exc_info:
             AgentRequest(message="test", context=large_context)
@@ -210,7 +206,7 @@ class TestAgentRequest:
     def test_context_validation_dangerous_keys(self):
         """Test context dangerous key validation."""
         dangerous_keys = ["__", "eval", "exec", "import", "open", "file"]
-        
+
         for key in dangerous_keys:
             dangerous_context = {key: "value"}
             with pytest.raises(ValidationError) as exc_info:
@@ -260,7 +256,7 @@ class TestTeamRequest:
             session_id="session_789",
             user_id="user_123",
             context={"complexity": "high"},
-            stream=True
+            stream=True,
         )
         assert request.task == "Create a complex system"
         assert request.team_id == "dev_team"
@@ -334,7 +330,7 @@ class TestTeamRequest:
         """Test context default_factory behavior."""
         request1 = TeamRequest(task="test1")
         request2 = TeamRequest(task="test2")
-        
+
         # Should have separate dict instances
         request1.context["key1"] = "value1"
         assert "key1" not in request2.context
@@ -357,7 +353,7 @@ class TestWorkflowRequest:
             workflow_id="complex_workflow",
             input_data={"param1": "value1", "param2": 123},
             session_id="session_999",
-            user_id="user_789"
+            user_id="user_789",
         )
         assert request.workflow_id == "complex_workflow"
         assert request.input_data == {"param1": "value1", "param2": 123}
@@ -392,7 +388,7 @@ class TestWorkflowRequest:
         """Test input_data size validation."""
         # Create large input data
         large_data = {"key": "a" * 10000}
-        
+
         # Should be rejected
         with pytest.raises(ValidationError) as exc_info:
             WorkflowRequest(workflow_id="test", input_data=large_data)
@@ -401,7 +397,7 @@ class TestWorkflowRequest:
     def test_input_data_dangerous_keys(self):
         """Test input_data dangerous key validation."""
         dangerous_keys = ["__", "eval", "exec", "import", "open", "file"]
-        
+
         for key in dangerous_keys:
             dangerous_data = {key: "value"}
             with pytest.raises(ValidationError) as exc_info:
@@ -411,27 +407,15 @@ class TestWorkflowRequest:
     def test_input_data_recursive_validation(self):
         """Test recursive validation of nested input data."""
         # Nested dangerous key
-        nested_data = {
-            "safe_key": {
-                "nested": {
-                    "eval": "dangerous_value"
-                }
-            }
-        }
-        
+        nested_data = {"safe_key": {"nested": {"eval": "dangerous_value"}}}
+
         with pytest.raises(ValidationError) as exc_info:
             WorkflowRequest(workflow_id="test", input_data=nested_data)
         assert "Invalid input key: eval" in str(exc_info.value)
 
         # Safe nested data should work
-        safe_nested_data = {
-            "safe_key": {
-                "nested": {
-                    "safe_nested": "safe_value"
-                }
-            }
-        }
-        
+        safe_nested_data = {"safe_key": {"nested": {"safe_nested": "safe_value"}}}
+
         request = WorkflowRequest(workflow_id="test", input_data=safe_nested_data)
         assert request.input_data == safe_nested_data
 
@@ -439,7 +423,7 @@ class TestWorkflowRequest:
         """Test input_data default_factory behavior."""
         request1 = WorkflowRequest(workflow_id="test1")
         request2 = WorkflowRequest(workflow_id="test2")
-        
+
         # Should have separate dict instances
         request1.input_data["key1"] = "value1"
         assert "key1" not in request2.input_data
@@ -490,9 +474,7 @@ class TestErrorResponse:
     def test_valid_error_response_full(self):
         """Test valid full error response."""
         response = ErrorResponse(
-            error="Validation failed",
-            detail="Field 'message' is required",
-            error_code="VALIDATION_ERROR"
+            error="Validation failed", detail="Field 'message' is required", error_code="VALIDATION_ERROR"
         )
         assert response.error == "Validation failed"
         assert response.detail == "Field 'message' is required"
@@ -507,11 +489,7 @@ class TestErrorResponse:
         """Test error response serialization."""
         response = ErrorResponse(error="Test error", detail="Test detail")
         data = response.model_dump()
-        assert data == {
-            "error": "Test error",
-            "detail": "Test detail",
-            "error_code": None
-        }
+        assert data == {"error": "Test error", "detail": "Test detail", "error_code": None}
 
 
 class TestSuccessResponse:
@@ -527,9 +505,7 @@ class TestSuccessResponse:
     def test_valid_success_response_full(self):
         """Test valid full success response."""
         response = SuccessResponse(
-            success=True,
-            message="Operation completed successfully",
-            data={"result": "success", "count": 42}
+            success=True, message="Operation completed successfully", data={"result": "success", "count": 42}
         )
         assert response.success is True
         assert response.message == "Operation completed successfully"
@@ -544,11 +520,7 @@ class TestSuccessResponse:
         """Test success response serialization."""
         response = SuccessResponse(message="Test", data={"key": "value"})
         data = response.model_dump()
-        assert data == {
-            "success": True,
-            "message": "Test",
-            "data": {"key": "value"}
-        }
+        assert data == {"success": True, "message": "Test", "data": {"key": "value"}}
 
     def test_success_response_any_data_type(self):
         """Test success response with various data types."""
@@ -572,7 +544,7 @@ class TestModelIntegration:
     def test_all_models_inherit_base_config(self):
         """Test that all request models inherit base configuration."""
         models = [AgentRequest, TeamRequest, WorkflowRequest, HealthRequest, VersionRequest]
-        
+
         for model_class in models:
             # Test extra field prohibition
             with pytest.raises(ValidationError):
@@ -599,18 +571,14 @@ class TestModelIntegration:
 
     def test_model_dump_and_load(self):
         """Test model serialization and deserialization."""
-        original = AgentRequest(
-            message="Test message",
-            session_id="session_123",
-            context={"key": "value"}
-        )
-        
+        original = AgentRequest(message="Test message", session_id="session_123", context={"key": "value"})
+
         # Serialize
         data = original.model_dump()
-        
+
         # Deserialize
         reconstructed = AgentRequest(**data)
-        
+
         assert reconstructed.message == original.message
         assert reconstructed.session_id == original.session_id
         assert reconstructed.context == original.context

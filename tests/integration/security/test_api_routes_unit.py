@@ -228,7 +228,7 @@ class TestAPIRoutesSecurityUnit:
         try:
             error_data = response.json()
             assert "detail" in error_data
-        except:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass  # Some endpoints may return non-JSON errors
 
     def test_method_not_allowed_responses(self, client):

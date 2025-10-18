@@ -20,9 +20,7 @@ class ApiSettings(BaseSettings):
 
     # Application environment derived from the `HIVE_ENVIRONMENT` environment variable.
     # Valid values include "development", "production"
-    environment: str = Field(
-        default_factory=lambda: os.getenv("HIVE_ENVIRONMENT", "development")
-    )
+    environment: str = Field(default_factory=lambda: os.getenv("HIVE_ENVIRONMENT", "development"))
 
     # Set to False to disable docs at /docs and /redoc
     docs_enabled: bool = True
@@ -34,27 +32,21 @@ class ApiSettings(BaseSettings):
     cors_origin_list: list[str] | None = Field(None, validate_default=True)
 
     @field_validator("environment")
-    def validate_environment(cls: type["ApiSettings"], environment: str) -> str:  # noqa: N805
+    @classmethod
+    def validate_environment(cls, environment: str) -> str:
         """Validate environment and enforce production security requirements."""
 
         valid_environments = ["development", "staging", "production"]
         if environment not in valid_environments:
-            raise ValueError(
-                f"Invalid environment: {environment}. Must be one of: {valid_environments}"
-            )
+            raise ValueError(f"Invalid environment: {environment}. Must be one of: {valid_environments}")
 
         # Production security validation
         if environment == "production":
             # Ensure critical production settings are configured
             api_key = os.getenv("HIVE_API_KEY")
-            if (
-                not api_key
-                or api_key.strip() == ""
-                or api_key in ["your-hive-api-key-here"]
-            ):
+            if not api_key or api_key.strip() == "" or api_key in ["your-hive-api-key-here"]:
                 raise ValueError(
-                    "Production environment requires a valid HIVE_API_KEY. "
-                    "Update your .env file with a secure API key."
+                    "Production environment requires a valid HIVE_API_KEY. Update your .env file with a secure API key."
                 )
 
             # Note: Authentication is automatically enabled in production regardless of HIVE_AUTH_DISABLED
@@ -64,9 +56,7 @@ class ApiSettings(BaseSettings):
 
     @field_validator("cors_origin_list", mode="before")
     @classmethod
-    def set_cors_origin_list(
-        cls, _cors_origin_list: Any, info: FieldValidationInfo
-    ) -> list[str]:
+    def set_cors_origin_list(cls, _cors_origin_list: Any, info: FieldValidationInfo) -> list[str]:
         """Derive CORS origins from environment with safe defaults per mode."""
 
         def _parse_origins(raw_origins: Any) -> list[str]:
@@ -77,20 +67,14 @@ class ApiSettings(BaseSettings):
 
             if isinstance(raw_origins, str):
                 candidates = raw_origins.split(",")
-            elif isinstance(raw_origins, (list, tuple, set)):
+            elif isinstance(raw_origins, list | tuple | set):
                 candidates = list(raw_origins)
             else:
                 candidates = [raw_origins]
 
-            return [
-                str(origin).strip()
-                for origin in candidates
-                if str(origin).strip()
-            ]
+            return [str(origin).strip() for origin in candidates if str(origin).strip()]
 
-        environment_raw = info.data.get(
-            "environment", os.getenv("HIVE_ENVIRONMENT", "development")
-        )
+        environment_raw = info.data.get("environment", os.getenv("HIVE_ENVIRONMENT", "development"))
         environment = str(environment_raw).strip().lower()
 
         # Prefer explicit validator input when provided (e.g. direct initialization)
@@ -121,4 +105,5 @@ class ApiSettings(BaseSettings):
 
 
 # Create ApiSettings object
-api_settings = ApiSettings()
+# Note: cors_origin_list is derived from environment in validator
+api_settings = ApiSettings(cors_origin_list=None)

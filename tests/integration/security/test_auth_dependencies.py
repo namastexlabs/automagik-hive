@@ -17,7 +17,6 @@ from fastapi.testclient import TestClient
 
 from lib.auth.dependencies import (
     api_key_header,
-    auth_service,
     get_auth_service,
     optional_api_key,
     require_api_key,
@@ -185,19 +184,24 @@ class TestOptionalApiKeyDependency:
 class TestGetAuthServiceDependency:
     """Test suite for get_auth_service dependency."""
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     def test_returns_auth_service_instance(self):
         """Test that get_auth_service returns an AuthService instance."""
         result = get_auth_service()
 
         # Should return an AuthService instance
         from lib.auth.service import AuthService
+
         assert isinstance(result, AuthService)
 
         # Should be the same instance on multiple calls (within test scope)
         assert get_auth_service() is result
 
-    @pytest.mark.skip(reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads")
+    @pytest.mark.skip(
+        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
+    )
     def test_auth_service_behaves_correctly(self):
         """Test that auth_service behaves as expected."""
         # Multiple calls should return same instance (within test scope)
@@ -208,6 +212,7 @@ class TestGetAuthServiceDependency:
 
         # Both should be AuthService instances
         from lib.auth.service import AuthService
+
         assert isinstance(service1, AuthService)
         assert isinstance(service2, AuthService)
 

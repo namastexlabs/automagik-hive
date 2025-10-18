@@ -3,7 +3,6 @@ Tests for shutdown progress display utility
 """
 
 import io
-import sys
 import time
 from unittest.mock import patch
 
@@ -27,7 +26,7 @@ class TestShutdownProgress:
         """Test adding steps to progress display"""
         progress = ShutdownProgress()
         progress.add_step("Test Step", "Test Description")
-        
+
         assert len(progress.steps) == 1
         step = progress.steps[0]
         assert step["title"] == "Test Step"
@@ -40,12 +39,12 @@ class TestShutdownProgress:
         """Test completing a step successfully"""
         progress = ShutdownProgress()
         progress.add_step("Test Step")
-        
+
         # Capture stdout to verify output
         captured_output = io.StringIO()
-        with patch('sys.stdout', captured_output):
+        with patch("sys.stdout", captured_output):
             progress.complete_step(0, success=True)
-        
+
         step = progress.steps[0]
         assert step["status"] == "completed"
         assert step["end_time"] is not None
@@ -54,12 +53,12 @@ class TestShutdownProgress:
         """Test completing a step with failure"""
         progress = ShutdownProgress()
         progress.add_step("Test Step")
-        
+
         # Capture stdout to verify output
         captured_output = io.StringIO()
-        with patch('sys.stdout', captured_output):
+        with patch("sys.stdout", captured_output):
             progress.complete_step(0, success=False)
-        
+
         step = progress.steps[0]
         assert step["status"] == "failed"
         assert step["end_time"] is not None
@@ -68,13 +67,13 @@ class TestShutdownProgress:
         """Test step context manager for successful completion"""
         progress = ShutdownProgress()
         progress.add_step("Test Step")
-        
+
         # Capture stdout to avoid animation output in tests
         captured_output = io.StringIO()
-        with patch('sys.stdout', captured_output):
+        with patch("sys.stdout", captured_output):
             with progress.step(0):
                 time.sleep(0.01)  # Brief sleep to test timing
-        
+
         step = progress.steps[0]
         assert step["status"] == "completed"
         assert step["start_time"] is not None
@@ -84,20 +83,20 @@ class TestShutdownProgress:
         """Test step context manager for failure handling"""
         progress = ShutdownProgress()
         progress.add_step("Test Step")
-        
+
         # Capture stdout to avoid animation output in tests
         captured_output = io.StringIO()
-        with patch('sys.stdout', captured_output):
+        with patch("sys.stdout", captured_output):
             with pytest.raises(ValueError):
                 with progress.step(0):
                     raise ValueError("Test error")
-        
+
         step = progress.steps[0]
         assert step["status"] == "failed"
 
     def test_windows_safe_characters(self):
         """Test that Windows-safe characters are used on Windows platform"""
-        with patch('platform.system', return_value='Windows'):
+        with patch("platform.system", return_value="Windows"):
             progress = ShutdownProgress()
             assert progress._animation_chars == ["-", "\\", "|", "/"]
             assert progress._success_icon == "+"
@@ -106,7 +105,7 @@ class TestShutdownProgress:
 
     def test_unix_unicode_characters(self):
         """Test that Unicode characters are used on Unix platforms"""
-        with patch('platform.system', return_value='Linux'):
+        with patch("platform.system", return_value="Linux"):
             progress = ShutdownProgress()
             assert progress._animation_chars == ["□", "▢", "▣", "■"]
             assert progress._success_icon == "✓"
@@ -121,12 +120,12 @@ class TestShutdownProgress:
     def test_print_farewell_message(self):
         """Test farewell message output"""
         progress = ShutdownProgress()
-        
+
         # Capture stdout to verify farewell message
         captured_output = io.StringIO()
-        with patch('sys.stdout', captured_output):
+        with patch("sys.stdout", captured_output):
             progress.print_farewell_message()
-        
+
         # Should have written to stdout (clearing and farewell)
         assert captured_output.getvalue()  # Some output should be present
 
@@ -137,24 +136,24 @@ class TestCreateAutomaikShutdownProgress:
     def test_create_automagik_shutdown_progress(self):
         """Test creating shutdown progress with predefined steps"""
         progress = create_automagik_shutdown_progress()
-        
+
         assert len(progress.steps) == 5
-        
+
         # Verify step titles match our shutdown phases
         expected_titles = [
             "Stopping Server",
-            "Cancelling Background Tasks", 
+            "Cancelling Background Tasks",
             "Cleaning Up Services",
             "Clearing Temporary Files",
-            "Finalizing Shutdown"
+            "Finalizing Shutdown",
         ]
-        
+
         actual_titles = [step["title"] for step in progress.steps]
         assert actual_titles == expected_titles
 
     def test_create_automagik_shutdown_progress_verbose(self):
         """Test creating shutdown progress with verbose mode"""
         progress = create_automagik_shutdown_progress(verbose=True)
-        
+
         assert progress.verbose is True
         assert len(progress.steps) == 5

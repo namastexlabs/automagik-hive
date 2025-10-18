@@ -1,7 +1,6 @@
 # Generic Agent Registry for Multi-Agent Systems
 # Database-driven agent loading via version factory
 
-from pathlib import Path
 from typing import Any
 
 from agno.agent import Agent
@@ -133,9 +132,7 @@ class AgentRegistry:
         available_agents = cls._get_available_agents()
 
         if agent_id not in available_agents:
-            raise KeyError(
-                f"Agent '{agent_id}' not found. Available: {available_agents}"
-            )
+            raise KeyError(f"Agent '{agent_id}' not found. Available: {available_agents}")
 
         return await create_agent(
             agent_id=agent_id,

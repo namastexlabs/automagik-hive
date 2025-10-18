@@ -100,9 +100,7 @@ class TestDatabaseServiceErrorHandling:
         service.pool = mock_database_pool["pool"]
 
         # Make cursor.execute raise an exception
-        mock_database_pool["cursor"].execute = AsyncMock(
-            side_effect=RuntimeError("Query execution failed")
-        )
+        mock_database_pool["cursor"].execute = AsyncMock(side_effect=RuntimeError("Query execution failed"))
 
         query = "SELECT * FROM test WHERE id = %(id)s"
         params = {"id": 1}
@@ -118,9 +116,7 @@ class TestDatabaseServiceErrorHandling:
 
         # Make cursor.fetchall raise an exception
         mock_database_pool["cursor"].execute = AsyncMock()
-        mock_database_pool["cursor"].fetchall = AsyncMock(
-            side_effect=RuntimeError("Fetch operation failed")
-        )
+        mock_database_pool["cursor"].fetchall = AsyncMock(side_effect=RuntimeError("Fetch operation failed"))
 
         query = "SELECT * FROM test"
 
@@ -134,9 +130,7 @@ class TestDatabaseServiceErrorHandling:
         service.pool = mock_database_pool["pool"]
 
         # Make connection.execute raise an exception during transaction
-        mock_database_pool["connection"].execute = AsyncMock(
-            side_effect=RuntimeError("Transaction operation failed")
-        )
+        mock_database_pool["connection"].execute = AsyncMock(side_effect=RuntimeError("Transaction operation failed"))
 
         operations = [
             ("INSERT INTO test (name) VALUES (%(name)s)", {"name": "test1"}),
@@ -210,9 +204,7 @@ class TestDatabaseServiceEdgeExceptionCases:
         service.pool = mock_database_pool["pool"]
 
         # Make cursor.execute raise parameter error
-        mock_database_pool["cursor"].execute = AsyncMock(
-            side_effect=TypeError("Parameter binding failed")
-        )
+        mock_database_pool["cursor"].execute = AsyncMock(side_effect=TypeError("Parameter binding failed"))
 
         query = "SELECT * FROM test WHERE id = %(id)s"
         invalid_params = {"id": object()}  # Invalid parameter type

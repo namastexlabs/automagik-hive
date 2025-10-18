@@ -379,9 +379,7 @@ class TestAuthServiceEdgeCases:
                 if value.lower() == "true":
                     assert service.auth_disabled, f"Value '{value}' should disable auth"
                 else:
-                    assert not service.auth_disabled, (
-                        f"Value '{value}' should NOT disable auth"
-                    )
+                    assert not service.auth_disabled, f"Value '{value}' should NOT disable auth"
 
                 # Clean up
                 os.environ.pop("HIVE_AUTH_DISABLED", None)
@@ -390,9 +388,7 @@ class TestAuthServiceEdgeCases:
             for value in enabled_values:
                 os.environ["HIVE_AUTH_DISABLED"] = value
                 service = AuthService()
-                assert not service.auth_disabled, (
-                    f"Value '{value}' should keep auth enabled"
-                )
+                assert not service.auth_disabled, f"Value '{value}' should keep auth enabled"
 
                 # Clean up
                 os.environ.pop("HIVE_AUTH_DISABLED", None)

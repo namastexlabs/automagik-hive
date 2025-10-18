@@ -27,7 +27,7 @@ class ServerConfig:
     def __init__(self):
         """Initialize server configuration with environment variables."""
         # Server host and port configuration
-        self.host = os.getenv("HIVE_API_HOST", "0.0.0.0")
+        self.host = os.getenv("HIVE_API_HOST", "0.0.0.0")  # noqa: S104
         port_str = os.getenv("HIVE_API_PORT")
         if not port_str:
             raise ValueError(
@@ -40,12 +40,8 @@ class ServerConfig:
         # Environment settings
         self.environment = os.getenv("HIVE_ENVIRONMENT", "development")
         self.log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
-        self.playground_enabled = self._get_bool(
-            "HIVE_EMBED_PLAYGROUND", default=True
-        )
-        self.playground_mount_path = self._normalize_path(
-            os.getenv("HIVE_PLAYGROUND_MOUNT_PATH", "/playground")
-        )
+        self.playground_enabled = self._get_bool("HIVE_EMBED_PLAYGROUND", default=True)
+        self.playground_mount_path = self._normalize_path(os.getenv("HIVE_PLAYGROUND_MOUNT_PATH", "/playground"))
         self.control_pane_base_url = os.getenv("HIVE_CONTROL_PANE_BASE_URL")
 
         # Validation
@@ -54,14 +50,10 @@ class ServerConfig:
     def _validate_config(self):
         """Validate configuration values."""
         if not (1 <= self.port <= 65535):
-            raise ValueError(
-                f"Invalid port number: {self.port}. Must be between 1 and 65535."
-            )
+            raise ValueError(f"Invalid port number: {self.port}. Must be between 1 and 65535.")
 
         if self.workers < 1:
-            raise ValueError(
-                f"Invalid worker count: {self.workers}. Must be at least 1."
-            )
+            raise ValueError(f"Invalid worker count: {self.workers}. Must be at least 1.")
 
         if self.environment not in ["development", "staging", "production"]:
             raise ValueError(
@@ -73,27 +65,17 @@ class ServerConfig:
             import os
 
             api_key = os.getenv("HIVE_API_KEY")
-            if (
-                not api_key
-                or api_key.strip() == ""
-                or api_key in ["your-hive-api-key-here"]
-            ):
+            if not api_key or api_key.strip() == "" or api_key in ["your-hive-api-key-here"]:
                 raise ValueError(
                     "Production environment requires a valid HIVE_API_KEY. "
                     "Set HIVE_API_KEY to a secure value in your environment."
                 )
 
         if self.log_level not in ["DEBUG", "INFO", "WARNING", "ERROR"]:
-            raise ValueError(
-                f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARNING, ERROR."
-            )
+            raise ValueError(f"Invalid log level: {self.log_level}. Must be one of: DEBUG, INFO, WARNING, ERROR.")
 
-        if self.control_pane_base_url and not self.control_pane_base_url.startswith(
-            ("http://", "https://")
-        ):
-            raise ValueError(
-                "HIVE_CONTROL_PANE_BASE_URL must include http:// or https:// scheme"
-            )
+        if self.control_pane_base_url and not self.control_pane_base_url.startswith(("http://", "https://")):
+            raise ValueError("HIVE_CONTROL_PANE_BASE_URL must include http:// or https:// scheme")
 
     @classmethod
     def get_instance(cls) -> "ServerConfig":
@@ -118,7 +100,7 @@ class ServerConfig:
     def get_base_url(self) -> str:
         """Get the base URL for the server."""
         # Use localhost for local development, otherwise use the configured host
-        display_host = "localhost" if self.host in ["0.0.0.0", "::"] else self.host
+        display_host = "localhost" if self.host in ["0.0.0.0", "::"] else self.host  # noqa: S104
         return f"http://{display_host}:{self.port}"
 
     def get_playground_url(self) -> str | None:
@@ -134,7 +116,9 @@ class ServerConfig:
 
     def __repr__(self) -> str:
         """String representation of configuration."""
-        return f"ServerConfig(host={self.host}, port={self.port}, workers={self.workers}, environment={self.environment})"
+        return (
+            f"ServerConfig(host={self.host}, port={self.port}, workers={self.workers}, environment={self.environment})"
+        )
 
     @staticmethod
     def _get_bool(var_name: str, default: bool) -> bool:

@@ -8,7 +8,7 @@ import asyncio
 import os
 import signal
 import sys
-from collections.abc import Callable
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -18,8 +18,8 @@ try:
     from agno.os.app import AgentOS
     from agno.os.settings import AgnoAPISettings
 except ImportError:  # pragma: no cover - optional dependency
-    AgentOS = None  # type: ignore[assignment]
-    AgnoAPISettings = None  # type: ignore[assignment]
+    AgentOS = None  # type: ignore[assignment, misc]
+    AgnoAPISettings = None  # type: ignore[assignment, misc]
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -37,14 +37,20 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.config.server_config import get_server_config
-from lib.config.settings import settings
-from lib.exceptions import ComponentLoadingError
+from lib.config.server_config import (  # noqa: E402 - Path setup required before import
+    get_server_config,  # noqa: E402 - Logging must be initialized before importing application modules
+)
+from lib.config.settings import (  # noqa: E402 - Path setup required before import
+    settings,  # noqa: E402 - Logging must be initialized before importing application modules
+)
+from lib.exceptions import (  # noqa: E402 - Path setup required before import
+    ComponentLoadingError,  # noqa: E402 - Logging must be initialized before importing application modules
+)
 
 # Configure unified logging system AFTER environment variables are loaded
-from lib.logging import initialize_logging, logger
-from lib.utils.startup_display import create_startup_display
-from lib.utils.version_reader import get_api_version
+from lib.logging import initialize_logging, logger  # noqa: E402 - Startup orchestration after logging setup
+from lib.utils.startup_display import create_startup_display  # noqa: E402 - Startup orchestration after logging setup
+from lib.utils.version_reader import get_api_version  # noqa: E402 - Startup orchestration after logging setup
 
 # Initialize execution tracing system
 # Execution tracing removed - was unused bloat that duplicated metrics system
@@ -90,24 +96,24 @@ except Exception as e:
 # Import teams via dynamic registry (removed hardcoded ana import)
 
 # Import workflow registry for dynamic loading
-from ai.workflows.registry import get_workflow
+from ai.workflows.registry import get_workflow  # noqa: E402 - Conditional import based on runtime configuration
 
 # Import CSV hot reload manager
 # Import orchestrated startup infrastructure
-from lib.utils.startup_orchestration import (
+from lib.utils.startup_orchestration import (  # noqa: E402 - Conditional import based on runtime configuration
     get_startup_display_with_results,
     orchestrated_startup,
 )
 
 # Import team registry for dynamic loading
-from lib.utils.version_factory import create_team
+from lib.utils.version_factory import create_team  # noqa: E402 - Conditional import based on runtime configuration
 
 
-def create_lifespan(startup_display: Any = None) -> Callable:
+def create_lifespan(startup_display: Any = None) -> Any:
     """Create lifespan context manager with startup_display access"""
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         """Application lifespan manager"""
         # Startup - Database migrations are now handled in main startup function
         # This lifespan function handles other FastAPI startup tasks
@@ -126,13 +132,13 @@ def create_lifespan(startup_display: Any = None) -> Callable:
                 logger.warning(
                     "Could not initialize MCP Connection Manager - configuration file missing",
                     error=error_msg,
-                    suggestion="Ensure .mcp.json exists in working directory or set HIVE_MCP_CONFIG_PATH"
+                    suggestion="Ensure .mcp.json exists in working directory or set HIVE_MCP_CONFIG_PATH",
                 )
             elif "Invalid JSON" in error_msg:
                 logger.warning(
                     "Could not initialize MCP Connection Manager - invalid configuration",
                     error=error_msg,
-                    suggestion="Check .mcp.json file for valid JSON syntax"
+                    suggestion="Check .mcp.json file for valid JSON syntax",
                 )
             else:
                 logger.warning("Could not initialize MCP Connection Manager", error=error_msg)
@@ -141,13 +147,13 @@ def create_lifespan(startup_display: Any = None) -> Callable:
         environment = os.getenv("HIVE_ENVIRONMENT", "development").lower()
         if environment == "production":
 
-            async def _send_startup_notification():
+            async def _send_startup_notification() -> None:
                 try:
                     await asyncio.sleep(2)  # Give MCP manager time to fully initialize
                     from common.startup_notifications import send_startup_notification
 
                     # Pass startup_display for rich notification content
-                    await send_startup_notification(startup_display)
+                    await send_startup_notification(startup_display)  # type: ignore[no-untyped-call]
                     logger.debug("Startup notification sent successfully")
                 except Exception as e:
                     logger.warning("Could not send startup notification", error=str(e))
@@ -180,39 +186,47 @@ def create_lifespan(startup_display: Any = None) -> Callable:
                 # Cancel all background tasks to prevent resource leaks
                 current_tasks = [task for task in asyncio.all_tasks() if not task.done()]
                 background_tasks = []
-                
+
                 for task in current_tasks:
-                    task_name = getattr(task, '_name', 'unnamed')
-                    coro_name = getattr(task.get_coro(), '__qualname__', '') if hasattr(task, 'get_coro') else ''
-                    
+                    task_name = getattr(task, "_name", "unnamed")
+                    coro_name = getattr(task.get_coro(), "__qualname__", "") if hasattr(task, "get_coro") else ""
+
                     # Cancel background service tasks (metrics, notifications, etc)
-                    if any(keyword in task_name.lower() for keyword in ['notification', 'background', 'processor', 'metrics']):
+                    if any(
+                        keyword in task_name.lower()
+                        for keyword in ["notification", "background", "processor", "metrics"]
+                    ):
                         background_tasks.append(task)
-                    elif any(keyword in coro_name.lower() for keyword in ['_background_processor', 'notification', 'background']):
+                    elif any(
+                        keyword in coro_name.lower()
+                        for keyword in ["_background_processor", "notification", "background"]
+                    ):
                         background_tasks.append(task)
-                
+
                 # Cancel the tasks
                 for task in background_tasks:
                     task.cancel()
-                
+
                 # Wait for them to complete cancellation
                 if background_tasks:
                     await asyncio.gather(*background_tasks, return_exceptions=True)
 
-            # Step 2: Cleaning Up Services  
+            # Step 2: Cleaning Up Services
             with shutdown_progress.step(2):
                 # Shutdown metrics service if it exists
                 try:
                     from lib.metrics.async_metrics_service import shutdown_metrics_service
-                    await shutdown_metrics_service()
+
+                    await shutdown_metrics_service()  # type: ignore[no-untyped-call]
                 except Exception as e:
                     # Don't warn about metrics shutdown - it may not have been fully initialized
                     logger.debug("Metrics service shutdown note", error=str(e))
-                
+
                 # Send shutdown notification
                 try:
                     from common.startup_notifications import send_shutdown_notification
-                    await send_shutdown_notification()
+
+                    await send_shutdown_notification()  # type: ignore[no-untyped-call]
                     logger.debug("Shutdown notification sent successfully")
                 except Exception as e:
                     logger.warning("Could not send shutdown notification", error=str(e))
@@ -273,9 +287,7 @@ def _create_simple_sync_api() -> FastAPI:
         db_label="—",
         dependencies=[],
     )
-    startup_display.add_error(
-        "System", "Running in simplified mode due to async conflicts"
-    )
+    startup_display.add_error("System", "Running in simplified mode due to async conflicts")
 
     # Display the table
     try:
@@ -292,7 +304,7 @@ def _create_simple_sync_api() -> FastAPI:
     )
 
     @app.get("/")
-    async def root():
+    async def root() -> dict[str, str]:
         return {
             "status": "ok",
             "mode": "simplified",
@@ -300,13 +312,13 @@ def _create_simple_sync_api() -> FastAPI:
         }
 
     @app.get("/health")
-    async def health():
+    async def health() -> dict[str, str]:
         return {"status": "healthy", "mode": "simplified"}
 
     return app
 
 
-async def _async_create_automagik_api():
+async def _async_create_automagik_api() -> FastAPI:
     """Create unified FastAPI app with Performance-Optimized Sequential Startup"""
 
     # Get environment settings
@@ -341,9 +353,7 @@ async def _async_create_automagik_api():
         result_type=type(startup_results).__name__,
         registries_type=type(startup_results.registries).__name__,
         agents_registry=startup_results.registries.agents,
-        agent_keys=list(startup_results.registries.agents.keys())
-        if startup_results.registries.agents
-        else [],
+        agent_keys=list(startup_results.registries.agents.keys()) if startup_results.registries.agents else [],
         has_agents=bool(startup_results.registries.agents),
     )
 
@@ -394,9 +404,7 @@ async def _async_create_automagik_api():
     for team_id in team_registry:
         try:
             # Team with metrics for internal use
-            team = await create_team(
-                team_id, metrics_service=startup_results.services.metrics_service
-            )
+            team = await create_team(team_id, metrics_service=startup_results.services.metrics_service)
             if team:
                 loaded_teams.append(team)
                 logger.debug("Team instance created", team_id=team_id)
@@ -429,9 +437,7 @@ async def _async_create_automagik_api():
             type_check=type(available_agents).__name__,
             bool_check=bool(available_agents),
         )
-        raise ComponentLoadingError(
-            "At least one agent is required but none were loaded"
-        )
+        raise ComponentLoadingError("At least one agent is required but none were loaded")
 
     # Create startup display with orchestrated results
     startup_display = get_startup_display_with_results(startup_results)
@@ -457,9 +463,7 @@ async def _async_create_automagik_api():
                 logger.debug(f"Agent {agent_id} loaded from orchestrated startup with metrics integration")
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to use agent {agent_id} from orchestrated startup: {e}"
-                )
+                logger.warning(f"Failed to use agent {agent_id} from orchestrated startup: {e}")
                 continue
 
     logger.debug(f"Created {len(agents_list)} agents for Playground")
@@ -505,9 +509,7 @@ async def _async_create_automagik_api():
 
     app.title = api_settings.title
     app.version = api_settings.version
-    app.description = (
-        "Multi-Agent System with intelligent routing and dynamic team discovery"
-    )
+    app.description = "Multi-Agent System with intelligent routing and dynamic team discovery"
 
     # Set lifespan for monitoring
     app.router.lifespan_context = create_lifespan(startup_display)
@@ -521,13 +523,9 @@ async def _async_create_automagik_api():
 
         if is_workflow_registered("conversation-typification"):
             # Note: This workflow is currently not implemented but system handles gracefully
-            logger.debug(
-                "🤖 Conversation typification workflow registered but not implemented"
-            )
+            logger.debug("🤖 Conversation typification workflow registered but not implemented")
         else:
-            logger.debug(
-                "🤖 Conversation typification workflow not available - system operating normally"
-            )
+            logger.debug("🤖 Conversation typification workflow not available - system operating normally")
     except Exception as e:
         logger.debug("🔧 Workflow registry check completed", error=str(e))
 
@@ -541,13 +539,8 @@ async def _async_create_automagik_api():
     if not settings().hive_embed_playground:
         logger.info("Agno AgentOS embedding disabled by configuration")
     elif AgentOS is None or AgnoAPISettings is None:
-        logger.warning(
-            "Agno AgentOS not available in current Agno distribution; "
-            "starting API without AgentOS routes."
-        )
-        startup_display.add_version_sync_log(
-            "⚠️ Agno AgentOS not installed — running API without agent management UI"
-        )
+        logger.warning("Agno AgentOS not available in current Agno distribution; starting API without AgentOS routes.")
+        startup_display.add_version_sync_log("⚠️ Agno AgentOS not installed — running API without agent management UI")
     else:
         try:
             # Configure AgentOS settings
@@ -582,7 +575,7 @@ async def _async_create_automagik_api():
                 "AgentOS initialized successfully",
                 agents=len(agents_list),
                 teams=len(teams_list),
-                workflows=len(workflows_list)
+                workflows=len(workflows_list),
             )
             startup_display.add_version_sync_log(
                 f"✅ Agno AgentOS enabled — {len(agents_list)} agents, {len(teams_list)} teams, {len(workflows_list)} workflows"
@@ -591,45 +584,46 @@ async def _async_create_automagik_api():
         except Exception as exc:
             logger.error(f"Failed to initialize Agno AgentOS: {exc}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             startup_display.add_error(
                 "Agno AgentOS",
                 f"AgentOS could not start: {exc}",
             )
-    
+
     # Add AGUI support if enabled
     if settings().hive_enable_agui:
-        from agno.app.agui.app import AGUIApp
         from agno.agent.agent import Agent
-        from lib.config.models import resolve_model
-        
+        from agno.app.agui.app import AGUIApp  # type: ignore[import-not-found]
+
         # Use the same dynamic agent loading as playground
         from ai.agents.registry import AgentRegistry
-        
+        from lib.config.models import resolve_model
+
         # Get agent ID from environment or default to first available
         agui_agent_id = os.getenv("HIVE_AGUI_AGENT", None)
-        available_agents = AgentRegistry.list_available_agents()
-        logger.info(f"AGUI: Found {len(available_agents)} available agents: {available_agents}")
-        
-        selected_agent_id = None
-        if agui_agent_id and agui_agent_id in available_agents:
+        available_agent_list = AgentRegistry.list_available_agents()
+        logger.info(f"AGUI: Found {len(available_agent_list)} available agents: {available_agent_list}")
+
+        selected_agent_id: str | None = None
+        if agui_agent_id and agui_agent_id in available_agent_list:
             selected_agent_id = agui_agent_id
             logger.info(f"AGUI: Using specified agent: {agui_agent_id}")
-        elif available_agents:
-            selected_agent_id = available_agents[0]
+        elif available_agent_list:
+            selected_agent_id = available_agent_list[0]
             logger.info(f"AGUI: Using first available agent: {selected_agent_id}")
-        
+
         if selected_agent_id:
             # Load the selected agent asynchronously
             try:
                 selected_agent = await AgentRegistry.get_agent(agent_id=selected_agent_id)
                 logger.info(f"AGUI: Successfully loaded agent: {selected_agent_id}")
-                
+
                 # Setup AGUI with dynamically loaded agent
                 agui_app = AGUIApp(
                     agent=selected_agent,
                     name=selected_agent.name,
-                    app_id=f"{selected_agent.agent_id}_agui",
+                    app_id=f"{selected_agent.agent_id}_agui",  # type: ignore[attr-defined]
                     description=selected_agent.description or f"AGUI interface for {selected_agent.name}",
                 )
             except Exception as e:
@@ -638,7 +632,7 @@ async def _async_create_automagik_api():
         else:
             logger.error("AGUI: No agents found")
             raise RuntimeError("AGUI: No agents available - check ai/agents/ directory")
-        
+
         # Mount AGUI app
         agui_fastapi_app = agui_app.get_app()
         app.mount("/agui", agui_fastapi_app)
@@ -696,9 +690,7 @@ async def _async_create_automagik_api():
                     display_status="table_unavailable",
                 )
     else:
-        logger.debug(
-            "Skipping startup display (reloader context - avoiding duplicate table)"
-        )
+        logger.debug("Skipping startup display (reloader context - avoiding duplicate table)")
 
     # Add custom business endpoints
     try:
@@ -710,7 +702,6 @@ async def _async_create_automagik_api():
 
         if is_development and not is_reloader_context:
             # Add development URLs
-            get_server_config().port
             from rich.console import Console
             from rich.table import Table
 
@@ -746,9 +737,7 @@ async def _async_create_automagik_api():
                 },
             )
     except Exception as e:
-        startup_display.add_error(
-            "Business Endpoints", f"Could not register custom business endpoints: {e}"
-        )
+        startup_display.add_error("Business Endpoints", f"Could not register custom business endpoints: {e}")
 
     # Add Agno message validation middleware (optional, removed in v2 cleanup)
     # Note: Agno validation middleware was removed in v2 architecture cleanup
@@ -764,32 +753,30 @@ async def _async_create_automagik_api():
     # Add CORS middleware
     # Note: allow_credentials=True is incompatible with allow_origins=["*"]
     # Browsers reject this combination as a security measure
-    use_credentials = "*" not in api_settings.cors_origin_list
+    cors_origins = api_settings.cors_origin_list or []
+    use_credentials = "*" not in cors_origins
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=api_settings.cors_origin_list,
+        allow_origins=cors_origins,
         allow_credentials=use_credentials,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
 
     if not use_credentials:
-        logger.debug(
-            "CORS credentials disabled due to wildcard origin",
-            origins=api_settings.cors_origin_list
-        )
+        logger.debug("CORS credentials disabled due to wildcard origin", origins=cors_origins)
 
     # Switch from startup to runtime logging mode
     from lib.logging import set_runtime_mode
 
-    set_runtime_mode()
+    set_runtime_mode()  # type: ignore[no-untyped-call]
 
     return app
 
 
-# Lazy app creation to prevent import-time execution
-app = None
+# Global app instance for lazy loading
+_app_instance: FastAPI | None = None
 
 
 def create_automagik_api() -> FastAPI:
@@ -823,10 +810,6 @@ def create_automagik_api() -> FastAPI:
         return asyncio.run(_async_create_automagik_api())
 
 
-# Global app instance for lazy loading
-_app_instance = None
-
-
 def get_app() -> FastAPI:
     """Get or create the FastAPI application lazily."""
     global _app_instance
@@ -841,18 +824,19 @@ def app() -> FastAPI:
     return get_app()
 
 
-def _setup_signal_handlers():
+def _setup_signal_handlers() -> None:
     """Setup signal handlers for graceful shutdown on Ctrl+C."""
-    def signal_handler(signum, frame):
+
+    def signal_handler(signum: int, frame: Any) -> None:
         # Let the normal shutdown process handle cleanup
         sys.exit(0)
-    
+
     # Setup signal handlers for graceful shutdown
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
 
-def main():
+def main() -> None:
     """Main entry point for Automagik Hive server."""
     import uvicorn
 
@@ -867,10 +851,7 @@ def main():
 
     # Auto-reload configuration: can be controlled via environment variable
     # Set DISABLE_RELOAD=true to disable auto-reload even in development
-    reload = (
-        environment == "development"
-        and os.getenv("DISABLE_RELOAD", "false").lower() != "true"
-    )
+    reload = environment == "development" and os.getenv("DISABLE_RELOAD", "false").lower() != "true"
 
     # Show startup info in development mode
     is_development = environment == "development"
@@ -882,7 +863,7 @@ def main():
             reload=reload,
             mode="development" if reload else "production",
         )
-    
+
     # Use uvicorn with factory function to support reload
     uvicorn.run("api.serve:app", host=host, port=port, reload=reload, factory=True)
 

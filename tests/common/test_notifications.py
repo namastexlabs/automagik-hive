@@ -2,22 +2,22 @@
 
 import os
 import time
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from common.notifications import (
+    LogProvider,
     NotificationLevel,
     NotificationMessage,
     NotificationProvider,
-    WhatsAppProvider,
-    LogProvider,
     NotificationService,
+    WhatsAppProvider,
     get_notification_service,
-    send_notification,
     send_critical_alert,
-    send_warning_alert,
     send_error_alert,
+    send_notification,
+    send_warning_alert,
 )
 
 
@@ -43,12 +43,9 @@ class TestNotificationMessage:
     def test_notification_message_creation(self):
         """Test creating NotificationMessage with required fields."""
         message = NotificationMessage(
-            title="Test Title",
-            message="Test message content",
-            level=NotificationLevel.INFO,
-            source="test_source"
+            title="Test Title", message="Test message content", level=NotificationLevel.INFO, source="test_source"
         )
-        
+
         assert message.title == "Test Title"
         assert message.message == "Test message content"
         assert message.level == NotificationLevel.INFO
@@ -60,50 +57,32 @@ class TestNotificationMessage:
         """Test creating NotificationMessage with custom timestamp."""
         custom_timestamp = 1234567890.0
         message = NotificationMessage(
-            title="Test",
-            message="Test",
-            level=NotificationLevel.WARNING,
-            source="test",
-            timestamp=custom_timestamp
+            title="Test", message="Test", level=NotificationLevel.WARNING, source="test", timestamp=custom_timestamp
         )
-        
+
         assert message.timestamp == custom_timestamp
 
     def test_notification_message_with_metadata(self):
         """Test creating NotificationMessage with custom metadata."""
         metadata = {"key": "value", "number": 42}
         message = NotificationMessage(
-            title="Test",
-            message="Test",
-            level=NotificationLevel.ERROR,
-            source="test",
-            metadata=metadata
+            title="Test", message="Test", level=NotificationLevel.ERROR, source="test", metadata=metadata
         )
-        
+
         assert message.metadata == metadata
 
     def test_notification_message_auto_timestamp(self):
         """Test NotificationMessage automatically sets timestamp."""
         before_time = time.time()
-        message = NotificationMessage(
-            title="Test",
-            message="Test",
-            level=NotificationLevel.CRITICAL,
-            source="test"
-        )
+        message = NotificationMessage(title="Test", message="Test", level=NotificationLevel.CRITICAL, source="test")
         after_time = time.time()
-        
+
         assert before_time <= message.timestamp <= after_time
 
     def test_notification_message_auto_metadata(self):
         """Test NotificationMessage automatically initializes metadata."""
-        message = NotificationMessage(
-            title="Test",
-            message="Test",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
-        
+        message = NotificationMessage(title="Test", message="Test", level=NotificationLevel.INFO, source="test")
+
         assert message.metadata == {}
 
 
@@ -117,10 +96,11 @@ class TestNotificationProvider:
 
     def test_notification_provider_requires_send_implementation(self):
         """Test subclasses must implement send method."""
+
         class IncompleteProvider(NotificationProvider):
             def is_available(self) -> bool:
                 return True
-        
+
         with pytest.raises(TypeError):
             IncompleteProvider()
 
@@ -156,12 +136,7 @@ class TestWhatsAppProvider:
     async def test_whatsapp_send_disabled(self):
         """Test WhatsApp sending when disabled."""
         provider = WhatsAppProvider()
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await provider.send(message)
         assert result is False
@@ -178,12 +153,7 @@ class TestWhatsAppProvider:
         mock_get_mcp_tools.return_value.__aenter__.return_value = mock_tools
 
         provider = WhatsAppProvider(group_id="test_group")
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await provider.send(message)
         assert result is True
@@ -197,10 +167,7 @@ class TestWhatsAppProvider:
 
         provider = WhatsAppProvider()
         message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.ERROR,
-            source="test"
+            title="Test", message="Test message", level=NotificationLevel.ERROR, source="test"
         )
 
         result = await provider.send(message)
@@ -211,10 +178,7 @@ class TestWhatsAppProvider:
         """Test WhatsApp sending respects cooldown."""
         provider = WhatsAppProvider()
         message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.WARNING,
-            source="test"
+            title="Test", message="Test message", level=NotificationLevel.WARNING, source="test"
         )
 
         # Simulate recent notification
@@ -223,13 +187,13 @@ class TestWhatsAppProvider:
 
         with patch.dict(os.environ, {"HIVE_WHATSAPP_NOTIFICATIONS_ENABLED": "true"}):
             result = await provider.send(message)
-        
+
         assert result is False
 
     def test_whatsapp_provider_emoji_mapping(self):
         """Test WhatsApp provider emoji mapping."""
         provider = WhatsAppProvider()
-        
+
         assert provider._get_emoji(NotificationLevel.INFO) == "ℹ️"
         assert provider._get_emoji(NotificationLevel.WARNING) == "⚠️"
         assert provider._get_emoji(NotificationLevel.CRITICAL) == "🚨"
@@ -260,10 +224,7 @@ class TestLogProvider:
         """Test LogProvider sends INFO notifications."""
         provider = LogProvider()
         message = NotificationMessage(
-            title="Test Info",
-            message="Test info message",
-            level=NotificationLevel.INFO,
-            source="test"
+            title="Test Info", message="Test info message", level=NotificationLevel.INFO, source="test"
         )
 
         result = await provider.send(message)
@@ -276,10 +237,7 @@ class TestLogProvider:
         """Test LogProvider sends WARNING notifications."""
         provider = LogProvider()
         message = NotificationMessage(
-            title="Test Warning",
-            message="Test warning message",
-            level=NotificationLevel.WARNING,
-            source="test"
+            title="Test Warning", message="Test warning message", level=NotificationLevel.WARNING, source="test"
         )
 
         result = await provider.send(message)
@@ -292,10 +250,7 @@ class TestLogProvider:
         """Test LogProvider sends ERROR notifications."""
         provider = LogProvider()
         message = NotificationMessage(
-            title="Test Error",
-            message="Test error message",
-            level=NotificationLevel.ERROR,
-            source="test"
+            title="Test Error", message="Test error message", level=NotificationLevel.ERROR, source="test"
         )
 
         result = await provider.send(message)
@@ -308,10 +263,7 @@ class TestLogProvider:
         """Test LogProvider sends CRITICAL notifications."""
         provider = LogProvider()
         message = NotificationMessage(
-            title="Test Critical",
-            message="Test critical message",
-            level=NotificationLevel.CRITICAL,
-            source="test"
+            title="Test Critical", message="Test critical message", level=NotificationLevel.CRITICAL, source="test"
         )
 
         result = await provider.send(message)
@@ -324,13 +276,8 @@ class TestLogProvider:
         """Test LogProvider handles exceptions."""
         provider = LogProvider()
         mock_logger.info.side_effect = Exception("Logger error")
-        
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await provider.send(message)
         assert result is False
@@ -347,7 +294,7 @@ class TestNotificationService:
     def test_notification_service_initialization(self):
         """Test NotificationService initializes with default providers."""
         service = NotificationService()
-        
+
         assert "log" in service.providers
         assert "whatsapp" in service.providers
         assert isinstance(service.providers["log"], LogProvider)
@@ -357,7 +304,7 @@ class TestNotificationService:
         """Test registering custom notification provider."""
         service = NotificationService()
         mock_provider = MagicMock(spec=NotificationProvider)
-        
+
         service.register_provider("custom", mock_provider)
         assert "custom" in service.providers
         assert service.providers["custom"] is mock_provider
@@ -369,17 +316,12 @@ class TestNotificationService:
         mock_provider = AsyncMock()
         mock_provider.send.return_value = True
         mock_log_provider.return_value = mock_provider
-        
+
         service = NotificationService()
         service.providers["log"] = mock_provider
         service.default_provider = "log"
-        
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await service.send(message)
         assert result is True
@@ -392,16 +334,11 @@ class TestNotificationService:
         mock_provider = AsyncMock()
         mock_provider.send.return_value = True
         mock_log_provider.return_value = mock_provider
-        
+
         service = NotificationService()
         service.providers["custom"] = mock_provider
-        
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await service.send(message, provider_name="custom")
         assert result is True
@@ -411,12 +348,7 @@ class TestNotificationService:
     async def test_notification_service_send_unknown_provider(self):
         """Test NotificationService handles unknown provider."""
         service = NotificationService()
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await service.send(message, provider_name="unknown")
         assert result is False
@@ -427,21 +359,16 @@ class TestNotificationService:
         """Test NotificationService falls back to log provider."""
         mock_unavailable_provider = MagicMock()
         mock_unavailable_provider.is_available.return_value = False
-        
+
         mock_log_provider_instance = AsyncMock()
         mock_log_provider_instance.send.return_value = True
         mock_log_provider.return_value = mock_log_provider_instance
-        
+
         service = NotificationService()
         service.providers["unavailable"] = mock_unavailable_provider
         service.providers["log"] = mock_log_provider_instance
-        
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await service.send(message, provider_name="unavailable")
         assert result is True
@@ -457,15 +384,12 @@ class TestNotificationService:
         service.default_provider = "log"
 
         result = await service.send_alert(
-            title="Test Alert",
-            message="Test alert message",
-            source="test_source",
-            level=NotificationLevel.WARNING
+            title="Test Alert", message="Test alert message", source="test_source", level=NotificationLevel.WARNING
         )
-        
+
         assert result is True
         mock_provider.send.assert_called_once()
-        
+
         # Verify the message was created correctly
         call_args = mock_provider.send.call_args[0][0]
         assert call_args.title == "Test Alert"
@@ -480,10 +404,10 @@ class TestNotificationService:
         mock_available.is_available.return_value = True
         mock_unavailable = MagicMock()
         mock_unavailable.is_available.return_value = False
-        
+
         service.providers["available"] = mock_available
         service.providers["unavailable"] = mock_unavailable
-        
+
         providers = service.get_available_providers()
         assert providers["available"] is True
         assert providers["unavailable"] is False
@@ -501,61 +425,50 @@ class TestNotificationConvenienceFunctions:
         mock_get_service.return_value = mock_service
 
         result = await send_notification(
-            title="Test",
-            message="Test message",
-            source="test",
-            level=NotificationLevel.INFO
+            title="Test", message="Test message", source="test", level=NotificationLevel.INFO
         )
-        
+
         assert result is True
-        mock_service.send_alert.assert_called_once_with(
-            "Test", "Test message", "test", NotificationLevel.INFO
-        )
+        mock_service.send_alert.assert_called_once_with("Test", "Test message", "test", NotificationLevel.INFO)
 
     @patch("common.notifications.send_notification")
     @pytest.mark.asyncio
     async def test_send_critical_alert(self, mock_send):
         """Test send_critical_alert convenience function."""
         mock_send.return_value = True
-        
+
         result = await send_critical_alert("Critical", "Critical message", "test")
-        
+
         assert result is True
-        mock_send.assert_called_once_with(
-            "Critical", "Critical message", "test", NotificationLevel.CRITICAL
-        )
+        mock_send.assert_called_once_with("Critical", "Critical message", "test", NotificationLevel.CRITICAL)
 
     @patch("common.notifications.send_notification")
     @pytest.mark.asyncio
     async def test_send_warning_alert(self, mock_send):
         """Test send_warning_alert convenience function."""
         mock_send.return_value = True
-        
+
         result = await send_warning_alert("Warning", "Warning message", "test")
-        
+
         assert result is True
-        mock_send.assert_called_once_with(
-            "Warning", "Warning message", "test", NotificationLevel.WARNING
-        )
+        mock_send.assert_called_once_with("Warning", "Warning message", "test", NotificationLevel.WARNING)
 
     @patch("common.notifications.send_notification")
     @pytest.mark.asyncio
     async def test_send_error_alert(self, mock_send):
         """Test send_error_alert convenience function."""
         mock_send.return_value = True
-        
+
         result = await send_error_alert("Error", "Error message", "test")
-        
+
         assert result is True
-        mock_send.assert_called_once_with(
-            "Error", "Error message", "test", NotificationLevel.ERROR
-        )
+        mock_send.assert_called_once_with("Error", "Error message", "test", NotificationLevel.ERROR)
 
     def test_get_notification_service_function(self):
         """Test get_notification_service function."""
         service = get_notification_service()
         assert isinstance(service, NotificationService)
-        
+
         # Should return the same instance (singleton pattern)
         service2 = get_notification_service()
         assert service is service2
@@ -565,10 +478,9 @@ class TestNotificationIntegration:
     """Test notification system integration scenarios."""
 
     @patch("lib.mcp.get_mcp_tools")
-    @patch.dict(os.environ, {
-        "HIVE_WHATSAPP_NOTIFICATIONS_ENABLED": "true",
-        "WHATSAPP_NOTIFICATION_GROUP": "test_group"
-    })
+    @patch.dict(
+        os.environ, {"HIVE_WHATSAPP_NOTIFICATIONS_ENABLED": "true", "WHATSAPP_NOTIFICATION_GROUP": "test_group"}
+    )
     @pytest.mark.asyncio
     async def test_end_to_end_notification_flow(self, mock_get_mcp_tools):
         """Test complete notification flow."""
@@ -584,7 +496,7 @@ class TestNotificationIntegration:
             message="Test system notification",
             level=NotificationLevel.WARNING,
             source="integration_test",
-            metadata={"test_id": "test_123"}
+            metadata={"test_id": "test_123"},
         )
 
         # Send via service
@@ -599,7 +511,7 @@ class TestNotificationIntegration:
             NotificationLevel.INFO,
             NotificationLevel.WARNING,
             NotificationLevel.ERROR,
-            NotificationLevel.CRITICAL
+            NotificationLevel.CRITICAL,
         ]
 
         for level in levels:
@@ -607,7 +519,7 @@ class TestNotificationIntegration:
                 title=f"Test {level.value.upper()}",
                 message=f"Test message for {level.value}",
                 level=level,
-                source="test"
+                source="test",
             )
             assert message.level == level
             assert level.value.upper() in message.title
@@ -616,24 +528,19 @@ class TestNotificationIntegration:
     async def test_notification_service_provider_fallback_chain(self):
         """Test notification service provider fallback chain."""
         service = NotificationService()
-        
+
         # Mock unavailable primary provider
         mock_primary = MagicMock()
         mock_primary.is_available.return_value = False
-        
+
         # Mock available fallback provider (log provider)
         mock_fallback = MagicMock()
         mock_fallback.send = AsyncMock(return_value=True)
-        
+
         service.providers["primary"] = mock_primary
         service.providers["log"] = mock_fallback
-        
-        message = NotificationMessage(
-            title="Test",
-            message="Test message",
-            level=NotificationLevel.INFO,
-            source="test"
-        )
+
+        message = NotificationMessage(title="Test", message="Test message", level=NotificationLevel.INFO, source="test")
 
         result = await service.send(message, provider_name="primary")
         assert result is True

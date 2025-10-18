@@ -292,9 +292,7 @@ class TestRowBasedCSVDocumentCreation:
             # Check debug logging calls for business unit summary
             debug_calls = mock_logger.debug.call_args_list
             for call_args in debug_calls:
-                if len(
-                    call_args[0]
-                ) > 0 and "✓ engineering: 2 documents processed" in str(call_args):
+                if len(call_args[0]) > 0 and "✓ engineering: 2 documents processed" in str(call_args):
                     break
             # Note: The exact format might vary, so we check that some logging occurred
             assert len(debug_calls) > 0
@@ -416,7 +414,7 @@ class TestRowBasedCSVErrorHandling:
             kb = RowBasedCSVKnowledgeBase(str(malformed_csv), self.mock_vector_db)
             # If it doesn't crash, that's good
             assert isinstance(kb.documents, list)
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # If it does throw an exception, that's also acceptable
             # as long as it's handled appropriately
             pass
@@ -673,9 +671,7 @@ class TestRowBasedCSVHotReload:
         kb = RowBasedCSVKnowledgeBase(str(self.csv_file), self.mock_vector_db)
 
         # Mock _load_csv_as_documents to raise exception
-        with patch.object(
-            kb, "_load_csv_as_documents", side_effect=Exception("Load error")
-        ):
+        with patch.object(kb, "_load_csv_as_documents", side_effect=Exception("Load error")):
             with patch("lib.knowledge.row_based_csv_knowledge.logger") as mock_logger:
                 kb.reload_from_csv()
 
@@ -982,9 +978,7 @@ class TestRowBasedCSVAdvancedCases:
         # Check individual sections in the correct order (based on actual code)
         assert content_parts[0].startswith("**Problem:**")
         assert content_parts[1].startswith("**Solution:**")
-        assert content_parts[2].startswith(
-            "**Typification:**"
-        )  # Comes before Business Unit
+        assert content_parts[2].startswith("**Typification:**")  # Comes before Business Unit
         assert content_parts[3].startswith("**Business Unit:**")
 
 

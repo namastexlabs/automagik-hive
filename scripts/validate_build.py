@@ -64,9 +64,7 @@ def build_and_validate() -> None:
     # Validate wheel contents
     wheel_file = wheel_files[0]
 
-    result = run_command(
-        ["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)]
-    )
+    result = run_command(["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)])
 
     wheel_contents = result.stdout
 
@@ -88,12 +86,12 @@ def build_and_validate() -> None:
             "zipfile",
             "-e",
             str(wheel_file),
-            "/tmp/wheel_check",
+            "/tmp/wheel_check",  # noqa: S108 - Test/script temp file
         ]
     )
 
     entry_points_file = (
-        Path("/tmp/wheel_check") / f"{wheel_file.stem}.dist-info" / "entry_points.txt"
+        Path("/tmp/wheel_check") / f"{wheel_file.stem}.dist-info" / "entry_points.txt"  # noqa: S108 - Test/script temp file
     )
 
     if entry_points_file.exists():

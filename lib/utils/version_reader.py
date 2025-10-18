@@ -26,7 +26,7 @@ def get_project_version() -> str:
         import importlib.metadata
 
         return importlib.metadata.version("automagik-hive")
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
     # Fall back to parsing pyproject.toml
@@ -41,7 +41,7 @@ def get_project_version() -> str:
             version_match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', content)
             if version_match:
                 return version_match.group(1)
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
     # Ultimate fallback
@@ -99,7 +99,7 @@ def _get_version_source() -> str:
 
         importlib.metadata.version("automagik-hive")
         return "importlib.metadata"
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
     # Try pyproject.toml
@@ -111,7 +111,7 @@ def _get_version_source() -> str:
             content = pyproject_path.read_text(encoding="utf-8")
             if re.search(r'version\s*=\s*["\']([^"\']+)["\']', content):
                 return "pyproject.toml"
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
     return "fallback"

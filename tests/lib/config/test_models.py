@@ -10,6 +10,7 @@ This test suite focuses on:
 
 import os
 from unittest.mock import Mock, patch
+
 import pytest
 
 # Import the module under test
@@ -24,7 +25,7 @@ try:
         validate_model,
     )
 except ImportError:
-    pytest.skip(f"Module lib.config.models not available", allow_module_level=True)
+    pytest.skip("Module lib.config.models not available", allow_module_level=True)
 
 
 class TestModelResolutionError:
@@ -68,21 +69,21 @@ class TestDefaultModelIdResolution:
     def test_get_default_model_id_success(self):
         """Test successful default model ID retrieval from environment."""
         with patch.dict(os.environ, {"HIVE_DEFAULT_MODEL": "gpt-4o-mini"}):
-            if hasattr(model_resolver, 'get_default_model_id'):
+            if hasattr(model_resolver, "get_default_model_id"):
                 model_id = model_resolver.get_default_model_id()
                 assert model_id == "gpt-4o-mini"
 
     def test_get_default_model_id_missing_env_var(self):
         """Test error handling when HIVE_DEFAULT_MODEL is not set."""
         with patch.dict(os.environ, {}, clear=True):
-            if hasattr(model_resolver, 'get_default_model_id'):
+            if hasattr(model_resolver, "get_default_model_id"):
                 with pytest.raises((ModelResolutionError, ValueError, KeyError)):
                     model_resolver.get_default_model_id()
 
     def test_get_default_model_id_empty_env_var(self):
         """Test error handling when HIVE_DEFAULT_MODEL is empty."""
         with patch.dict(os.environ, {"HIVE_DEFAULT_MODEL": ""}):
-            if hasattr(model_resolver, 'get_default_model_id'):
+            if hasattr(model_resolver, "get_default_model_id"):
                 with pytest.raises((ModelResolutionError, ValueError)):
                     model_resolver.get_default_model_id()
 
@@ -111,10 +112,6 @@ class TestDefaultProviderResolution:
 
     def test_get_default_provider_no_env_vars(self):
         """Test provider detection when HIVE_DEFAULT_PROVIDER is not set."""
-        env_vars_to_clear = [
-            "HIVE_DEFAULT_PROVIDER", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", 
-            "AZURE_OPENAI_API_KEY", "COHERE_API_KEY", "REPLICATE_API_TOKEN"
-        ]
         with patch.dict(os.environ, {}, clear=True):
             if callable(get_default_provider):
                 # Should either return a default or raise an appropriate error
@@ -150,10 +147,7 @@ class TestModelResolution:
     def test_resolve_model_environment_integration(self):
         """Test model resolution integrates with environment configuration."""
         if callable(resolve_model):
-            test_env = {
-                "HIVE_DEFAULT_MODEL": "gpt-4o-mini",
-                "OPENAI_API_KEY": "test-key"
-            }
+            test_env = {"HIVE_DEFAULT_MODEL": "gpt-4o-mini", "OPENAI_API_KEY": "test-key"}
             with patch.dict(os.environ, test_env):
                 try:
                     model = resolve_model()  # Should use default from env
@@ -172,7 +166,7 @@ class TestModelValidation:
             # Create a mock model that should pass validation
             mock_model = Mock()
             mock_model.model_name = "test-model"
-            
+
             try:
                 result = validate_model(mock_model)
                 # Should either return True or the model itself
@@ -205,8 +199,8 @@ class TestModelResolverMethods:
     def test_model_resolver_detect_provider(self):
         """Test provider detection method."""
         resolver = ModelResolver()
-        
-        if hasattr(resolver, '_detect_provider'):
+
+        if hasattr(resolver, "_detect_provider"):
             # Test with various environment configurations and model IDs
             test_models = ["gpt-4", "claude-3-haiku-20240307", "gemini-pro"]
             with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}, clear=True):
@@ -221,8 +215,8 @@ class TestModelResolverMethods:
     def test_model_resolver_discover_model_class(self):
         """Test model class discovery method."""
         resolver = ModelResolver()
-        
-        if hasattr(resolver, '_discover_model_class'):
+
+        if hasattr(resolver, "_discover_model_class"):
             try:
                 # Test discovery with a known provider
                 model_class = resolver._discover_model_class("anthropic", "claude-3-haiku-20240307")
@@ -234,8 +228,8 @@ class TestModelResolverMethods:
     def test_model_resolver_resolve_model_method(self):
         """Test the resolve_model method on ModelResolver instance."""
         resolver = ModelResolver()
-        
-        if hasattr(resolver, 'resolve_model'):
+
+        if hasattr(resolver, "resolve_model"):
             with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
                 try:
                     model = resolver.resolve_model("claude-3-haiku-20240307")
@@ -256,7 +250,7 @@ class TestEnvironmentVariableValidation:
             {"OPENAI_API_KEY": "test-key"},
             {"GOOGLE_API_KEY": "test-key"},
         ]
-        
+
         for config in test_configs:
             with patch.dict(os.environ, config, clear=True):
                 # Test that validation passes with proper API keys
@@ -270,7 +264,7 @@ class TestModelConfigurationEdgeCases:
     def test_model_resolver_with_missing_dependencies(self):
         """Test behavior when model provider dependencies are missing."""
         resolver = ModelResolver()
-        
+
         # Test that resolver handles missing dependencies gracefully
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}):
             try:
@@ -288,7 +282,7 @@ class TestModelConfigurationEdgeCases:
             {"ANTHROPIC_API_KEY": "invalid-key-format"},
             {"OPENAI_API_KEY": "short"},
         ]
-        
+
         for env_config in test_cases:
             with patch.dict(os.environ, env_config):
                 resolver = ModelResolver()
@@ -298,10 +292,10 @@ class TestModelConfigurationEdgeCases:
     def test_concurrent_model_resolution(self):
         """Test that model resolution works correctly with concurrent access."""
         import threading
-        
+
         results = []
         errors = []
-        
+
         def resolve_model_thread():
             try:
                 with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test"}):
@@ -309,17 +303,17 @@ class TestModelConfigurationEdgeCases:
                     results.append(resolver)
             except Exception as e:
                 errors.append(e)
-        
+
         # Test concurrent access
         threads = []
         for _ in range(3):
             thread = threading.Thread(target=resolve_model_thread)
             threads.append(thread)
             thread.start()
-        
+
         for thread in threads:
             thread.join()
-        
+
         # Should handle concurrent access without issues
         assert len(results) > 0 or len(errors) > 0  # Some result expected
 
@@ -329,26 +323,23 @@ class TestModelIntegration:
 
     def test_end_to_end_model_resolution_flow(self):
         """Test complete model resolution flow from environment to model instance."""
-        test_env = {
-            "HIVE_DEFAULT_MODEL": "claude-3-haiku-20240307",
-            "ANTHROPIC_API_KEY": "test-anthropic-key"
-        }
-        
+        test_env = {"HIVE_DEFAULT_MODEL": "claude-3-haiku-20240307", "ANTHROPIC_API_KEY": "test-anthropic-key"}
+
         with patch.dict(os.environ, test_env):
             try:
                 # Test the complete flow
                 if callable(get_default_model_id):
                     model_id = get_default_model_id()
                     assert model_id == "claude-3-haiku-20240307"
-                
+
                 if callable(get_default_provider):
                     provider = get_default_provider()
                     assert isinstance(provider, str)
-                
+
                 if callable(resolve_model):
                     model = resolve_model(model_id)
                     assert model is not None
-                    
+
             except (ModelResolutionError, ImportError, AttributeError):
                 # Expected if dependencies not available in test environment
                 pass
@@ -359,7 +350,7 @@ class TestModelIntegration:
         with patch.dict(os.environ, {}, clear=True):
             resolver = ModelResolver()
             assert resolver is not None
-            
+
         # Test with partial environment configuration
         with patch.dict(os.environ, {"HIVE_DEFAULT_MODEL": "test-model"}, clear=True):
             resolver = ModelResolver()

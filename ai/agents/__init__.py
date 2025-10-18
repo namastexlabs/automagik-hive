@@ -6,17 +6,17 @@
 from .registry import (
     AgentRegistry,
     get_agent,
+    get_mcp_server_info,
     get_team_agents,
     list_available_agents,
     list_mcp_servers,
-    get_mcp_server_info,
     reload_mcp_catalog,
 )
 
 __all__ = [
     # Registry and factory functions
     "AgentRegistry",
-    "get_agent", 
+    "get_agent",
     "get_team_agents",
     "list_available_agents",
     # MCP functions

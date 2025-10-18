@@ -85,7 +85,7 @@ class LoggingValidator:
                 with open(config_path) as f:
                     user_whitelist = yaml.safe_load(f)
                     default_whitelist.update(user_whitelist)
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # Warning: Could not load whitelist config - using defaults
                 pass
 
@@ -163,13 +163,9 @@ class LoggingValidator:
                 return  # Only report first match
 
         # Check for getLogger pattern (but skip string literals and comments)
-        if (
-            "getLogger(__name__)" in line or "getLogger(" in line
-        ) and not line.strip().startswith("#"):
+        if ("getLogger(__name__)" in line or "getLogger(" in line) and not line.strip().startswith("#"):
             # Skip if it's in a string literal or comment about getLogger
-            if not any(
-                skip in line for skip in ['"getLogger', "'getLogger", "# ", "pattern"]
-            ):
+            if not any(skip in line for skip in ['"getLogger', "'getLogger", "# ", "pattern"]):
                 self.violations.append(
                     LoggingViolation(
                         file_path=file_path,
@@ -193,10 +189,7 @@ class LoggingValidator:
         # Enhanced print detection - catch actual print calls, not regex patterns
         if re.search(r"\bprint\s*\(", line) and not line.strip().startswith("#"):
             # Don't flag console.print (Rich library) or stdout.write
-            if any(
-                allowed in line
-                for allowed in ["console.print", "stdout.write", "stderr.write"]
-            ):
+            if any(allowed in line for allowed in ["console.print", "stdout.write", "stderr.write"]):
                 return
 
             # Skip regex pattern definitions and comments
@@ -298,18 +291,11 @@ class LoggingValidator:
         """Suggest appropriate emoji based on file path."""
         path_lower = file_path.lower()
 
-        if any(
-            keyword in path_lower for keyword in ["api", "route", "endpoint", "mcp"]
-        ):
+        if any(keyword in path_lower for keyword in ["api", "route", "endpoint", "mcp"]):
             return "🌐"
-        if any(
-            keyword in path_lower for keyword in ["agent", "team", "workflow", "ai"]
-        ):
+        if any(keyword in path_lower for keyword in ["agent", "team", "workflow", "ai"]):
             return "🤖"
-        if any(
-            keyword in path_lower
-            for keyword in ["notification", "whatsapp", "communication"]
-        ):
+        if any(keyword in path_lower for keyword in ["notification", "whatsapp", "communication"]):
             return "📱"
         if any(keyword in path_lower for keyword in ["auth", "security", "key"]):
             return "🔐"
@@ -317,9 +303,7 @@ class LoggingValidator:
             return "⚡"
         if any(keyword in path_lower for keyword in ["data", "csv", "knowledge", "db"]):
             return "📊"
-        if any(
-            keyword in path_lower for keyword in ["config", "storage", "util", "proxy"]
-        ):
+        if any(keyword in path_lower for keyword in ["config", "storage", "util", "proxy"]):
             return "🔧"
         return "🔧"  # Default system emoji
 
@@ -328,10 +312,7 @@ class LoggingValidator:
         line_lower = line.lower()
 
         # Analyze line content for specific keywords
-        if any(
-            keyword in line_lower
-            for keyword in ["api", "request", "response", "http", "endpoint", "url"]
-        ):
+        if any(keyword in line_lower for keyword in ["api", "request", "response", "http", "endpoint", "url"]):
             return "🌐"
         if any(
             keyword in line_lower
@@ -346,42 +327,21 @@ class LoggingValidator:
             ]
         ):
             return "📊"
-        if any(
-            keyword in line_lower
-            for keyword in ["auth", "login", "password", "token", "security", "key"]
-        ):
+        if any(keyword in line_lower for keyword in ["auth", "login", "password", "token", "security", "key"]):
             return "🔐"
-        if any(
-            keyword in line_lower
-            for keyword in ["agent", "ai", "model", "prompt", "completion"]
-        ):
+        if any(keyword in line_lower for keyword in ["agent", "ai", "model", "prompt", "completion"]):
             return "🤖"
-        if any(
-            keyword in line_lower
-            for keyword in ["notification", "message", "whatsapp", "send", "notify"]
-        ):
+        if any(keyword in line_lower for keyword in ["notification", "message", "whatsapp", "send", "notify"]):
             return "📱"
-        if any(
-            keyword in line_lower
-            for keyword in ["performance", "metric", "time", "speed", "async", "await"]
-        ):
+        if any(keyword in line_lower for keyword in ["performance", "metric", "time", "speed", "async", "await"]):
             return "⚡"
-        if any(
-            keyword in line_lower
-            for keyword in ["error", "exception", "failed", "critical", "alert"]
-        ):
+        if any(keyword in line_lower for keyword in ["error", "exception", "failed", "critical", "alert"]):
             return "🚨"
-        if any(
-            keyword in line_lower
-            for keyword in ["warning", "warn", "caution", "deprecated"]
-        ):
+        if any(keyword in line_lower for keyword in ["warning", "warn", "caution", "deprecated"]):
             return "⚠️"
         if any(keyword in line_lower for keyword in ["debug", "trace", "dev", "test"]):
             return "🐛"
-        if any(
-            keyword in line_lower
-            for keyword in ["target", "focus", "goal", "objective"]
-        ):
+        if any(keyword in line_lower for keyword in ["target", "focus", "goal", "objective"]):
             return "🎯"
         # Fall back to file path analysis
         return self._suggest_emoji(file_path)

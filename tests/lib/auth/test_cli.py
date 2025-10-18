@@ -1,13 +1,12 @@
 """Tests for lib.auth.cli module."""
 
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import the module under test
 try:
-    import lib.auth.cli
+    import lib.auth.cli  # noqa: F401 - Availability test import
 except ImportError:
-    pytest.skip(f"Module lib.auth.cli not available", allow_module_level=True)
+    pytest.skip("Module lib.auth.cli not available", allow_module_level=True)
 
 
 class TestCli:
@@ -16,11 +15,13 @@ class TestCli:
     def test_module_imports(self):
         """Test that the module can be imported without errors."""
         import lib.auth.cli
+
         assert lib.auth.cli is not None
 
     def test_module_attributes(self):
         """Test module has expected attributes."""
         import lib.auth.cli
+
         # Add specific attribute tests as needed
         assert hasattr(lib.auth.cli, "__doc__")
 

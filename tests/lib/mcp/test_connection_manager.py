@@ -27,10 +27,17 @@ class TestGetCatalog:
 
         lib.mcp.connection_manager._catalog = None
 
-        catalog1 = get_catalog()
-        catalog2 = get_catalog()
+        with patch("lib.mcp.connection_manager.MCPCatalog") as mock_catalog_class:
+            mock_instance = Mock()
+            mock_catalog_class.return_value = mock_instance
 
-        assert catalog1 is catalog2
+            catalog1 = get_catalog()
+            catalog2 = get_catalog()
+
+            assert catalog1 is catalog2
+            assert catalog1 is mock_instance
+            # Should only be called once due to singleton behavior
+            mock_catalog_class.assert_called_once()
 
     def test_lazy_initialization(self) -> None:
         """Test that catalog is lazily initialized."""
@@ -107,9 +114,7 @@ class TestGetMCPTools:
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
-    async def test_sse_server_connection(
-        self, mock_mcp_tools_class, mock_get_catalog
-    ) -> None:
+    async def test_sse_server_connection(self, mock_mcp_tools_class, mock_get_catalog) -> None:
         """Test creating MCP tools for SSE server."""
         # Setup mocks
         mock_catalog = Mock()

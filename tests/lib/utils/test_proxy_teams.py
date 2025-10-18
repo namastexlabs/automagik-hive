@@ -76,9 +76,7 @@ class TestAgnoTeamProxyInitialization:
 
     @patch("lib.utils.proxy_teams.inspect.signature")
     @patch("lib.utils.proxy_teams.logger")
-    def test_parameter_discovery_failure_uses_fallback(
-        self, mock_logger, mock_signature
-    ):
+    def test_parameter_discovery_failure_uses_fallback(self, mock_logger, mock_signature):
         """Test fallback parameter set when introspection fails."""
         # Make introspection fail
         mock_signature.side_effect = Exception("Introspection failed")
@@ -168,9 +166,7 @@ class TestAgnoTeamProxyTeamCreation:
         proxy = AgnoTeamProxy()
 
         with (
-            patch.object(
-                proxy, "_process_config", new_callable=AsyncMock
-            ) as mock_process,
+            patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch.object(proxy, "_create_metadata") as mock_metadata,
         ):
@@ -208,9 +204,7 @@ class TestAgnoTeamProxyTeamCreation:
         mock_metrics_service.collect_from_response = MagicMock()
 
         with (
-            patch.object(
-                proxy, "_process_config", new_callable=AsyncMock
-            ) as mock_process,
+            patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch.object(proxy, "_wrap_team_with_metrics") as mock_wrap,
             patch.object(proxy, "_create_metadata") as mock_metadata,
@@ -228,9 +222,7 @@ class TestAgnoTeamProxyTeamCreation:
             )
 
             assert result == mock_team
-            mock_wrap.assert_called_once_with(
-                mock_team, "test-team", mock_team_config, mock_metrics_service
-            )
+            mock_wrap.assert_called_once_with(mock_team, "test-team", mock_team_config, mock_metrics_service)
 
     @pytest.mark.asyncio
     async def test_create_team_failure_handling(self, mock_team_config):
@@ -238,9 +230,7 @@ class TestAgnoTeamProxyTeamCreation:
         proxy = AgnoTeamProxy()
 
         with (
-            patch.object(
-                proxy, "_process_config", new_callable=AsyncMock
-            ) as mock_process,
+            patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch("lib.utils.proxy_teams.logger") as mock_logger,
         ):
@@ -248,9 +238,7 @@ class TestAgnoTeamProxyTeamCreation:
             mock_team_class.side_effect = Exception("Team creation failed")
 
             with pytest.raises(Exception, match="Team creation failed"):
-                await proxy.create_team(
-                    component_id="test-team", config=mock_team_config
-                )
+                await proxy.create_team(component_id="test-team", config=mock_team_config)
 
             mock_logger.error.assert_called()
 
@@ -303,9 +291,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
         # MagicMock supported parameters to match config
         proxy._supported_params = {"name", "mode", "description", "instructions"}
 
-        result = await proxy._process_config(
-            config, "test-team", "postgresql://test_db"
-        )
+        result = await proxy._process_config(config, "test-team", "postgresql://test_db")
 
         assert result["name"] == "Test Team"
         assert result["mode"] == "route"
@@ -323,8 +309,8 @@ class TestAgnoTeamProxyConfigurationProcessing:
 
         with (
             patch("lib.utils.proxy_teams.create_dynamic_storage") as mock_create_storage,
-            patch('lib.config.provider_registry.get_provider_registry') as mock_registry,
-            patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter,
+            patch("lib.config.provider_registry.get_provider_registry") as mock_registry,
+            patch("lib.utils.dynamic_model_resolver.filter_model_parameters") as mock_filter,
         ):
             # Mock db creation to avoid real database connection
             mock_db_instance = MagicMock()
@@ -332,18 +318,18 @@ class TestAgnoTeamProxyConfigurationProcessing:
                 "db": mock_db_instance,
                 "dependencies": {"db": mock_db_instance},
             }
-            
+
             # Mock provider registry for model handling
             mock_provider_registry = MagicMock()
             mock_registry.return_value = mock_provider_registry
             mock_provider_registry.detect_provider.return_value = "anthropic"
-            
+
             # Mock model class
             mock_model_class = MagicMock()
             mock_model_instance = MagicMock()
             mock_model_class.return_value = mock_model_instance
             mock_provider_registry.resolve_model_class.return_value = mock_model_class
-            
+
             # Mock model parameter filtering
             mock_filter.return_value = {"id": "claude-3-sonnet"}
 
@@ -356,7 +342,7 @@ class TestAgnoTeamProxyConfigurationProcessing:
                 component_mode="team",
                 db_url="postgresql://test_db",
             )
-            
+
             # Verify model configuration was processed
             mock_provider_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
             mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
@@ -365,8 +351,8 @@ class TestAgnoTeamProxyConfigurationProcessing:
             assert result["db"] is mock_db_instance
             assert result["dependencies"]["db"] is mock_db_instance
             # Note: model_class is NOT called due to lazy instantiation (returns config dict instead)
-            
-            # Verify result contains expected processed config 
+
+            # Verify result contains expected processed config
             assert "db" in result
             assert "dependencies" in result
             # Model config gets spread into top-level (lazy instantiation)
@@ -384,13 +370,11 @@ class TestAgnoTeamProxyConfigurationProcessing:
 
         # Create an async mock handler
         mock_handler = AsyncMock(return_value=mock_members)
-        
+
         # Patch the handler in the _custom_params dictionary since that's how _process_config calls it
         proxy._custom_params["members"] = mock_handler
 
-        result = await proxy._process_config(
-            config, "test-team", "postgresql://test_db"
-        )
+        result = await proxy._process_config(config, "test-team", "postgresql://test_db")
 
         assert result["members"] == mock_members
         mock_handler.assert_called_once()
@@ -412,18 +396,18 @@ class TestAgnoTeamProxyConfigurationProcessing:
         config = {"team": {"name": "Test", "mode": "route"}}
 
         # Create a mock handler that returns a dict
-        mock_handler = MagicMock(return_value={
-            "name": "Test Team",
-            "mode": "route",
-            "extra_field": "value",
-        })
-        
+        mock_handler = MagicMock(
+            return_value={
+                "name": "Test Team",
+                "mode": "route",
+                "extra_field": "value",
+            }
+        )
+
         # Patch the handler in the _custom_params dictionary since that's how _process_config calls it
         proxy._custom_params["team"] = mock_handler
 
-        result = await proxy._process_config(
-            config, "test-team", "postgresql://test_db"
-        )
+        result = await proxy._process_config(config, "test-team", "postgresql://test_db")
 
         # Dict result should be merged into processed config
         assert result["name"] == "Test Team"
@@ -450,18 +434,19 @@ class TestAgnoTeamProxyParameterHandlers:
         }
 
         # Mock the components that are actually called in the new implementation
-        with patch('lib.config.provider_registry.get_provider_registry') as mock_registry, \
-             patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter:
-            
+        with (
+            patch("lib.config.provider_registry.get_provider_registry") as mock_registry,
+            patch("lib.utils.dynamic_model_resolver.filter_model_parameters") as mock_filter,
+        ):
             # Create mock registry with provider detection and model class resolution
             mock_provider_registry = MagicMock()
             mock_registry.return_value = mock_provider_registry
             mock_provider_registry.detect_provider.return_value = "anthropic"
-            
+
             # Create mock model class
             mock_model_class = MagicMock()
             mock_provider_registry.resolve_model_class.return_value = mock_model_class
-            
+
             # Mock filter to return filtered parameters (remove custom_param)
             filtered_config = {
                 "id": "claude-3-sonnet",
@@ -474,13 +459,13 @@ class TestAgnoTeamProxyParameterHandlers:
 
             # Verify provider detection was called
             mock_provider_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
-            
+
             # Verify model class resolution was called
             mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
-            
+
             # Verify filtering was called with the model class and original config
             mock_filter.assert_called_once_with(mock_model_class, model_config)
-            
+
             # The result should be the filtered configuration for lazy instantiation
             assert result == {"id": "claude-3-sonnet", **filtered_config}
 
@@ -489,18 +474,19 @@ class TestAgnoTeamProxyParameterHandlers:
         model_config = {"id": "claude-3-sonnet"}
 
         # Mock the components that are actually called in the new implementation
-        with patch('lib.config.provider_registry.get_provider_registry') as mock_registry, \
-             patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter:
-            
+        with (
+            patch("lib.config.provider_registry.get_provider_registry") as mock_registry,
+            patch("lib.utils.dynamic_model_resolver.filter_model_parameters") as mock_filter,
+        ):
             # Create mock registry with provider detection and model class resolution
             mock_provider_registry = MagicMock()
             mock_registry.return_value = mock_provider_registry
             mock_provider_registry.detect_provider.return_value = "anthropic"
-            
+
             # Create mock model class
             mock_model_class = MagicMock()
             mock_provider_registry.resolve_model_class.return_value = mock_model_class
-            
+
             # Mock filter to return the model config as-is
             mock_filter.return_value = model_config
 
@@ -508,13 +494,13 @@ class TestAgnoTeamProxyParameterHandlers:
 
             # Verify provider detection was called
             mock_provider_registry.detect_provider.assert_called_once_with("claude-3-sonnet")
-            
+
             # Verify model class resolution was called
             mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-3-sonnet")
-            
+
             # Verify filtering was called with the model class and original config
             mock_filter.assert_called_once_with(mock_model_class, model_config)
-            
+
             # The result should be the filtered configuration for lazy instantiation
             assert result == {"id": "claude-3-sonnet", **model_config}
 
@@ -529,9 +515,7 @@ class TestAgnoTeamProxyParameterHandlers:
                 "dependencies": {"db": mock_db},
             }
 
-            result = proxy._handle_db_config(
-                db_config, {}, "test-team", "db_url"
-            )
+            result = proxy._handle_db_config(db_config, {}, "test-team", "db_url")
 
             assert result == {"db": mock_db, "dependencies": {"db": mock_db}}
             mock_create.assert_called_once_with(
@@ -554,9 +538,7 @@ class TestAgnoTeamProxyParameterHandlers:
             mock_memory_manager = MagicMock()
             mock_create.return_value = mock_memory_manager
 
-            result = proxy._handle_memory_config(
-                memory_config, {}, "test-team", "db_url"
-            )
+            result = proxy._handle_memory_config(memory_config, {}, "test-team", "db_url")
 
             assert result["memory_manager"] is mock_memory_manager
             mock_create.assert_called_once_with(
@@ -628,9 +610,7 @@ class TestAgnoTeamProxyParameterHandlers:
         mock_agent2 = MagicMock()
 
         with (
-            patch(
-                "ai.agents.registry.get_agent", new_callable=AsyncMock
-            ) as mock_get_agent,
+            patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent,
             patch("lib.utils.proxy_teams.logger") as mock_logger,
         ):
             mock_get_agent.side_effect = [mock_agent1, mock_agent2]
@@ -661,9 +641,7 @@ class TestAgnoTeamProxyParameterHandlers:
         mock_agent3 = MagicMock()
 
         with (
-            patch(
-                "ai.agents.registry.get_agent", new_callable=AsyncMock
-            ) as mock_get_agent,
+            patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent,
             patch("lib.utils.proxy_teams.logger") as mock_logger,
         ):
             # Second agent fails to load
@@ -724,26 +702,20 @@ class TestAgnoTeamProxyMetricsWrapping:
         config = {}
         original_run = mock_team.run
 
-        wrapped_team = proxy._wrap_team_with_metrics(
-            mock_team, "test-team", config, mock_metrics_service
-        )
+        wrapped_team = proxy._wrap_team_with_metrics(mock_team, "test-team", config, mock_metrics_service)
 
         assert wrapped_team == mock_team
         # Original run method should be replaced
         assert wrapped_team.run != original_run
 
-    def test_wrapped_run_successful_execution(
-        self, proxy, mock_team, mock_metrics_service
-    ):
+    def test_wrapped_run_successful_execution(self, proxy, mock_team, mock_metrics_service):
         """Test wrapped run method with successful execution."""
         config = {}
         mock_response = {"content": "Team response"}
         original_run = MagicMock(return_value=mock_response)
         mock_team.run = original_run
 
-        wrapped_team = proxy._wrap_team_with_metrics(
-            mock_team, "test-team", config, mock_metrics_service
-        )
+        wrapped_team = proxy._wrap_team_with_metrics(mock_team, "test-team", config, mock_metrics_service)
 
         with patch.object(proxy, "_extract_metrics_overrides") as mock_extract:
             mock_extract.return_value = {"metrics_enabled": True}
@@ -754,20 +726,14 @@ class TestAgnoTeamProxyMetricsWrapping:
             original_run.assert_called_once_with("test message")
             mock_metrics_service.collect_from_response.assert_called_once()
 
-    def test_wrapped_run_metrics_collection_failure(
-        self, proxy, mock_team, mock_metrics_service
-    ):
+    def test_wrapped_run_metrics_collection_failure(self, proxy, mock_team, mock_metrics_service):
         """Test wrapped run method when metrics collection fails."""
         config = {}
         mock_response = {"content": "Team response"}
         mock_team.run.return_value = mock_response
-        mock_metrics_service.collect_from_response.side_effect = Exception(
-            "Metrics failed"
-        )
+        mock_metrics_service.collect_from_response.side_effect = Exception("Metrics failed")
 
-        wrapped_team = proxy._wrap_team_with_metrics(
-            mock_team, "test-team", config, mock_metrics_service
-        )
+        wrapped_team = proxy._wrap_team_with_metrics(mock_team, "test-team", config, mock_metrics_service)
 
         with patch("lib.utils.proxy_teams.logger") as mock_logger:
             result = wrapped_team.run("test message")
@@ -777,16 +743,12 @@ class TestAgnoTeamProxyMetricsWrapping:
             # Should log warning but not raise
             mock_logger.warning.assert_called_once()
 
-    def test_wrapped_run_team_execution_failure(
-        self, proxy, mock_team, mock_metrics_service
-    ):
+    def test_wrapped_run_team_execution_failure(self, proxy, mock_team, mock_metrics_service):
         """Test wrapped run method when team execution fails."""
         config = {}
         mock_team.run.side_effect = Exception("Team execution failed")
 
-        wrapped_team = proxy._wrap_team_with_metrics(
-            mock_team, "test-team", config, mock_metrics_service
-        )
+        wrapped_team = proxy._wrap_team_with_metrics(mock_team, "test-team", config, mock_metrics_service)
 
         with patch("lib.utils.proxy_teams.logger") as mock_logger:
             with pytest.raises(Exception, match="Team execution failed"):
@@ -799,9 +761,7 @@ class TestAgnoTeamProxyMetricsWrapping:
         config = {}
         mock_team.run.return_value = None
 
-        wrapped_team = proxy._wrap_team_with_metrics(
-            mock_team, "test-team", config, mock_metrics_service
-        )
+        wrapped_team = proxy._wrap_team_with_metrics(mock_team, "test-team", config, mock_metrics_service)
 
         result = wrapped_team.run("test message")
 
@@ -809,18 +769,14 @@ class TestAgnoTeamProxyMetricsWrapping:
         # Should not call metrics collection for None response
         mock_metrics_service.collect_from_response.assert_not_called()
 
-    def test_wrapped_run_metrics_service_returns_false(
-        self, proxy, mock_team, mock_metrics_service
-    ):
+    def test_wrapped_run_metrics_service_returns_false(self, proxy, mock_team, mock_metrics_service):
         """Test wrapped run when metrics service returns false."""
         config = {}
         mock_response = {"content": "Team response"}
         mock_team.run.return_value = mock_response
         mock_metrics_service.collect_from_response.return_value = False
 
-        wrapped_team = proxy._wrap_team_with_metrics(
-            mock_team, "test-team", config, mock_metrics_service
-        )
+        wrapped_team = proxy._wrap_team_with_metrics(mock_team, "test-team", config, mock_metrics_service)
 
         with patch("lib.utils.proxy_teams.logger") as mock_logger:
             result = wrapped_team.run("test message")
@@ -971,9 +927,7 @@ class TestAgnoTeamProxyEdgeCases:
         config = {"name": "Test Team"}
 
         with (
-            patch.object(
-                proxy, "_process_config", new_callable=AsyncMock
-            ) as mock_process,
+            patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch.object(proxy, "_create_metadata") as mock_metadata,
         ):
@@ -1007,9 +961,7 @@ class TestAgnoTeamProxyEdgeCases:
         proxy._supported_params = {"name", "mode", "members"}
 
         with (
-            patch.object(
-                proxy, "_process_config", new_callable=AsyncMock
-            ) as mock_process,
+            patch.object(proxy, "_process_config", new_callable=AsyncMock) as mock_process,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch.object(proxy, "_create_metadata") as mock_metadata,
         ):
@@ -1041,24 +993,25 @@ class TestAgnoTeamProxyEdgeCases:
     def test_handle_model_config_missing_resolve_model(self, proxy):
         """Test model config handler when provider detection fails and resolve_model is called."""
         model_config = {"id": "unknown-model-id"}
-        
+
         # MagicMock provider registry to return None (no provider found)
-        with patch('lib.config.provider_registry.get_provider_registry') as mock_registry, \
-             patch("lib.config.models.resolve_model") as mock_resolve:
-            
+        with (
+            patch("lib.config.provider_registry.get_provider_registry") as mock_registry,
+            patch("lib.config.models.resolve_model") as mock_resolve,
+        ):
             mock_provider_registry = MagicMock()
             mock_registry.return_value = mock_provider_registry
             mock_provider_registry.detect_provider.return_value = None  # No provider found
-            
+
             # This should trigger the fallback to resolve_model
             mock_resolve.side_effect = ImportError("Module not found")
-            
+
             with pytest.raises(ImportError):
                 proxy._handle_model_config(model_config, {}, "test-team", None)
-            
+
             # Verify provider detection was attempted
             mock_provider_registry.detect_provider.assert_called_once_with("unknown-model-id")
-            
+
             # Verify resolve_model was called as fallback
             mock_resolve.assert_called_once_with(model_id="unknown-model-id", id="unknown-model-id")
 
@@ -1077,15 +1030,11 @@ class TestAgnoTeamProxyEdgeCases:
         """Test member loading when import fails."""
         members_config = ["agent1"]
 
-        with patch(
-            "ai.agents.registry.get_agent", new_callable=AsyncMock
-        ) as mock_get_agent:
+        with patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent:
             mock_get_agent.side_effect = ImportError("Agent registry not found")
 
             with patch("lib.utils.proxy_teams.logger") as mock_logger:
-                result = await proxy._handle_members(
-                    members_config, {}, "test-team", None
-                )
+                result = await proxy._handle_members(members_config, {}, "test-team", None)
 
                 assert result == []
                 mock_logger.warning.assert_called_once()
@@ -1148,9 +1097,7 @@ class TestAgnoTeamProxyEdgeCases:
         assert len(missing_areas) == 0, f"Missing core areas: {missing_areas}"
 
         # Should have substantial parameter coverage
-        assert len(fallback_params) > 50, (
-            "Fallback should have comprehensive parameter coverage"
-        )
+        assert len(fallback_params) > 50, "Fallback should have comprehensive parameter coverage"
 
 
 class TestAgnoTeamProxyIntegration:
@@ -1200,38 +1147,34 @@ class TestAgnoTeamProxyIntegration:
     async def test_full_team_creation_workflow(self, proxy, comprehensive_config):
         """Test complete team creation workflow with all features."""
         mock_agents = [MagicMock(), MagicMock(), MagicMock()]
-        mock_model = MagicMock()
+        MagicMock()
         mock_db = MagicMock()
         mock_memory = MagicMock()
         mock_metrics_service = MagicMock()
         mock_metrics_service.collect_from_response = MagicMock(return_value=True)
 
         with (
-            patch(
-                "ai.agents.registry.get_agent", new_callable=AsyncMock
-            ) as mock_get_agent,
-            patch('lib.config.provider_registry.get_provider_registry') as mock_registry,
-            patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter,
-            patch(
-                "lib.utils.agno_storage_utils.create_dynamic_storage"
-            ) as mock_create_storage,
-            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
+            patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent,
+            patch("lib.config.provider_registry.get_provider_registry") as mock_registry,
+            patch("lib.utils.dynamic_model_resolver.filter_model_parameters") as mock_filter,
+            patch("lib.utils.agno_storage_utils.create_dynamic_storage") as mock_create_storage,
+            patch("agno.db.postgres.PostgresDb"),
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
             patch("lib.utils.proxy_teams.logger") as mock_logger,
         ):
             # Setup mocks
             mock_get_agent.side_effect = mock_agents
-            
+
             # Mock provider registry for model handling
             mock_provider_registry = MagicMock()
             mock_registry.return_value = mock_provider_registry
             mock_provider_registry.detect_provider.return_value = "anthropic"
             mock_provider_registry.resolve_model_class.return_value = MagicMock()
-            
+
             # Mock model parameter filtering
             mock_filter.return_value = {"id": "claude-3-sonnet", "temperature": 0.8}
-            
+
             mock_create_storage.return_value = mock_db
             mock_create_memory.return_value = mock_memory
 
@@ -1261,10 +1204,7 @@ class TestAgnoTeamProxyIntegration:
             assert result == mock_team
 
             # Verify unknown parameter was logged
-            assert any(
-                "unknown_parameter" in str(call)
-                for call in mock_logger.debug.call_args_list
-            )
+            assert any("unknown_parameter" in str(call) for call in mock_logger.debug.call_args_list)
 
     def test_comprehensive_config_validation(self, proxy, comprehensive_config):
         """Test validation of comprehensive configuration."""
@@ -1279,20 +1219,14 @@ class TestAgnoTeamProxyIntegration:
         assert validation_result["coverage_percentage"] > 0
 
     @pytest.mark.asyncio
-    async def test_error_resilience_in_complex_workflow(
-        self, proxy, comprehensive_config
-    ):
+    async def test_error_resilience_in_complex_workflow(self, proxy, comprehensive_config):
         """Test error handling in complex team creation scenarios."""
         with (
-            patch(
-                "ai.agents.registry.get_agent", new_callable=AsyncMock
-            ) as mock_get_agent,
-            patch('lib.config.provider_registry.get_provider_registry') as mock_registry,
-            patch('lib.utils.dynamic_model_resolver.filter_model_parameters') as mock_filter,
-            patch(
-                "lib.utils.agno_storage_utils.create_dynamic_storage"
-            ) as mock_create_storage,
-            patch("agno.db.postgres.PostgresDb") as mock_postgres_storage,
+            patch("ai.agents.registry.get_agent", new_callable=AsyncMock) as mock_get_agent,
+            patch("lib.config.provider_registry.get_provider_registry") as mock_registry,
+            patch("lib.utils.dynamic_model_resolver.filter_model_parameters") as mock_filter,
+            patch("lib.utils.agno_storage_utils.create_dynamic_storage") as mock_create_storage,
+            patch("agno.db.postgres.PostgresDb"),
             patch("lib.memory.memory_factory.create_team_memory") as mock_create_memory,
             patch("lib.utils.proxy_teams.Team") as mock_team_class,
         ):
@@ -1307,18 +1241,16 @@ class TestAgnoTeamProxyIntegration:
             mock_registry.return_value = mock_provider_registry
             mock_provider_registry.detect_provider.return_value = "anthropic"
             mock_provider_registry.resolve_model_class.return_value = MagicMock()
-            
+
             # Mock model parameter filtering
             mock_filter.return_value = {"id": "claude-3-sonnet", "temperature": 0.8}
-            
+
             mock_create_storage.return_value = MagicMock()
             mock_create_memory.return_value = MagicMock()
             mock_team_class.return_value = MagicMock()
 
             # Should complete despite member loading failure
-            result = await proxy.create_team(
-                component_id="resilient-team", config=comprehensive_config
-            )
+            result = await proxy.create_team(component_id="resilient-team", config=comprehensive_config)
 
             assert result is not None
 
@@ -1335,9 +1267,7 @@ class TestAgnoTeamProxyIntegration:
         mock_metrics_service = MagicMock()
         mock_metrics_service.collect_from_response = MagicMock(return_value=True)
 
-        wrapped_team = proxy._wrap_team_with_metrics(
-            mock_team, "metrics-team", config, mock_metrics_service
-        )
+        wrapped_team = proxy._wrap_team_with_metrics(mock_team, "metrics-team", config, mock_metrics_service)
 
         # Execute wrapped run
         result = wrapped_team.run("test input", arg2="value")

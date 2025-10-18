@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from agno.os.config import AgentOSConfig
 from agno.os.schema import (
@@ -14,13 +15,8 @@ from agno.os.schema import (
     WorkflowSummaryResponse,
 )
 
-from typing import TYPE_CHECKING
-
-
 if TYPE_CHECKING:  # pragma: no cover - import only for type checkers
-    from ai.agents.registry import AgentRegistry
-    from ai.teams.registry import list_available_teams
-    from ai.workflows.registry import list_available_workflows
+    pass
 
 from lib.agentos import load_agentos_config
 from lib.agentos.config_models import collect_component_metadata
@@ -79,9 +75,7 @@ class AgentOSService:
         if self._registry_cache is None:
             registry: dict[str, dict[str, str]] = {"agent": {}, "team": {}, "workflow": {}}
             for component in collect_component_metadata():
-                registry.setdefault(component.component_type, {})[
-                    component.identifier
-                ] = component.display_name
+                registry.setdefault(component.component_type, {})[component.identifier] = component.display_name
             self._registry_cache = registry
         return self._registry_cache
 
@@ -139,9 +133,7 @@ class AgentOSService:
         yield config.knowledge
         yield config.evals
 
-    def _build_agent_summaries(
-        self, display_map: dict[str, str]
-    ) -> list[AgentSummaryResponse]:
+    def _build_agent_summaries(self, display_map: dict[str, str]) -> list[AgentSummaryResponse]:
         agents: list[AgentSummaryResponse] = []
         for agent_id in _list_available_agents():
             agents.append(
@@ -152,9 +144,7 @@ class AgentOSService:
             )
         return agents
 
-    def _build_team_summaries(
-        self, display_map: dict[str, str]
-    ) -> list[TeamSummaryResponse]:
+    def _build_team_summaries(self, display_map: dict[str, str]) -> list[TeamSummaryResponse]:
         teams: list[TeamSummaryResponse] = []
         for team_id in _list_available_teams():
             teams.append(
@@ -165,16 +155,13 @@ class AgentOSService:
             )
         return teams
 
-    def _build_workflow_summaries(
-        self, display_map: dict[str, str]
-    ) -> list[WorkflowSummaryResponse]:
+    def _build_workflow_summaries(self, display_map: dict[str, str]) -> list[WorkflowSummaryResponse]:
         workflows: list[WorkflowSummaryResponse] = []
         for workflow_id in _list_available_workflows():
             workflows.append(
                 WorkflowSummaryResponse(
                     id=workflow_id,
-                    name=display_map.get(workflow_id)
-                    or self._fallback_display_name(workflow_id),
+                    name=display_map.get(workflow_id) or self._fallback_display_name(workflow_id),
                 )
             )
         return workflows
@@ -192,9 +179,7 @@ class AgentOSService:
 
         playground_route = self._resolve_playground_route(base_url)
         if playground_route is not None:
-            interfaces.append(
-                InterfaceResponse(type="playground", version="v1", route=playground_route)
-            )
+            interfaces.append(InterfaceResponse(type="playground", version="v1", route=playground_route))
 
         interfaces.append(
             InterfaceResponse(
@@ -204,9 +189,7 @@ class AgentOSService:
             )
         )
 
-        interfaces.append(
-            InterfaceResponse(type="control-pane", version="v1", route=base_url)
-        )
+        interfaces.append(InterfaceResponse(type="control-pane", version="v1", route=base_url))
 
         return interfaces
 
@@ -215,7 +198,7 @@ class AgentOSService:
             return str(self._settings.hive_control_pane_base_url).rstrip("/")
 
         host = self._settings.hive_api_host
-        display_host = "localhost" if host in {"0.0.0.0", "::"} else host
+        display_host = "localhost" if host in {"0.0.0.0", "::"} else host  # noqa: S104
         return f"http://{display_host}:{self._settings.hive_api_port}"
 
     def _resolve_playground_route(self, base_url: str) -> str | None:

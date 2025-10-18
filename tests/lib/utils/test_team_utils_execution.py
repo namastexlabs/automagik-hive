@@ -4,8 +4,7 @@ Focus: EXECUTE all team utility functions to achieve 50%+ source code coverage
 Target: Test ALL utility functions with realistic team management scenarios
 """
 
-import pytest
-from lib.utils.team_utils import TeamUtils, ResponseFormatter, team_utils, response_formatter
+from lib.utils.team_utils import ResponseFormatter, TeamUtils, response_formatter, team_utils
 
 
 class TestTeamUtilsExecution:
@@ -16,7 +15,7 @@ class TestTeamUtilsExecution:
         # Test empty string handling
         result = TeamUtils.normalize_text("")
         assert result == ""
-        
+
         # Test None handling
         result = TeamUtils.normalize_text(None)
         assert result == ""
@@ -26,7 +25,7 @@ class TestTeamUtilsExecution:
         # Test uppercase to lowercase conversion
         result = TeamUtils.normalize_text("TEAM LEADER")
         assert result == "team leader"
-        
+
         # Test mixed case conversion
         result = TeamUtils.normalize_text("Team MaNaGeR")
         assert result == "team manager"
@@ -36,13 +35,13 @@ class TestTeamUtilsExecution:
         # Test all 'a' variants
         result = TeamUtils.normalize_text("Gerência")
         assert result == "gerencia"
-        
+
         result = TeamUtils.normalize_text("Administração")
         assert result == "administracao"
-        
+
         result = TeamUtils.normalize_text("Manutenção")
         assert result == "manutencao"
-        
+
         result = TeamUtils.normalize_text("Organização")
         assert result == "organizacao"
 
@@ -51,7 +50,7 @@ class TestTeamUtilsExecution:
         # Test every single accent replacement in the function
         test_cases = {
             "á": "a",
-            "à": "a", 
+            "à": "a",
             "ã": "a",
             "â": "a",
             "é": "e",
@@ -69,7 +68,7 @@ class TestTeamUtilsExecution:
             "û": "u",
             "ç": "c",
         }
-        
+
         for accented, expected in test_cases.items():
             result = TeamUtils.normalize_text(accented)
             assert result == expected, f"Failed to convert {accented} to {expected}"
@@ -79,10 +78,10 @@ class TestTeamUtilsExecution:
         # Test words with multiple accents
         result = TeamUtils.normalize_text("Coordenação")
         assert result == "coordenacao"
-        
+
         result = TeamUtils.normalize_text("Configuração")
         assert result == "configuracao"
-        
+
         result = TeamUtils.normalize_text("Comunicação")
         assert result == "comunicacao"
 
@@ -91,11 +90,11 @@ class TestTeamUtilsExecution:
         # Test multiple spaces removal
         result = TeamUtils.normalize_text("team    leader    role")
         assert result == "team leader role"
-        
+
         # Test tab and newline removal
         result = TeamUtils.normalize_text("team\t\nleader\n\trole")
         assert result == "team leader role"
-        
+
         # Test leading/trailing whitespace
         result = TeamUtils.normalize_text("   team leader   ")
         assert result == "team leader"
@@ -105,10 +104,10 @@ class TestTeamUtilsExecution:
         # Test complex Brazilian team role names
         result = TeamUtils.normalize_text("Líder de Equipe de Desenvolvimento")
         assert result == "lider de equipe de desenvolvimento"
-        
+
         result = TeamUtils.normalize_text("Coordenador de Projetos Ágeis")
         assert result == "coordenador de projetos ageis"
-        
+
         result = TeamUtils.normalize_text("Especialista em Configuração")
         assert result == "especialista em configuracao"
 
@@ -117,11 +116,11 @@ class TestTeamUtilsExecution:
         # Test single character strings
         result = TeamUtils.normalize_text("Á")
         assert result == "a"
-        
+
         # Test strings with only accents
         result = TeamUtils.normalize_text("áéíóú")
         assert result == "aeiou"
-        
+
         # Test mixed accents and regular characters
         result = TeamUtils.normalize_text("Configuração de Equipe")
         assert result == "configuracao de equipe"
@@ -138,7 +137,7 @@ class TestTeamUtilsExecution:
         # Test that the exported instance works correctly
         result = team_utils.normalize_text("Gestão de Equipe")
         assert result == "gestao de equipe"
-        
+
         # Test instance methods are accessible
         assert hasattr(team_utils, "normalize_text")
         assert callable(team_utils.normalize_text)
@@ -148,7 +147,7 @@ class TestTeamUtilsExecution:
         # Test class instantiation
         formatter = ResponseFormatter()
         assert formatter is not None
-        
+
         # Test exported instance
         assert response_formatter is not None
         assert isinstance(response_formatter, ResponseFormatter)
@@ -158,7 +157,7 @@ class TestTeamUtilsExecution:
         # Test calling static method directly on class
         result = TeamUtils.normalize_text("Administração")
         assert result == "administracao"
-        
+
         # Test calling static method on instance
         utils_instance = TeamUtils()
         result = utils_instance.normalize_text("Organização")
@@ -171,7 +170,7 @@ class TestTeamUtilsExecution:
         result = TeamUtils.normalize_text(test_string)
         expected = "aaaaeeeiiioooouuuc"
         assert result == expected
-        
+
         # Test mixed case with all accents
         test_string_upper = "ÁÀÃÂÉÈÊÍÌÎÓÒÕÔÚÙÛÇ"
         result = TeamUtils.normalize_text(test_string_upper)
@@ -182,22 +181,22 @@ class TestTeamUtilsExecution:
         team_messages = [
             "Reunião de Planejamento",
             "Revisão de Código",
-            "Configuração do Ambiente", 
+            "Configuração do Ambiente",
             "Integração Contínua",
             "Documentação Técnica",
-            "Comunicação da Equipe"
+            "Comunicação da Equipe",
         ]
-        
+
         expected_results = [
             "reuniao de planejamento",
             "revisao de codigo",
             "configuracao do ambiente",
-            "integracao continua", 
+            "integracao continua",
             "documentacao tecnica",
-            "comunicacao da equipe"
+            "comunicacao da equipe",
         ]
-        
-        for message, expected in zip(team_messages, expected_results):
+
+        for message, expected in zip(team_messages, expected_results, strict=False):
             result = TeamUtils.normalize_text(message)
             assert result == expected
 
@@ -206,11 +205,11 @@ class TestTeamUtilsExecution:
         # Test string with only spaces
         result = TeamUtils.normalize_text("   ")
         assert result == ""
-        
+
         # Test string with accents and spaces only
         result = TeamUtils.normalize_text("  á  é  ")
         assert result == "a e"
-        
+
         # Test empty replacement (if any character doesn't match)
         result = TeamUtils.normalize_text("team123")
         assert result == "team123"
@@ -220,10 +219,10 @@ class TestTeamUtilsExecution:
         # Test TeamUtils class docstring and methods exist
         assert TeamUtils.__doc__ is not None
         assert "normalize_text" in dir(TeamUtils)
-        
+
         # Test ResponseFormatter class exists and is accessible
         assert ResponseFormatter.__doc__ is not None
-        
+
         # Test module-level exports
         assert team_utils is not None
         assert response_formatter is not None

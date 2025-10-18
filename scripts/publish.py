@@ -77,9 +77,7 @@ def validate_build() -> None:
 
     # Check wheel contents for CLI module
     wheel_file = wheel_files[0]
-    result = run_command(
-        ["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)], check=False
-    )
+    result = run_command(["uv", "run", "python", "-m", "zipfile", "-l", str(wheel_file)], check=False)
 
     if "cli/" not in result.stdout:
         sys.exit(1)

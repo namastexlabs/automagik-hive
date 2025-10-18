@@ -131,20 +131,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv venv
-          source .venv/bin/activate
-          uv pip install -r uv.lock
+          uv sync
 
       - name: Run linting
         run: |
-          source .venv/bin/activate
           uv run ruff check .
           uv run ruff format --check .
 
       - name: Run type checking
         run: |
-          source .venv/bin/activate
-          uv run mypy ai/agents/ api/ --strict
+          uv run mypy ai/agents/registry.py ai/agents/__init__.py ai/agents/tools/ api/ --strict
 
       - name: Run tests
         env:
@@ -152,7 +148,6 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           RUNTIME_ENV: test
         run: |
-          source .venv/bin/activate
           uv run pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
 
       - name: Upload coverage reports
@@ -276,23 +271,3 @@ jobs:
         run: |
           echo "Running production health checks..."
           # Add health check script here
-
-  # Notification
-  notify:
-    name: Notify
-    runs-on: ubuntu-latest
-    needs: [deploy-staging, deploy-production]
-    if: always()
-    steps:
-      - name: Notify deployment status
-        uses: 8398a7/action-slack@v3
-        if: always()
-        with:
-          status: ${{ job.status }}
-          channel: '#deployments'
-          text: |
-            Deployment ${{ job.status }} for ${{ github.repository }}
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

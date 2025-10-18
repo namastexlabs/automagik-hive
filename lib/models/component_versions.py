@@ -16,16 +16,12 @@ class ComponentVersion(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     component_id = Column(String(255), nullable=False, index=True)
-    component_type = Column(
-        String(50), nullable=False, index=True
-    )  # agent, team, workflow
+    component_type = Column(String(50), nullable=False, index=True)  # agent, team, workflow
     version = Column(Integer, nullable=False, default=1)
     config = Column(JSON, nullable=False)  # YAML config as JSON
     description = Column(Text)
     is_active = Column(Boolean, default=False, index=True)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     created_by = Column(String(255), default="system")
 
     def __repr__(self):

@@ -23,13 +23,14 @@ load_dotenv()
 
 # Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
 
-from lib.utils.yaml_cache import (
-    get_yaml_cache_manager,
+from lib.utils.yaml_cache import (  # noqa: E402 - Dynamic conditional imports based on configuration
     load_yaml_cached,
 )
-from lib.versioning import AgnoVersionService
-from lib.versioning.bidirectional_sync import BidirectionalSync
-from lib.versioning.dev_mode import DevMode
+from lib.versioning import AgnoVersionService  # noqa: E402 - Dynamic conditional imports based on configuration
+from lib.versioning.bidirectional_sync import (  # noqa: E402 - Conditional import
+    BidirectionalSync,  # noqa: E402 - Dynamic conditional imports based on configuration
+)
+from lib.versioning.dev_mode import DevMode  # noqa: E402 - Dynamic conditional imports based on configuration
 
 
 def load_global_knowledge_config():
@@ -55,7 +56,7 @@ class VersionFactory:
     Creates versioned components with modern patterns.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with database URL from environment."""
         self.db_url = os.getenv("HIVE_DATABASE_URL")
         if not self.db_url:
@@ -99,31 +100,21 @@ class VersionFactory:
         if version is not None:
             # Specific version requested: Always use database
             logger.debug(f"Loading {component_id} version {version} from database")
-            config = await self._load_with_bidirectional_sync(
-                component_id, component_type, version, **kwargs
-            )
+            config = await self._load_with_bidirectional_sync(component_id, component_type, version, **kwargs)
         elif DevMode.is_enabled():
             # Dev mode: YAML only, no DB interaction
             logger.debug(f"Dev mode: Loading {component_id} from YAML only")
-            config = await self._load_from_yaml_only(
-                component_id, component_type, **kwargs
-            )
+            config = await self._load_from_yaml_only(component_id, component_type, **kwargs)
             # Track YAML fallback usage
             self.yaml_fallback_count += 1
         else:
             # Production: Always bidirectional sync
-            logger.debug(
-                f"Production mode: Loading {component_id} with bidirectional sync"
-            )
+            logger.debug(f"Production mode: Loading {component_id} with bidirectional sync")
             try:
-                config = await self._load_with_bidirectional_sync(
-                    component_id, component_type, version, **kwargs
-                )
+                config = await self._load_with_bidirectional_sync(component_id, component_type, version, **kwargs)
             except Exception as e:
                 # Fallback to YAML if sync fails (e.g., no database data yet)
-                logger.warning(
-                    f"Bidirectional sync failed for {component_id}, falling back to YAML: {e}"
-                )
+                logger.warning(f"Bidirectional sync failed for {component_id}, falling back to YAML: {e}")
                 # Track YAML fallback usage
                 self.yaml_fallback_count += 1
                 return await self._create_component_from_yaml(
@@ -139,9 +130,7 @@ class VersionFactory:
 
         # Validate component configuration contains expected type
         if component_type not in config:
-            raise ValueError(
-                f"Component type {component_type} not found in configuration for {component_id}"
-            )
+            raise ValueError(f"Component type {component_type} not found in configuration for {component_id}")
 
         # Create component using type-specific method
         creation_methods = {
@@ -184,7 +173,7 @@ class VersionFactory:
                     agent_config[key] = config[key]
         else:
             agent_config = config
-        
+
         # Apply inheritance from team configuration if agent is part of a team
         inherited_config = self._apply_team_inheritance(component_id, agent_config)
 
@@ -235,28 +224,22 @@ class VersionFactory:
                 )
                 # Attach knowledge to agent for AgentOS discovery
                 agent.knowledge = knowledge
-                logger.debug(
-                    f"📚 Knowledge base attached to agent {component_id} for AgentOS discovery"
-                )
+                logger.debug(f"📚 Knowledge base attached to agent {component_id} for AgentOS discovery")
             except Exception as e:
-                logger.warning(
-                    f"Failed to attach knowledge to agent {component_id}: {e}"
-                )
+                logger.warning(f"Failed to attach knowledge to agent {component_id}: {e}")
 
         # Get supported parameters count safely
         try:
             supported_params = proxy.get_supported_parameters()
-            if hasattr(supported_params, '__await__'):
+            if hasattr(supported_params, "__await__"):
                 # Handle async case in testing scenarios
                 supported_params = await supported_params
             param_count = len(supported_params)
         except Exception:
             # Fallback if parameters aren't available
             param_count = "unknown"
-        
-        logger.debug(
-            f"🤖 Agent {component_id} created with inheritance and {param_count} available parameters"
-        )
+
+        logger.debug(f"🤖 Agent {component_id} created with inheritance and {param_count} available parameters")
 
         # Stash runtime context metadata for startup summaries
         if session_keys:
@@ -266,9 +249,7 @@ class VersionFactory:
 
         return agent
 
-    def _apply_team_inheritance(
-        self, agent_id: str, config: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _apply_team_inheritance(self, agent_id: str, config: dict[str, Any]) -> dict[str, Any]:
         """Apply team inheritance to agent configuration if agent is part of a team."""
         # Config inheritance system removed - return config unchanged
         logger.debug(f"🔧 No inheritance applied for agent {agent_id} - inheritance system removed")
@@ -284,9 +265,7 @@ class VersionFactory:
         tools = []
 
         # Check if strict validation is enabled (fail-fast mode) - defaults to true
-        strict_validation = (
-            os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
-        )
+        strict_validation = os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
 
         try:
             # Get tool configurations from YAML
@@ -299,9 +278,7 @@ class VersionFactory:
                         error_msg = f"Invalid tool configuration: {tool_config}"
                         if strict_validation:
                             logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
-                            raise ValueError(
-                                f"Agent {component_id} tool validation failed: {error_msg}"
-                            )
+                            raise ValueError(f"Agent {component_id} tool validation failed: {error_msg}")
                         logger.warning(f"{error_msg}")
 
                 # Load tools via central registry
@@ -310,13 +287,9 @@ class VersionFactory:
                 if successfully_loaded_names:
                     # Sort tool names alphabetically for consistent display
                     sorted_tool_names = sorted(successfully_loaded_names)
-                    logger.info(
-                        f"Successfully loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}"
-                    )
+                    logger.info(f"Successfully loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}")
                 elif tools:
-                    logger.info(
-                        f"Loaded {len(tools)} tools for agent {component_id} via central registry"
-                    )
+                    logger.info(f"Loaded {len(tools)} tools for agent {component_id} via central registry")
                 else:
                     logger.info(f"No tools successfully loaded for agent {component_id}")
 
@@ -333,9 +306,7 @@ class VersionFactory:
 
             if strict_validation:
                 logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
-                raise ValueError(
-                    f"Agent {component_id} tool loading failed due to unexpected error: {e}"
-                )
+                raise ValueError(f"Agent {component_id} tool loading failed due to unexpected error: {e}")
             logger.error(f"{error_msg}")
 
         return tools
@@ -372,9 +343,7 @@ class VersionFactory:
     ) -> Team:
         """Create team using dynamic Agno Team proxy with inheritance validation."""
 
-        logger.debug(
-            f"🔧 Creating team {component_id} (session_id={session_id}, debug_mode={debug_mode})"
-        )
+        logger.debug(f"🔧 Creating team {component_id} (session_id={session_id}, debug_mode={debug_mode})")
 
         try:
             # Validate team inheritance configuration using full config
@@ -387,9 +356,7 @@ class VersionFactory:
             from lib.utils.agno_proxy import get_agno_team_proxy
 
             proxy = get_agno_team_proxy()
-            logger.debug(
-                f"🔧 AgnoTeamProxy loaded successfully for team {component_id}"
-            )
+            logger.debug(f"🔧 AgnoTeamProxy loaded successfully for team {component_id}")
 
             # Create team using dynamic proxy with full config
             logger.debug(f"🔧 Creating team instance via proxy for {component_id}")
@@ -407,14 +374,14 @@ class VersionFactory:
             # Get supported parameters count safely
             try:
                 supported_params = proxy.get_supported_parameters()
-                if hasattr(supported_params, '__await__'):
+                if hasattr(supported_params, "__await__"):
                     # Handle async case in testing scenarios
                     supported_params = await supported_params
                 param_count = len(supported_params)
             except Exception:
                 # Fallback if parameters aren't available
                 param_count = "unknown"
-            
+
             logger.debug(
                 f"🤖 Team {component_id} created with inheritance validation and {param_count} available parameters"
             )
@@ -427,9 +394,7 @@ class VersionFactory:
             )
             raise
 
-    def _validate_team_inheritance(
-        self, team_id: str, config: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _validate_team_inheritance(self, team_id: str, config: dict[str, Any]) -> dict[str, Any]:
         """Validate team configuration for proper inheritance setup."""
         # Config inheritance system removed - return config unchanged
         logger.debug(f"🔧 No inheritance validation for team {team_id} - inheritance system removed")
@@ -446,7 +411,7 @@ class VersionFactory:
         **kwargs,
     ) -> Workflow:
         """Create workflow using dynamic Agno Workflow proxy for future compatibility."""
-        
+
         # Extract workflow-specific config if full config provided
         workflow_config = config.get("workflow", config) if "workflow" in config else config
 
@@ -470,24 +435,19 @@ class VersionFactory:
         # Get supported parameters count safely
         try:
             supported_params = proxy.get_supported_parameters()
-            if hasattr(supported_params, '__await__'):
+            if hasattr(supported_params, "__await__"):
                 # Handle async case in testing scenarios
                 supported_params = await supported_params
             param_count = len(supported_params)
         except Exception:
             # Fallback if parameters aren't available
             param_count = "unknown"
-        
-        logger.debug(
-            f"🤖 Workflow {component_id} created with {param_count} available Agno Workflow parameters"
-        )
+
+        logger.debug(f"🤖 Workflow {component_id} created with {param_count} available Agno Workflow parameters")
 
         return workflow
 
-
-    async def _load_from_yaml_only(
-        self, component_id: str, component_type: str, **kwargs
-    ) -> dict:
+    async def _load_from_yaml_only(self, component_id: str, component_type: str, **kwargs) -> dict:
         """
         Load component configuration from YAML only (dev mode).
 
@@ -524,13 +484,9 @@ class VersionFactory:
             raise ValueError(f"Failed to load YAML config from {config_file}: {e}")
 
         if not yaml_config or component_type not in yaml_config:
-            raise ValueError(
-                f"Invalid YAML config in {config_file}: missing '{component_type}' section"
-            )
+            raise ValueError(f"Invalid YAML config in {config_file}: missing '{component_type}' section")
 
-        logger.debug(
-            f"Dev mode: Loaded {component_type} {component_id} configuration from YAML"
-        )
+        logger.debug(f"Dev mode: Loaded {component_type} {component_id} configuration from YAML")
         return yaml_config
 
     async def _load_with_bidirectional_sync(
@@ -554,9 +510,7 @@ class VersionFactory:
         """
         if version is not None:
             # Load specific version from database
-            version_record = await self.version_service.get_version(
-                component_id, version
-            )
+            version_record = await self.version_service.get_version(component_id, version)
             if not version_record:
                 raise ValueError(f"Version {version} not found for {component_id}")
             # Return the config directly as it already has the correct structure
@@ -603,13 +557,9 @@ class VersionFactory:
             raise ValueError(f"Failed to load YAML config from {config_file}: {e}")
 
         if not yaml_config or component_type not in yaml_config:
-            raise ValueError(
-                f"Invalid YAML config in {config_file}: missing '{component_type}' section"
-            )
+            raise ValueError(f"Invalid YAML config in {config_file}: missing '{component_type}' section")
 
-        logger.debug(
-            f"🔧 Loading {component_type} {component_id} from YAML (first startup fallback)"
-        )
+        logger.debug(f"🔧 Loading {component_type} {component_id} from YAML (first startup fallback)")
 
         # Use the same creation methods but with YAML config
         creation_methods = {
@@ -666,11 +616,6 @@ async def create_team(
     )
 
 
-async def create_versioned_workflow(
-    workflow_id: str, version: int | None = None, **kwargs
-) -> Workflow:
+async def create_versioned_workflow(workflow_id: str, version: int | None = None, **kwargs) -> Workflow:
     """Create versioned workflow using Agno storage."""
-    return await get_version_factory().create_versioned_component(
-        workflow_id, "workflow", version, **kwargs
-    )
-
+    return await get_version_factory().create_versioned_component(workflow_id, "workflow", version, **kwargs)

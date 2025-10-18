@@ -30,9 +30,7 @@ def test_pyproject_toml_version_format():
 
     # Validate version format (PEP 440 compliant)
     version_pattern = r"^(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?$"
-    assert re.match(version_pattern, version), (
-        f"Version '{version}' should be PEP 440 compliant"
-    )
+    assert re.match(version_pattern, version), f"Version '{version}' should be PEP 440 compliant"
 
 
 def test_version_reader_consistency():
@@ -93,8 +91,7 @@ def test_all_components_same_version():
 
     for component_name, component_version in components.items():
         assert component_version == project_version, (
-            f"{component_name} version '{component_version}' "
-            f"does not match project version '{project_version}'"
+            f"{component_name} version '{component_version}' does not match project version '{project_version}'"
         )
 
 
@@ -130,9 +127,7 @@ def test_version_format_compatibility(version_string):
     """Test that various version formats work with the version reader."""
     # This is a unit test to ensure our version parsing is robust
     version_pattern = r"^(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?$"
-    assert re.match(version_pattern, version_string), (
-        f"Version '{version_string}' should be valid PEP 440 format"
-    )
+    assert re.match(version_pattern, version_string), f"Version '{version_string}' should be valid PEP 440 format"
 
 
 if __name__ == "__main__":
