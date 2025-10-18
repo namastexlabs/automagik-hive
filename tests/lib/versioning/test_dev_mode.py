@@ -282,6 +282,7 @@ class TestDevModeEdgeCases:
         # Set environment variable ONCE before spawning threads
         # to avoid race conditions with patch.dict which is not thread-safe
         with patch.dict(os.environ, {"HIVE_DEV_MODE": "true"}):
+
             def worker():
                 time.sleep(0.001)  # Small delay to simulate race conditions
                 enabled = DevMode.is_enabled()
