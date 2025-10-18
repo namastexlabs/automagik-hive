@@ -698,19 +698,16 @@ class TestSmartIncrementalLoaderAnalysis:
         mock_df.iterrows.return_value = iter(mock_rows)
         mock_read_csv.return_value = mock_df
 
-        # Mock database connection
-        mock_conn = MagicMock()
-        mock_engine = MagicMock()
-        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
-        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=None)
-        mock_create_engine.return_value = mock_engine
-
-        # Mock some records exist (first query returns 1, others return 0)
-        mock_conn.execute.return_value.fetchone.side_effect = [[1], [0], [0]]  # 1 existing, 2 new
-
         with patch("pathlib.Path.exists", return_value=True):  # Ensure CSV file "exists"
             loader = SmartIncrementalLoader(str(self.csv_file))
-            analysis = loader.analyze_changes()
+
+            # Mock _get_existing_row_hashes to return one existing hash
+            with patch.object(loader, "_get_existing_row_hashes") as mock_get_hashes:
+                # Get the first row's hash and mark it as existing
+                first_hash = loader._hash_row(mock_rows[0][1])
+                mock_get_hashes.return_value = {first_hash}
+
+                analysis = loader.analyze_changes()
 
         assert "error" not in analysis
         assert analysis["csv_total_rows"] == 3
@@ -746,19 +743,16 @@ class TestSmartIncrementalLoaderAnalysis:
         mock_df.iterrows.return_value = iter(mock_rows)
         mock_read_csv.return_value = mock_df
 
-        # Mock database connection
-        mock_conn = MagicMock()
-        mock_engine = MagicMock()
-        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
-        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=None)
-        mock_create_engine.return_value = mock_engine
-
-        # Mock all records exist (all queries return 1)
-        mock_conn.execute.return_value.fetchone.return_value = [1]
-
         with patch("pathlib.Path.exists", return_value=True):  # Ensure CSV file "exists"
             loader = SmartIncrementalLoader(str(self.csv_file))
-            analysis = loader.analyze_changes()
+
+            # Mock _get_existing_row_hashes to return all row hashes
+            with patch.object(loader, "_get_existing_row_hashes") as mock_get_hashes:
+                # Mark all rows as existing
+                all_hashes = {loader._hash_row(row[1]) for row in mock_rows}
+                mock_get_hashes.return_value = all_hashes
+
+                analysis = loader.analyze_changes()
 
             assert "error" not in analysis
         assert analysis["csv_total_rows"] == 3
@@ -787,12 +781,12 @@ class TestSmartIncrementalLoaderAnalysis:
         mock_df.iterrows.return_value = iter(mock_rows)
         mock_read_csv.return_value = mock_df
 
-        # Mock database connection error
-        mock_create_engine.side_effect = Exception("Database connection failed")
-
         with patch("pathlib.Path.exists", return_value=True):  # Ensure CSV file "exists"
             loader = SmartIncrementalLoader(str(self.csv_file))
-            analysis = loader.analyze_changes()
+
+            # Mock _get_existing_row_hashes to raise exception
+            with patch.object(loader, "_get_existing_row_hashes", side_effect=Exception("Database connection failed")):
+                analysis = loader.analyze_changes()
 
             assert "error" in analysis
             assert analysis["error"] == "Database connection failed"
@@ -1144,10 +1138,7 @@ class TestSmartIncrementalLoaderSingleRowProcessing:
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
     @patch("yaml.safe_load")
-    @patch("pandas.DataFrame.to_csv")
-    @patch("pathlib.Path.exists", return_value=True)
-    @patch("pathlib.Path.unlink")
-    def test_process_single_row_success(self, mock_unlink, mock_exists, mock_to_csv, mock_yaml_load, mock_file):
+    def test_process_single_row_success(self, mock_yaml_load, mock_file):
         """Test processing a single row successfully."""
         mock_yaml_load.return_value = self.test_config
 
@@ -1158,13 +1149,17 @@ class TestSmartIncrementalLoaderSingleRowProcessing:
 
         with patch.object(SmartIncrementalLoader, "_update_row_hash", return_value=True) as mock_update_hash:
             loader = SmartIncrementalLoader(str(self.csv_file), kb=mock_kb)
-            result = loader._process_single_row(row_data)
 
-            assert result is True
-            mock_to_csv.assert_called_once()  # Temporary CSV created
-            mock_kb.load.assert_called_once_with(recreate=False, upsert=True)
-            mock_update_hash.assert_called_once_with(row_data["data"], row_data["hash"])
-            mock_unlink.assert_called_once()  # Temporary file cleaned up
+            # Mock build_document_from_row to return a document
+            mock_doc = MagicMock()
+            mock_doc.name = "test_document"
+            with patch.object(mock_kb, "build_document_from_row", return_value=mock_doc):
+                with patch.object(mock_kb, "add_document") as mock_add_doc:
+                    result = loader._process_single_row(row_data)
+
+                    assert result is True
+                    mock_add_doc.assert_called_once_with(mock_doc, upsert=True, skip_if_exists=False)
+                    mock_update_hash.assert_called_once_with(row_data["data"], row_data["hash"])
 
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)
@@ -1177,17 +1172,21 @@ class TestSmartIncrementalLoaderSingleRowProcessing:
 
         # Mock knowledge base that raises error
         mock_kb = MagicMock()
-        mock_kb.load.side_effect = Exception("KB load failed")
 
         with patch("lib.logging.logger") as mock_logger:
-            with patch("pandas.DataFrame.to_csv"):
-                with patch("pathlib.Path.exists", return_value=True):
-                    with patch("pathlib.Path.unlink"):
-                        loader = SmartIncrementalLoader(str(self.csv_file), kb=mock_kb)
-                        result = loader._process_single_row(row_data)
+            loader = SmartIncrementalLoader(str(self.csv_file), kb=mock_kb)
 
-                        assert result is False
-                        mock_logger.error.assert_called_once_with("Error processing single row", error="KB load failed")
+            # Mock build_document_from_row to return a document
+            mock_doc = MagicMock()
+            mock_doc.name = "test_document"
+
+            # Mock add_document to raise error
+            with patch.object(mock_kb, "build_document_from_row", return_value=mock_doc):
+                with patch.object(mock_kb, "add_document", side_effect=Exception("KB load failed")):
+                    result = loader._process_single_row(row_data)
+
+                    assert result is False
+                    mock_logger.error.assert_called()
 
     @patch.dict("os.environ", {"HIVE_DATABASE_URL": "postgresql://test:5432/db"})
     @patch("builtins.open", new_callable=mock_open)

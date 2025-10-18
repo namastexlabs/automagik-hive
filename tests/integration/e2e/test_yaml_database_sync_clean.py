@@ -92,38 +92,30 @@ class TestFileSyncTracker:
             Path("/test/base/ai/teams/test-team/config.yaml"),
         ]
 
-    def test_get_yaml_path_agent(self, tracker, sample_yaml_paths):
+    def test_get_yaml_path_agent(self, tracker, sample_yaml_paths):  # noqa: ARG002
         """Test YAML path resolution for agent."""
-        expected_path = sample_yaml_paths[0]
-
-        def mock_exists(path_self):
-            return str(path_self) == str(expected_path)
-
-        with patch.object(Path, "exists", mock_exists):
+        # Mock the Path.exists() method to return True only for agent path
+        with patch("pathlib.Path.exists") as mock_exists:
+            # Return True for first path (agent), False for others
+            mock_exists.side_effect = [True, False, False]
             path = tracker._get_yaml_path("test-agent")
-            assert path == expected_path
+            assert str(path).endswith("ai/agents/test-agent/config.yaml")
 
-    def test_get_yaml_path_workflow(self, tracker, sample_yaml_paths):
+    def test_get_yaml_path_workflow(self, tracker, sample_yaml_paths):  # noqa: ARG002
         """Test YAML path resolution for workflow."""
-        expected_path = sample_yaml_paths[1]
-
-        def mock_exists(path_self):
-            return str(path_self) == str(expected_path)
-
-        with patch.object(Path, "exists", mock_exists):
+        # Mock to return False for agent, True for workflow
+        with patch("pathlib.Path.exists") as mock_exists:
+            mock_exists.side_effect = [False, True, False]
             path = tracker._get_yaml_path("test-workflow")
-            assert path == expected_path
+            assert str(path).endswith("ai/workflows/test-workflow/config.yaml")
 
-    def test_get_yaml_path_team(self, tracker, sample_yaml_paths):
+    def test_get_yaml_path_team(self, tracker, sample_yaml_paths):  # noqa: ARG002
         """Test YAML path resolution for team."""
-        expected_path = sample_yaml_paths[2]
-
-        def mock_exists(path_self):
-            return str(path_self) == str(expected_path)
-
-        with patch.object(Path, "exists", mock_exists):
+        # Mock to return False for agent/workflow, True for team
+        with patch("pathlib.Path.exists") as mock_exists:
+            mock_exists.side_effect = [False, False, True]
             path = tracker._get_yaml_path("test-team")
-            assert path == expected_path
+            assert str(path).endswith("ai/teams/test-team/config.yaml")
 
     def test_get_yaml_path_not_found(self, tracker):
         """Test FileNotFoundError when YAML config doesn't exist."""

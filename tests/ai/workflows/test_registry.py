@@ -2,7 +2,7 @@
 Tests for ai/workflows/registry.py - Workflow Registry and factory functions
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -94,74 +94,56 @@ class TestWorkflowDiscovery:
             result = _discover_workflows()
             assert result == {}
 
-    @patch("ai.workflows.registry.importlib.util")
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_factory_function(self, mock_path, mock_importlib) -> None:
+    def test_discover_workflows_no_factory_function(self, tmp_path) -> None:
         """Test discovery when workflow module has no factory function."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "no-factory-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "no-factory-workflow"
+        # Create config.yaml
+        (workflow_dir / "config.yaml").write_text("workflow:\n  workflow_id: no-factory\n")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = True
-        mock_workflow_file.exists.return_value = True
+        # Create workflow.py without factory function
+        workflow_code = """
+# Workflow module without factory function
+def some_other_function():
+    pass
+"""
+        (workflow_dir / "workflow.py").write_text(workflow_code)
 
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
-
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        # Mock module loading
-        mock_spec = Mock()
-        mock_module = Mock()
-
-        # Mock that the factory function doesn't exist
-        def mock_hasattr(obj, name):
-            return False  # No factory function found
-
-        with patch("builtins.hasattr", side_effect=mock_hasattr):
-            mock_importlib.spec_from_file_location.return_value = mock_spec
-            mock_importlib.module_from_spec.return_value = mock_module
-
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
             result = _discover_workflows()
 
+        # Should skip workflow without factory function
         assert result == {}
 
-    @patch("ai.workflows.registry.importlib.util")
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_import_exception(self, mock_path, mock_importlib) -> None:
+    def test_discover_workflows_import_exception(self, tmp_path) -> None:
         """Test discovery handles import exceptions gracefully."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "broken-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "broken-workflow"
+        # Create config.yaml
+        (workflow_dir / "config.yaml").write_text("workflow:\n  workflow_id: broken\n")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = True
-        mock_workflow_file.exists.return_value = True
+        # Create workflow.py with syntax error to cause import failure
+        workflow_code = """
+# This will cause an import error
+def get_broken_workflow_workflow():
+    # Invalid syntax - missing closing parenthesis
+    return Workflow(
+        name="Broken"
+"""
+        (workflow_dir / "workflow.py").write_text(workflow_code)
 
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_workflows()
 
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        # Mock import failure
-        mock_importlib.spec_from_file_location.side_effect = ImportError(
-            "Failed to import",
-        )
-
-        result = _discover_workflows()
+        # Should gracefully skip workflow that fails to import
         assert result == {}
 
     def test_hyphen_to_underscore_conversion_logic(self) -> None:

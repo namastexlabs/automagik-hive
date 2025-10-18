@@ -641,6 +641,7 @@ class TestCliExecutionWorkflows:
     @patch("lib.auth.cli.AuthInitService")
     @patch("lib.auth.cli.CredentialService")
     @patch("lib.auth.cli.logger")
+    @patch.dict(os.environ, {"HIVE_AUTH_DISABLED": "false"})
     def test_complete_cli_setup_workflow(self, mock_logger, mock_cred_service_class, mock_auth_service_class):
         """Test complete CLI setup workflow execution."""
         # Setup mocks
@@ -675,7 +676,8 @@ class TestCliExecutionWorkflows:
         sync_mcp_credentials()
 
         # Verify all functions were executed
-        mock_auth_service.get_current_key.assert_called_once()
+        # get_current_key is called twice: once directly and once via show_auth_status() → show_current_key()
+        assert mock_auth_service.get_current_key.call_count == 2
         mock_auth_service.regenerate_key.assert_called_once()
         mock_cred_service.generate_postgres_credentials.assert_called_once_with("setup.db", 5432, "setup_db")
         mock_cred_service.generate_agent_credentials.assert_called_once_with(35432, "setup_agent")

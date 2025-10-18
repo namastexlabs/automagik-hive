@@ -265,30 +265,47 @@ class TestDevModeEdgeCases:
             assert all(d == descriptions[0] for d in descriptions)
 
     def test_thread_safety_simulation(self):
-        """Test DevMode behavior under simulated concurrent access."""
+        """Test DevMode behavior under simulated concurrent access.
+
+        Note: This test sets the environment variable once before spawning threads
+        to avoid thread-safety issues with patch.dict. The goal is to verify that
+        DevMode.is_enabled() and DevMode.get_mode_description() are thread-safe
+        when reading the same environment variable concurrently.
+        """
         import threading
         import time
 
         results = []
         descriptions = []
+        lock = threading.Lock()
 
-        def worker():
-            with patch.dict(os.environ, {"HIVE_DEV_MODE": "true"}):
+        # Set environment variable ONCE before spawning threads
+        # to avoid race conditions with patch.dict which is not thread-safe
+        with patch.dict(os.environ, {"HIVE_DEV_MODE": "true"}):
+
+            def worker():
                 time.sleep(0.001)  # Small delay to simulate race conditions
-                results.append(DevMode.is_enabled())
-                descriptions.append(DevMode.get_mode_description())
+                enabled = DevMode.is_enabled()
+                description = DevMode.get_mode_description()
 
-        threads = [threading.Thread(target=worker) for _ in range(10)]
+                # Thread-safe append
+                with lock:
+                    results.append(enabled)
+                    descriptions.append(description)
 
-        for thread in threads:
-            thread.start()
+            threads = [threading.Thread(target=worker) for _ in range(10)]
 
-        for thread in threads:
-            thread.join()
+            for thread in threads:
+                thread.start()
+
+            for thread in threads:
+                thread.join()
 
         # All results should be consistent
-        assert all(r is True for r in results)
-        assert all(d == descriptions[0] for d in descriptions)
+        assert len(results) == 10, f"Expected 10 results, got {len(results)}"
+        assert len(descriptions) == 10, f"Expected 10 descriptions, got {len(descriptions)}"
+        assert all(r is True for r in results), f"Not all results are True: {results}"
+        assert all(d == descriptions[0] for d in descriptions), f"Descriptions are inconsistent: {descriptions}"
 
 
 class TestDevModeIntegration:

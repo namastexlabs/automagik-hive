@@ -39,17 +39,22 @@ class ServiceManager:
 
     def agentos_config(self, json_output: bool = False) -> bool:
         """Display AgentOS configuration snapshot."""
+        import json
 
         from lib.agentos.exceptions import AgentOSConfigError
         from lib.services.agentos_service import AgentOSService
 
         try:
             payload = AgentOSService().serialize()
-        except AgentOSConfigError:
+        except AgentOSConfigError as exc:
+            print(f"❌ Unable to load AgentOS configuration: {exc}")
+            return False
+        except Exception as exc:
+            print(f"❌ Unable to load AgentOS configuration: {exc}")
             return False
 
         if json_output:
-            pass
+            print(json.dumps(payload, indent=2, sort_keys=True))
         else:
             self._print_agentos_summary(payload)
 
@@ -224,21 +229,55 @@ class ServiceManager:
 
     def _print_agentos_summary(self, payload: dict[str, Any]) -> None:
         """Render AgentOS configuration overview for terminal output."""
+        print("\n" + "=" * 70)
+        print("🤖 AgentOS Configuration Snapshot")
+        print("=" * 70)
 
-        payload.get("available_models") or []
+        # Basic info
+        os_id = payload.get("os_id", "unknown")
+        name = payload.get("name", "Unknown AgentOS")
+        description = payload.get("description", "")
 
-        def _render_components(title: str, items: list[dict[str, Any]]) -> None:
+        print(f"\nOS ID: {os_id}")
+        print(f"Name: {name}")
+        if description:
+            print(f"Description: {description}")
+
+        # Available models
+        models = payload.get("available_models") or []
+        if models:
+            print(f"\n📦 Available Models ({len(models)}):")
+            for model in models[:5]:  # Show first 5
+                print(f"  - {model}")
+            if len(models) > 5:
+                print(f"  ... and {len(models) - 5} more")
+
+        # Components
+        def _render_components(title: str, emoji: str, items: list[dict[str, Any]]) -> None:
             if not items:
                 return
-            for item in items:
+            print(f"\n{emoji} {title} ({len(items)}):")
+            for item in items[:5]:  # Show first 5
                 identifier = item.get("id") or "—"
-                item.get("name") or identifier
+                item_name = item.get("name") or identifier
+                print(f"  - {item_name} ({identifier})")
+            if len(items) > 5:
+                print(f"  ... and {len(items) - 5} more")
 
-        _render_components("Agents", payload.get("agents", []))
-        _render_components("Teams", payload.get("teams", []))
-        _render_components("Workflows", payload.get("workflows", []))
+        _render_components("Agents", "🤖", payload.get("agents", []))
+        _render_components("Teams", "👥", payload.get("teams", []))
+        _render_components("Workflows", "⚡", payload.get("workflows", []))
 
-        (payload.get("chat") or {}).get("quick_prompts", {})
+        # Interfaces
+        interfaces = payload.get("interfaces", [])
+        if interfaces:
+            print(f"\n🌐 Interfaces ({len(interfaces)}):")
+            for interface in interfaces:
+                itype = interface.get("type", "unknown")
+                route = interface.get("route", "—")
+                print(f"  - {itype}: {route}")
+
+        print("\n" + "=" * 70)
 
     def _setup_env_file(self, workspace: str) -> bool:
         """Setup .env file with API key generation if needed."""
@@ -363,13 +402,26 @@ class ServiceManager:
     def uninstall_environment(self, workspace: str = ".") -> bool:
         """Uninstall main environment - COMPLETE SYSTEM WIPE."""
         try:
+            # Print warning and request confirmation
+            print("\n" + "=" * 70)
+            print("⚠️  COMPLETE SYSTEM UNINSTALL")
+            print("=" * 70)
+            print("\nThis will completely remove ALL Automagik Hive environments:")
+            print("  - Main production environment")
+            print("  - Docker containers and volumes")
+            print("  - Configuration files")
+            print("\n⚠️  WARNING: This action cannot be undone!")
+            print("\nType 'WIPE ALL' to confirm complete system wipe: ", end="", flush=True)
+
             # Get user confirmation for complete wipe
             try:
                 response = input().strip()
             except (EOFError, KeyboardInterrupt):
+                print("\n❌ Uninstall cancelled by user")
                 return False
 
             if response != "WIPE ALL":
+                print("❌ Uninstall cancelled by user")
                 return False
 
             success_count = 0

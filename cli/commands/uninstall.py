@@ -16,10 +16,12 @@ class UninstallCommands:
 
     def uninstall_current_workspace(self) -> bool:
         """Uninstall current workspace."""
+        print("🗑️ Uninstalling current workspace")
         return True
 
     def uninstall_global(self) -> bool:
         """Uninstall global installation."""
+        print("🗑️ Uninstalling global installation")
         return True
 
     def execute(self) -> bool:

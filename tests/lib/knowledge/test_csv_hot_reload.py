@@ -361,9 +361,21 @@ class TestCSVHotReloadManagerReloading:
         mock_kb = Mock()
         self.manager.knowledge_base = mock_kb
 
-        self.manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader since _reload_knowledge_base uses it
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {
+                "strategy": "incremental_update",
+                "new_rows_processed": 2,
+                "rows_removed": 0,
+            }
+            mock_loader_class.return_value = mock_loader
 
-        mock_kb.load.assert_called_once_with(recreate=False, skip_existing=True)
+            self.manager._reload_knowledge_base()
+
+            # Verify SmartIncrementalLoader was instantiated with correct params
+            mock_loader_class.assert_called_once_with(csv_path=str(self.csv_file), kb=mock_kb)
+            mock_loader.smart_load.assert_called_once()
 
     def test_reload_knowledge_base_no_knowledge_base(self):
         """Test reload when no knowledge base is initialized."""
@@ -375,13 +387,20 @@ class TestCSVHotReloadManagerReloading:
     def test_reload_knowledge_base_load_error(self):
         """Test handling of errors during knowledge base reload."""
         mock_kb = Mock()
-        mock_kb.load.side_effect = Exception("Load failed")
         self.manager.knowledge_base = mock_kb
 
-        # Should handle error gracefully
-        self.manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader to return error
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {"error": "Load failed"}
+            mock_loader_class.return_value = mock_loader
 
-        mock_kb.load.assert_called_once()
+            # Should handle error gracefully and fall back to basic load
+            with patch.object(mock_kb, "load") as mock_load:
+                self.manager._reload_knowledge_base()
+
+                # Verify fallback to basic load was attempted
+                mock_load.assert_called_once_with(recreate=False, skip_existing=True)
 
     def test_force_reload(self):
         """Test manual force reload functionality."""
@@ -487,11 +506,19 @@ class TestCSVHotReloadManagerIntegration:
                             assert manager.is_running
                             mock_observer.start.assert_called_once()
 
-                            # Force reload
-                            manager.force_reload()
+                            # Force reload with SmartIncrementalLoader mock
+                            with patch(
+                                "lib.knowledge.smart_incremental_loader.SmartIncrementalLoader"
+                            ) as mock_loader_class:
+                                mock_loader = Mock()
+                                mock_loader.smart_load.return_value = {"strategy": "incremental_update"}
+                                mock_loader_class.return_value = mock_loader
 
-                            # Should have called load again
-                            assert mock_kb.load.call_count == 2
+                                manager.force_reload()
+
+                                # Should have called smart_load
+                                mock_loader_class.assert_called_once()
+                                mock_loader.smart_load.assert_called_once()
 
                             # Stop watching
                             manager.stop_watching()
@@ -715,17 +742,27 @@ class TestCSVHotReloadErrorHandling:
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
         manager.knowledge_base = mock_kb
 
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader for successful reload
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {"strategy": "incremental_update", "new_rows_processed": 2}
+            mock_loader_class.return_value = mock_loader
 
-        # Verify reload success log
-        mock_logger.info.assert_called()
+            manager._reload_knowledge_base()
 
-        # Test error logging
-        mock_kb.load.side_effect = Exception("Test error")
-        manager._reload_knowledge_base()
+            # Verify reload success log
+            mock_logger.info.assert_called()
 
-        # Verify error log
-        mock_logger.error.assert_called()
+        # Test error logging with smart loader error
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.side_effect = Exception("Test error")
+            mock_loader_class.return_value = mock_loader
+
+            manager._reload_knowledge_base()
+
+            # Verify error log
+            mock_logger.error.assert_called()
 
     def test_observer_cleanup_on_error(self):
         """Test that observer is properly cleaned up when errors occur."""
@@ -791,13 +828,20 @@ class TestCSVHotReloadPerformance:
         manager = CSVHotReloadManager(csv_path=str(self.csv_file))
         manager.knowledge_base = mock_kb
 
-        # Simulate concurrent reloads
-        manager._reload_knowledge_base()
-        manager._reload_knowledge_base()
-        manager._reload_knowledge_base()
+        # Mock SmartIncrementalLoader for all reload calls
+        with patch("lib.knowledge.smart_incremental_loader.SmartIncrementalLoader") as mock_loader_class:
+            mock_loader = Mock()
+            mock_loader.smart_load.return_value = {"strategy": "no_changes"}
+            mock_loader_class.return_value = mock_loader
 
-        # All calls should complete successfully
-        assert mock_kb.load.call_count == 3
+            # Simulate concurrent reloads
+            manager._reload_knowledge_base()
+            manager._reload_knowledge_base()
+            manager._reload_knowledge_base()
+
+            # All calls should complete successfully
+            assert mock_loader_class.call_count == 3
+            assert mock_loader.smart_load.call_count == 3
 
     def test_status_call_performance(self):
         """Test that status calls are fast and don't block."""

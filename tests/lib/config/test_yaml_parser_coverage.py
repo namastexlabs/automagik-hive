@@ -17,6 +17,18 @@ from lib.config.yaml_parser import YAMLConfigParser
 from lib.mcp.catalog import MCPCatalog
 
 
+@pytest.fixture(autouse=True)
+def mock_mcp_catalog_init():
+    """Mock MCPCatalog initialization to avoid .mcp.json dependency."""
+    with patch("lib.config.yaml_parser.MCPCatalog") as mock_catalog_class:
+        mock_instance = Mock(spec=MCPCatalog)
+        mock_instance.has_server.return_value = True
+        mock_instance.list_servers.return_value = []
+        mock_instance.reload_catalog.return_value = None
+        mock_catalog_class.return_value = mock_instance
+        yield mock_catalog_class
+
+
 class TestYAMLConfigParserInitialization:
     """Test YAML parser initialization and setup."""
 
@@ -27,16 +39,13 @@ class TestYAMLConfigParserInitialization:
 
         assert parser.mcp_catalog is mock_catalog
 
-    def test_init_without_mcp_catalog_creates_default(self):
+    def test_init_without_mcp_catalog_creates_default(self, mock_mcp_catalog_init):
         """Test initialization without MCP catalog creates default."""
-        with patch("lib.config.yaml_parser.MCPCatalog") as mock_catalog_class:
-            mock_catalog = Mock()
-            mock_catalog_class.return_value = mock_catalog
+        parser = YAMLConfigParser()
 
-            parser = YAMLConfigParser()
-
-            assert parser.mcp_catalog is mock_catalog
-            mock_catalog_class.assert_called_once_with()
+        assert parser.mcp_catalog is not None
+        # Verify MCPCatalog was instantiated via the mocked class
+        mock_mcp_catalog_init.assert_called_once_with()
 
 
 class TestAgentConfigParsing:
@@ -171,7 +180,8 @@ class TestTeamConfigParsing:
         with open(config_file, "w") as f:
             yaml.dump(config_content, f)
 
-        parser = YAMLConfigParser()
+        mock_catalog = Mock(spec=MCPCatalog)
+        parser = YAMLConfigParser(mock_catalog)
         result = parser.parse_team_config(str(config_file))
 
         assert isinstance(result, TeamConfig)
@@ -181,7 +191,8 @@ class TestTeamConfigParsing:
 
     def test_parse_team_config_file_not_found(self):
         """Test parsing non-existent team configuration file."""
-        parser = YAMLConfigParser()
+        mock_catalog = Mock(spec=MCPCatalog)
+        parser = YAMLConfigParser(mock_catalog)
 
         with pytest.raises(FileNotFoundError, match="Configuration file not found"):
             parser.parse_team_config("/nonexistent/team.yaml")
@@ -191,7 +202,8 @@ class TestTeamConfigParsing:
         config_file = tmp_path / "invalid_team.yaml"
         config_file.write_text("team_id: test\ninvalid: yaml: content: {")
 
-        parser = YAMLConfigParser()
+        mock_catalog = Mock(spec=MCPCatalog)
+        parser = YAMLConfigParser(mock_catalog)
 
         with pytest.raises(ValueError, match="Invalid YAML"):
             parser.parse_team_config(str(config_file))
@@ -202,7 +214,8 @@ class TestTeamConfigParsing:
         with open(config_file, "w") as f:
             yaml.dump("just a string", f)
 
-        parser = YAMLConfigParser()
+        mock_catalog = Mock(spec=MCPCatalog)
+        parser = YAMLConfigParser(mock_catalog)
 
         with pytest.raises(ValueError, match="Configuration file must contain a YAML object"):
             parser.parse_team_config(str(config_file))
@@ -211,9 +224,14 @@ class TestTeamConfigParsing:
 class TestToolsParsing:
     """Test tools parsing and MCP separation functionality."""
 
-    def test_parse_tools_mixed_tools_list(self):
+    @pytest.fixture
+    def parser(self):
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        return YAMLConfigParser(mock_catalog)
+
+    def test_parse_tools_mixed_tools_list(self, parser):
         """Test parsing mixed regular and MCP tools."""
-        parser = YAMLConfigParser()
         tools_list = ["tool1", "mcp.postgres", "tool2", "mcp.redis", "tool3"]
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -221,9 +239,8 @@ class TestToolsParsing:
         assert regular_tools == ["tool1", "tool2", "tool3"]
         assert mcp_tools == ["postgres", "redis"]
 
-    def test_parse_tools_only_regular_tools(self):
+    def test_parse_tools_only_regular_tools(self, parser):
         """Test parsing list with only regular tools."""
-        parser = YAMLConfigParser()
         tools_list = ["tool1", "tool2", "tool3"]
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -231,9 +248,8 @@ class TestToolsParsing:
         assert regular_tools == ["tool1", "tool2", "tool3"]
         assert mcp_tools == []
 
-    def test_parse_tools_only_mcp_tools(self):
+    def test_parse_tools_only_mcp_tools(self, parser):
         """Test parsing list with only MCP tools."""
-        parser = YAMLConfigParser()
         tools_list = ["mcp.postgres", "mcp.redis", "mcp.search"]
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -241,9 +257,8 @@ class TestToolsParsing:
         assert regular_tools == []
         assert mcp_tools == ["postgres", "redis", "search"]
 
-    def test_parse_tools_empty_list(self):
+    def test_parse_tools_empty_list(self, parser):
         """Test parsing empty tools list."""
-        parser = YAMLConfigParser()
         tools_list = []
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -251,9 +266,8 @@ class TestToolsParsing:
         assert regular_tools == []
         assert mcp_tools == []
 
-    def test_parse_tools_with_whitespace(self):
+    def test_parse_tools_with_whitespace(self, parser):
         """Test parsing tools with whitespace."""
-        parser = YAMLConfigParser()
         tools_list = ["  tool1  ", "  mcp.postgres  ", "tool2"]
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -261,9 +275,8 @@ class TestToolsParsing:
         assert regular_tools == ["tool1", "tool2"]
         assert mcp_tools == ["postgres"]
 
-    def test_parse_tools_invalid_tool_entries(self):
+    def test_parse_tools_invalid_tool_entries(self, parser):
         """Test parsing tools list with invalid entries."""
-        parser = YAMLConfigParser()
         tools_list = ["tool1", 123, "mcp.postgres", None, "tool2"]  # Mixed types
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -272,9 +285,8 @@ class TestToolsParsing:
         assert regular_tools == ["tool1", "tool2"]
         assert mcp_tools == ["postgres"]
 
-    def test_parse_tools_empty_mcp_name(self):
+    def test_parse_tools_empty_mcp_name(self, parser):
         """Test parsing MCP tool with empty server name."""
-        parser = YAMLConfigParser()
         tools_list = ["tool1", "mcp.", "mcp.valid"]  # Empty MCP name
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -286,11 +298,16 @@ class TestToolsParsing:
 class TestMCPToolValidation:
     """Test MCP tool validation against catalog."""
 
-    def test_validate_mcp_tools_all_valid(self):
-        """Test validation when all MCP tools exist in catalog."""
-        mock_catalog = Mock()
+    @pytest.fixture
+    def parser_with_catalog(self):
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
         mock_catalog.has_server.return_value = True
-        parser = YAMLConfigParser(mcp_catalog=mock_catalog)
+        return YAMLConfigParser(mock_catalog), mock_catalog
+
+    def test_validate_mcp_tools_all_valid(self, parser_with_catalog):
+        """Test validation when all MCP tools exist in catalog."""
+        parser, mock_catalog = parser_with_catalog
 
         mcp_tool_names = ["postgres", "redis", "search"]
         result = parser._validate_mcp_tools(mcp_tool_names)
@@ -303,7 +320,7 @@ class TestMCPToolValidation:
 
     def test_validate_mcp_tools_some_invalid(self):
         """Test validation when some MCP tools don't exist in catalog."""
-        mock_catalog = Mock()
+        mock_catalog = Mock(spec=MCPCatalog)
 
         def has_server_side_effect(name):
             return name in ["postgres", "redis"]
@@ -326,9 +343,9 @@ class TestMCPToolValidation:
         assert len(invalid_tools) == 1
         assert not invalid_tools[0].enabled
 
-    def test_validate_mcp_tools_empty_list(self):
+    def test_validate_mcp_tools_empty_list(self, parser_with_catalog):
         """Test validation with empty MCP tools list."""
-        parser = YAMLConfigParser()
+        parser, _ = parser_with_catalog
 
         result = parser._validate_mcp_tools([])
 
@@ -336,7 +353,7 @@ class TestMCPToolValidation:
 
     def test_validate_mcp_tools_catalog_error(self):
         """Test validation when catalog access raises error."""
-        mock_catalog = Mock()
+        mock_catalog = Mock(spec=MCPCatalog)
         mock_catalog.has_server.side_effect = Exception("Catalog error")
         parser = YAMLConfigParser(mcp_catalog=mock_catalog)
 
@@ -350,7 +367,13 @@ class TestMCPToolValidation:
 class TestConfigurationUpdates:
     """Test configuration file update functionality."""
 
-    def test_update_agent_config_existing_file(self, tmp_path):
+    @pytest.fixture
+    def parser(self):
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        return YAMLConfigParser(mock_catalog)
+
+    def test_update_agent_config_existing_file(self, parser, tmp_path):
         """Test updating existing agent configuration file."""
         original_config = {"agent_id": "test-agent", "name": "Original Name", "version": "1.0.0"}
 
@@ -358,7 +381,6 @@ class TestConfigurationUpdates:
         with open(config_file, "w") as f:
             yaml.dump(original_config, f)
 
-        parser = YAMLConfigParser()
         updates = {"name": "Updated Name", "description": "New description"}
 
         parser.update_agent_config(str(config_file), updates)
@@ -372,30 +394,24 @@ class TestConfigurationUpdates:
         assert updated_config["version"] == "1.0.0"  # Unchanged
         assert updated_config["description"] == "New description"  # Added
 
-    def test_update_agent_config_file_not_found(self):
+    def test_update_agent_config_file_not_found(self, parser):
         """Test updating non-existent configuration file."""
-        parser = YAMLConfigParser()
-
         with pytest.raises(FileNotFoundError):
             parser.update_agent_config("/nonexistent/config.yaml", {"name": "test"})
 
-    def test_update_agent_config_read_error(self, tmp_path):
+    def test_update_agent_config_read_error(self, parser, tmp_path):
         """Test updating configuration when file read fails."""
         config_file = tmp_path / "agent.yaml"
         config_file.write_text("valid: yaml")
-
-        parser = YAMLConfigParser()
 
         with patch("builtins.open", side_effect=OSError("Read error")):
             with pytest.raises(ValueError, match="Error updating configuration file"):
                 parser.update_agent_config(str(config_file), {"name": "test"})
 
-    def test_update_agent_config_write_error(self, tmp_path):
+    def test_update_agent_config_write_error(self, parser, tmp_path):
         """Test updating configuration when file write fails."""
         config_file = tmp_path / "agent.yaml"
         config_file.write_text("agent_id: test")
-
-        parser = YAMLConfigParser()
 
         with patch("builtins.open", mock_open()) as mock_file:
             # Make write fail
@@ -408,7 +424,13 @@ class TestConfigurationUpdates:
 class TestMCPToolsSummary:
     """Test MCP tools summary generation."""
 
-    def test_get_mcp_tools_summary_complete_config(self):
+    @pytest.fixture
+    def parser(self):
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        return YAMLConfigParser(mock_catalog)
+
+    def test_get_mcp_tools_summary_complete_config(self, parser):
         """Test MCP tools summary with complete configuration."""
         mock_config = Mock(spec=AgentConfigMCP)
         mock_config.all_tools = ["tool1", "tool2", "mcp.postgres", "mcp.redis"]
@@ -420,7 +442,6 @@ class TestMCPToolsSummary:
         mock_config.mcp_tools = [enabled_tool, disabled_tool]
         mock_config.mcp_server_names = ["postgres", "redis"]
 
-        parser = YAMLConfigParser()
         summary = parser.get_mcp_tools_summary(mock_config)
 
         assert summary["total_tools"] == 4
@@ -430,7 +451,7 @@ class TestMCPToolsSummary:
         assert summary["enabled_mcp_tools"] == ["postgres"]
         assert summary["disabled_mcp_tools"] == ["redis"]
 
-    def test_get_mcp_tools_summary_no_mcp_tools(self):
+    def test_get_mcp_tools_summary_no_mcp_tools(self, parser):
         """Test MCP tools summary with no MCP tools."""
         mock_config = Mock(spec=AgentConfigMCP)
         mock_config.all_tools = ["tool1", "tool2"]
@@ -438,7 +459,6 @@ class TestMCPToolsSummary:
         mock_config.mcp_tools = []
         mock_config.mcp_server_names = []
 
-        parser = YAMLConfigParser()
         summary = parser.get_mcp_tools_summary(mock_config)
 
         assert summary["total_tools"] == 2
@@ -452,7 +472,14 @@ class TestMCPToolsSummary:
 class TestConfigValidation:
     """Test configuration validation functionality."""
 
-    def test_validate_config_file_valid_config(self, tmp_path):
+    @pytest.fixture
+    def parser(self):
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        mock_catalog.has_server.return_value = True
+        return YAMLConfigParser(mock_catalog)
+
+    def test_validate_config_file_valid_config(self, parser, tmp_path):
         """Test validation of valid configuration file."""
         config_content = {
             "agent": {"agent_id": "test-agent", "name": "Test Agent", "version": 1},
@@ -464,10 +491,6 @@ class TestConfigValidation:
         config_file = tmp_path / "agent.yaml"
         with open(config_file, "w") as f:
             yaml.dump(config_content, f)
-
-        mock_catalog = Mock()
-        mock_catalog.has_server.return_value = True
-        parser = YAMLConfigParser(mcp_catalog=mock_catalog)
 
         # Since the source code has a bug accessing config.config.agent_id directly
         # instead of config.config.agent.agent_id, the validation will fail
@@ -485,12 +508,11 @@ class TestConfigValidation:
         assert result["tools_summary"] is None
         assert "AgentConfig" in result["errors"][0]  # Verify specific error message
 
-    def test_validate_config_file_invalid_config(self, tmp_path):
+    def test_validate_config_file_invalid_config(self, parser, tmp_path):
         """Test validation of invalid configuration file."""
         config_file = tmp_path / "invalid.yaml"
         config_file.write_text("invalid: yaml: {")
 
-        parser = YAMLConfigParser()
         result = parser.validate_config_file(str(config_file))
 
         assert result["valid"] is False
@@ -500,9 +522,8 @@ class TestConfigValidation:
         assert len(result["errors"]) > 0
         assert result["tools_summary"] is None
 
-    def test_validate_config_file_nonexistent(self):
+    def test_validate_config_file_nonexistent(self, parser):
         """Test validation of non-existent configuration file."""
-        parser = YAMLConfigParser()
         result = parser.validate_config_file("/nonexistent/config.yaml")
 
         assert result["valid"] is False
@@ -513,20 +534,25 @@ class TestConfigValidation:
 class TestCatalogManagement:
     """Test MCP catalog management functionality."""
 
-    def test_reload_mcp_catalog(self):
+    @pytest.fixture
+    def parser_with_catalog(self):
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        mock_catalog.reload_catalog.return_value = None
+        mock_catalog.list_servers.return_value = ["server1", "server2", "server3"]
+        return YAMLConfigParser(mock_catalog), mock_catalog
+
+    def test_reload_mcp_catalog(self, parser_with_catalog):
         """Test MCP catalog reload functionality."""
-        mock_catalog = Mock()
-        parser = YAMLConfigParser(mcp_catalog=mock_catalog)
+        parser, mock_catalog = parser_with_catalog
 
         parser.reload_mcp_catalog()
 
         mock_catalog.reload_catalog.assert_called_once()
 
-    def test_str_representation(self):
+    def test_str_representation(self, parser_with_catalog):
         """Test string representation of parser."""
-        mock_catalog = Mock()
-        mock_catalog.list_servers.return_value = ["server1", "server2", "server3"]
-        parser = YAMLConfigParser(mcp_catalog=mock_catalog)
+        parser, mock_catalog = parser_with_catalog
 
         str_repr = str(parser)
 
@@ -537,9 +563,15 @@ class TestCatalogManagement:
 class TestEdgeCasesAndErrorHandling:
     """Test edge cases and error handling scenarios."""
 
-    def test_parse_tools_with_unicode_characters(self):
+    @pytest.fixture
+    def parser(self):
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        mock_catalog.has_server.return_value = True
+        return YAMLConfigParser(mock_catalog)
+
+    def test_parse_tools_with_unicode_characters(self, parser):
         """Test parsing tools with unicode characters."""
-        parser = YAMLConfigParser()
         tools_list = ["tøøl1", "mcp.pøstgres", "tøøl2"]
 
         regular_tools, mcp_tools = parser._parse_tools(tools_list)
@@ -547,9 +579,8 @@ class TestEdgeCasesAndErrorHandling:
         assert regular_tools == ["tøøl1", "tøøl2"]
         assert mcp_tools == ["pøstgres"]
 
-    def test_parse_tools_very_long_names(self):
+    def test_parse_tools_very_long_names(self, parser):
         """Test parsing tools with very long names."""
-        parser = YAMLConfigParser()
         long_name = "x" * 1000
         tools_list = [long_name, f"mcp.{long_name}"]
 
@@ -558,7 +589,7 @@ class TestEdgeCasesAndErrorHandling:
         assert regular_tools == [long_name]
         assert mcp_tools == [long_name]
 
-    def test_config_parsing_with_complex_yaml_structure(self, tmp_path):
+    def test_config_parsing_with_complex_yaml_structure(self, parser, tmp_path):
         """Test parsing configuration with complex YAML structures."""
         config_content = {
             "agent": {"agent_id": "complex-agent", "name": "Complex Agent", "version": 1},
@@ -573,10 +604,6 @@ class TestEdgeCasesAndErrorHandling:
         with open(config_file, "w") as f:
             yaml.dump(config_content, f)
 
-        mock_catalog = Mock()
-        mock_catalog.has_server.return_value = True
-        parser = YAMLConfigParser(mcp_catalog=mock_catalog)
-
         result = parser.parse_agent_config(str(config_file))
 
         assert isinstance(result, AgentConfigMCP)
@@ -584,11 +611,10 @@ class TestEdgeCasesAndErrorHandling:
         assert result.regular_tools == ["tool1"]
         assert len(result.mcp_tools) == 1
 
-    def test_concurrent_parsing_safety(self):
+    def test_concurrent_parsing_safety(self, parser):
         """Test that parser handles concurrent parsing safely."""
         import threading
 
-        parser = YAMLConfigParser()
         results = []
         errors = []
 
@@ -635,7 +661,7 @@ class TestEdgeCasesAndErrorHandling:
         for thread_id, result in results:
             assert result.config.agent.agent_id == f"agent-{thread_id}"
 
-    def test_memory_usage_with_large_configs(self, tmp_path):
+    def test_memory_usage_with_large_configs(self, parser, tmp_path):
         """Test memory usage with large configuration files."""
         # Create a large configuration
         large_tools_list = []
@@ -657,10 +683,6 @@ class TestEdgeCasesAndErrorHandling:
         with open(config_file, "w") as f:
             yaml.dump(config_content, f)
 
-        mock_catalog = Mock()
-        mock_catalog.has_server.return_value = True
-        parser = YAMLConfigParser(mcp_catalog=mock_catalog)
-
         # Should handle large configs without issues
         result = parser.parse_agent_config(str(config_file))
 
@@ -668,7 +690,7 @@ class TestEdgeCasesAndErrorHandling:
         assert len(result.regular_tools) == 900  # 90% are regular tools
         assert len(result.mcp_tools) == 100  # 10% are MCP tools
 
-    def test_parser_with_malformed_mcp_references(self, tmp_path):
+    def test_parser_with_malformed_mcp_references(self, parser, tmp_path):
         """Test parser handles malformed MCP references gracefully."""
         config_content = {
             "agent": {"agent_id": "test-agent", "name": "Test Agent", "version": 1},
@@ -689,10 +711,6 @@ class TestEdgeCasesAndErrorHandling:
         config_file = tmp_path / "malformed.yaml"
         with open(config_file, "w") as f:
             yaml.dump(config_content, f)
-
-        mock_catalog = Mock()
-        mock_catalog.has_server.return_value = True
-        parser = YAMLConfigParser(mcp_catalog=mock_catalog)
 
         result = parser.parse_agent_config(str(config_file))
 

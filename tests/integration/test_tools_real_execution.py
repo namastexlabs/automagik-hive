@@ -17,6 +17,8 @@ from lib.tools.registry import ToolRegistry
 class TestRealToolsExecution:
     """Test tools registry with actual MCP service connections."""
 
+    @pytest.mark.integration
+    @pytest.mark.skipif(os.getenv("CI") == "true", reason="Requires external MCP servers")
     def test_mcp_catalog_discovers_real_servers(self):
         """Test that MCP catalog discovers actual configured servers."""
         catalog = MCPCatalog()
@@ -58,6 +60,8 @@ class TestRealToolsExecution:
             elif hasattr(tool, "get_tool_function"):
                 pass
 
+    @pytest.mark.integration
+    @pytest.mark.skipif(os.getenv("CI") == "true", reason="Requires external MCP servers")
     @pytest.mark.asyncio
     async def test_postgres_tool_actual_connection(self):
         """Test PostgreSQL tool with actual database connection."""
@@ -82,6 +86,8 @@ class TestRealToolsExecution:
             pass
             # Don't fail test - connection issues are expected in test environments
 
+    @pytest.mark.integration
+    @pytest.mark.skipif(os.getenv("CI") == "true", reason="Requires external MCP servers")
     @pytest.mark.asyncio
     async def test_automagik_forge_tool_actual_connection(self):
         """Test Automagik Forge tool with actual service connection."""
@@ -177,6 +183,8 @@ class TestRealToolsExecution:
         if tool1 is not None and tool2 is not None:
             assert tool1 is tool2
 
+    @pytest.mark.integration
+    @pytest.mark.skipif(os.getenv("CI") == "true", reason="Requires external MCP servers")
     def test_mcp_server_configuration_validation(self):
         """Test validation of actual MCP server configurations."""
         catalog = MCPCatalog()
@@ -196,6 +204,8 @@ class TestRealToolsExecution:
             else:
                 pass
 
+    @pytest.mark.integration
+    @pytest.mark.skipif(os.getenv("CI") == "true", reason="Requires external MCP servers")
     def test_end_to_end_tool_discovery_and_loading(self):
         """Test complete end-to-end tool discovery and loading process."""
 

@@ -1,6 +1,6 @@
 """Tests for ai.tools.registry module."""
 
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -201,39 +201,24 @@ class TestFactoryFunctions:
         mock_registry_list.assert_called_once()
 
 
-@pytest.fixture
-def mock_tool_filesystem():
-    """Fixture that mocks a complete tool filesystem structure."""
-    with patch("ai.tools.registry.Path") as mock_path:
-        # Setup directory structure
-        tools_dir = MagicMock()
-        tools_dir.exists.return_value = True
-
-        # Create a template tool using MagicMock to handle __truediv__
-        template_tool_dir = MagicMock()
-        template_tool_dir.is_dir.return_value = True
-        template_tool_dir.name = "template-tool"
-
-        template_config = MagicMock()
-        template_config.exists.return_value = True
-        template_tool_dir.__truediv__.return_value = template_config
-
-        tools_dir.iterdir.return_value = [template_tool_dir]
-        mock_path.return_value = tools_dir
-
-        yield mock_path
-
-
-def test_integration_tools_discovery_and_loading(mock_tool_filesystem):
+def test_integration_tools_discovery_and_loading(tmp_path):
     """Integration test for complete tools discovery and loading workflow."""
-    with patch("builtins.open", mock_open(read_data="tool:\n  tool_id: template-tool\n")):
-        with patch("yaml.safe_load") as mock_yaml:
-            mock_yaml.return_value = {"tool": {"tool_id": "template-tool"}}
+    # Create AI root with tools directory
+    ai_root = tmp_path / "ai"
+    tools_dir = ai_root / "tools"
+    tools_dir.mkdir(parents=True)
 
-            # Test discovery
-            available = list_available_tools()
-            assert "template-tool" in available
+    # Create template tool directory with config file
+    template_tool_dir = tools_dir / "template-tool"
+    template_tool_dir.mkdir()
+    (template_tool_dir / "config.yaml").write_text("tool:\n  tool_id: template-tool\n  name: Template Tool\n")
 
-            # Test info retrieval
-            info = ToolRegistry.get_tool_info("template-tool")
-            assert info["tool_id"] == "template-tool"
+    with patch("ai.tools.registry.resolve_ai_root", return_value=ai_root):
+        # Test discovery
+        available = list_available_tools()
+        assert "template-tool" in available
+
+        # Test info retrieval
+        info = ToolRegistry.get_tool_info("template-tool")
+        assert info["tool_id"] == "template-tool"
+        assert info["name"] == "Template Tool"

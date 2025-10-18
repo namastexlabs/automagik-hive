@@ -14,10 +14,9 @@ Focuses on:
 """
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, Mock, mock_open, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-import yaml
 
 from ai.agents.registry import (
     _discover_agents,
@@ -64,62 +63,41 @@ class TestAgentDiscovery:
             result = _discover_agents()
             assert sorted(result) == ["test-agent-1", "test-agent-2"]
 
-    def test_discover_agents_malformed_config(self):
+    def test_discover_agents_malformed_config(self, tmp_path):
         """Test agent discovery with malformed config file."""
-        with patch("ai.agents.registry.Path") as mock_path_class:
-            # Mock the main agents directory
-            mock_agents_dir = Mock()
-            mock_agents_dir.exists.return_value = True
+        # Create AI root with agents directory
+        ai_root = tmp_path / "ai"
+        agents_dir = ai_root / "agents"
+        agents_dir.mkdir(parents=True)
 
-            # Mock agent subdirectory with MagicMock for __truediv__ support
-            mock_agent_dir = MagicMock()
-            mock_agent_dir.is_dir.return_value = True
-            mock_agent_dir.name = "bad-agent"
+        # Create agent directory with invalid YAML config
+        agent_dir = agents_dir / "bad-agent"
+        agent_dir.mkdir()
+        (agent_dir / "config.yaml").write_text("invalid: yaml: content: [[[")
 
-            mock_agents_dir.iterdir.return_value = [mock_agent_dir]
+        with (
+            patch("ai.agents.registry.resolve_ai_root", return_value=ai_root),
+            patch("ai.agents.registry.logger") as mock_logger,
+        ):
+            result = _discover_agents()
+            assert result == []
+            mock_logger.warning.assert_called_once()
 
-            # Mock config file
-            mock_config_file = Mock()
-            mock_config_file.exists.return_value = True
-            mock_agent_dir.__truediv__.return_value = mock_config_file
-
-            mock_path_class.return_value = mock_agents_dir
-
-            with (
-                patch("builtins.open", mock_open()),
-                patch("yaml.safe_load", side_effect=yaml.YAMLError("Invalid YAML")),
-                patch("ai.agents.registry.logger") as mock_logger,
-            ):
-                result = _discover_agents()
-                assert result == []
-                mock_logger.warning.assert_called_once()
-
-    def test_discover_agents_missing_agent_id(self):
+    def test_discover_agents_missing_agent_id(self, tmp_path):
         """Test agent discovery with config missing agent_id."""
-        mock_config = {"agent": {}}  # Missing agent_id
+        # Create AI root with agents directory
+        ai_root = tmp_path / "ai"
+        agents_dir = ai_root / "agents"
+        agents_dir.mkdir(parents=True)
 
-        with patch("ai.agents.registry.Path") as mock_path_class:
-            # Mock the main agents directory
-            mock_agents_dir = Mock()
-            mock_agents_dir.exists.return_value = True
+        # Create agent directory with config missing agent_id
+        agent_dir = agents_dir / "incomplete-agent"
+        agent_dir.mkdir()
+        (agent_dir / "config.yaml").write_text("agent: {}\n")  # Missing agent_id
 
-            # Mock agent subdirectory with MagicMock for __truediv__ support
-            mock_agent_dir = MagicMock()
-            mock_agent_dir.is_dir.return_value = True
-            mock_agent_dir.name = "incomplete-agent"
-
-            mock_agents_dir.iterdir.return_value = [mock_agent_dir]
-
-            # Mock config file
-            mock_config_file = Mock()
-            mock_config_file.exists.return_value = True
-            mock_agent_dir.__truediv__.return_value = mock_config_file
-
-            mock_path_class.return_value = mock_agents_dir
-
-            with patch("builtins.open", mock_open()), patch("yaml.safe_load", return_value=mock_config):
-                result = _discover_agents()
-                assert result == []
+        with patch("ai.agents.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_agents()
+            assert result == []
 
     def test_discover_agents_file_not_directory(self, tmp_path):
         """Test agent discovery with files instead of directories."""
@@ -404,34 +382,26 @@ class TestEdgeCasesAndErrors:
             with pytest.raises(Exception, match="Creation failed"):
                 await AgentRegistry.get_agent(agent_id="test-agent")
 
-    def test_discover_agents_with_io_error(self):
+    def test_discover_agents_with_io_error(self, tmp_path):
         """Test agent discovery with file I/O error."""
-        with patch("ai.agents.registry.Path") as mock_path_class:
-            # Mock the main agents directory
-            mock_agents_dir = Mock()
-            mock_agents_dir.exists.return_value = True
+        # Create AI root with agents directory
+        ai_root = tmp_path / "ai"
+        agents_dir = ai_root / "agents"
+        agents_dir.mkdir(parents=True)
 
-            # Mock agent subdirectory with MagicMock for __truediv__ support
-            mock_agent_dir = MagicMock()
-            mock_agent_dir.is_dir.return_value = True
-            mock_agent_dir.name = "problematic-agent"
+        # Create agent directory with config file
+        agent_dir = agents_dir / "problematic-agent"
+        agent_dir.mkdir()
+        (agent_dir / "config.yaml").write_text("agent:\n  agent_id: problematic-agent\n")
 
-            mock_agents_dir.iterdir.return_value = [mock_agent_dir]
-
-            # Mock config file
-            mock_config_file = Mock()
-            mock_config_file.exists.return_value = True
-            mock_agent_dir.__truediv__.return_value = mock_config_file
-
-            mock_path_class.return_value = mock_agents_dir
-
-            with (
-                patch("builtins.open", side_effect=OSError("Permission denied")),
-                patch("ai.agents.registry.logger") as mock_logger,
-            ):
-                result = _discover_agents()
-                assert result == []
-                mock_logger.warning.assert_called_once()
+        with (
+            patch("ai.agents.registry.resolve_ai_root", return_value=ai_root),
+            patch("builtins.open", side_effect=OSError("Permission denied")),
+            patch("ai.agents.registry.logger") as mock_logger,
+        ):
+            result = _discover_agents()
+            assert result == []
+            mock_logger.warning.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_all_agents_empty_available_agents(self):
@@ -509,56 +479,47 @@ class TestIntegrationScenarios:
     """Test realistic integration scenarios."""
 
     @pytest.mark.asyncio
-    async def test_full_agent_lifecycle(self):
+    async def test_full_agent_lifecycle(self, tmp_path):
         """Test complete agent lifecycle from discovery to creation."""
-        # Mock filesystem structure
-        mock_config = {
-            "agent": {"agent_id": "integration-test-agent"},
-            "model": {"provider": "test", "id": "test-model"},
-            # Align to Agno v2 schema: unified db + dependencies
-            "db": {"type": "postgres", "table_name": "test_agent_storage"},
-            "dependencies": {},
-        }
+        # Create AI root with agents directory
+        ai_root = tmp_path / "ai"
+        agents_dir = ai_root / "agents"
+        agents_dir.mkdir(parents=True)
+
+        # Create agent directory with valid config
+        agent_dir = agents_dir / "integration-test-agent"
+        agent_dir.mkdir()
+        config_content = """agent:
+  agent_id: integration-test-agent
+model:
+  provider: test
+  id: test-model
+db:
+  type: postgres
+  table_name: test_agent_storage
+dependencies: {}
+"""
+        (agent_dir / "config.yaml").write_text(config_content)
 
         mock_agent = Mock()
 
-        with patch("ai.agents.registry.Path") as mock_path_class:
-            # Mock the main agents directory
-            mock_agents_dir = Mock()
-            mock_agents_dir.exists.return_value = True
+        with (
+            patch("ai.agents.registry.resolve_ai_root", return_value=ai_root),
+            patch("ai.agents.registry.create_agent", new_callable=AsyncMock, return_value=mock_agent),
+        ):
+            # Discovery
+            discovered = _discover_agents()
+            assert "integration-test-agent" in discovered
 
-            # Mock agent subdirectory with MagicMock for __truediv__ support
-            mock_agent_dir = MagicMock()
-            mock_agent_dir.is_dir.return_value = True
-            mock_agent_dir.name = "integration-test-agent"
+            # Registry listing
+            from ai.agents.registry import AgentRegistry
 
-            mock_agents_dir.iterdir.return_value = [mock_agent_dir]
+            available = AgentRegistry.list_available_agents()
+            assert "integration-test-agent" in available
 
-            # Mock config file
-            mock_config_file = Mock()
-            mock_config_file.exists.return_value = True
-            mock_agent_dir.__truediv__.return_value = mock_config_file
-
-            mock_path_class.return_value = mock_agents_dir
-
-            with (
-                patch("builtins.open", mock_open()),
-                patch("yaml.safe_load", return_value=mock_config),
-                patch("ai.agents.registry.create_agent", new_callable=AsyncMock, return_value=mock_agent),
-            ):
-                # Discovery
-                discovered = _discover_agents()
-                assert "integration-test-agent" in discovered
-
-                # Registry listing
-                from ai.agents.registry import AgentRegistry
-
-                available = AgentRegistry.list_available_agents()
-                assert "integration-test-agent" in available
-
-                # Agent creation
-                result = await get_agent(name="integration-test-agent", session_id="integration-test")
-                assert result == mock_agent
+            # Agent creation
+            result = await get_agent(name="integration-test-agent", session_id="integration-test")
+            assert result == mock_agent
 
     def test_mcp_integration_scenario(self):
         """Test MCP integration with realistic server info."""
