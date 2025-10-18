@@ -164,27 +164,50 @@ class ServiceManager:
         except Exception:
             return False
 
-    def init_workspace(self, workspace_name: str = "my-hive-workspace") -> bool:
+    def init_workspace(self, workspace_name: str = "my-hive-workspace", force: bool = False) -> bool:
         """Initialize a new workspace with AI component templates.
 
         Lightweight template copying - NOT full workspace scaffolding.
         Creates basic directory structure and copies template files only.
         User must still run 'install' for full environment setup.
 
+        Supports both source installations (development) and package installations (uvx/pip).
+
         Args:
             workspace_name: Name of the workspace directory to create
+            force: If True, overwrite existing workspace after confirmation
 
         Returns:
             bool: True if successful, False otherwise
         """
         try:
             import shutil
+            import sys
+            from datetime import datetime, timezone
             workspace_path = Path(workspace_name)
 
             # Check if workspace already exists
             if workspace_path.exists():
-                print(f"❌ Directory '{workspace_name}' already exists")
-                return False
+                if not force:
+                    print(f"❌ Directory '{workspace_name}' already exists")
+                    print(f"💡 Use --force to overwrite existing workspace")
+                    return False
+
+                # Confirm overwrite
+                print(f"⚠️  Directory '{workspace_name}' already exists")
+                print(f"🗑️  This will DELETE the existing workspace and create a new one")
+                try:
+                    response = input("Type 'yes' to confirm overwrite: ").strip().lower()
+                    if response != "yes":
+                        print("❌ Init cancelled")
+                        return False
+                except (EOFError, KeyboardInterrupt):
+                    print("\n❌ Init cancelled")
+                    return False
+
+                # Remove existing workspace
+                shutil.rmtree(workspace_path)
+                print(f"🗑️  Removed existing workspace\n")
 
             print(f"🏗️  Initializing workspace: {workspace_name}")
             print("📋 This will copy AI component templates only")
@@ -196,12 +219,19 @@ class ServiceManager:
             (workspace_path / "ai" / "workflows").mkdir(parents=True)
             (workspace_path / "knowledge").mkdir(parents=True)
 
-            # Locate project root templates
-            project_root = Path(__file__).parent.parent.parent
+            # Locate templates (source or package installation)
+            template_root = self._locate_template_root()
+            if template_root is None:
+                print("❌ Could not locate template files")
+                print("💡 Templates may not be installed correctly")
+                print("   If using uvx, try: pip install automagik-hive")
+                print("   If developing, ensure you're in the project directory")
+                return False
+
             templates_copied = 0
 
             # Copy template-agent
-            template_agent = project_root / "ai" / "agents" / "template-agent"
+            template_agent = template_root / "agents" / "template-agent"
             if template_agent.exists():
                 shutil.copytree(
                     template_agent,
@@ -211,7 +241,7 @@ class ServiceManager:
                 templates_copied += 1
 
             # Copy template-team
-            template_team = project_root / "ai" / "teams" / "template-team"
+            template_team = template_root / "teams" / "template-team"
             if template_team.exists():
                 shutil.copytree(
                     template_team,
@@ -221,7 +251,7 @@ class ServiceManager:
                 templates_copied += 1
 
             # Copy template-workflow
-            template_workflow = project_root / "ai" / "workflows" / "template-workflow"
+            template_workflow = template_root / "workflows" / "template-workflow"
             if template_workflow.exists():
                 shutil.copytree(
                     template_workflow,
@@ -231,7 +261,7 @@ class ServiceManager:
                 templates_copied += 1
 
             # Copy .env.example
-            env_example = project_root / ".env.example"
+            env_example = template_root / ".env.example"
             if env_example.exists():
                 shutil.copy(env_example, workspace_path / ".env.example")
                 print("  ✅ Environment template (.env.example)")
@@ -239,8 +269,12 @@ class ServiceManager:
             # Create knowledge directory marker
             (workspace_path / "knowledge" / ".gitkeep").touch()
 
+            # Create workspace metadata file with version tracking
+            self._create_workspace_metadata(workspace_path)
+            print("  ✅ Workspace metadata")
+
             if templates_copied == 0:
-                print("⚠️  Warning: No templates were copied (not found in project)")
+                print("⚠️  Warning: No templates were copied (not found)")
                 return False
 
             print(f"\n✅ Workspace initialized: {workspace_name}")
@@ -256,6 +290,63 @@ class ServiceManager:
         except Exception as e:
             print(f"❌ Failed to initialize workspace: {e}")
             return False
+
+    def _locate_template_root(self) -> Path | None:
+        """Locate template directory from source or package installation.
+
+        Returns:
+            Path to templates directory or None if not found
+        """
+        import sys
+
+        # Try source directory first (for development)
+        project_root = Path(__file__).parent.parent.parent
+        source_templates = project_root / "ai"
+        if (source_templates / "agents" / "template-agent").exists():
+            return source_templates
+
+        # Try package resources (for uvx/pip install)
+        try:
+            if sys.version_info >= (3, 9):
+                from importlib.resources import files
+                template_path = files('automagik_hive') / 'templates'
+            else:
+                from importlib.resources import path as resource_path
+                with resource_path('automagik_hive', 'templates') as p:
+                    template_path = Path(p)
+
+            if template_path.exists() and (template_path / "agents" / "template-agent").exists():
+                return template_path
+        except (ImportError, FileNotFoundError, TypeError):
+            pass
+
+        return None
+
+    def _create_workspace_metadata(self, workspace_path: Path) -> None:
+        """Create workspace metadata file for version tracking.
+
+        Args:
+            workspace_path: Path to the workspace directory
+        """
+        from datetime import datetime, timezone
+        import yaml
+
+        try:
+            from lib.utils.version_reader import get_project_version
+            hive_version = get_project_version()
+        except Exception:
+            hive_version = "unknown"
+
+        metadata = {
+            "template_version": "1.0.0",
+            "hive_version": hive_version,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "description": "Automagik Hive workspace metadata"
+        }
+
+        metadata_file = workspace_path / ".automagik-hive-workspace.yml"
+        with open(metadata_file, 'w') as f:
+            yaml.dump(metadata, f, default_flow_style=False)
 
     def install_full_environment(self, workspace: str = ".") -> bool:
         """Complete environment setup with deployment choice - ENHANCED METHOD."""
