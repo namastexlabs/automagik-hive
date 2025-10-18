@@ -13,7 +13,7 @@ This test suite covers:
 
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
@@ -23,15 +23,28 @@ from lib.config.yaml_parser import YAMLConfigParser
 from lib.mcp.catalog import MCPCatalog
 
 
+@pytest.fixture(autouse=True)
+def mock_mcp_catalog_init():
+    """Mock MCPCatalog initialization to avoid .mcp.json dependency."""
+    with patch('lib.config.yaml_parser.MCPCatalog') as mock_catalog_class:
+        mock_instance = Mock(spec=MCPCatalog)
+        mock_instance.has_server.return_value = True
+        mock_instance.list_servers.return_value = []
+        mock_instance.reload_catalog.return_value = None
+        mock_catalog_class.return_value = mock_instance
+        yield mock_catalog_class
+
+
 class TestYAMLConfigParserInitialization:
     """Test YAMLConfigParser initialization and setup."""
 
-    def test_init_with_default_mcp_catalog(self):
+    def test_init_with_default_mcp_catalog(self, mock_mcp_catalog_init):
         """Test initialization with default MCP catalog."""
         parser = YAMLConfigParser()
 
         assert parser.mcp_catalog is not None
-        assert isinstance(parser.mcp_catalog, MCPCatalog)
+        # Verify MCPCatalog was instantiated via the mocked class
+        mock_mcp_catalog_init.assert_called_once()
 
     def test_init_with_custom_mcp_catalog(self):
         """Test initialization with custom MCP catalog."""
@@ -40,12 +53,13 @@ class TestYAMLConfigParserInitialization:
 
         assert parser.mcp_catalog is custom_catalog
 
-    def test_init_with_none_mcp_catalog(self):
+    def test_init_with_none_mcp_catalog(self, mock_mcp_catalog_init):
         """Test initialization when None is passed for MCP catalog."""
         parser = YAMLConfigParser(None)
 
         assert parser.mcp_catalog is not None
-        assert isinstance(parser.mcp_catalog, MCPCatalog)
+        # Verify MCPCatalog was instantiated via the mocked class
+        mock_mcp_catalog_init.assert_called()
 
 
 class TestAgentConfigParsing:
@@ -169,8 +183,9 @@ class TestTeamConfigParsing:
 
     @pytest.fixture
     def parser(self):
-        """Create parser instance."""
-        return YAMLConfigParser()
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        return YAMLConfigParser(mock_catalog)
 
     @pytest.fixture
     def valid_team_config(self):
@@ -358,8 +373,9 @@ class TestConfigurationUpdates:
 
     @pytest.fixture
     def parser(self):
-        """Create parser instance."""
-        return YAMLConfigParser()
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        return YAMLConfigParser(mock_catalog)
 
     @pytest.fixture
     def temp_config_file(self):
@@ -426,8 +442,9 @@ class TestMCPToolsSummary:
 
     @pytest.fixture
     def parser(self):
-        """Create parser instance."""
-        return YAMLConfigParser()
+        """Create parser instance with mock MCP catalog."""
+        mock_catalog = Mock(spec=MCPCatalog)
+        return YAMLConfigParser(mock_catalog)
 
     @pytest.fixture
     def mock_agent_config_mcp(self):
@@ -562,7 +579,7 @@ class TestErrorHandlingEdgeCases:
 
     @pytest.fixture
     def parser(self):
-        """Create parser with mock catalog."""
+        """Create parser instance with mock MCP catalog."""
         mock_catalog = Mock(spec=MCPCatalog)
         return YAMLConfigParser(mock_catalog)
 
