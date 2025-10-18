@@ -36,7 +36,7 @@ def create_parser() -> argparse.ArgumentParser:
         description="""Automagik Hive - Multi-Agent AI Framework CLI
 
 CORE COMMANDS (Quick Start):
-  --serve [WORKSPACE]         Start production server (Docker)
+  --serve [WORKSPACE]         Start workspace server
   --dev [WORKSPACE]           Start development server (local)
   --version                   Show version information
 
@@ -77,7 +77,7 @@ Use --help for detailed options or see documentation.
     parser.add_argument(
         "--init", nargs="?", const="__DEFAULT__", default=False, metavar="NAME", help="Initialize workspace"
     )
-    parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start production server (Docker)")
+    parser.add_argument("--serve", nargs="?", const=".", metavar="WORKSPACE", help="Start workspace server")
     parser.add_argument("--dev", nargs="?", const=".", metavar="WORKSPACE", help="Start development server (local)")
     # Get actual version for the version argument
     try:
