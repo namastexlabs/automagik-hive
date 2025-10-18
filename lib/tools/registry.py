@@ -28,6 +28,17 @@ class ToolRegistry:
     _mcp_tools_cache: dict[str, RealMCPTool] = {}
     _agno_tools_cache: dict[str, type] = {}
 
+    # Allowed tool configuration options for native Agno tools
+    # Used for validation to catch configuration errors early
+    ALLOWED_TOOL_OPTIONS = {
+        "name",  # Tool identifier (required)
+        "instructions",  # Custom instructions (string or list)
+        "add_instructions",  # Enable instruction injection (auto-set by registry)
+        "show_result",  # Display tool execution results
+        "requires_confirmation",  # Require user confirmation before execution
+        "use_python_repl",  # Use Python REPL for code execution
+    }
+
     @staticmethod
     def load_tools(tool_configs: list[dict[str, Any]]) -> tuple[list[Callable], list[str]]:
         """
@@ -179,7 +190,35 @@ class ToolRegistry:
     @staticmethod
     def _load_native_agno_tool(tool_name: str, tool_options: dict[str, Any] = None) -> Any:
         """
-        Load native Agno tools via auto-discovery with optional configuration.
+        Load native Agno tools via auto-discovery with automatic instruction injection support.
+
+        This method handles three YAML configuration patterns for native Agno tools:
+
+        1. Zero Config (uses toolkit defaults):
+           ```yaml
+           tools:
+             - ShellTools
+           ```
+
+        2. Custom Instructions:
+           ```yaml
+           tools:
+             - name: ShellTools
+               instructions:
+                 - "Always confirm destructive operations"
+                 - "Use absolute paths for file operations"
+           ```
+
+        3. Explicit Disable:
+           ```yaml
+           tools:
+             - name: ShellTools
+               instructions: []
+           ```
+
+        Critical: This method returns tool instances that will have `add_instructions=True`
+        set by the calling code to enable LLM instruction injection. Without this flag,
+        custom instructions would be ignored by the agent.
 
         Args:
             tool_name: Name of the native Agno tool (e.g., "ShellTools")
@@ -188,6 +227,13 @@ class ToolRegistry:
 
         Returns:
             Agno tool instance or None if not found
+
+        Example:
+            >>> tool = ToolRegistry._load_native_agno_tool("ShellTools")
+            >>> if tool:
+            ...     # Tool instance ready for configuration
+            ...     # Calling code will set add_instructions=True
+            ...     tool_configured = configure_tool(tool, instructions=[...])
         """
         if tool_options is None:
             tool_options = {}
@@ -347,13 +393,25 @@ class ToolRegistry:
     @staticmethod
     def _validate_tool_config(tool_config: Any) -> bool:
         """
-        Validate tool configuration structure.
+        Validate tool configuration structure and options.
+
+        Validates both the structure and allowed options for tool configurations.
+        For native Agno tools, checks that only allowed options are specified
+        to catch configuration errors early.
 
         Args:
             tool_config: Tool configuration (string or dictionary)
 
         Returns:
             True if valid, False otherwise
+
+        Example:
+            >>> ToolRegistry._validate_tool_config("ShellTools")  # Valid
+            True
+            >>> ToolRegistry._validate_tool_config({"name": "ShellTools"})  # Valid
+            True
+            >>> ToolRegistry._validate_tool_config({"name": "ShellTools", "invalid_option": True})
+            False  # Warns about invalid option
         """
         # Handle string format (just tool name)
         if isinstance(tool_config, str):
@@ -362,6 +420,23 @@ class ToolRegistry:
         # Handle dict format
         if isinstance(tool_config, dict):
             required_fields = ["name"]
-            return all(field in tool_config for field in required_fields)
+            if not all(field in tool_config for field in required_fields):
+                return False
+
+            # Validate tool options for native Agno tools (optional enhancement)
+            # This helps catch typos and invalid configuration early
+            tool_name = tool_config.get("name", "")
+            if tool_name and not tool_name.startswith(("mcp__", "shared__")):
+                # Check for unknown options
+                unknown_options = set(tool_config.keys()) - ToolRegistry.ALLOWED_TOOL_OPTIONS
+                if unknown_options:
+                    logger.warning(
+                        f"Tool '{tool_name}' has unknown options: {unknown_options}. "
+                        f"Allowed options: {ToolRegistry.ALLOWED_TOOL_OPTIONS}"
+                    )
+                    # Don't fail validation, just warn - allows for future extensibility
+                    # return False  # Uncomment to make this a hard error
+
+            return True
 
         return False

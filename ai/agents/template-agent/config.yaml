@@ -56,6 +56,13 @@ streaming:
   stream_intermediate_steps: true
 
 # Template agent tools (leave instructions empty to rely on the toolkit's Agno defaults)
+# Note: ShellTools and other native Agno tools can be added here
+# See ai/tools/CLAUDE.md for configuration patterns:
+#   - Zero config: - ShellTools
+#   - Custom instructions: - name: ShellTools
+#                             instructions: [...]
+#   - Disabled instructions: - name: ShellTools
+#                               instructions: []
 tools:
   - name: ShellTools
     instructions:
