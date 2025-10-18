@@ -78,31 +78,19 @@ class TestMCPServerConfig:
     def test_http_server_detection(self) -> None:
         """Test that HTTP/streamable-http servers are properly identified."""
         # Test streamable-http type
-        http_config = MCPServerConfig(
-            name="http-server",
-            type="streamable-http",
-            url="https://docs.agno.com/mcp"
-        )
+        http_config = MCPServerConfig(name="http-server", type="streamable-http", url="https://docs.agno.com/mcp")
         assert http_config.is_http_server is True
         assert http_config.is_sse_server is False
         assert http_config.is_command_server is False
 
         # Test http type (normalized to streamable-http)
-        http_config2 = MCPServerConfig(
-            name="http-server",
-            type="http",
-            url="http://localhost:8000/mcp"
-        )
+        http_config2 = MCPServerConfig(name="http-server", type="http", url="http://localhost:8000/mcp")
         assert http_config2.is_http_server is True
         assert http_config2.is_sse_server is False
         assert http_config2.is_command_server is False
 
         # Test SSE server is not HTTP
-        sse_config = MCPServerConfig(
-            name="sse-server",
-            type="sse",
-            url="http://localhost:8080/sse"
-        )
+        sse_config = MCPServerConfig(name="sse-server", type="sse", url="http://localhost:8080/sse")
         assert sse_config.is_http_server is False
         assert sse_config.is_sse_server is True
         assert sse_config.is_command_server is False
@@ -223,9 +211,7 @@ class TestGetMCPTools:
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
     @patch("lib.mcp.connection_manager.MCPTools")
-    async def test_http_server_connection(
-        self, mock_mcp_tools_class, mock_get_catalog
-    ) -> None:
+    async def test_http_server_connection(self, mock_mcp_tools_class, mock_get_catalog) -> None:
         """Test creating MCP tools for HTTP/streamable-http server."""
         # Setup mocks
         mock_catalog = Mock()
