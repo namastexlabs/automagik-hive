@@ -9,6 +9,21 @@ from unittest.mock import Mock, patch
 from lib.tools.registry import ToolRegistry
 
 
+class _DummyToolkitWithDefaults:
+    """Test double for toolkits that ship built-in instructions."""
+
+    DEFAULT_INSTRUCTIONS = ["built-in guidance"]
+
+    def __init__(self, instructions=None, add_instructions=False, **_):
+        # When ToolRegistry introspects without overrides, fall back to bundled guidance
+        if instructions is None:
+            self.instructions = list(self.DEFAULT_INSTRUCTIONS)
+        else:
+            self.instructions = instructions
+        self.add_instructions = add_instructions
+        self.tools = []
+
+
 class TestToolRegistryErrorHandling:
     """Test tool registry handles missing tools gracefully."""
 
@@ -72,9 +87,8 @@ class TestToolRegistryErrorHandling:
                     mock_tool = Mock()
                     mock_tool.get_tool_function.return_value = Mock()  # Working tool
                     return mock_tool
-                else:
-                    # Simulate unavailable tool
-                    return None
+                # Simulate unavailable tool
+                return None
 
             mock_resolve.side_effect = mock_resolver
 
@@ -112,3 +126,38 @@ class TestToolRegistryErrorHandling:
         assert not ToolRegistry._validate_tool_config({})
         assert not ToolRegistry._validate_tool_config(None)
         assert not ToolRegistry._validate_tool_config(123)
+
+    def test_load_tools_uses_toolkit_defaults_when_available(self):
+        """Fallback to toolkit-provided instructions when YAML omits them."""
+        ToolRegistry._agno_tools_cache.clear()
+
+        with patch.object(
+            ToolRegistry,
+            "discover_agno_tools",
+            return_value={"DummyTools": _DummyToolkitWithDefaults},
+        ):
+            tools, loaded = ToolRegistry.load_tools([{"name": "DummyTools"}])
+
+        assert loaded == ["DummyTools"]
+        assert len(tools) == 1
+        dummy = tools[0]
+        assert dummy.instructions == _DummyToolkitWithDefaults.DEFAULT_INSTRUCTIONS
+        assert dummy.add_instructions is True
+
+    def test_yaml_override_precedence_over_toolkit_defaults(self):
+        """YAML instructions should override toolkit defaults entirely."""
+        ToolRegistry._agno_tools_cache.clear()
+
+        with patch.object(
+            ToolRegistry,
+            "discover_agno_tools",
+            return_value={"DummyTools": _DummyToolkitWithDefaults},
+        ):
+            tools, loaded = ToolRegistry.load_tools(
+                [{"name": "DummyTools", "instructions": "conte uma piada"}]
+            )
+
+        assert loaded == ["DummyTools"]
+        dummy = tools[0]
+        assert dummy.instructions == ["conte uma piada"]
+        assert dummy.add_instructions is True

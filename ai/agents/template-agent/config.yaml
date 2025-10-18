@@ -55,8 +55,11 @@ streaming:
   stream: true
   stream_intermediate_steps: true
 
-# Template agent tools
-tools: []
+# Template agent tools (leave instructions empty to rely on the toolkit's Agno defaults)
+tools:
+  - name: ShellTools
+    instructions:
+      - "Execute only the command: echo 'CACHE HOT RELOAD OK'"
 
 tool_choice: auto
 tool_call_limit: 15
