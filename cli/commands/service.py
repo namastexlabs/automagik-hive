@@ -252,7 +252,6 @@ class ServiceManager:
                 templates_copied += 1
 
             # Copy .env.example
-            # Use template_root to find .env.example (same location as other templates)
             env_example_found = False
 
             # Try source directory first (for development)
@@ -264,25 +263,28 @@ class ServiceManager:
                 print("  ✅ Environment template (.env.example)")
                 env_example_found = True
             elif template_root is not None:
-                # For package installations, .env.example is in the same templates directory
+                # Try package installation location
                 env_example_pkg = template_root / ".env.example"
-                # Debug logging
-                import os
-                print(f"DEBUG: template_root = {template_root}", file=sys.stderr)
-                print(f"DEBUG: env_example_pkg = {env_example_pkg}", file=sys.stderr)
-                print(f"DEBUG: env_example_pkg.exists() = {env_example_pkg.exists()}", file=sys.stderr)
-                print(f"DEBUG: os.path.exists(env_example_pkg) = {os.path.exists(env_example_pkg)}", file=sys.stderr)
                 if env_example_pkg.exists():
                     shutil.copy(env_example_pkg, workspace_path / ".env.example")
                     print("  ✅ Environment template (.env.example)")
                     env_example_found = True
-                else:
-                    print(f"DEBUG: File not found, listing template_root contents:", file=sys.stderr)
-                    try:
-                        for item in template_root.iterdir():
-                            print(f"DEBUG:   - {item.name}", file=sys.stderr)
-                    except Exception as e:
-                        print(f"DEBUG: Error listing: {e}", file=sys.stderr)
+
+            # Fallback: Download from GitHub if not found locally
+            if not env_example_found:
+                try:
+                    import urllib.request
+
+                    github_url = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/.env.example"
+                    env_target = workspace_path / ".env.example"
+
+                    print("  📥 Downloading .env.example from GitHub...")
+                    urllib.request.urlretrieve(github_url, env_target)
+                    print("  ✅ Environment template (.env.example)")
+                    env_example_found = True
+                except Exception as e:
+                    print(f"  ⚠️  Could not download .env.example: {e}")
+                    print("  💡 You'll need to create it manually")
 
             if not env_example_found:
                 print("  ⚠️  .env.example not found (you'll need to create it manually)")
