@@ -391,10 +391,15 @@ class ServiceManager:
             if Path(workspace).resolve() != resolved_workspace:
                 pass
 
+            print("\n🔧 Automagik Hive Installation")
+            print("=" * 50)
+
             # 1. DEPLOYMENT CHOICE SELECTION (NEW)
             deployment_mode = self._prompt_deployment_choice()
 
             # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
+            print("\n📝 Step 1/2: Generating Credentials")
+            print("-" * 50)
             from lib.auth.credential_service import CredentialService
 
             credential_service = CredentialService(project_root=resolved_workspace)
@@ -402,15 +407,45 @@ class ServiceManager:
             # Generate workspace credentials using existing comprehensive service
             credential_service.install_all_modes(modes=["workspace"])
 
+            print("\n✅ Credentials generated successfully")
+            print(f"   📄 Configuration: {resolved_workspace}/.env")
+            print(f"   🔐 Backup: {resolved_workspace}/.env.master")
+
             # 3. DEPLOYMENT-SPECIFIC SETUP (NEW)
+            print(f"\n🚀 Step 2/2: Setting up {deployment_mode.replace('_', ' ').title()} Mode")
+            print("-" * 50)
+
             if deployment_mode == "local_hybrid":
-                return self._setup_local_hybrid_deployment(str(resolved_workspace))
+                success = self._setup_local_hybrid_deployment(str(resolved_workspace))
             else:  # full_docker
-                return self.main_service.install_main_environment(str(resolved_workspace))
+                success = self.main_service.install_main_environment(str(resolved_workspace))
+
+            if success:
+                print("\n" + "=" * 50)
+                print("✅ Installation Complete!")
+                print("=" * 50)
+                print("\n📋 Next Steps:")
+                print("   1. Edit .env with your API keys:")
+                print("      - ANTHROPIC_API_KEY (for Claude)")
+                print("      - OPENAI_API_KEY (optional)")
+                print("      - Other provider keys as needed")
+                print("\n   2. Start the development server:")
+                print(f"      cd {resolved_workspace}")
+                print("      automagik-hive dev")
+                print("\n   3. Access the API:")
+                print("      http://localhost:8886/docs")
+                print("\n💡 Tip: Check .env.example for all available configuration options")
+                print("=" * 50 + "\n")
+                return True
+            else:
+                print("\n❌ Installation failed")
+                return False
 
         except KeyboardInterrupt:
+            print("\n\n❌ Installation cancelled by user")
             return False
-        except Exception:
+        except Exception as e:
+            print(f"\n❌ Installation failed: {e}")
             return False
 
     def _resolve_install_root(self, workspace: str) -> Path:
