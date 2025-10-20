@@ -141,29 +141,37 @@ jobs:
           body: |
             ## 📦 PyPI Release ${{ steps.version.outputs.version }}
 
-            This release has been published to PyPI!
+            This release has been published to PyPI and is ready for installation and testing.
 
-            ### Installation
+            ### 🚀 Installation
+
             ```bash
             # Install from PyPI
             pip install automagik-hive==${{ steps.version.outputs.version }}
 
-            # Or run directly with uvx
+            # Or run directly with uvx (recommended)
             uvx automagik-hive@${{ steps.version.outputs.version }} --version
             ```
 
-            ### What's Included
-            - CORS configuration for agno.os integration
-            - Agent ID serialization corrections
-            - Knowledge hot reload functionality
+            ### 🔗 Links
 
-            ### Links
-            - [PyPI Package](https://pypi.org/project/automagik-hive/${{ steps.version.outputs.version }}/)
-            - [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
-            - [Associated PR #56](https://github.com/${{ github.repository }}/pull/56)
+            - 📦 [PyPI Package](https://pypi.org/project/automagik-hive/${{ steps.version.outputs.version }}/)
+            - 📚 [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+            - 🔀 [View Pull Request](https://github.com/${{ github.repository }}/pull/56)
+            - 📝 [Full Changelog](https://github.com/${{ github.repository }}/compare/v0.1.1b2...v${{ steps.version.outputs.version }})
+
+            ### 📋 Release Assets
+
+            This release includes:
+            - Python wheel (`.whl`) for fast installation
+            - Source distribution (`.tar.gz`) for building from source
+            - Digital attestations for supply chain security
 
             ---
-            🤖 Published automatically via GitHub Actions using trusted publishing
+
+            🤖 **Automated Release**: Published via GitHub Actions using [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
+
+            **Co-Authored-By**: Automagik Genie 🧞 <genie@namastex.ai>
           draft: false
           prerelease: ${{ steps.version.outputs.prerelease }}
           generate_release_notes: true
