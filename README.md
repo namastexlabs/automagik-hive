@@ -10,6 +10,9 @@
 </p>
 
 <p align="center">
+  <a href="https://pypi.org/project/automagik-hive/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/automagik-hive?style=flat-square&color=00D9FF" /></a>
+  <a href="https://pypi.org/project/automagik-hive/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/automagik-hive?style=flat-square&color=00D9FF" /></a>
+  <a href="https://pepy.tech/project/automagik-hive"><img alt="Downloads" src="https://img.shields.io/pepy/dt/automagik-hive?style=flat-square&color=00D9FF" /></a>
   <a href="https://github.com/namastexlabs/automagik-hive/actions"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/namastexlabs/automagik-hive/test.yml?branch=main&style=flat-square" /></a>
   <a href="https://github.com/namastexlabs/automagik-hive/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/namastexlabs/automagik-hive?style=flat-square&color=00D9FF" /></a>
   <a href="https://discord.gg/xcW8c7fF3R"><img alt="Discord" src="https://img.shields.io/discord/1095114867012292758?style=flat-square&color=00D9FF&label=discord" /></a>
