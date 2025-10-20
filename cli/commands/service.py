@@ -633,9 +633,19 @@ class ServiceManager:
     def _setup_local_hybrid_deployment(self, workspace: str) -> bool:
         """Setup local main + PostgreSQL docker only - NEW METHOD."""
         try:
-            return self.main_service.start_postgres_only(workspace)
-        except Exception:
-            return False
+            print("   🐘 Starting PostgreSQL container...")
+            success = self.main_service.start_postgres_only(workspace)
+            if success:
+                print("   ✅ PostgreSQL started successfully")
+                print("   🔌 Database: localhost:5532")
+            else:
+                print("   ⚠️  PostgreSQL setup skipped or failed")
+                print("   💡 You can start it later with: automagik-hive postgres-start")
+            return True  # Don't fail installation if PostgreSQL setup has issues
+        except Exception as e:
+            print(f"   ⚠️  PostgreSQL setup error: {e}")
+            print("   💡 You can start it later with: automagik-hive postgres-start")
+            return True  # Don't fail installation if PostgreSQL setup has issues
 
     # Credential generation handled by CredentialService.install_all_modes()
 
