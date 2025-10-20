@@ -109,14 +109,105 @@ ensure_python() {
     print_success "Python 3.12 installed via uv."
 }
 
+# Installs Docker on macOS with architecture detection.
+install_docker_macos() {
+    local arch
+    arch=$(uname -m)
+
+    print_info "Detected architecture: $arch"
+
+    if [[ "$arch" == "arm64" ]]; then
+        print_info "Apple Silicon detected. Installing Docker Desktop for Apple Silicon..."
+    elif [[ "$arch" == "x86_64" ]]; then
+        print_info "Intel Mac detected. Installing Docker Desktop for Intel..."
+    else
+        print_error "Unsupported architecture: $arch"
+        exit 1
+    fi
+
+    # Homebrew automatically handles architecture-appropriate installation
+    brew install --cask docker
+
+    print_info "Please start Docker Desktop manually. The script will continue once it's running."
+    print_info "(Look for Docker icon in menu bar and wait for it to finish starting)"
+
+    # Wait for Docker daemon to become available
+    local wait_count=0
+    until docker info >/dev/null 2>&1; do
+        echo -n "."
+        sleep 5
+        wait_count=$((wait_count + 1))
+        if [ $wait_count -gt 60 ]; then
+            echo ""
+            print_error "Docker daemon did not start within 5 minutes. Please check Docker Desktop."
+            exit 1
+        fi
+    done
+    echo ""
+    print_success "Docker Desktop is running."
+}
+
+# Verifies Docker installation and provides helpful error messages.
+verify_docker_installation() {
+    if ! docker info >/dev/null 2>&1; then
+        print_error "Docker verification failed. Please ensure Docker is running."
+        if [[ "$(uname -s)" == "Darwin" ]]; then
+            print_info "On macOS: Start Docker Desktop from Applications"
+        else
+            print_info "On Linux: Run 'sudo systemctl start docker'"
+        fi
+        exit 1
+    fi
+
+    local docker_version
+    docker_version=$(docker --version)
+    print_success "Docker verified: $docker_version"
+}
+
 # Ensures Docker is installed and the daemon is running.
 ensure_docker() {
     print_status "Verifying Docker installation..."
-    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-        print_success "Docker is installed and running."
-        return 0
+
+    # Check if docker command exists
+    if command -v docker >/dev/null 2>&1; then
+        # Check if Docker Desktop.app exists (macOS specific)
+        if [[ "$(uname -s)" == "Darwin" && -d "/Applications/Docker.app" ]]; then
+            print_success "Docker Desktop found."
+
+            # Check if daemon is running
+            if docker info >/dev/null 2>&1; then
+                print_success "Docker is running."
+                verify_docker_installation
+                return 0
+            else
+                print_warning "Docker Desktop is installed but not running."
+                print_info "Please start Docker Desktop manually, then re-run this installer."
+                print_info "Waiting for Docker to start..."
+                local wait_count=0
+                until docker info >/dev/null 2>&1; do
+                    sleep 5
+                    wait_count=$((wait_count + 1))
+                    if [ $wait_count -gt 60 ]; then
+                        echo ""
+                        print_error "Docker did not start within 5 minutes. Please start Docker Desktop and re-run the installer."
+                        exit 1
+                    fi
+                done
+                print_success "Docker is now running."
+                verify_docker_installation
+                return 0
+            fi
+        fi
+
+        # Docker CLI exists, check daemon
+        if docker info >/dev/null 2>&1; then
+            print_success "Docker is installed and running."
+            verify_docker_installation
+            return 0
+        fi
     fi
-    
+
+    # If we reach here, Docker needs installation
     print_info "Docker not found or not running. Attempting installation..."
     case "$(uname -s)" in
         Linux)
@@ -149,14 +240,13 @@ ensure_docker() {
             print_warning "Added user to docker group. You may need to log out and back in."
             ;;
         Darwin)
-            brew install --cask docker
-            print_info "Please start Docker Desktop manually. The script will continue once it's running."
-            until docker info >/dev/null 2>&1; do sleep 5; done
+            install_docker_macos
             ;;
         *) print_error "Unsupported OS for automatic Docker installation." && exit 1 ;;
     esac
-    
+
     print_success "Docker is now installed and running."
+    verify_docker_installation
 }
 
 # ===========================================
