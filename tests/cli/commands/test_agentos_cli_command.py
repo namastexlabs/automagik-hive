@@ -39,4 +39,3 @@ class TestAgentOSCLICommand:
         payload = json.loads(output)
         assert payload["os_id"] == "automagik-hive"
         assert "hive_sessions" in payload["databases"]
-

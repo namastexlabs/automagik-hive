@@ -73,9 +73,7 @@ def create_memory_instance(
                 "Memory creation failed: No database URL provided",
                 table_name=table_name,
             )
-            raise MemoryFactoryError(
-                f"No HIVE_DATABASE_URL provided for memory table '{table_name}'"
-            )
+            raise MemoryFactoryError(f"No HIVE_DATABASE_URL provided for memory table '{table_name}'")
 
         schema = config.get("database", {}).get("schema", "agno")
         shared_db = _build_memory_db(table_name, resolved_db_url, schema)
@@ -90,9 +88,7 @@ def create_memory_instance(
             error=str(exc),
             error_type=type(exc).__name__,
         )
-        raise MemoryFactoryError(
-            f"Memory creation failed for table '{table_name}': {exc}"
-        ) from exc
+        raise MemoryFactoryError(f"Memory creation failed for table '{table_name}': {exc}") from exc
 
 
 def create_agent_memory(

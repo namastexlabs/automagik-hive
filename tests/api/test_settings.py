@@ -15,19 +15,35 @@ from lib.utils.version_reader import get_api_version
 class TestApiSettings:
     """Test ApiSettings configuration class."""
 
-    @patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"})
     def test_default_settings_development(self):
         """Test default configuration values in development."""
         from api.settings import ApiSettings
 
-        settings = ApiSettings()
+        # Clear HIVE_CORS_ORIGINS to test default development behavior
+        env_backup = {
+            "HIVE_ENVIRONMENT": "development",
+        }
 
-        assert settings.title == "Automagik Hive Multi-Agent System"
-        assert settings.version == get_api_version()
-        assert settings.environment == "development"
-        assert settings.docs_enabled is True
-        assert isinstance(settings.cors_origin_list, list)
-        assert "*" in settings.cors_origin_list
+        # Remove HIVE_CORS_ORIGINS if present to test default behavior
+        if "HIVE_CORS_ORIGINS" in os.environ:
+            env_backup["HIVE_CORS_ORIGINS"] = os.environ["HIVE_CORS_ORIGINS"]
+            del os.environ["HIVE_CORS_ORIGINS"]
+
+        try:
+            with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}, clear=False):
+                settings = ApiSettings()
+
+                assert settings.title == "Automagik Hive Multi-Agent System"
+                assert settings.version == get_api_version()
+                assert settings.environment == "development"
+                assert settings.docs_enabled is True
+                assert isinstance(settings.cors_origin_list, list)
+                # In development without explicit HIVE_CORS_ORIGINS, should default to "*"
+                assert "*" in settings.cors_origin_list
+        finally:
+            # Restore original HIVE_CORS_ORIGINS if it existed
+            if "HIVE_CORS_ORIGINS" in env_backup:
+                os.environ["HIVE_CORS_ORIGINS"] = env_backup["HIVE_CORS_ORIGINS"]
 
     @patch.dict(
         os.environ,
@@ -47,15 +63,46 @@ class TestApiSettings:
         assert "https://example.com" in settings.cors_origin_list
         assert "*" not in settings.cors_origin_list
 
-    @patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"})
     def test_development_cors_origins(self):
         """Test CORS origins in development mode."""
         from api.settings import ApiSettings
 
+        # Clear HIVE_CORS_ORIGINS to test default development behavior
+        env_backup = {}
+        if "HIVE_CORS_ORIGINS" in os.environ:
+            env_backup["HIVE_CORS_ORIGINS"] = os.environ["HIVE_CORS_ORIGINS"]
+            del os.environ["HIVE_CORS_ORIGINS"]
+
+        try:
+            with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}, clear=False):
+                settings = ApiSettings()
+
+                # Development without explicit HIVE_CORS_ORIGINS should allow all origins
+                assert settings.cors_origin_list == ["*"]
+        finally:
+            # Restore original HIVE_CORS_ORIGINS if it existed
+            if "HIVE_CORS_ORIGINS" in env_backup:
+                os.environ["HIVE_CORS_ORIGINS"] = env_backup["HIVE_CORS_ORIGINS"]
+
+    @patch.dict(
+        os.environ,
+        {
+            "HIVE_ENVIRONMENT": "development",
+            "HIVE_CORS_ORIGINS": "http://localhost:3000,https://os.agno.com",
+        },
+    )
+    def test_development_cors_origins_explicit(self):
+        """Test that explicit HIVE_CORS_ORIGINS is respected even in development mode."""
+        from api.settings import ApiSettings
+
         settings = ApiSettings()
 
-        # Development should always allow all origins
-        assert settings.cors_origin_list == ["*"]
+        # Even in development, explicit HIVE_CORS_ORIGINS should take precedence
+        # This is critical for integrations like agno.os that require explicit origins
+        assert "http://localhost:3000" in settings.cors_origin_list
+        assert "https://os.agno.com" in settings.cors_origin_list
+        assert "*" not in settings.cors_origin_list
+        assert len(settings.cors_origin_list) == 2
 
     @patch.dict(
         os.environ,
@@ -324,15 +371,26 @@ class TestFieldValidators:
             with pytest.raises(ValueError, match="Invalid environment"):
                 ApiSettings.validate_environment(env)
 
-    @patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"})
     def test_set_cors_origin_list_development(self):
         """Test CORS origin list validator in development."""
         from api.settings import ApiSettings
 
-        settings = ApiSettings()
+        # Clear HIVE_CORS_ORIGINS to test default development behavior
+        env_backup = {}
+        if "HIVE_CORS_ORIGINS" in os.environ:
+            env_backup["HIVE_CORS_ORIGINS"] = os.environ["HIVE_CORS_ORIGINS"]
+            del os.environ["HIVE_CORS_ORIGINS"]
 
-        # In development, should always return ["*"]
-        assert settings.cors_origin_list == ["*"]
+        try:
+            with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}, clear=False):
+                settings = ApiSettings()
+
+                # In development without explicit HIVE_CORS_ORIGINS, should return ["*"]
+                assert settings.cors_origin_list == ["*"]
+        finally:
+            # Restore original HIVE_CORS_ORIGINS if it existed
+            if "HIVE_CORS_ORIGINS" in env_backup:
+                os.environ["HIVE_CORS_ORIGINS"] = env_backup["HIVE_CORS_ORIGINS"]
 
     @patch.dict(
         os.environ,
@@ -381,24 +439,37 @@ class TestEnvironmentIntegration:
         """Test that settings instances are properly isolated."""
         from api.settings import ApiSettings
 
-        # Create settings with different environments
-        with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}):
-            dev_settings = ApiSettings()
+        # Clear HIVE_CORS_ORIGINS to ensure clean test
+        env_backup = {}
+        if "HIVE_CORS_ORIGINS" in os.environ:
+            env_backup["HIVE_CORS_ORIGINS"] = os.environ["HIVE_CORS_ORIGINS"]
+            del os.environ["HIVE_CORS_ORIGINS"]
 
-        with patch.dict(
-            os.environ,
-            {
-                "HIVE_ENVIRONMENT": "production",
-                "HIVE_CORS_ORIGINS": "https://prod.example.com",
-            },
-        ):
-            prod_settings = ApiSettings()
+        try:
+            # Create settings with different environments
+            with patch.dict(os.environ, {"HIVE_ENVIRONMENT": "development"}, clear=False):
+                dev_settings = ApiSettings()
 
-        # Should have different configurations
-        assert dev_settings.environment == "development"
-        assert prod_settings.environment == "production"
-        assert dev_settings.cors_origin_list == ["*"]
-        assert "https://prod.example.com" in prod_settings.cors_origin_list
+            with patch.dict(
+                os.environ,
+                {
+                    "HIVE_ENVIRONMENT": "production",
+                    "HIVE_CORS_ORIGINS": "https://prod.example.com",
+                },
+                clear=False,
+            ):
+                prod_settings = ApiSettings()
+
+            # Should have different configurations
+            assert dev_settings.environment == "development"
+            assert prod_settings.environment == "production"
+            # Development without explicit HIVE_CORS_ORIGINS should use ["*"]
+            assert dev_settings.cors_origin_list == ["*"]
+            assert "https://prod.example.com" in prod_settings.cors_origin_list
+        finally:
+            # Restore original HIVE_CORS_ORIGINS if it existed
+            if "HIVE_CORS_ORIGINS" in env_backup:
+                os.environ["HIVE_CORS_ORIGINS"] = env_backup["HIVE_CORS_ORIGINS"]
 
 
 if __name__ == "__main__":

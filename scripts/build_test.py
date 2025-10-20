@@ -41,13 +41,13 @@ def main():
                 "zipfile",
                 "-e",
                 str(wheel_file),
-                "/tmp/wheel_check",
+                "/tmp/wheel_check",  # noqa: S108 - Test/script temp file
             ],
             check=True,
         )
 
         entry_file = (
-            Path("/tmp/wheel_check")
+            Path("/tmp/wheel_check")  # noqa: S108 - Test/script temp file
             / f"{wheel_file.stem}.dist-info"
             / "entry_points.txt"
         )

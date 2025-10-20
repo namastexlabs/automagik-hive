@@ -13,12 +13,8 @@ class MCPToolConfig(BaseModel):
     """Configuration for a single MCP tool reference"""
 
     server_name: str = Field(..., description="Name of the MCP server")
-    tool_name: str | None = Field(
-        None, description="Specific tool name (if different from server)"
-    )
-    parameters: dict[str, Any] | None = Field(
-        default_factory=dict, description="Default parameters for the tool"
-    )
+    tool_name: str | None = Field(None, description="Specific tool name (if different from server)")
+    parameters: dict[str, Any] | None = Field(default_factory=dict, description="Default parameters for the tool")
     enabled: bool = Field(True, description="Whether the tool is enabled")
 
     @field_validator("server_name")
@@ -59,14 +55,10 @@ class AgentConfig(BaseModel):
     instructions: str | list[str] = Field(..., description="Agent instructions")
 
     # Tools (mixed regular and MCP tools)
-    tools: list[str] = Field(
-        default_factory=list, description="List of tools including MCP tools"
-    )
+    tools: list[str] = Field(default_factory=list, description="List of tools including MCP tools")
 
     # Knowledge filtering
-    knowledge_filter: dict[str, Any] | None = Field(
-        None, description="Knowledge base filtering"
-    )
+    knowledge_filter: dict[str, Any] | None = Field(None, description="Knowledge base filtering")
 
     # Storage configuration
     storage: dict[str, Any] | None = Field(None, description="Storage configuration")
@@ -118,19 +110,13 @@ class AgentConfigMCP(BaseModel):
     config: AgentConfig = Field(..., description="Standard agent configuration")
 
     # Parsed tools
-    regular_tools: list[str] = Field(
-        default_factory=list, description="Regular (non-MCP) tools"
-    )
-    mcp_tools: list[MCPToolConfig] = Field(
-        default_factory=list, description="Parsed MCP tools"
-    )
+    regular_tools: list[str] = Field(default_factory=list, description="Regular (non-MCP) tools")
+    mcp_tools: list[MCPToolConfig] = Field(default_factory=list, description="Parsed MCP tools")
 
     @property
     def all_tools(self) -> list[str]:
         """Get all tools (regular + MCP) as string list"""
-        return self.regular_tools + [
-            f"mcp.{tool.server_name}" for tool in self.mcp_tools
-        ]
+        return self.regular_tools + [f"mcp.{tool.server_name}" for tool in self.mcp_tools]
 
     @property
     def mcp_server_names(self) -> list[str]:

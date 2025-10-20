@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.1.1b2"
+version = "0.2.0rc2"
 description = "Automagik Hive"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -51,6 +51,12 @@ package = true
 [tool.hatch.build.targets.wheel]
 packages = ["ai", "api", "lib", "cli", "common"]
 
+[tool.hatch.build.targets.wheel.shared-data]
+"ai/agents/template-agent" = "automagik_hive/templates/agents/template-agent"
+"ai/teams/template-team" = "automagik_hive/templates/teams/template-team"
+"ai/workflows/template-workflow" = "automagik_hive/templates/workflows/template-workflow"
+".env.example" = "automagik_hive/templates/.env.example"
+
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
@@ -70,16 +76,33 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+exclude = [
+      ".claude",
+      ".git",
+      ".venv",
+      "__pycache__",
+      "build",
+      "dist",
+  ]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "S", "B", "A", "C4", "T20"]
-ignore = ["E501", "S101", "S603", "S607"]
+ignore = ["E501", "S101", "S603", "S607", "T201", "B904", "S106", "B008"]
+
 
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+exclude = [
+      '^\.venv/',
+      '^\.git/',
+      '__pycache__',
+]
+[[tool.mypy.overrides]]
+  module = ["langwatch.*", "langwatch.dspy.*"]
+  follow_imports = "skip"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

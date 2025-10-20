@@ -24,19 +24,13 @@ class BusinessUnitFilter:
 
         # Defensive normalization in case the loaded config has unexpected shapes
         business_units_cfg = self.config.get("business_units", {}) if isinstance(self.config, dict) else {}
-        self.business_units: dict[str, Any] = (
-            business_units_cfg if isinstance(business_units_cfg, dict) else {}
-        )
+        self.business_units: dict[str, Any] = business_units_cfg if isinstance(business_units_cfg, dict) else {}
 
         search_cfg = self.config.get("search_config", {}) if isinstance(self.config, dict) else {}
-        self.search_config: dict[str, Any] = (
-            search_cfg if isinstance(search_cfg, dict) else {}
-        )
+        self.search_config: dict[str, Any] = search_cfg if isinstance(search_cfg, dict) else {}
 
         perf_cfg = self.config.get("performance", {}) if isinstance(self.config, dict) else {}
-        self.performance: dict[str, Any] = (
-            perf_cfg if isinstance(perf_cfg, dict) else {}
-        )
+        self.performance: dict[str, Any] = perf_cfg if isinstance(perf_cfg, dict) else {}
 
         # Build keyword lookup maps for faster filtering
         self._build_keyword_maps()
@@ -44,9 +38,7 @@ class BusinessUnitFilter:
         logger.info(
             "Business unit filter initialized",
             business_units=len(self.business_units),
-            total_keywords=sum(
-                len(bu.get("keywords", [])) for bu in self.business_units.values()
-            ),
+            total_keywords=sum(len(bu.get("keywords", [])) for bu in self.business_units.values()),
         )
 
     def _build_keyword_maps(self) -> None:
@@ -134,9 +126,7 @@ class BusinessUnitFilter:
         return {
             "max_results": self.search_config.get("max_results", 3),
             "relevance_threshold": self.search_config.get("relevance_threshold", 0.7),
-            "enable_hybrid_search": self.search_config.get(
-                "enable_hybrid_search", True
-            ),
+            "enable_hybrid_search": self.search_config.get("enable_hybrid_search", True),
             "use_semantic_search": self.search_config.get("use_semantic_search", True),
         }
 
@@ -148,9 +138,7 @@ class BusinessUnitFilter:
             "cache_max_size": self.performance.get("cache_max_size", 1000),
         }
 
-    def filter_documents_by_business_unit(
-        self, documents: list[Any], target_unit: str
-    ) -> list[Any]:
+    def filter_documents_by_business_unit(self, documents: list[Any], target_unit: str) -> list[Any]:
         """
         Filter documents to only include those matching the target business unit.
 
@@ -199,41 +187,40 @@ class BusinessUnitFilter:
 
     def list_business_units(self) -> dict[str, str]:
         """List all available business units."""
-        return {
-            unit_id: unit_data["name"]
-            for unit_id, unit_data in self.business_unit_keywords.items()
-        }
+        return {unit_id: unit_data["name"] for unit_id, unit_data in self.business_unit_keywords.items()}
 
 
 def test_config_filter() -> None:
     """Test function to demonstrate BusinessUnitFilter functionality."""
     # Create filter instance
     filter_instance = BusinessUnitFilter()
-    
+
     logger.info("Testing BusinessUnitFilter functionality")
-    
+
     # Test business unit detection
     test_texts = [
         "I need help with payment processing issues",
         "My account has problems and I need support",
-        "Terminal configuration for merchant services"
+        "Terminal configuration for merchant services",
     ]
-    
+
     for text in test_texts:
         detected = filter_instance.detect_business_unit_from_text(text)
         if detected:
             unit_info = filter_instance.get_business_unit_info(detected)
             logger.info(f"Detected '{detected}' for text: '{text}'", unit_info=unit_info)
-    
+
     # Test configuration access
     search_params = filter_instance.get_search_params()
     performance_settings = filter_instance.get_performance_settings()
     business_units = filter_instance.list_business_units()
-    
-    logger.info("Configuration retrieved", 
-               search_params=search_params,
-               performance_settings=performance_settings,
-               business_units=business_units)
+
+    logger.info(
+        "Configuration retrieved",
+        search_params=search_params,
+        performance_settings=performance_settings,
+        business_units=business_units,
+    )
 
 
 # --- Test patchability helper -------------------------------------------------

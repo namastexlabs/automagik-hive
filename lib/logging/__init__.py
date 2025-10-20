@@ -23,7 +23,7 @@ from .batch_logger import (
     set_runtime_mode,
     startup_logging,
 )
-from .config import initialize_logging, ensure_logging_initialized, setup_logging
+from .config import ensure_logging_initialized, initialize_logging, setup_logging
 from .progress import component_tracker, startup_progress
 from .session_logger import (
     log_run_continuation_attempt,

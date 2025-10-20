@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI
@@ -11,13 +12,12 @@ from api.settings import api_settings
 from lib.auth.dependencies import get_auth_service, require_api_key
 from lib.logging import initialize_logging, logger
 
-
 # Ensure unified logging is initialized for standalone FastAPI entrypoints
 initialize_logging(surface="api.main")
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan manager"""
     # Startup - initialize authentication
     auth_service = get_auth_service()
@@ -27,9 +27,7 @@ async def lifespan(_app: FastAPI):
 
     # Log security warnings for production
     if auth_status["production_override_active"]:
-        logger.warning(
-            "Production Security Override: Authentication ENABLED despite HIVE_AUTH_DISABLED=true"
-        )
+        logger.warning("Production Security Override: Authentication ENABLED despite HIVE_AUTH_DISABLED=true")
 
     yield
 
@@ -72,15 +70,21 @@ def create_app() -> FastAPI:
     app.include_router(protected_router)
 
     # Add Middlewares
+    # Note: allow_credentials=True is incompatible with allow_origins=["*"]
+    # Browsers reject this combination as a security measure
+    cors_origins = api_settings.cors_origin_list if api_settings.cors_origin_list else ["*"]
+    use_credentials = "*" not in cors_origins
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=api_settings.cors_origin_list
-        if api_settings.cors_origin_list
-        else ["*"],
-        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_credentials=use_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    if not use_credentials:
+        logger.debug("CORS credentials disabled due to wildcard origin", origins=cors_origins)
 
     return app
 

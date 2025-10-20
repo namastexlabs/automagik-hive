@@ -62,9 +62,7 @@ class PostgreSQLManager:
             return self.credential_service
         return CredentialService(project_root=workspace_root)
 
-    def setup_postgres_container(
-        self, interactive: bool = True, workspace_path: str = "."
-    ) -> bool:
+    def setup_postgres_container(self, interactive: bool = True, workspace_path: str = ".") -> bool:
         """Setup PostgreSQL container with secure credentials.
 
         Replicates setup_docker_postgres Makefile function:
@@ -83,9 +81,7 @@ class PostgreSQLManager:
             True if setup successful, False otherwise
         """
         if interactive:
-            choice = input(
-                "Would you like to set up Docker PostgreSQL with secure credentials? (Y/n): "
-            )
+            choice = input("Would you like to set up Docker PostgreSQL with secure credentials? (Y/n): ")
             if choice.lower() in ["n", "no"]:
                 return False
 
@@ -217,9 +213,7 @@ class PostgreSQLManager:
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
-    def get_container_logs(
-        self, tail: int = 50, workspace_path: str = "."
-    ) -> str | None:
+    def get_container_logs(self, tail: int = 50, workspace_path: str = ".") -> str | None:
         """Get PostgreSQL container logs.
 
         Args:
@@ -476,16 +470,11 @@ class PostgreSQLManager:
             env["POSTGRES_GID"] = str(gid)
 
             # Extract credentials from env file if available
-            credentials = (
-                self._get_credential_service(workspace_path)
-                .extract_postgres_credentials_from_env()
-            )
+            credentials = self._get_credential_service(workspace_path).extract_postgres_credentials_from_env()
             if credentials.get("user") and credentials.get("password"):
                 env["POSTGRES_USER"] = credentials["user"]
                 env["POSTGRES_PASSWORD"] = credentials["password"]
-                env["POSTGRES_DB"] = credentials.get(
-                    "database", self.config.database
-                )
+                env["POSTGRES_DB"] = credentials.get("database", self.config.database)
 
             compose_cmd = self._get_compose_command()
             result = subprocess.run(

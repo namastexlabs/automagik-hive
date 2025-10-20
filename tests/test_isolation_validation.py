@@ -212,7 +212,7 @@ class TestGlobalIsolationEnforcement:
                     assert test_filename in warning_msg
                     assert "isolated_workspace fixture" in warning_msg
 
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 # If file creation fails, that's actually good for isolation
                 pass
 
@@ -255,7 +255,7 @@ class TestGlobalIsolationEnforcement:
                     # Clean up
                     if Path(dotfile).exists():
                         Path(dotfile).unlink()
-                except Exception:
+                except Exception:  # noqa: S110 - Silent exception handling is intentional
                     pass
 
             # Dotfiles should not trigger warnings

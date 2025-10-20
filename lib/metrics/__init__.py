@@ -111,8 +111,10 @@ def _check_langwatch_availability() -> bool:
         True if LangWatch can be imported, False otherwise
     """
     try:
-        import langwatch
-        from openinference.instrumentation.agno import AgnoInstrumentor
+        import langwatch  # noqa: F401 - Availability test, import required
+        from openinference.instrumentation.agno import (
+            AgnoInstrumentor,  # noqa: F401 - Availability test, import required
+        )
 
         return True
     except ImportError:
@@ -134,7 +136,7 @@ def get_metrics_status() -> dict:
         try:
             service = get_metrics_service()
             metrics_service_available = service is not None
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
 
     return {

@@ -6,7 +6,7 @@ and validates response times and throughput.
 
 PERFORMANCE OPTIMIZATIONS APPLIED:
 - Reduced throughput test duration: 5s → 2s (60% reduction)
-- Reduced sustained load test: 6s → 2.5s (58% reduction)  
+- Reduced sustained load test: 6s → 2.5s (58% reduction)
 - Optimized concurrent tests: 100→60 requests, 30→20 workers
 - Improved pacing algorithms for faster convergence
 - Maintained performance validation accuracy while reducing CI overhead
@@ -105,7 +105,7 @@ class TestConcurrencyPerformance:
     def test_concurrent_health_checks_performance(self, test_client):
         """Test performance of health checks under concurrent load."""
         num_requests = 60  # Reduced from 100 for faster testing
-        max_workers = 15   # Reduced workers for more predictable performance
+        max_workers = 15  # Reduced workers for more predictable performance
 
         def make_request():
             start_time = time.time()
@@ -133,9 +133,7 @@ class TestConcurrencyPerformance:
         throughput = num_requests / total_time  # requests per second
 
         # Performance assertions - adjusted for reduced load
-        assert avg_response_time < 0.4, (
-            f"Average response time under load: {avg_response_time:.3f}s"
-        )
+        assert avg_response_time < 0.4, f"Average response time under load: {avg_response_time:.3f}s"
         assert throughput > 40, f"Throughput too low: {throughput:.1f} req/s"
 
         # No single request should take too long
@@ -180,27 +178,19 @@ class TestConcurrencyPerformance:
             results = [future.result() for future in futures]
 
         # Analyze results by endpoint type
-        health_times = [
-            duration for endpoint, _, duration in results if endpoint == "health"
-        ]
-        component_times = [
-            duration for endpoint, _, duration in results if endpoint == "components"
-        ]
+        health_times = [duration for endpoint, _, duration in results if endpoint == "health"]
+        component_times = [duration for endpoint, _, duration in results if endpoint == "components"]
         [duration for endpoint, _, duration in results if endpoint == "mcp"]
 
         # Health endpoints should remain fast under mixed load
         if health_times:
             avg_health_time = statistics.mean(health_times)
-            assert avg_health_time < 0.25, (
-                f"Health endpoints slow under mixed load: {avg_health_time:.3f}s"
-            )
+            assert avg_health_time < 0.25, f"Health endpoints slow under mixed load: {avg_health_time:.3f}s"
 
         # Component endpoints should handle concurrent load reasonably
         if component_times:
             avg_component_time = statistics.mean(component_times)
-            assert avg_component_time < 1.5, (
-                f"Component endpoints slow under load: {avg_component_time:.3f}s"
-            )
+            assert avg_component_time < 1.5, f"Component endpoints slow under load: {avg_component_time:.3f}s"
 
     def test_concurrent_request_isolation(self, test_client):
         """Test that concurrent requests don't interfere with each other."""
@@ -225,9 +215,7 @@ class TestConcurrencyPerformance:
 
         # Execute concurrent requests with reduced workers
         with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-            futures = [
-                executor.submit(make_request_with_id, i) for i in range(num_requests)
-            ]
+            futures = [executor.submit(make_request_with_id, i) for i in range(num_requests)]
             completed_ids = [future.result() for future in futures]
 
         # Verify all requests completed successfully
@@ -317,7 +305,7 @@ class TestThroughputPerformance:
                 start_req = time.time()
                 response = test_client.get("/health")
                 end_req = time.time()
-                
+
                 if response.status_code == status.HTTP_200_OK:
                     request_count += 1
                     response_times.append(end_req - start_req)
@@ -357,60 +345,60 @@ class TestThroughputPerformance:
         duration = 3.0  # 3 seconds for sustained load test
         min_requests = 15  # Minimum requests to complete
         target_workers = 8  # Concurrent workers for sustained load
-        
+
         successful_requests = 0
         failed_requests = 0
         response_times = []
         results_lock = threading.Lock()
-        
+
         def worker_thread():
             """Worker thread that makes requests for the duration."""
             nonlocal successful_requests, failed_requests
             worker_start = time.time()
             worker_end = worker_start + duration
-            
+
             while time.time() < worker_end:
                 try:
                     request_start = time.time()
                     response = test_client.get("/health")
                     request_end = time.time()
                     response_time = request_end - request_start
-                    
+
                     with results_lock:
                         if response.status_code == status.HTTP_200_OK:
                             successful_requests += 1
                             response_times.append(response_time)
                         else:
                             failed_requests += 1
-                            
+
                     # Small delay to prevent overwhelming the system
                     # but still maintain good throughput
                     time.sleep(0.005)  # 5ms delay for sustainable load
-                    
+
                 except Exception:
                     with results_lock:
                         failed_requests += 1
                     time.sleep(0.01)  # Brief recovery delay
-        
+
         # Start all worker threads
         threads = []
         start_time = time.time()
-        
+
         for _ in range(target_workers):
             thread = threading.Thread(target=worker_thread)
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
+
         actual_duration = time.time() - start_time
         total_attempts = successful_requests + failed_requests
         actual_rps = successful_requests / actual_duration if actual_duration > 0 else 0
         avg_response_time = statistics.mean(response_times) if response_times else 0
         success_rate = (successful_requests / total_attempts * 100) if total_attempts > 0 else 0
-        
+
         # Primary assertion: minimum request completion
         assert successful_requests >= min_requests, (
             f"Too few requests completed: {successful_requests} (minimum: {min_requests}). "
@@ -420,28 +408,27 @@ class TestThroughputPerformance:
             f"Avg response time: {avg_response_time:.3f}s, "
             f"Workers: {target_workers}, Duration: {actual_duration:.2f}s"
         )
-        
+
         # Ensure reasonable success rate under load
         min_success_rate = 85.0  # 85% minimum success rate
         assert success_rate >= min_success_rate, (
             f"Success rate too low: {success_rate:.1f}% (minimum: {min_success_rate}%). "
             f"Failed requests: {failed_requests}/{total_attempts}"
         )
-        
+
         # Response times should remain reasonable under sustained load
         max_acceptable_avg_time = 0.5  # Reasonable for sustained concurrent load
         assert avg_response_time < max_acceptable_avg_time, (
             f"Response time degraded under sustained load: {avg_response_time:.3f}s "
             f"(max acceptable: {max_acceptable_avg_time}s)"
         )
-        
+
         # Verify no individual request takes too long
         if response_times:
             max_response_time = max(response_times)
             max_individual_time = 2.0  # Reasonable max for individual requests under load
             assert max_response_time < max_individual_time, (
-                f"Individual request too slow: {max_response_time:.3f}s "
-                f"(max acceptable: {max_individual_time}s)"
+                f"Individual request too slow: {max_response_time:.3f}s (max acceptable: {max_individual_time}s)"
             )
 
 
@@ -465,15 +452,11 @@ class TestScalabilityPerformance:
             with concurrent.futures.ThreadPoolExecutor(
                 max_workers=concurrency,
             ) as executor:
-                futures = [
-                    executor.submit(make_request) for _ in range(concurrency * 5)
-                ]
+                futures = [executor.submit(make_request) for _ in range(concurrency * 5)]
                 request_results = [future.result() for future in futures]
 
             # Calculate average response time
-            valid_times = [
-                duration for status, duration in request_results if status == 200
-            ]
+            valid_times = [duration for status, duration in request_results if status == 200]
             if valid_times:
                 avg_time = statistics.mean(valid_times)
                 results[concurrency] = avg_time

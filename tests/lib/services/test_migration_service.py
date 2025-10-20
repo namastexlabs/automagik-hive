@@ -45,9 +45,7 @@ class TestMigrationServiceInitialization:
     def test_init_missing_db_url_raises_error(self):
         """Test initialization fails when no database URL is provided."""
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(
-                ValueError, match="HIVE_DATABASE_URL environment variable must be set"
-            ):
+            with pytest.raises(ValueError, match="HIVE_DATABASE_URL environment variable must be set"):
                 MigrationService()
 
     def test_init_missing_alembic_config_raises_error(self):
@@ -198,9 +196,7 @@ class TestMigrationStatusCheck:
         mock_script.get_current_head.return_value = "head_revision_123"
 
         mock_context = Mock()
-        mock_context.get_current_revision.side_effect = Exception(
-            "no such table: alembic_version"
-        )
+        mock_context.get_current_revision.side_effect = Exception("no such table: alembic_version")
 
         mock_engine = Mock()
         mock_connection = Mock()
@@ -219,9 +215,7 @@ class TestMigrationStatusCheck:
                         "lib.services.migration_service.MigrationContext.configure",
                         return_value=mock_context,
                     ):
-                        with patch(
-                            "lib.services.migration_service.logger"
-                        ) as mock_logger:
+                        with patch("lib.services.migration_service.logger") as mock_logger:
                             result = await self.service.check_migration_status()
 
                             assert result["success"] is True
@@ -238,9 +232,7 @@ class TestMigrationStatusCheck:
     @pytest.mark.asyncio
     async def test_check_migration_status_configuration_error(self):
         """Test status check handles configuration errors gracefully."""
-        with patch.object(
-            self.service, "_get_alembic_config", side_effect=Exception("Config error")
-        ):
+        with patch.object(self.service, "_get_alembic_config", side_effect=Exception("Config error")):
             with patch("lib.services.migration_service.logger") as mock_logger:
                 result = await self.service.check_migration_status()
 
@@ -249,9 +241,7 @@ class TestMigrationStatusCheck:
                 assert result["error_type"] == "Exception"
                 assert result["database_url_configured"] is True
 
-                mock_logger.error.assert_called_with(
-                    "Migration status check failed", error="Config error"
-                )
+                mock_logger.error.assert_called_with("Migration status check failed", error="Config error")
 
     @pytest.mark.asyncio
     async def test_check_migration_status_database_connection_error(self):
@@ -276,26 +266,20 @@ class TestMigrationStatusCheck:
                         assert result["error_type"] == "Exception"
                         assert result["database_url_configured"] is True
 
-                        mock_logger.error.assert_called_with(
-                            "Migration status check failed", error="Connection failed"
-                        )
+                        mock_logger.error.assert_called_with("Migration status check failed", error="Connection failed")
 
     @pytest.mark.asyncio
     async def test_check_migration_status_missing_db_url(self):
         """Test status check with missing database URL."""
         service = MigrationService(db_url="")  # Empty URL
 
-        with patch.object(
-            service, "_get_alembic_config", side_effect=Exception("No URL")
-        ):
+        with patch.object(service, "_get_alembic_config", side_effect=Exception("No URL")):
             with patch("lib.services.migration_service.logger"):
                 result = await service.check_migration_status()
 
                 assert result["success"] is False
                 # Empty string is still considered configured for bool() purposes in the production code
-                assert (
-                    result["database_url_configured"] is True
-                )  # Changed to match actual behavior
+                assert result["database_url_configured"] is True  # Changed to match actual behavior
                 assert "error" in result
 
 
@@ -322,9 +306,7 @@ class TestMigrationExecution:
         mock_engine.connect.return_value = mock_context_manager
 
         with patch.object(self.service, "_get_alembic_config") as mock_cfg:
-            with patch(
-                "lib.services.migration_service.command.upgrade"
-            ) as mock_upgrade:
+            with patch("lib.services.migration_service.command.upgrade") as mock_upgrade:
                 with patch(
                     "lib.services.migration_service.ScriptDirectory.from_config",
                     return_value=mock_script,
@@ -334,9 +316,7 @@ class TestMigrationExecution:
                             "lib.services.migration_service.MigrationContext.configure",
                             return_value=mock_context,
                         ):
-                            with patch(
-                                "lib.services.migration_service.logger"
-                            ) as mock_logger:
+                            with patch("lib.services.migration_service.logger") as mock_logger:
                                 result = await self.service.run_migrations()
 
                                 assert result["success"] is True
@@ -344,15 +324,9 @@ class TestMigrationExecution:
                                 assert result["target_revision"] == "head"
                                 assert result["migrations_applied"] is True
 
-                                mock_upgrade.assert_called_once_with(
-                                    mock_cfg.return_value, "head"
-                                )
-                                mock_logger.info.assert_any_call(
-                                    "Executing Alembic upgrade command", target="head"
-                                )
-                                mock_logger.info.assert_any_call(
-                                    "Starting database migrations", target="head"
-                                )
+                                mock_upgrade.assert_called_once_with(mock_cfg.return_value, "head")
+                                mock_logger.info.assert_any_call("Executing Alembic upgrade command", target="head")
+                                mock_logger.info.assert_any_call("Starting database migrations", target="head")
                                 mock_logger.info.assert_any_call(
                                     "Database migrations completed successfully",
                                     revision="final_revision_456",
@@ -374,9 +348,7 @@ class TestMigrationExecution:
         mock_engine.connect.return_value = mock_context_manager
 
         with patch.object(self.service, "_get_alembic_config") as mock_cfg:
-            with patch(
-                "lib.services.migration_service.command.upgrade"
-            ) as mock_upgrade:
+            with patch("lib.services.migration_service.command.upgrade") as mock_upgrade:
                 with patch(
                     "lib.services.migration_service.ScriptDirectory.from_config",
                     return_value=mock_script,
@@ -386,21 +358,15 @@ class TestMigrationExecution:
                             "lib.services.migration_service.MigrationContext.configure",
                             return_value=mock_context,
                         ):
-                            with patch(
-                                "lib.services.migration_service.logger"
-                            ) as mock_logger:
-                                result = await self.service.run_migrations(
-                                    target_revision=target_revision
-                                )
+                            with patch("lib.services.migration_service.logger") as mock_logger:
+                                result = await self.service.run_migrations(target_revision=target_revision)
 
                                 assert result["success"] is True
                                 assert result["final_revision"] == target_revision
                                 assert result["target_revision"] == target_revision
                                 assert result["migrations_applied"] is True
 
-                                mock_upgrade.assert_called_once_with(
-                                    mock_cfg.return_value, target_revision
-                                )
+                                mock_upgrade.assert_called_once_with(mock_cfg.return_value, target_revision)
                                 mock_logger.info.assert_any_call(
                                     "Executing Alembic upgrade command",
                                     target=target_revision,
@@ -484,9 +450,7 @@ class TestMigrationExecution:
     @pytest.mark.asyncio
     async def test_run_migrations_outer_exception_handling(self):
         """Test migration execution handles inner-level exceptions."""
-        with patch.object(
-            self.service, "_get_alembic_config", side_effect=Exception("Outer error")
-        ):
+        with patch.object(self.service, "_get_alembic_config", side_effect=Exception("Outer error")):
             with patch("lib.services.migration_service.logger") as mock_logger:
                 result = await self.service.run_migrations()
 
@@ -505,16 +469,12 @@ class TestMigrationExecution:
     @pytest.mark.asyncio
     async def test_run_migrations_logs_failure_on_sync_error(self):
         """Test migration execution logs failures appropriately."""
-        with patch.object(
-            self.service, "_get_alembic_config", side_effect=Exception("Sync error")
-        ):
+        with patch.object(self.service, "_get_alembic_config", side_effect=Exception("Sync error")):
             with patch("lib.services.migration_service.logger") as mock_logger:
                 result = await self.service.run_migrations()
 
                 assert result["success"] is False
-                mock_logger.error.assert_any_call(
-                    "Database migration failed", error="Sync error"
-                )
+                mock_logger.error.assert_any_call("Database migration failed", error="Sync error")
 
     @pytest.mark.asyncio
     async def test_run_migrations_outer_exception_coverage(self):
@@ -554,9 +514,7 @@ class TestDatabaseReadinessEnsurance:
             "current_revision": "latest_revision_123",
         }
 
-        with patch.object(
-            self.service, "check_migration_status", return_value=mock_status
-        ):
+        with patch.object(self.service, "check_migration_status", return_value=mock_status):
             with patch("lib.services.migration_service.logger") as mock_logger:
                 result = await self.service.ensure_database_ready()
 
@@ -565,18 +523,14 @@ class TestDatabaseReadinessEnsurance:
                 assert result["action"] == "none_required"
                 assert result["current_revision"] == "latest_revision_123"
 
-                mock_logger.info.assert_called_with(
-                    "Database schema is up-to-date", revision="latest_revision_123"
-                )
+                mock_logger.info.assert_called_with("Database schema is up-to-date", revision="latest_revision_123")
 
     @pytest.mark.asyncio
     async def test_ensure_database_ready_status_check_fails(self):
         """Test ensuring database readiness when status check fails."""
         mock_status = {"success": False, "error": "Status check failed"}
 
-        with patch.object(
-            self.service, "check_migration_status", return_value=mock_status
-        ):
+        with patch.object(self.service, "check_migration_status", return_value=mock_status):
             result = await self.service.ensure_database_ready()
 
             assert result["success"] is False
@@ -595,12 +549,8 @@ class TestDatabaseReadinessEnsurance:
 
         mock_migration_result = {"success": True, "final_revision": "new_revision_456"}
 
-        with patch.object(
-            self.service, "check_migration_status", return_value=mock_status
-        ):
-            with patch.object(
-                self.service, "run_migrations", return_value=mock_migration_result
-            ):
+        with patch.object(self.service, "check_migration_status", return_value=mock_status):
+            with patch.object(self.service, "run_migrations", return_value=mock_migration_result):
                 result = await self.service.ensure_database_ready()
 
                 assert result["success"] is True
@@ -620,12 +570,8 @@ class TestDatabaseReadinessEnsurance:
 
         mock_migration_result = {"success": False, "error": "Migration failed"}
 
-        with patch.object(
-            self.service, "check_migration_status", return_value=mock_status
-        ):
-            with patch.object(
-                self.service, "run_migrations", return_value=mock_migration_result
-            ):
+        with patch.object(self.service, "check_migration_status", return_value=mock_status):
+            with patch.object(self.service, "run_migrations", return_value=mock_migration_result):
                 result = await self.service.ensure_database_ready()
 
                 assert result["success"] is False
@@ -648,12 +594,8 @@ class TestDatabaseReadinessEnsurance:
             "final_revision": "initial_revision_001",
         }
 
-        with patch.object(
-            self.service, "check_migration_status", return_value=mock_status
-        ):
-            with patch.object(
-                self.service, "run_migrations", return_value=mock_migration_result
-            ):
+        with patch.object(self.service, "check_migration_status", return_value=mock_status):
+            with patch.object(self.service, "run_migrations", return_value=mock_migration_result):
                 result = await self.service.ensure_database_ready()
 
                 assert result["success"] is True
@@ -673,10 +615,7 @@ class TestDatabaseReadinessEnsurance:
                 result = await self.service.ensure_database_ready()
 
                 assert result["success"] is False
-                assert (
-                    result["message"]
-                    == "Database readiness check failed: Unexpected error"
-                )
+                assert result["message"] == "Database readiness check failed: Unexpected error"
                 assert result["action"] == "error"
                 assert result["error"] == "Unexpected error"
 
@@ -699,12 +638,8 @@ class TestDatabaseReadinessEnsurance:
 
         mock_migration_result = {"success": True, "final_revision": "new_revision_789"}
 
-        with patch.object(
-            self.service, "check_migration_status", return_value=mock_status
-        ):
-            with patch.object(
-                self.service, "run_migrations", return_value=mock_migration_result
-            ):
+        with patch.object(self.service, "check_migration_status", return_value=mock_status):
+            with patch.object(self.service, "run_migrations", return_value=mock_migration_result):
                 result = await self.service.ensure_database_ready()
 
                 assert result["success"] is True
@@ -722,12 +657,8 @@ class TestDatabaseReadinessEnsurance:
 
         mock_migration_result = {"success": True, "final_revision": "new_revision_999"}
 
-        with patch.object(
-            self.service, "check_migration_status", return_value=mock_status
-        ):
-            with patch.object(
-                self.service, "run_migrations", return_value=mock_migration_result
-            ):
+        with patch.object(self.service, "check_migration_status", return_value=mock_status):
+            with patch.object(self.service, "run_migrations", return_value=mock_migration_result):
                 result = await self.service.ensure_database_ready()
 
                 assert result["success"] is True
@@ -746,9 +677,7 @@ class TestGlobalServiceInstance:
     @pytest.mark.asyncio
     async def test_get_migration_service_creates_new_instance(self):
         """Test that get_migration_service creates a new instance when none exists."""
-        with patch.dict(
-            os.environ, {"HIVE_DATABASE_URL": "postgresql://test@localhost/test"}
-        ):
+        with patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test@localhost/test"}):
             service = await get_migration_service()
 
             assert isinstance(service, MigrationService)
@@ -757,9 +686,7 @@ class TestGlobalServiceInstance:
     @pytest.mark.asyncio
     async def test_get_migration_service_returns_existing_instance(self):
         """Test that get_migration_service returns existing instance when available."""
-        with patch.dict(
-            os.environ, {"HIVE_DATABASE_URL": "postgresql://test@localhost/test"}
-        ):
+        with patch.dict(os.environ, {"HIVE_DATABASE_URL": "postgresql://test@localhost/test"}):
             service1 = await get_migration_service()
             service2 = await get_migration_service()
 
@@ -769,9 +696,7 @@ class TestGlobalServiceInstance:
     async def test_get_migration_service_handles_missing_env_var(self):
         """Test that get_migration_service handles missing environment variable."""
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(
-                ValueError, match="HIVE_DATABASE_URL environment variable must be set"
-            ):
+            with pytest.raises(ValueError, match="HIVE_DATABASE_URL environment variable must be set"):
                 await get_migration_service()
 
 
@@ -818,9 +743,7 @@ class TestConvenienceFunctions:
     async def test_check_migration_status_async(self):
         """Test check_migration_status_async convenience function."""
         mock_service = Mock()
-        mock_service.check_migration_status = AsyncMock(
-            return_value={"success": True, "pending_upgrades": False}
-        )
+        mock_service.check_migration_status = AsyncMock(return_value={"success": True, "pending_upgrades": False})
 
         with patch(
             "lib.services.migration_service.get_migration_service",
@@ -835,9 +758,7 @@ class TestConvenienceFunctions:
     async def test_ensure_database_ready_async(self):
         """Test ensure_database_ready_async convenience function."""
         mock_service = Mock()
-        mock_service.ensure_database_ready = AsyncMock(
-            return_value={"success": True, "action": "none_required"}
-        )
+        mock_service.ensure_database_ready = AsyncMock(return_value={"success": True, "action": "none_required"})
 
         with patch(
             "lib.services.migration_service.get_migration_service",
@@ -870,7 +791,9 @@ class TestURLConversionEdgeCases:
 
     def test_convert_to_sync_url_complex_psycopg_url(self):
         """Test URL conversion with complex psycopg URL."""
-        complex_url = "postgresql+psycopg://user:pass@host1:5432,host2:5432/db?target_session_attrs=read-write&sslmode=require"
+        complex_url = (
+            "postgresql+psycopg://user:pass@host1:5432,host2:5432/db?target_session_attrs=read-write&sslmode=require"
+        )
         result = self.service._convert_to_sync_url(complex_url)
         assert result == complex_url
 
@@ -951,9 +874,7 @@ class TestErrorScenarios:
             with patch("lib.services.migration_service.ScriptDirectory.from_config"):
                 with patch(
                     "sqlalchemy.create_engine",
-                    side_effect=sqlalchemy.exc.TimeoutError(
-                        "statement", "params", "orig"
-                    ),
+                    side_effect=sqlalchemy.exc.TimeoutError("statement", "params", "orig"),
                 ):
                     with patch("lib.services.migration_service.logger"):
                         result = await self.service.check_migration_status()
@@ -1034,9 +955,7 @@ class TestDatabaseIntegrationPatterns:
         mock_engine.connect.return_value = mock_context_manager
 
         with patch.object(self.service, "_get_alembic_config") as mock_cfg:
-            with patch(
-                "lib.services.migration_service.command.upgrade"
-            ) as mock_upgrade:
+            with patch("lib.services.migration_service.command.upgrade") as mock_upgrade:
                 with patch(
                     "lib.services.migration_service.ScriptDirectory.from_config",
                     return_value=mock_script,
@@ -1046,16 +965,12 @@ class TestDatabaseIntegrationPatterns:
                             "lib.services.migration_service.MigrationContext.configure",
                             return_value=mock_context,
                         ):
-                            result = await self.service.run_migrations(
-                                target_revision=target_revision
-                            )
+                            result = await self.service.run_migrations(target_revision=target_revision)
 
                             assert result["success"] is True
                             assert result["final_revision"] == target_revision
                             assert result["target_revision"] == target_revision
-                            mock_upgrade.assert_called_once_with(
-                                mock_cfg.return_value, target_revision
-                            )
+                            mock_upgrade.assert_called_once_with(mock_cfg.return_value, target_revision)
 
     @pytest.mark.asyncio
     async def test_complex_database_url_handling(self):
@@ -1080,9 +995,7 @@ class TestDatabaseIntegrationPatterns:
                 "lib.services.migration_service.ScriptDirectory.from_config",
                 return_value=mock_script,
             ):
-                with patch(
-                    "sqlalchemy.create_engine", return_value=mock_engine
-                ) as mock_create_engine:
+                with patch("sqlalchemy.create_engine", return_value=mock_engine) as mock_create_engine:
                     with patch(
                         "lib.services.migration_service.MigrationContext.configure",
                         return_value=mock_context,
@@ -1128,9 +1041,7 @@ class TestConcurrencyAndThreadSafety:
                         return_value=mock_context,
                     ):
                         # Run multiple concurrent status checks
-                        tasks = [
-                            self.service.check_migration_status() for _ in range(5)
-                        ]
+                        tasks = [self.service.check_migration_status() for _ in range(5)]
                         results = await asyncio.gather(*tasks)
 
                         # All should succeed
@@ -1168,9 +1079,7 @@ class TestConcurrencyAndThreadSafety:
                             status_task = self.service.check_migration_status()
                             migration_task = self.service.run_migrations()
 
-                            status_result, migration_result = await asyncio.gather(
-                                status_task, migration_task
-                            )
+                            status_result, migration_result = await asyncio.gather(status_task, migration_task)
 
                             assert status_result["success"] is True
                             assert migration_result["success"] is True

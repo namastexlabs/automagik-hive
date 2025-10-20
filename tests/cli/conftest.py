@@ -22,9 +22,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch  # noqa: E402 - Path setup required before imports
 
-import pytest
+import pytest  # noqa: E402 - Path setup required before imports
 
 # Optional imports for real server testing
 try:
@@ -72,7 +72,7 @@ class TestEnvironmentManager:
             try:
                 if Path(temp_dir).exists():
                     shutil.rmtree(temp_dir)
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
         self.temp_dirs.clear()
 
@@ -207,7 +207,7 @@ POSTGRES_USER=hive_agent
 POSTGRES_PASSWORD=agent_test_password
 HIVE_API_KEY=agent_test_key_fixture
 """)
-    
+
     # Create docker-compose.yml for agent environment
     docker_dir = workspace / "docker" / "agent"
     docker_dir.mkdir(parents=True, exist_ok=True)
@@ -379,9 +379,7 @@ def performance_timer():
             elapsed = time.time() - self.start_time
             self.measurements[label] = elapsed
 
-            assert elapsed < max_time, (
-                f"Performance check failed: {label} took {elapsed:.3f}s (max: {max_time}s)"
-            )
+            assert elapsed < max_time, f"Performance check failed: {label} took {elapsed:.3f}s (max: {max_time}s)"
 
             self.start_time = None
             return elapsed
@@ -480,11 +478,7 @@ def cli_test_configuration():
             return self.coverage_thresholds.get(level, 95.0)
 
         def get_test_api_key(self, provider: str, valid: bool = True) -> str:
-            source = (
-                self.test_data["valid_api_keys"]
-                if valid
-                else self.test_data["invalid_api_keys"]
-            )
+            source = self.test_data["valid_api_keys"] if valid else self.test_data["invalid_api_keys"]
             return source.get(provider, "")
 
         def get_available_port(self, port_type: str) -> int:
@@ -528,9 +522,7 @@ services:
 
             return workspace
 
-        def create_postgres_workspace(
-            self, name: str = "postgres", port: int = 5432
-        ) -> Path:
+        def create_postgres_workspace(self, name: str = "postgres", port: int = 5432) -> Path:
             """Create workspace with PostgreSQL configuration."""
             workspace = self.env_manager.create_temp_workspace(name)
 
@@ -556,14 +548,12 @@ POSTGRES_PASSWORD=test_password
 
             return workspace
 
-        def create_agent_workspace(
-            self, name: str = "agent", api_port: int = 38886, db_port: int = 35532
-        ) -> Path:
+        def create_agent_workspace(self, name: str = "agent", api_port: int = 38886, db_port: int = 35532) -> Path:
             """Create workspace with agent configuration."""
             workspace = self.env_manager.create_temp_workspace(name)
 
             # Create main .env for docker-compose inheritance
-            (workspace / ".env").write_text(f"""
+            (workspace / ".env").write_text("""
 HIVE_API_PORT=8886
 POSTGRES_PORT=5532
 POSTGRES_DB=hive
@@ -571,7 +561,7 @@ POSTGRES_USER=hive_agent
 POSTGRES_PASSWORD=agent_password
 HIVE_API_KEY=agent_test_key
 """)
-            
+
             # Create docker-compose.yml for agent environment
             docker_dir = workspace / "docker" / "agent"
             docker_dir.mkdir(parents=True, exist_ok=True)
@@ -705,9 +695,7 @@ def cli_assertion_helpers():
             """Assert that workspace has expected file structure."""
             for expected_file in expected_files:
                 file_path = workspace_path / expected_file
-                assert file_path.exists(), (
-                    f"Expected file {expected_file} not found in workspace"
-                )
+                assert file_path.exists(), f"Expected file {expected_file} not found in workspace"
 
         @staticmethod
         def assert_env_file_content(env_file: Path, expected_vars: dict[str, str]):
@@ -719,13 +707,9 @@ def cli_assertion_helpers():
 
             for key, expected_value in expected_vars.items():
                 if expected_value is not None:
-                    assert f"{key}={expected_value}" in env_content, (
-                        f"Expected {key}={expected_value} in env file"
-                    )
+                    assert f"{key}={expected_value}" in env_content, f"Expected {key}={expected_value} in env file"
                 else:
-                    assert f"{key}=" in env_content, (
-                        f"Expected {key} to be present in env file"
-                    )
+                    assert f"{key}=" in env_content, f"Expected {key} to be present in env file"
 
         @staticmethod
         def assert_docker_compose_valid(compose_file: Path):
@@ -740,9 +724,7 @@ def cli_assertion_helpers():
                     compose_data = yaml.safe_load(f)
 
                 assert "version" in compose_data, "Docker compose file missing version"
-                assert "services" in compose_data, (
-                    "Docker compose file missing services"
-                )
+                assert "services" in compose_data, "Docker compose file missing services"
 
             except ImportError:
                 pytest.skip("PyYAML not available for docker-compose validation")
@@ -750,32 +732,20 @@ def cli_assertion_helpers():
                 pytest.fail(f"Docker compose file is not valid YAML: {e}")
 
         @staticmethod
-        def assert_command_output_contains(
-            captured_output: str, expected_strings: list[str]
-        ):
+        def assert_command_output_contains(captured_output: str, expected_strings: list[str]):
             """Assert that command output contains expected strings."""
             for expected_string in expected_strings:
-                assert expected_string in captured_output, (
-                    f"Expected '{expected_string}' in output: {captured_output}"
-                )
+                assert expected_string in captured_output, f"Expected '{expected_string}' in output: {captured_output}"
 
         @staticmethod
-        def assert_performance_within_limits(
-            execution_time: float, max_time: float, operation: str
-        ):
+        def assert_performance_within_limits(execution_time: float, max_time: float, operation: str):
             """Assert that operation completed within performance limits."""
-            assert execution_time <= max_time, (
-                f"{operation} took {execution_time:.3f}s, expected under {max_time}s"
-            )
+            assert execution_time <= max_time, f"{operation} took {execution_time:.3f}s, expected under {max_time}s"
 
         @staticmethod
-        def assert_coverage_threshold_met(
-            coverage_percentage: float, threshold: float = 95.0
-        ):
+        def assert_coverage_threshold_met(coverage_percentage: float, threshold: float = 95.0):
             """Assert that coverage threshold is met."""
-            assert coverage_percentage >= threshold, (
-                f"Coverage {coverage_percentage:.2f}% below threshold {threshold}%"
-            )
+            assert coverage_percentage >= threshold, f"Coverage {coverage_percentage:.2f}% below threshold {threshold}%"
 
     return CLIAssertionHelpers()
 
@@ -784,18 +754,14 @@ def cli_assertion_helpers():
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "unit: Unit tests for individual components")
-    config.addinivalue_line(
-        "markers", "integration: Integration tests across components"
-    )
+    config.addinivalue_line("markers", "integration: Integration tests across components")
     config.addinivalue_line("markers", "e2e: End-to-end workflow tests")
     config.addinivalue_line("markers", "performance: Performance and benchmark tests")
     config.addinivalue_line("markers", "real_server: Tests requiring real agent server")
     config.addinivalue_line("markers", "real_postgres: Tests requiring real PostgreSQL")
     config.addinivalue_line("markers", "slow: Slow tests that take significant time")
     config.addinivalue_line("markers", "coverage: Coverage validation tests")
-    config.addinivalue_line(
-        "markers", "cross_platform: Cross-platform compatibility tests"
-    )
+    config.addinivalue_line("markers", "cross_platform: Cross-platform compatibility tests")
 
 
 # Configure test collection and execution
@@ -826,10 +792,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.cross_platform)
 
         # Mark slow tests
-        if any(
-            marker in item.name
-            for marker in ["comprehensive", "full_lifecycle", "concurrent"]
-        ):
+        if any(marker in item.name for marker in ["comprehensive", "full_lifecycle", "concurrent"]):
             item.add_marker(pytest.mark.slow)
 
 

@@ -272,9 +272,7 @@ class AssertionHelpers:
         """Assert that a function is async."""
         import asyncio
 
-        assert asyncio.iscoroutinefunction(func), (
-            f"Function {func.__name__} is not async"
-        )
+        assert asyncio.iscoroutinefunction(func), f"Function {func.__name__} is not async"
 
 
 @pytest.fixture
@@ -311,9 +309,7 @@ class PerformanceTimer:
     def assert_duration_under(self, max_seconds: float):
         """Assert that duration is under specified seconds."""
         duration = self.duration()
-        assert duration < max_seconds, (
-            f"Operation took {duration}s, expected under {max_seconds}s"
-        )
+        assert duration < max_seconds, f"Operation took {duration}s, expected under {max_seconds}s"
 
 
 @pytest.fixture
@@ -416,10 +412,10 @@ def generate_test_metrics(count: int = 10) -> list[dict[str, Any]]:
         metrics.append(
             {
                 "agent_id": f"test_agent_{i:03d}",
-                "execution_time": round(random.uniform(0.1, 5.0), 3),
-                "tokens_used": random.randint(50, 500),
-                "success": random.choice([True, False]),
-                "cost": round(random.uniform(0.001, 0.01), 6),
+                "execution_time": round(random.uniform(0.1, 5.0), 3),  # noqa: S311
+                "tokens_used": random.randint(50, 500),  # noqa: S311 - Test data generation
+                "success": random.choice([True, False]),  # noqa: S311 - Test data generation
+                "cost": round(random.uniform(0.001, 0.01), 6),  # noqa: S311
                 "timestamp": f"2023-01-01T{i % 24:02d}:00:00Z",
             },
         )
@@ -447,7 +443,7 @@ def generate_test_csv_data(rows: int = 10, columns: int = 4) -> list[list[str]]:
             else:
                 # Random data
                 row.append(
-                    "".join(random.choices(string.ascii_letters + string.digits, k=8)),
+                    "".join(random.choices(string.ascii_letters + string.digits, k=8)),  # noqa: S311 - Test data generation
                 )
         data.append(row)
 

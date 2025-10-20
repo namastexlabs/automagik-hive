@@ -85,12 +85,11 @@ def find_symbol(
                                 "symbol_type": detected_type,
                                 "content": line.strip(),
                                 "context": "\n".join(
-                                    f"{start_line + i + 1:4d}: {line}"
-                                    for i, line in enumerate(context_lines)
+                                    f"{start_line + i + 1:4d}: {line}" for i, line in enumerate(context_lines)
                                 ),
                             }
                         )
-            except Exception:
+            except Exception:  # noqa: S110 - Silent file read failures expected during search
                 pass  # Skip files that can't be read
 
             return file_results
@@ -100,8 +99,7 @@ def find_symbol(
             if file_path.is_file() and file_path.suffix in extensions:
                 # Skip common non-source directories
                 if any(
-                    part
-                    in [".git", "node_modules", "__pycache__", ".venv", "build", "dist"]
+                    part in [".git", "node_modules", "__pycache__", ".venv", "build", "dist"]
                     for part in file_path.parts
                 ):
                     continue
@@ -109,30 +107,22 @@ def find_symbol(
                 results.extend(search_in_file(file_path))
 
         if not results:
-            return f"No symbols found matching '{symbol_name}'" + (
-                f" of type '{symbol_type}'" if symbol_type else ""
-            )
+            return f"No symbols found matching '{symbol_name}'" + (f" of type '{symbol_type}'" if symbol_type else "")
 
         # Format results
         output = [f"Found {len(results)} symbol(s) matching '{symbol_name}':\n"]
 
         for result in sorted(results, key=lambda x: (x["file"], x["line"])):
-            output.append(
-                f"📍 {result['file']}:{result['line']} - {result['symbol_type']}"
-            )
+            output.append(f"📍 {result['file']}:{result['line']} - {result['symbol_type']}")
             output.append(f"   {result['content']}")
             output.append("")
 
         # If results are too many, show first 20 with summary
         if len(results) > 20:
             summary_results = results[:20]
-            output = [
-                f"Found {len(results)} symbol(s) matching '{symbol_name}' (showing first 20):\n"
-            ]
+            output = [f"Found {len(results)} symbol(s) matching '{symbol_name}' (showing first 20):\n"]
             for result in summary_results:
-                output.append(
-                    f"📍 {result['file']}:{result['line']} - {result['symbol_type']}"
-                )
+                output.append(f"📍 {result['file']}:{result['line']} - {result['symbol_type']}")
                 output.append(f"   {result['content']}")
             output.append(f"\n... and {len(results) - 20} more results")
 
@@ -187,8 +177,7 @@ def find_referencing_symbols(
             if file_path.is_file() and file_path.suffix in search_extensions:
                 # Skip common non-source directories
                 if any(
-                    part
-                    in [".git", "node_modules", "__pycache__", ".venv", "build", "dist"]
+                    part in [".git", "node_modules", "__pycache__", ".venv", "build", "dist"]
                     for part in file_path.parts
                 ):
                     continue
@@ -200,11 +189,7 @@ def find_referencing_symbols(
                     for line_num, line in enumerate(lines, 1):
                         if target_symbol in line:
                             # Skip the definition itself
-                            if (
-                                file_path == target_path
-                                and target_line
-                                and line_num == target_line
-                            ):
+                            if file_path == target_path and target_line and line_num == target_line:
                                 continue
 
                             # Try to understand the reference context
@@ -225,13 +210,12 @@ def find_referencing_symbols(
                                     "reference_type": ref_type,
                                     "content": line.strip(),
                                     "context": "\n".join(
-                                        f"{start_line + i + 1:4d}: {line}"
-                                        for i, line in enumerate(context_lines)
+                                        f"{start_line + i + 1:4d}: {line}" for i, line in enumerate(context_lines)
                                     ),
                                 }
                             )
 
-                except Exception:
+                except Exception:  # noqa: S112 - Silent file read failures expected during search
                     continue  # Skip files that can't be read
 
         if not references:
@@ -252,9 +236,7 @@ def find_referencing_symbols(
 
 
 @tool
-def find_referencing_code_snippets(
-    target_symbol: str, target_file: str, context_lines: int = 3
-) -> str:
+def find_referencing_code_snippets(target_symbol: str, target_file: str, context_lines: int = 3) -> str:
     """
     Find code snippets that reference the specified symbol with extended context.
 
@@ -291,8 +273,7 @@ def find_referencing_code_snippets(
             if file_path.is_file() and file_path.suffix in search_extensions:
                 # Skip common non-source directories
                 if any(
-                    part
-                    in [".git", "node_modules", "__pycache__", ".venv", "build", "dist"]
+                    part in [".git", "node_modules", "__pycache__", ".venv", "build", "dist"]
                     for part in file_path.parts
                 ):
                     continue
@@ -331,30 +312,23 @@ def find_referencing_code_snippets(
                                 "target_line": line_num,
                                 "usage_type": usage_type,
                                 "snippet": "\n".join(
-                                    f"{start_line + i + 1:4d}: {line}"
-                                    for i, line in enumerate(snippet_lines)
+                                    f"{start_line + i + 1:4d}: {line}" for i, line in enumerate(snippet_lines)
                                 ),
                                 "highlighted_line": line_num,
                             }
                             snippets.append(snippet)
 
-                except Exception:
+                except Exception:  # noqa: S112 - Silent file read failures expected during search
                     continue
 
         if not snippets:
             return f"No code snippets found referencing '{target_symbol}'"
 
         # Format output
-        output = [
-            f"Code snippets referencing '{target_symbol}' ({len(snippets)} found):\n"
-        ]
+        output = [f"Code snippets referencing '{target_symbol}' ({len(snippets)} found):\n"]
 
-        for snippet in sorted(
-            snippets, key=lambda x: (x["file"], int(x["target_line"]))
-        ):
-            output.append(
-                f"📄 {snippet['file']} (lines {snippet['line_range']}) - {snippet['usage_type']}"
-            )
+        for snippet in sorted(snippets, key=lambda x: (x["file"], x["target_line"])):
+            output.append(f"📄 {snippet['file']} (lines {snippet['line_range']}) - {snippet['usage_type']}")
             output.append(f"{snippet['snippet']}")
             output.append("")
 
@@ -391,9 +365,7 @@ def get_symbols_overview(
         symbols = []
 
         if target_path.is_file():
-            symbols.extend(
-                _extract_symbols_from_file(target_path, symbol_types, include_private)
-            )
+            symbols.extend(_extract_symbols_from_file(target_path, symbol_types, include_private))
         else:
             # Directory - analyze all relevant files
             for file_path in target_path.rglob("*"):
@@ -406,17 +378,13 @@ def get_symbols_overview(
                     ".c",
                     ".h",
                 ]:
-                    symbols.extend(
-                        _extract_symbols_from_file(
-                            file_path, symbol_types, include_private
-                        )
-                    )
+                    symbols.extend(_extract_symbols_from_file(file_path, symbol_types, include_private))
 
         if not symbols:
             return f"No symbols found in {file_or_directory}"
 
         # Group symbols by file and type
-        by_file = {}
+        by_file: dict[str, dict[str, list[dict[str, Any]]]] = {}
         for symbol in symbols:
             file_key = symbol["file"]
             if file_key not in by_file:
@@ -431,18 +399,16 @@ def get_symbols_overview(
         # Format output
         output = [f"Symbol Overview for {file_or_directory}:\n"]
 
-        for file_path in sorted(by_file.keys()):
-            output.append(f"📄 {file_path}")
+        for file_key in sorted(by_file.keys()):
+            output.append(f"📄 {file_key}")
 
-            for symbol_type in sorted(by_file[file_path].keys()):
-                type_symbols = by_file[file_path][symbol_type]
+            for symbol_type in sorted(by_file[file_key].keys()):
+                type_symbols = by_file[file_key][symbol_type]
                 output.append(f"  {symbol_type.upper()}S ({len(type_symbols)}):")
 
                 for symbol in sorted(type_symbols, key=lambda x: x["line"]):
                     visibility = "🔒" if symbol.get("private", False) else "🔓"
-                    output.append(
-                        f"    {visibility} {symbol['name']} (line {symbol['line']})"
-                    )
+                    output.append(f"    {visibility} {symbol['name']} (line {symbol['line']})")
                     if symbol.get("signature"):
                         output.append(f"        {symbol['signature']}")
             output.append("")
@@ -485,11 +451,7 @@ def _detect_symbol_type(line: str, symbol_name: str) -> str:
         return "class"
     if "public interface" in line_lower:
         return "interface"
-    if (
-        ("public " in line_lower or "private " in line_lower)
-        and "(" in line
-        and ")" in line
-    ):
+    if ("public " in line_lower or "private " in line_lower) and "(" in line and ")" in line:
         return "method"
 
     # Generic patterns
@@ -570,7 +532,7 @@ def _extract_symbols_from_file(
 
                 symbols.append(symbol)
 
-    except Exception:
+    except Exception:  # noqa: S110 - Silent file processing failures expected during extraction
         pass  # Skip files that can't be processed
 
     return symbols

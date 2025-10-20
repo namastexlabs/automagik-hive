@@ -46,9 +46,7 @@ class BatchLogger:
     def log_model_resolved(self, model_id: str, provider: str):
         """Log model resolution (batched during startup)."""
         if self._should_log_verbose():
-            logger.info(
-                "Model resolved successfully", model_id=model_id, provider=provider
-            )
+            logger.info("Model resolved successfully", model_id=model_id, provider=provider)
             return
 
         if self.startup_mode:
@@ -59,9 +57,7 @@ class BatchLogger:
     def log_storage_created(self, storage_type: str, component_id: str):
         """Log storage creation (batched during startup)."""
         if self._should_log_verbose():
-            logger.info(
-                f"Successfully created {storage_type} storage for {component_id}"
-            )
+            logger.info(f"Successfully created {storage_type} storage for {component_id}")
             return
 
         if self.startup_mode:
@@ -72,9 +68,7 @@ class BatchLogger:
     def log_agent_created(self, component_id: str, parameter_count: int):
         """Log agent creation (batched during startup)."""
         if self._should_log_verbose():
-            logger.info(
-                f"🤖 Agent {component_id} created with inheritance and {parameter_count} available parameters"
-            )
+            logger.info(f"🤖 Agent {component_id} created with inheritance and {parameter_count} available parameters")
             return
 
         if self.startup_mode:
@@ -120,17 +114,13 @@ class BatchLogger:
         # Agent inheritance summary
         if self.batches["agent_inheritance"]:
             agents = self.batches["agent_inheritance"]
-            logger.info(
-                f"Applied inheritance to {len(agents)} agents: {', '.join(agents)}"
-            )
+            logger.info(f"Applied inheritance to {len(agents)} agents: {', '.join(agents)}")
 
         # Model resolution summary
         if self.batches["model_resolved"]:
             models = self.batches["model_resolved"]
             unique_providers = {provider for _, provider in models}
-            logger.info(
-                f"Model resolution: {len(models)} operations across {len(unique_providers)} providers"
-            )
+            logger.info(f"Model resolution: {len(models)} operations across {len(unique_providers)} providers")
 
         # Storage creation summary
         if self.batches["storage_created"]:
@@ -144,32 +134,24 @@ class BatchLogger:
             total_params = sum(count for _, count in agents)
             avg_params = total_params // len(agents) if agents else 0
             agent_names = [name for name, _ in agents]
-            logger.info(
-                f"Created {len(agents)} agents: {', '.join(agent_names)} (avg {avg_params} params)"
-            )
+            logger.info(f"Created {len(agents)} agents: {', '.join(agent_names)} (avg {avg_params} params)")
 
         # Team member loading summary
         team_keys = [key for key in self.batches if key.startswith("team_members")]
         for team_key in team_keys:
             members = self.batches[team_key]
             if team_key == "team_members":
-                logger.info(
-                    f"🤖 Loaded {len(members)} team members: {', '.join(members)}"
-                )
+                logger.info(f"🤖 Loaded {len(members)} team members: {', '.join(members)}")
             else:
                 team_id = team_key.replace("team_members_", "")
-                logger.info(
-                    f"🤖 Team {team_id}: {len(members)} members loaded ({', '.join(members)})"
-                )
+                logger.info(f"🤖 Team {team_id}: {len(members)} members loaded ({', '.join(members)})")
 
         # CSV processing summary
         if self.batches["csv_processing"]:
             csv_ops = self.batches["csv_processing"]
             total_docs = sum(count for _, count in csv_ops)
             sources = len({source for source, _ in csv_ops})
-            logger.info(
-                f"Knowledge base: {sources} sources, {total_docs} documents loaded"
-            )
+            logger.info(f"Knowledge base: {sources} sources, {total_docs} documents loaded")
 
         # Clear batches
         self.batches.clear()

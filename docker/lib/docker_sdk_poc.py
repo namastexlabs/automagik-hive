@@ -121,9 +121,7 @@ class DockerSDKManager:
             return ContainerInfo(
                 id=container.id[:12],  # Short ID like Docker CLI
                 name=container.name,
-                image=container.image.tags[0]
-                if container.image.tags
-                else container.image.id[:12],
+                image=container.image.tags[0] if container.image.tags else container.image.id[:12],
                 state=state,
                 status=container.status,
                 ports=container.attrs["NetworkSettings"]["Ports"] or {},
@@ -289,9 +287,7 @@ class DockerSDKManager:
         except APIError:
             return None
 
-    def wait_for_healthy(
-        self, name_or_id: str, timeout: int = 60, check_interval: float = 1.0
-    ) -> bool:
+    def wait_for_healthy(self, name_or_id: str, timeout: int = 60, check_interval: float = 1.0) -> bool:
         """Wait for container to become healthy using Docker SDK.
 
         Args:
@@ -341,7 +337,7 @@ class DockerSDKManager:
         except APIError:
             return False
 
-    def list_containers(self, all: bool = False) -> list[ContainerInfo]:
+    def list_containers(self, all_: bool = False) -> list[ContainerInfo]:
         """List containers using Docker SDK.
 
         Args:
@@ -368,9 +364,7 @@ class DockerSDKManager:
                     info = ContainerInfo(
                         id=container.id[:12],
                         name=container.name,
-                        image=container.image.tags[0]
-                        if container.image.tags
-                        else container.image.id[:12],
+                        image=container.image.tags[0] if container.image.tags else container.image.id[:12],
                         state=state,
                         status=container.status,
                         ports=container.attrs["NetworkSettings"]["Ports"] or {},
@@ -380,7 +374,7 @@ class DockerSDKManager:
                     )
                     container_list.append(info)
 
-                except Exception:
+                except Exception:  # noqa: S112 - Continue after exception is intentional
                     continue
 
             return container_list
@@ -434,13 +428,9 @@ class DockerSDKManager:
                 container_id=container_info.id,
                 state=container_info.state,
                 health_status=health.get("Status"),
-                last_health_check=health.get("Log", [{}])[-1].get("Start")
-                if health.get("Log")
-                else None,
+                last_health_check=health.get("Log", [{}])[-1].get("Start") if health.get("Log") else None,
                 is_ready=container_info.state == ContainerState.RUNNING
-                and (
-                    health.get("Status") in ["healthy", None]
-                ),  # No health check or healthy
+                and (health.get("Status") in ["healthy", None]),  # No health check or healthy
             )
 
         except (NotFound, APIError):
@@ -465,7 +455,7 @@ def demonstrate_sdk_vs_subprocess():
     # Example 1: List containers with rich metadata
     containers = sdk.list_containers(all=True)
 
-    for container in containers[:3]:  # Show first 3
+    for _container in containers[:3]:  # Show first 3
         pass
 
     # Example 2: Type-safe error handling
@@ -474,7 +464,7 @@ def demonstrate_sdk_vs_subprocess():
         info = sdk.get_container_info("non-existent-container")
         if info is None:
             pass
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         pass
 
     # Example 3: Programmatic access to container metadata

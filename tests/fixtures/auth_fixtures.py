@@ -123,16 +123,14 @@ class AuthTestHelpers:
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
 
-        assert response.status_code == 401, (
-            f"Expected 401 but got {response.status_code}"
-        )
+        assert response.status_code == 401, f"Expected 401 but got {response.status_code}"
 
         # Check for consistent error structure
         try:
             error_data = response.json()
             assert "detail" in error_data
             assert "Invalid or missing x-api-key header" in error_data["detail"]
-        except:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass  # Some endpoints may return non-JSON errors
 
     @staticmethod

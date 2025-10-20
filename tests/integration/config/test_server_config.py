@@ -27,7 +27,7 @@ class TestServerConfig:
         with patch.dict(
             os.environ,
             {
-                "HIVE_API_HOST": "0.0.0.0",
+                "HIVE_API_HOST": "0.0.0.0",  # noqa: S104
                 "HIVE_API_PORT": "8886",
                 "HIVE_API_WORKERS": "4",
                 "HIVE_ENVIRONMENT": "development",
@@ -36,7 +36,7 @@ class TestServerConfig:
         ):
             config = ServerConfig()
 
-            assert config.host == "0.0.0.0"
+            assert config.host == "0.0.0.0"  # noqa: S104 - Server binding to all interfaces
             assert config.port == 8886
             assert config.workers == 4
             assert config.environment == "development"
@@ -66,7 +66,7 @@ class TestServerConfig:
         with patch.dict(os.environ, {"HIVE_API_PORT": "8886"}, clear=True):
             config = ServerConfig()
 
-            assert config.host == "0.0.0.0"
+            assert config.host == "0.0.0.0"  # noqa: S104 - Server binding to all interfaces
             assert config.port == 8886
             assert config.workers == 4
             assert config.environment == "development"
@@ -149,7 +149,7 @@ class TestServerConfig:
         # Test with localhost display for 0.0.0.0
         with patch.dict(
             os.environ,
-            {"HIVE_API_HOST": "0.0.0.0", "HIVE_API_PORT": "8886"},
+            {"HIVE_API_HOST": "0.0.0.0", "HIVE_API_PORT": "8886"},  # noqa: S104
         ):
             config = ServerConfig()
             assert config.get_base_url() == "http://localhost:8886"

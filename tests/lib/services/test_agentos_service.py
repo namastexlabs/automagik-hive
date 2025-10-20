@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import yaml
 import pytest
-
+import yaml
 from agno.os.schema import ConfigResponse
 
 from lib.agentos import load_agentos_config
@@ -79,7 +78,7 @@ class TestAgentOSService:
         assert all(len(prompts) <= 3 for prompts in response.chat.quick_prompts.values())
 
         interfaces = {entry.type: entry.route for entry in response.interfaces}
-        host = "localhost" if settings.hive_api_host in {"0.0.0.0", "::"} else settings.hive_api_host
+        host = "localhost" if settings.hive_api_host in {"0.0.0.0", "::"} else settings.hive_api_host  # noqa: S104
         expected_base = f"http://{host}:{settings.hive_api_port}"
 
         assert interfaces["agentos-config"].endswith("/api/v1/agentos/config")

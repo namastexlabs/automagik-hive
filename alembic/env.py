@@ -39,7 +39,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import hive models for autogenerate support
-from lib.models import Base
+from lib.models import Base  # noqa: E402 - Database configuration must be set before importing models
 
 target_metadata = Base.metadata
 

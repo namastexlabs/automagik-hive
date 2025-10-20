@@ -5,28 +5,24 @@ All Docker operations and database connections are mocked to prevent real
 container creation and provide fast, reliable test execution.
 
 SAFETY GUARANTEES:
-- NO real Docker containers created/started/stopped  
+- NO real Docker containers created/started/stopped
 - NO real database connections
 - NO external dependencies
 - Fast execution (< 1 second total)
 - Safe for any environment
 """
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-import subprocess
 
 # SAFETY: Mock Docker and psycopg2 modules to prevent accidental real operations
-with patch.dict('sys.modules', {
-    'docker': MagicMock(),
-    'psycopg2': MagicMock()
-}):
-    import docker
+with patch.dict("sys.modules", {"docker": MagicMock(), "psycopg2": MagicMock()}):
     import psycopg2
+
+    import docker
 
 # TODO: Update tests to use cli.docker_manager.DockerManager
 
@@ -35,13 +31,9 @@ with patch.dict('sys.modules', {
 @pytest.fixture(autouse=True)
 def mock_all_subprocess():
     """CRITICAL SAFETY: Auto-mock ALL subprocess calls to prevent real Docker operations."""
-    with patch('subprocess.run') as mock_run:
+    with patch("subprocess.run") as mock_run:
         # Default safe responses for all Docker commands
-        mock_run.return_value = MagicMock(
-            stdout="",
-            stderr="", 
-            returncode=0
-        )
+        mock_run.return_value = MagicMock(stdout="", stderr="", returncode=0)
         yield mock_run
 
 
@@ -52,13 +44,9 @@ def mock_all_docker_operations():
     # we'll mock it safely by patching the global docker variable
     mock_client = MagicMock()
     mock_client.ping.return_value = True
-    mock_client.containers.get.side_effect = lambda name: MagicMock(
-        stop=MagicMock(),
-        remove=MagicMock(),
-        name=name
-    )
+    mock_client.containers.get.side_effect = lambda name: MagicMock(stop=MagicMock(), remove=MagicMock(), name=name)
     # Mock the global docker variable
-    with patch.object(docker, 'from_env', return_value=mock_client):
+    with patch.object(docker, "from_env", return_value=mock_client):
         yield mock_client
 
 
@@ -71,18 +59,20 @@ def mock_psycopg2_connections():
     mock_cursor.fetchone.return_value = ("PostgreSQL 15.5",)
     mock_cursor.fetchall.return_value = [("hive",), ("agno",)]
     mock_conn.cursor.return_value = mock_cursor
-    
-    with patch.object(psycopg2, 'connect', return_value=mock_conn) as mock_connect:
+
+    with patch.object(psycopg2, "connect", return_value=mock_conn) as mock_connect:
         yield mock_connect
 
 
 @pytest.fixture(autouse=True)
 def mock_file_operations():
     """SAFETY: Mock all file operations to prevent real file system changes."""
-    with patch('pathlib.Path.exists', return_value=True), \
-         patch('pathlib.Path.write_text'), \
-         patch('pathlib.Path.read_text'), \
-         patch('time.sleep'):  # Also mock sleep for fast execution
+    with (
+        patch("pathlib.Path.exists", return_value=True),
+        patch("pathlib.Path.write_text"),
+        patch("pathlib.Path.read_text"),
+        patch("time.sleep"),
+    ):  # Also mock sleep for fast execution
         yield
 
 
@@ -149,7 +139,7 @@ HIVE_API_PORT=8886
 
     def test_postgres_commands_initialization(self):
         """Test PostgreSQLCommands initializes correctly."""
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
 
         # Should fail initially - initialization not implemented
         assert hasattr(commands, "postgres_service")
@@ -160,20 +150,18 @@ HIVE_API_PORT=8886
         mock_docker_service.is_container_running.return_value = False
         mock_docker_service.start_container.return_value = True
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_start(str(temp_workspace))
 
         # Should fail initially - postgres start not implemented
         assert result is True
         mock_docker_service.start_container.assert_called_once()
 
-    def test_postgres_start_command_already_running(
-        self, temp_workspace, mock_docker_service
-    ):
+    def test_postgres_start_command_already_running(self, temp_workspace, mock_docker_service):
         """Test PostgreSQL start when container already running."""
         mock_docker_service.is_container_running.return_value = True
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_start(str(temp_workspace))
 
         # Should fail initially - already running check not implemented
@@ -185,33 +173,29 @@ HIVE_API_PORT=8886
         mock_docker_service.is_container_running.return_value = True
         mock_docker_service.stop_container.return_value = True
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_stop(str(temp_workspace))
 
         # Should fail initially - postgres stop not implemented
         assert result is True
         mock_docker_service.stop_container.assert_called_once()
 
-    def test_postgres_stop_command_not_running(
-        self, temp_workspace, mock_docker_service
-    ):
+    def test_postgres_stop_command_not_running(self, temp_workspace, mock_docker_service):
         """Test PostgreSQL stop when container not running."""
         mock_docker_service.is_container_running.return_value = False
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_stop(str(temp_workspace))
 
         # Should fail initially - not running check not implemented
         assert result is True
         mock_docker_service.stop_container.assert_not_called()
 
-    def test_postgres_restart_command_success(
-        self, temp_workspace, mock_docker_service
-    ):
+    def test_postgres_restart_command_success(self, temp_workspace, mock_docker_service):
         """Test successful PostgreSQL container restart."""
         mock_docker_service.restart_container.return_value = True
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_restart(str(temp_workspace))
 
         # Should fail initially - postgres restart not implemented
@@ -227,7 +211,7 @@ HIVE_API_PORT=8886
             "uptime": "2 hours",
         }
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_status(str(temp_workspace))
 
         # Should fail initially - status display not implemented
@@ -243,7 +227,7 @@ HIVE_API_PORT=8886
             "uptime": "0",
         }
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_status(str(temp_workspace))
 
         # Should fail initially - stopped status handling not implemented
@@ -258,29 +242,23 @@ HIVE_API_PORT=8886
 """
         mock_docker_service.get_container_logs.return_value = mock_logs
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_logs(str(temp_workspace), tail=50)
 
         # Should fail initially - logs display not implemented
         assert result is True
-        mock_docker_service.get_container_logs.assert_called_once_with(
-            container_name="hive-postgres-test", tail=50
-        )
+        mock_docker_service.get_container_logs.assert_called_once_with(container_name="hive-postgres-test", tail=50)
 
-    def test_postgres_logs_command_custom_tail(
-        self, temp_workspace, mock_docker_service
-    ):
+    def test_postgres_logs_command_custom_tail(self, temp_workspace, mock_docker_service):
         """Test PostgreSQL logs command with custom tail count."""
         mock_docker_service.get_container_logs.return_value = "Mock logs"
 
-        commands = PostgreSQLCommands()
+        commands = PostgreSQLCommands()  # noqa: F821
         result = commands.postgres_logs(str(temp_workspace), tail=100)
 
         # Should fail initially - custom tail not implemented
         assert result is True
-        mock_docker_service.get_container_logs.assert_called_once_with(
-            container_name="hive-postgres-test", tail=100
-        )
+        mock_docker_service.get_container_logs.assert_called_once_with(container_name="hive-postgres-test", tail=100)
 
     def test_postgres_health_command_healthy(self, temp_workspace, mock_docker_service):
         """Test PostgreSQL health check when healthy."""
@@ -296,16 +274,14 @@ HIVE_API_PORT=8886
             mock_conn.cursor.return_value = mock_cursor
             mock_connect.return_value = mock_conn
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
             result = commands.postgres_health(str(temp_workspace))
 
         # Should fail initially - health check not implemented
         assert result is True
         mock_connect.assert_called_once()
 
-    def test_postgres_health_command_connection_failed(
-        self, temp_workspace, mock_docker_service
-    ):
+    def test_postgres_health_command_connection_failed(self, temp_workspace, mock_docker_service):
         """Test PostgreSQL health check when connection fails."""
         mock_docker_service.get_container_status.return_value = {
             "status": "running",
@@ -315,7 +291,7 @@ HIVE_API_PORT=8886
         with patch("cli.commands.postgres.psycopg2.connect") as mock_connect:
             mock_connect.side_effect = psycopg2.OperationalError("Connection failed")
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
             result = commands.postgres_health(str(temp_workspace))
 
         # Should fail initially - connection failure handling not implemented
@@ -336,7 +312,7 @@ class TestPostgreSQLServiceCore:
 
     def test_postgres_service_initialization(self, mock_docker_service):
         """Test PostgreSQLService initializes correctly."""
-        service = PostgreSQLService()
+        service = PostgreSQLService()  # noqa: F821
 
         # Should fail initially - service initialization not implemented
         assert hasattr(service, "docker_service")
@@ -347,7 +323,7 @@ class TestPostgreSQLServiceCore:
         mock_docker_service.start_container.return_value = True
         mock_docker_service.is_container_running.return_value = False
 
-        service = PostgreSQLService()
+        service = PostgreSQLService()  # noqa: F821
         result = service.start_postgres("test-workspace", "hive-postgres-test")
 
         # Should fail initially - start postgres not implemented
@@ -359,7 +335,7 @@ class TestPostgreSQLServiceCore:
         mock_docker_service.stop_container.return_value = True
         mock_docker_service.is_container_running.return_value = True
 
-        service = PostgreSQLService()
+        service = PostgreSQLService()  # noqa: F821
         result = service.stop_postgres("test-workspace", "hive-postgres-test")
 
         # Should fail initially - stop postgres not implemented
@@ -373,7 +349,7 @@ class TestPostgreSQLServiceCore:
             "ports": ["35534:5432"],
         }
 
-        service = PostgreSQLService()
+        service = PostgreSQLService()  # noqa: F821
         connection_info = service.get_connection_info("test-workspace")
 
         # Should fail initially - connection info not implemented
@@ -388,7 +364,7 @@ class TestPostgreSQLServiceCore:
             mock_conn = Mock()
             mock_connect.return_value = mock_conn
 
-            service = PostgreSQLService()
+            service = PostgreSQLService()  # noqa: F821
             result = service.check_connection(
                 host="localhost",
                 port=35534,
@@ -406,7 +382,7 @@ class TestPostgreSQLServiceCore:
         with patch("cli.core.postgres_service.psycopg2.connect") as mock_connect:
             mock_connect.side_effect = psycopg2.OperationalError("Connection refused")
 
-            service = PostgreSQLService()
+            service = PostgreSQLService()  # noqa: F821
             result = service.check_connection(
                 host="localhost",
                 port=35534,
@@ -427,11 +403,7 @@ class TestSafePostgreSQLContainerIntegration:
         """SAFETY: Mock Docker client to prevent real container operations."""
         mock_client = MagicMock()
         mock_client.ping.return_value = True
-        mock_client.containers.get.side_effect = lambda name: MagicMock(
-            stop=MagicMock(),
-            remove=MagicMock(),
-            name=name
-        )
+        mock_client.containers.get.side_effect = lambda name: MagicMock(stop=MagicMock(), remove=MagicMock(), name=name)
         # Mock docker.errors.NotFound for testing
         mock_client.errors.NotFound = Exception
         return mock_client
@@ -473,12 +445,10 @@ POSTGRES_PASSWORD=real_test_password_456
 
             yield workspace
 
-    def test_safe_postgres_container_lifecycle(
-        self, mock_docker_client, temp_workspace_real
-    ):
+    def test_safe_postgres_container_lifecycle(self, mock_docker_client, temp_workspace_real):
         """SAFETY: Test PostgreSQL container lifecycle with complete mocking."""
         # SAFETY: Mock PostgreSQLCommands to prevent real implementation calls
-        with patch('PostgreSQLCommands') as mock_commands_class:
+        with patch("PostgreSQLCommands") as mock_commands_class:
             mock_commands = MagicMock()
             mock_commands.postgres_start.return_value = True
             mock_commands.postgres_status.return_value = True
@@ -494,19 +464,17 @@ POSTGRES_PASSWORD=real_test_password_456
             # SAFETY: All container operations are mocked
             # Clean up any existing test container (mocked)
             try:
-                existing_container = mock_docker_client.containers.get(
-                    "hive-postgres-real-test"
-                )
+                existing_container = mock_docker_client.containers.get("hive-postgres-real-test")
                 existing_container.stop()
                 existing_container.remove()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
             # Test start (mocked)
             result = commands.postgres_start(workspace_path)
             assert result is True
 
-            # Test status (mocked) 
+            # Test status (mocked)
             result = commands.postgres_status(workspace_path)
             assert result is True
 
@@ -531,7 +499,7 @@ POSTGRES_PASSWORD=real_test_password_456
                 container = mock_docker_client.containers.get("hive-postgres-real-test")
                 container.stop()
                 container.remove()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
     def test_safe_postgres_database_connection(
@@ -539,7 +507,7 @@ POSTGRES_PASSWORD=real_test_password_456
     ):
         """SAFETY: Test database connection and operations with complete mocking."""
         # SAFETY: Mock PostgreSQLCommands to prevent real implementation calls
-        with patch('PostgreSQLCommands') as mock_commands_class:
+        with patch("PostgreSQLCommands") as mock_commands_class:
             mock_commands = MagicMock()
             mock_commands.postgres_start.return_value = True
             mock_commands.postgres_stop.return_value = True
@@ -554,7 +522,7 @@ POSTGRES_PASSWORD=real_test_password_456
 
             # SAFETY: Database connections are mocked by auto-fixture
             # All psycopg2.connect calls return mocked connections
-            
+
             # Test connection (mocked)
             conn = mock_psycopg2_connections.return_value
             cursor = conn.cursor.return_value
@@ -583,9 +551,7 @@ POSTGRES_PASSWORD=real_test_password_456
             )
 
             # Test data retrieval (mocked)
-            cursor.execute(
-                "SELECT id, name FROM test_table WHERE name = %s;", ("Test Entry",)
-            )
+            cursor.execute("SELECT id, name FROM test_table WHERE name = %s;", ("Test Entry",))
             # Mock the specific return for this query
             cursor.fetchone.return_value = (1, "Test Entry")
             result = cursor.fetchone()
@@ -603,13 +569,13 @@ POSTGRES_PASSWORD=real_test_password_456
                 container = mock_docker_client.containers.get("hive-postgres-real-test")
                 container.stop()
                 container.remove()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
     def test_safe_postgres_schema_management(self, mock_docker_client, temp_workspace_real, mock_psycopg2_connections):
         """SAFETY: Test PostgreSQL schema creation and management with complete mocking."""
         # SAFETY: Mock PostgreSQLCommands to prevent real implementation calls
-        with patch('PostgreSQLCommands') as mock_commands_class:
+        with patch("PostgreSQLCommands") as mock_commands_class:
             mock_commands = MagicMock()
             mock_commands.postgres_start.return_value = True
             mock_commands.postgres_stop.return_value = True
@@ -688,7 +654,7 @@ POSTGRES_PASSWORD=real_test_password_456
                 container = mock_docker_client.containers.get("hive-postgres-real-test")
                 container.stop()
                 container.remove()
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
 
@@ -701,7 +667,7 @@ class TestPostgreSQLErrorHandling:
             workspace = Path(temp_dir)
             # No docker-compose.yml created
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
 
             # All commands should handle missing compose file gracefully
             assert commands.postgres_start(str(workspace)) in [True, False]
@@ -717,7 +683,7 @@ class TestPostgreSQLErrorHandling:
             # Create invalid docker-compose.yml
             (workspace / "docker-compose.yml").write_text("invalid: yaml: content [")
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
 
             # Should fail initially - invalid compose handling not implemented
             result = commands.postgres_start(str(workspace))
@@ -730,7 +696,7 @@ class TestPostgreSQLErrorHandling:
             mock_docker.is_docker_available.return_value = False
             mock_docker_class.return_value = mock_docker
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
 
             # Should fail initially - Docker unavailable handling not implemented
             result = commands.postgres_start(".")
@@ -741,7 +707,7 @@ class TestPostgreSQLErrorHandling:
         with patch("cli.core.postgres_service.psycopg2.connect") as mock_connect:
             mock_connect.side_effect = psycopg2.OperationalError("timeout expired")
 
-            service = PostgreSQLService()
+            service = PostgreSQLService()  # noqa: F821
             result = service.check_connection(
                 host="localhost",
                 port=35534,
@@ -757,11 +723,9 @@ class TestPostgreSQLErrorHandling:
     def test_postgres_service_authentication_error(self):
         """Test PostgreSQL service authentication error handling."""
         with patch("cli.core.postgres_service.psycopg2.connect") as mock_connect:
-            mock_connect.side_effect = psycopg2.OperationalError(
-                "authentication failed"
-            )
+            mock_connect.side_effect = psycopg2.OperationalError("authentication failed")
 
-            service = PostgreSQLService()
+            service = PostgreSQLService()  # noqa: F821
             result = service.check_connection(
                 host="localhost",
                 port=35534,
@@ -790,7 +754,7 @@ services:
             workspace.chmod(0o444)
 
             try:
-                commands = PostgreSQLCommands()
+                commands = PostgreSQLCommands()  # noqa: F821
 
                 # Should handle permission errors gracefully
                 result = commands.postgres_start(str(workspace))
@@ -819,7 +783,7 @@ class TestPostgreSQLPrintOutput:
             }
             mock_docker_class.return_value = mock_docker
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
             commands.postgres_status("test_workspace")
 
         captured = capsys.readouterr()
@@ -837,7 +801,7 @@ class TestPostgreSQLPrintOutput:
             mock_service.start_postgres.return_value = True
             mock_service_class.return_value = mock_service
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
             commands.postgres_start("test_workspace")
 
         captured = capsys.readouterr()
@@ -861,13 +825,11 @@ class TestPostgreSQLPrintOutput:
 
             mock_conn = Mock()
             mock_cursor = Mock()
-            mock_cursor.fetchone.return_value = (
-                "PostgreSQL 15.5 on x86_64-pc-linux-gnu",
-            )
+            mock_cursor.fetchone.return_value = ("PostgreSQL 15.5 on x86_64-pc-linux-gnu",)
             mock_conn.cursor.return_value = mock_cursor
             mock_connect.return_value = mock_conn
 
-            commands = PostgreSQLCommands()
+            commands = PostgreSQLCommands()  # noqa: F821
             commands.postgres_health("test_workspace")
 
         captured = capsys.readouterr()
@@ -882,72 +844,74 @@ class TestPostgreSQLPrintOutput:
 # SAFETY VALIDATION: CRITICAL DOCKER MOCKING VERIFICATION
 # ============================================================================
 
+
 class TestSafetyValidation:
     """Validate that ALL Docker operations are properly mocked for safety."""
-    
+
     def test_no_real_docker_calls_possible(self, mock_all_subprocess):
         """CRITICAL SAFETY TEST: Verify no real Docker commands can execute."""
         # This test validates our safety fixtures work
         assert mock_all_subprocess is not None
-        
+
         # Verify the mock is properly configured
         mock_all_subprocess.return_value.returncode = 0
         mock_all_subprocess.return_value.stdout = "mocked output"
-        
+
         # Test that subprocess calls are intercepted
         result = mock_all_subprocess(["docker", "ps"])
         assert result.returncode == 0
         assert result.stdout == "mocked output"
-    
+
     def test_no_real_database_connections_possible(self, mock_psycopg2_connections):
         """CRITICAL SAFETY TEST: Verify no real database connections can be made."""
         # Test that psycopg2.connect is mocked
         conn = mock_psycopg2_connections.return_value
         assert conn is not None
-        
+
         # Verify cursor operations are mocked
         cursor = conn.cursor.return_value
         assert cursor is not None
-        assert hasattr(cursor, 'execute')
-        assert hasattr(cursor, 'fetchone')
-        assert hasattr(cursor, 'fetchall')
-    
+        assert hasattr(cursor, "execute")
+        assert hasattr(cursor, "fetchone")
+        assert hasattr(cursor, "fetchall")
+
     def test_fast_execution_benchmark(self):
         """PERFORMANCE TEST: Verify tests run fast without real Docker/DB operations."""
         import time
+
         start_time = time.time()
-        
+
         # Run multiple operations (all mocked)
         for _ in range(10):
             # These would be expensive operations if real
             mock_docker = MagicMock()
             mock_docker.ping()
             mock_docker.containers.get("test")
-            
+
             mock_conn = MagicMock()
             mock_cursor = mock_conn.cursor()
             mock_cursor.execute("SELECT 1")
-        
+
         execution_time = time.time() - start_time
-        
+
         # Should complete very quickly since no real operations
         assert execution_time < 0.1, f"Tests too slow: {execution_time}s (should be < 0.1s)"
-    
+
     def test_docker_import_safety(self):
         """SAFETY TEST: Verify Docker import is mocked and safe."""
         # Our docker import should be mocked
         assert docker is not None
-        
+
         # Should not have real Docker client methods
         # Real docker module would have APIClient, but ours is mocked
         client = docker.from_env()
         assert client is not None
-    
+
     def test_psycopg2_import_safety(self):
         """SAFETY TEST: Verify psycopg2 import is mocked and safe."""
         # Our psycopg2 import should be mocked
         assert psycopg2 is not None
-        
+
         # Mock connection should work
         conn = psycopg2.connect()
         assert conn is not None
@@ -1001,5 +965,5 @@ pytestmark = [
     pytest.mark.skip(reason="CLI architecture refactored - postgres commands consolidated"),
     pytest.mark.postgres,
     pytest.mark.integration,
-    pytest.mark.safe  # NEW: Mark tests as safe for any environment
+    pytest.mark.safe,  # NEW: Mark tests as safe for any environment
 ]

@@ -60,7 +60,8 @@ class TestDevModeWorkflow:
         yaml_path, expected_config = temp_yaml_file
 
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
             with patch("pathlib.Path") as mock_path:
                 # Mock path resolution to use our temp file
@@ -68,22 +69,16 @@ class TestDevModeWorkflow:
                 mock_path_instance.exists.return_value = True
                 mock_path.return_value = mock_path_instance
 
-                with patch(
-                    "builtins.open", mock_open(read_data=yaml.dump(expected_config))
-                ):
+                with patch("builtins.open", mock_open(read_data=yaml.dump(expected_config))):
                     with patch("yaml.safe_load", return_value=expected_config):
                         # Mock database services to prevent real connections
-                        with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                        with patch("lib.versioning.AgnoVersionService"):
+                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                                 factory = VersionFactory()
 
                                 # In dev mode, should load from YAML only without DB interaction
-                                with patch.object(
-                                    factory.sync_engine, "sync_component"
-                                ) as mock_sync:
-                                    config = await factory._load_from_yaml_only(
-                                        "test-agent", "agent"
-                                    )
+                                with patch.object(factory.sync_engine, "sync_component") as mock_sync:
+                                    config = await factory._load_from_yaml_only("test-agent", "agent")
 
                                     assert config == expected_config
                                     # Sync engine should not be called in dev mode
@@ -93,7 +88,8 @@ class TestDevModeWorkflow:
     async def test_dev_mode_workflow_missing_yaml_raises_error(self):
         """Test dev mode raises error when YAML doesn't exist."""
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
             with patch("pathlib.Path") as mock_path:
                 mock_path_instance = Mock()
@@ -101,8 +97,8 @@ class TestDevModeWorkflow:
                 mock_path.return_value = mock_path_instance
 
                 # Mock database services to prevent real connections
-                with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                    with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                with patch("lib.versioning.AgnoVersionService"):
+                    with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                         factory = VersionFactory()
 
                         with pytest.raises(ValueError, match="Config file not found"):
@@ -112,25 +108,22 @@ class TestDevModeWorkflow:
     async def test_dev_mode_workflow_invalid_yaml_raises_error(self, temp_yaml_file):
         """Test dev mode raises error for invalid YAML structure."""
         yaml_path, _ = temp_yaml_file
-        invalid_config = {
-            "team": {"component_id": "wrong-type"}
-        }  # Missing 'agent' section
+        invalid_config = {"team": {"component_id": "wrong-type"}}  # Missing 'agent' section
 
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
             with patch("pathlib.Path") as mock_path:
                 mock_path_instance = Mock()
                 mock_path_instance.exists.return_value = True
                 mock_path.return_value = mock_path_instance
 
-                with patch(
-                    "builtins.open", mock_open(read_data=yaml.dump(invalid_config))
-                ):
+                with patch("builtins.open", mock_open(read_data=yaml.dump(invalid_config))):
                     with patch("yaml.safe_load", return_value=invalid_config):
                         # Mock database services to prevent real connections
-                        with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                        with patch("lib.versioning.AgnoVersionService"):
+                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                                 factory = VersionFactory()
 
                                 with pytest.raises(ValueError, match="missing 'agent' section"):
@@ -177,11 +170,10 @@ class TestProductionSyncWorkflow:
     ):
         """Test production workflow updates DB when YAML is newer."""
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_service_class.return_value = mock_version_service
 
                 factory = VersionFactory()
@@ -191,20 +183,12 @@ class TestProductionSyncWorkflow:
                 mock_version_service.get_active_version.return_value = sample_db_version
                 sync_engine.file_tracker.yaml_newer_than_db = Mock(return_value=True)
 
-                with patch.object(
-                    sync_engine, "_load_yaml_config", return_value=sample_yaml_config
-                ):
-                    with patch.object(
-                        sync_engine, "_update_db_from_yaml"
-                    ) as mock_update:
-                        config = await factory._load_with_bidirectional_sync(
-                            "prod-agent", "agent"
-                        )
+                with patch.object(sync_engine, "_load_yaml_config", return_value=sample_yaml_config):
+                    with patch.object(sync_engine, "_update_db_from_yaml") as mock_update:
+                        config = await factory._load_with_bidirectional_sync("prod-agent", "agent")
 
                         assert config == sample_yaml_config
-                        mock_update.assert_called_once_with(
-                            "prod-agent", "agent", sample_yaml_config, 2
-                        )
+                        mock_update.assert_called_once_with("prod-agent", "agent", sample_yaml_config, 2)
 
     @pytest.mark.asyncio
     async def test_production_sync_workflow_db_to_yaml_update(
@@ -212,11 +196,10 @@ class TestProductionSyncWorkflow:
     ):
         """Test production workflow updates YAML when DB is newer."""
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_service_class.return_value = mock_version_service
 
                 factory = VersionFactory()
@@ -230,32 +213,21 @@ class TestProductionSyncWorkflow:
                 mock_version_service.get_active_version.return_value = sample_db_version
                 sync_engine.file_tracker.yaml_newer_than_db = Mock(return_value=False)
 
-                with patch.object(
-                    sync_engine, "_load_yaml_config", return_value=yaml_config_v2
-                ):
-                    with patch.object(
-                        sync_engine, "_update_yaml_from_db"
-                    ) as mock_update:
-                        config = await factory._load_with_bidirectional_sync(
-                            "prod-agent", "agent"
-                        )
+                with patch.object(sync_engine, "_load_yaml_config", return_value=yaml_config_v2):
+                    with patch.object(sync_engine, "_update_yaml_from_db") as mock_update:
+                        config = await factory._load_with_bidirectional_sync("prod-agent", "agent")
 
                         assert config == sample_db_version.config
-                        mock_update.assert_called_once_with(
-                            "prod-agent", "agent", sample_db_version
-                        )
+                        mock_update.assert_called_once_with("prod-agent", "agent", sample_db_version)
 
     @pytest.mark.asyncio
-    async def test_production_sync_workflow_create_new_component(
-        self, mock_version_service, sample_yaml_config
-    ):
+    async def test_production_sync_workflow_create_new_component(self, mock_version_service, sample_yaml_config):
         """Test production workflow creates new component from YAML."""
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_service_class.return_value = mock_version_service
 
                 factory = VersionFactory()
@@ -264,23 +236,15 @@ class TestProductionSyncWorkflow:
                 # No existing DB version
                 mock_version_service.get_active_version.return_value = None
 
-                with patch.object(
-                    sync_engine, "_load_yaml_config", return_value=sample_yaml_config
-                ):
+                with patch.object(sync_engine, "_load_yaml_config", return_value=sample_yaml_config):
                     with patch.object(sync_engine, "_create_db_version") as mock_create:
-                        config = await factory._load_with_bidirectional_sync(
-                            "new-agent", "agent"
-                        )
+                        config = await factory._load_with_bidirectional_sync("new-agent", "agent")
 
                         assert config == sample_yaml_config
-                        mock_create.assert_called_once_with(
-                            "new-agent", "agent", sample_yaml_config, 2
-                        )
+                        mock_create.assert_called_once_with("new-agent", "agent", sample_yaml_config, 2)
 
     @pytest.mark.asyncio
-    async def test_production_sync_workflow_specific_version_load(
-        self, mock_version_service
-    ):
+    async def test_production_sync_workflow_specific_version_load(self, mock_version_service):
         """Test production workflow loads specific version from DB."""
         specific_version_config = {
             "agent": {
@@ -302,61 +266,49 @@ class TestProductionSyncWorkflow:
         )
 
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_service_class.return_value = mock_version_service
-                
+
                 # Mock the VersionFactory to prevent real database initialization
                 with patch("lib.utils.version_factory.VersionFactory.__init__") as mock_init:
                     mock_init.return_value = None
-                    
+
                     factory = VersionFactory()
                     factory.version_service = mock_version_service
                     factory.sync_engine = Mock()
-                    
+
                     mock_version_service.get_version.return_value = version_record
 
-                    config = await factory._load_with_bidirectional_sync(
-                        "versioned-agent", "agent", version=5
-                    )
+                    config = await factory._load_with_bidirectional_sync("versioned-agent", "agent", version=5)
 
                     assert config == specific_version_config
-                    mock_version_service.get_version.assert_called_once_with(
-                        "versioned-agent", 5
-                    )
+                    mock_version_service.get_version.assert_called_once_with("versioned-agent", 5)
 
     @pytest.mark.asyncio
-    async def test_production_sync_workflow_specific_version_not_found(
-        self, mock_version_service
-    ):
+    async def test_production_sync_workflow_specific_version_not_found(self, mock_version_service):
         """Test production workflow raises error when specific version not found."""
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_service_class.return_value = mock_version_service
 
                 # Mock the VersionFactory to prevent real database initialization
                 with patch("lib.utils.version_factory.VersionFactory.__init__") as mock_init:
                     mock_init.return_value = None
-                    
+
                     factory = VersionFactory()
                     factory.version_service = mock_version_service
                     factory.sync_engine = Mock()
-                    
+
                     mock_version_service.get_version.return_value = None
 
-                    with pytest.raises(
-                        ValueError, match="Version 99 not found for nonexistent-agent"
-                    ):
-                        await factory._load_with_bidirectional_sync(
-                            "nonexistent-agent", "agent", version=99
-                        )
+                    with pytest.raises(ValueError, match="Version 99 not found for nonexistent-agent"):
+                        await factory._load_with_bidirectional_sync("nonexistent-agent", "agent", version=99)
 
 
 class TestApiToYamlWriteBack:
@@ -383,13 +335,9 @@ class TestApiToYamlWriteBack:
             # Mock the write-back operation
             mock_sync_engine.write_back_to_yaml = AsyncMock()
 
-            await mock_sync_engine.write_back_to_yaml(
-                "api-agent", "agent", updated_config, 3
-            )
+            await mock_sync_engine.write_back_to_yaml("api-agent", "agent", updated_config, 3)
 
-            mock_sync_engine.write_back_to_yaml.assert_called_once_with(
-                "api-agent", "agent", updated_config, 3
-            )
+            mock_sync_engine.write_back_to_yaml.assert_called_once_with("api-agent", "agent", updated_config, 3)
 
     @pytest.mark.asyncio
     async def test_api_to_yaml_write_back_dev_mode_skip(self, mock_sync_engine):
@@ -403,9 +351,7 @@ class TestApiToYamlWriteBack:
             with patch.dict(os.environ, {"HIVE_DEV_MODE": "true"}):
                 with patch("builtins.open") as mock_file:
                     # In dev mode, write-back should be skipped
-                    await sync_engine.write_back_to_yaml(
-                        "dev-agent", "agent", updated_config, 1
-                    )
+                    await sync_engine.write_back_to_yaml("dev-agent", "agent", updated_config, 1)
 
                     # Should not attempt to open file in dev mode
                     mock_file.assert_not_called()
@@ -428,12 +374,8 @@ class TestApiToYamlWriteBack:
                         "builtins.open",
                         side_effect=PermissionError("Read-only filesystem"),
                     ):
-                        with pytest.raises(
-                            PermissionError, match="Read-only filesystem"
-                        ):
-                            await sync_engine.write_back_to_yaml(
-                                "error-agent", "agent", updated_config, 2
-                            )
+                        with pytest.raises(PermissionError, match="Read-only filesystem"):
+                            await sync_engine.write_back_to_yaml("error-agent", "agent", updated_config, 2)
 
 
 class TestCompleteIntegrationScenarios:
@@ -453,34 +395,30 @@ class TestCompleteIntegrationScenarios:
 
         # Phase 1: Development in dev mode (YAML only)
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "true", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
             with patch("pathlib.Path") as mock_path:
                 mock_path_instance = Mock()
                 mock_path_instance.exists.return_value = True
                 mock_path.return_value = mock_path_instance
 
-                with patch(
-                    "builtins.open", mock_open(read_data=yaml.dump(component_config))
-                ):
+                with patch("builtins.open", mock_open(read_data=yaml.dump(component_config))):
                     with patch("yaml.safe_load", return_value=component_config):
                         # Mock database services to prevent real connections
-                        with patch("lib.versioning.AgnoVersionService") as mock_agno_service:
-                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync") as mock_bidirectional_sync:
+                        with patch("lib.versioning.AgnoVersionService"):
+                            with patch("lib.versioning.bidirectional_sync.BidirectionalSync"):
                                 dev_factory = VersionFactory()
-                                dev_config = await dev_factory._load_from_yaml_only(
-                                    "migration-agent", "agent"
-                                )
+                                dev_config = await dev_factory._load_from_yaml_only("migration-agent", "agent")
 
                                 assert dev_config == component_config
 
         # Phase 2: Production deployment (bidirectional sync)
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_version_service = AsyncMock()
                 mock_service_class.return_value = mock_version_service
 
@@ -490,20 +428,16 @@ class TestCompleteIntegrationScenarios:
                 # Mock the VersionFactory to prevent real database initialization
                 with patch("lib.utils.version_factory.VersionFactory.__init__") as mock_init:
                     mock_init.return_value = None
-                    
+
                     prod_factory = VersionFactory()
                     prod_factory.version_service = mock_version_service
                     sync_engine = AsyncMock()
                     sync_engine.sync_component.return_value = component_config
                     prod_factory.sync_engine = sync_engine
 
-                    with patch.object(
-                        sync_engine, "_load_yaml_config", return_value=component_config
-                    ):
-                        with patch.object(sync_engine, "_create_db_version") as mock_create:
-                            prod_config = await prod_factory._load_with_bidirectional_sync(
-                                "migration-agent", "agent"
-                            )
+                    with patch.object(sync_engine, "_load_yaml_config", return_value=component_config):
+                        with patch.object(sync_engine, "_create_db_version"):
+                            prod_config = await prod_factory._load_with_bidirectional_sync("migration-agent", "agent")
 
                             assert prod_config == component_config
                             # Note: This assertion may not be called since we're using sync_component directly
@@ -533,11 +467,10 @@ class TestCompleteIntegrationScenarios:
         }
 
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_version_service = AsyncMock()
                 mock_service_class.return_value = mock_version_service
 
@@ -563,20 +496,12 @@ class TestCompleteIntegrationScenarios:
                 # Phase 2: Next sync should update YAML from newer DB version
                 sync_engine.file_tracker.yaml_newer_than_db = Mock(return_value=False)
 
-                with patch.object(
-                    sync_engine, "_load_yaml_config", return_value=initial_config
-                ):
-                    with patch.object(
-                        sync_engine, "_update_yaml_from_db"
-                    ) as mock_update:
-                        result_config = await sync_engine.sync_component(
-                            "prod-cycle-agent", "agent"
-                        )
+                with patch.object(sync_engine, "_load_yaml_config", return_value=initial_config):
+                    with patch.object(sync_engine, "_update_yaml_from_db") as mock_update:
+                        result_config = await sync_engine.sync_component("prod-cycle-agent", "agent")
 
                         assert result_config == updated_config
-                        mock_update.assert_called_once_with(
-                            "prod-cycle-agent", "agent", db_version
-                        )
+                        mock_update.assert_called_once_with("prod-cycle-agent", "agent", db_version)
 
     @pytest.mark.asyncio
     async def test_complete_conflict_resolution_scenario(self):
@@ -600,11 +525,10 @@ class TestCompleteIntegrationScenarios:
         }
 
         with patch.dict(
-            os.environ, {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"}
+            os.environ,
+            {"HIVE_DEV_MODE": "false", "HIVE_DATABASE_URL": "postgresql+psycopg://test:test@localhost:5432/test_db"},
         ):
-            with patch(
-                "lib.versioning.bidirectional_sync.AgnoVersionService"
-            ) as mock_service_class:
+            with patch("lib.versioning.bidirectional_sync.AgnoVersionService") as mock_service_class:
                 mock_version_service = AsyncMock()
                 mock_service_class.return_value = mock_version_service
 
@@ -627,21 +551,13 @@ class TestCompleteIntegrationScenarios:
                 # YAML file is newer (timestamp-based resolution)
                 sync_engine.file_tracker.yaml_newer_than_db = Mock(return_value=True)
 
-                with patch.object(
-                    sync_engine, "_load_yaml_config", return_value=yaml_config
-                ):
-                    with patch.object(
-                        sync_engine, "_update_db_from_yaml"
-                    ) as mock_update:
-                        result_config = await sync_engine.sync_component(
-                            "conflict-agent", "agent"
-                        )
+                with patch.object(sync_engine, "_load_yaml_config", return_value=yaml_config):
+                    with patch.object(sync_engine, "_update_db_from_yaml") as mock_update:
+                        result_config = await sync_engine.sync_component("conflict-agent", "agent")
 
                         # YAML wins due to newer timestamp
                         assert result_config == yaml_config
-                        mock_update.assert_called_once_with(
-                            "conflict-agent", "agent", yaml_config, 2
-                        )
+                        mock_update.assert_called_once_with("conflict-agent", "agent", yaml_config, 2)
 
 
 # Store integration test patterns in memory for future reference
@@ -650,6 +566,6 @@ async def test_store_integration_patterns():
     """Store successful integration test patterns in memory."""
     try:
         pass
-    except Exception:
+    except Exception:  # noqa: S110 - Silent exception handling is intentional
         # If memory storage fails, just pass - this is not critical for test functionality
         pass

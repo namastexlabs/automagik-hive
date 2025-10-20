@@ -12,11 +12,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter
-
 # Import knowledge modules
 from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
 from lib.knowledge.factories.knowledge_factory import create_knowledge_base, get_knowledge_base
+from lib.knowledge.filters.business_unit_filter import BusinessUnitFilter
 from lib.knowledge.row_based_csv_knowledge import RowBasedCSVKnowledgeBase
 from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
 
@@ -302,7 +301,7 @@ class TestSmartIncrementalLoader:
         try:
             analysis = loader.analyze_changes()
             assert isinstance(analysis, dict)
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # Method might fail due to complex database interactions - that's ok for testing
             pass
 
@@ -385,7 +384,7 @@ class TestKnowledgeErrorHandling:
                 try:
                     loader = SmartIncrementalLoader("/non/existent/file.csv")
                     assert loader is not None
-                except Exception:
+                except Exception:  # noqa: S110 - Silent exception handling is intentional
                     # Expected - may fail due to missing config or db issues
                     pass
 

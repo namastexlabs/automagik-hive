@@ -45,6 +45,11 @@ class MCPServerConfig:
         """Check if this is a command-based server"""
         return self.type == "command" or (self.command is not None)
 
+    @property
+    def is_http_server(self) -> bool:
+        """Check if this is an HTTP/streamable-http server"""
+        return self.type in ["http", "streamable-http"]
+
 
 class MCPCatalog:
     """
@@ -67,6 +72,7 @@ class MCPCatalog:
         """
         if mcp_json_path is None:
             import os
+
             mcp_json_path = os.getenv("HIVE_MCP_CONFIG_PATH", ".mcp.json")
         self.config_path = Path(mcp_json_path)
         self.catalog: dict[str, Any] = {}
@@ -94,13 +100,9 @@ class MCPCatalog:
                 )
 
         except json.JSONDecodeError as e:
-            raise MCPException(
-                f"Invalid JSON in MCP configuration: {e}", str(self.config_path)
-            )
+            raise MCPException(f"Invalid JSON in MCP configuration: {e}", str(self.config_path))
         except Exception as e:
-            raise MCPException(
-                f"Error loading MCP configuration: {e}", str(self.config_path)
-            )
+            raise MCPException(f"Error loading MCP configuration: {e}", str(self.config_path))
 
     def _discover_servers(self) -> None:
         """Discover available MCP servers from the catalog"""
@@ -114,9 +116,7 @@ class MCPCatalog:
 
         for server_name, server_config in mcp_servers.items():
             if not isinstance(server_config, dict):
-                logger.warning(
-                    "Invalid server config, skipping", server_name=server_name
-                )
+                logger.warning("Invalid server config, skipping", server_name=server_name)
                 continue
 
             try:
@@ -142,6 +142,15 @@ class MCPCatalog:
                         env=server_config.get("env", {}),
                     )
 
+                # Handle HTTP/streamable-http servers
+                elif server_type in ["http", "streamable-http"]:
+                    config = MCPServerConfig(
+                        name=server_name,
+                        type="streamable-http",  # Normalize to streamable-http
+                        url=server_config.get("url"),
+                        env=server_config.get("env", {}),
+                    )
+
                 else:
                     logger.warning(
                         "Unknown server type, skipping",
@@ -153,9 +162,7 @@ class MCPCatalog:
                 self.available_servers[server_name] = config
 
             except Exception as e:
-                logger.warning(
-                    "Error processing server", server_name=server_name, error=str(e)
-                )
+                logger.warning("Error processing server", server_name=server_name, error=str(e))
                 continue
 
     def get_server_config(self, server_name: str) -> MCPServerConfig:
@@ -218,6 +225,7 @@ class MCPCatalog:
             "url": config.url,
             "is_sse_server": config.is_sse_server,
             "is_command_server": config.is_command_server,
+            "is_http_server": config.is_http_server,
         }
 
     def reload_catalog(self) -> None:

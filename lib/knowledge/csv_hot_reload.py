@@ -77,15 +77,11 @@ class CSVHotReloadManager:
             return Path(supplied)
 
         knowledge_cfg: dict[str, Any] = self._config.get("knowledge", {})
-        csv_setting = knowledge_cfg.get("csv_file_path") or self._config.get(
-            "csv_file_path"
-        )
+        csv_setting = knowledge_cfg.get("csv_file_path") or self._config.get("csv_file_path")
 
         if csv_setting:
             candidate = Path(csv_setting)
-            logger.info(
-                "Using CSV path from centralized config", csv_path=str(candidate)
-            )
+            logger.info("Using CSV path from centralized config", csv_path=str(candidate))
             return candidate
 
         fallback = (Path(__file__).parent / "knowledge_rag.csv").resolve()
@@ -97,11 +93,7 @@ class CSVHotReloadManager:
 
     def _extract_debounce_delay(self) -> float:
         try:
-            return float(
-                self._config.get("knowledge", {})
-                .get("hot_reload", {})
-                .get("debounce_delay", 1.0)
-            )
+            return float(self._config.get("knowledge", {}).get("hot_reload", {}).get("debounce_delay", 1.0))
         except Exception:  # pragma: no cover - defensive parsing
             return 1.0
 
@@ -111,9 +103,7 @@ class CSVHotReloadManager:
     def _initialize_knowledge_base(self) -> None:
         db_url = os.getenv("HIVE_DATABASE_URL")
         if not db_url:
-            logger.warning(
-                "HIVE_DATABASE_URL not set; knowledge base hot reload disabled"
-            )
+            logger.warning("HIVE_DATABASE_URL not set; knowledge base hot reload disabled")
             self.knowledge_base = None
             return
 
@@ -173,9 +163,7 @@ class CSVHotReloadManager:
         try:
             return OpenAIEmbedder(id=embedder_id)
         except Exception as exc:
-            logger.warning(
-                "Could not load global embedder config", error=str(exc)
-            )
+            logger.warning("Could not load global embedder config", error=str(exc))
             return OpenAIEmbedder(id=DEFAULT_EMBEDDER_ID)
 
     def _vector_config(self) -> dict[str, Any]:
@@ -219,9 +207,7 @@ class CSVHotReloadManager:
                 knowledge_table=knowledge_table,
             )
         except Exception as exc:  # pragma: no cover - defensive fallback
-            logger.warning(
-                "Could not initialize contents database", error=str(exc)
-            )
+            logger.warning("Could not initialize contents database", error=str(exc))
             return None
 
     # ------------------------------------------------------------------
@@ -314,16 +300,48 @@ class CSVHotReloadManager:
             return
 
         try:
-            self.knowledge_base.load(recreate=False, skip_existing=True)
-            logger.info(
-                "Knowledge base reloaded",
-                component="csv_hot_reload",
-                method="agno_incremental",
-            )
+            # Use SmartIncrementalLoader for intelligent change detection
+            from lib.knowledge.smart_incremental_loader import SmartIncrementalLoader
+
+            smart_loader = SmartIncrementalLoader(csv_path=str(self.csv_path), kb=self.knowledge_base)
+
+            # Analyze and process only changes
+            result = smart_loader.smart_load()
+
+            if "error" in result:
+                logger.warning(
+                    "Smart reload failed, falling back to basic load",
+                    error=result["error"],
+                    component="csv_hot_reload",
+                )
+                # Fallback to basic incremental load
+                self.knowledge_base.load(recreate=False, skip_existing=True)
+            else:
+                strategy = result.get("strategy", "unknown")
+                if strategy == "no_changes":
+                    logger.debug(
+                        "No changes detected in CSV",
+                        component="csv_hot_reload",
+                    )
+                elif strategy == "incremental_update":
+                    new_rows = result.get("new_rows_processed", 0)
+                    removed_rows = result.get("rows_removed", 0)
+                    logger.info(
+                        "Knowledge base reloaded with changes",
+                        component="csv_hot_reload",
+                        method="smart_incremental",
+                        new_rows=new_rows,
+                        removed_rows=removed_rows,
+                    )
+                else:
+                    logger.info(
+                        "Knowledge base reloaded",
+                        component="csv_hot_reload",
+                        method="smart_incremental",
+                        strategy=strategy,
+                    )
         except Exception as exc:
-            logger.error(
-                "Knowledge base reload failed", error=str(exc), component="csv_hot_reload"
-            )
+            logger.error("Knowledge base reload failed", error=str(exc), component="csv_hot_reload")
 
     # ------------------------------------------------------------------
     # Status helpers
@@ -366,9 +384,7 @@ def main() -> None:
         return
     # Backward compatibility: only treat flags explicitly set to True as truthy
     # Using `is True` avoids MagicMock truthiness in patched tests.
-    force_flag = (getattr(args, "force", False) is True) or (
-        getattr(args, "force_reload", False) is True
-    )
+    force_flag = (getattr(args, "force", False) is True) or (getattr(args, "force_reload", False) is True)
     if force_flag:
         manager.force_reload()
         return

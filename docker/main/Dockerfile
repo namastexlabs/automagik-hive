@@ -84,7 +84,7 @@ COPY --chown=hive:hive common/ ./common/
 # Copy remaining files
 COPY --chown=hive:hive scripts/ ./scripts/
 COPY --chown=hive:hive logging_whitelist.yaml ./
-COPY --chown=hive:hive .mcp.json ./
+# Skip .mcp.json - will be provided via volume mount or environment config in production
 
 # Switch to non-root user
 USER hive

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from cli.commands.service import ServiceManager
 from lib.agentos.exceptions import AgentOSConfigError
 

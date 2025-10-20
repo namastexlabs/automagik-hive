@@ -8,19 +8,19 @@ Agent Under Test: ai/agents/template-agent/agent.py
 Pattern: Simple Agent.from_yaml() with config file path manipulation
 """
 
-import pytest
-from unittest.mock import Mock, patch
+import importlib.util
+import os
 
 # Import the module under test using importlib for better isolation
-import sys
-import os
-import importlib.util
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Set test database URL BEFORE loading any modules
-os.environ['HIVE_DATABASE_URL'] = 'sqlite:///test.db'
+os.environ["HIVE_DATABASE_URL"] = "sqlite:///test.db"
 
 # Load the template-agent module
-template_agent_path = os.path.join(os.path.dirname(__file__), '../../../../ai/agents/template-agent/agent.py')
+template_agent_path = os.path.join(os.path.dirname(__file__), "../../../../ai/agents/template-agent/agent.py")
 spec = importlib.util.spec_from_file_location("template_agent_module", template_agent_path)
 template_agent_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(template_agent_module)
@@ -33,22 +33,22 @@ class TestTemplateAgentFactory:
     def test_get_template_agent_with_default_parameters_should_create_agent(self):
         """
         FAILING TEST: Should create template agent using Agent.from_yaml().
-        
+
         RED phase: This test WILL FAIL until implementation is complete.
         Tests the simple template agent creation pattern.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             # Setup mock for Agent.from_yaml static method
             mock_agent_instance = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
+
             # Execute function under test
             result = get_template_agent()
-            
+
             # Assertions - These WILL FAIL in RED phase
             assert result is not None, "Template agent should be created successfully"
             assert result == mock_agent_instance, "Should return the created agent instance"
-            
+
             # Verify Agent.from_yaml was called with correct config path
             mock_agent_class.from_yaml.assert_called_once()
             call_args = mock_agent_class.from_yaml.call_args
@@ -58,65 +58,66 @@ class TestTemplateAgentFactory:
     def test_get_template_agent_config_path_should_replace_agent_py_with_config_yaml(self):
         """
         FAILING TEST: Should replace 'agent.py' with 'config.yaml' in file path.
-        
+
         RED phase: Tests file path manipulation logic.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class, \
-             patch.object(template_agent_module, '__file__', '/path/to/agent.py'):
-            
+        with (
+            patch.object(template_agent_module, "Agent") as mock_agent_class,
+            patch.object(template_agent_module, "__file__", "/path/to/agent.py"),
+        ):
             mock_agent_instance = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
-            result = get_template_agent()
-            
+
+            get_template_agent()
+
             # Verify path replacement logic
             call_args = mock_agent_class.from_yaml.call_args
             config_path = call_args[0][0]
-            assert config_path == '/path/to/config.yaml', "Should replace agent.py with config.yaml"
+            assert config_path == "/path/to/config.yaml", "Should replace agent.py with config.yaml"
 
     def test_get_template_agent_agent_from_yaml_failure_should_raise_error(self):
         """
         FAILING TEST: Should propagate Agent.from_yaml failures.
-        
+
         RED phase: Tests error handling for Agent creation failures.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             # Simulate Agent.from_yaml failure
             mock_agent_class.from_yaml.side_effect = Exception("Template agent creation failed")
-            
+
             with pytest.raises(Exception) as exc_info:
                 get_template_agent()
-            
+
             assert "Template agent creation failed" in str(exc_info.value)
 
     def test_get_template_agent_missing_config_file_should_raise_error(self):
         """
         FAILING TEST: Should raise FileNotFoundError when config.yaml is missing.
-        
+
         RED phase: Tests error handling for missing configuration files.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             # Simulate missing config file
             mock_agent_class.from_yaml.side_effect = FileNotFoundError("Config file not found")
-            
+
             with pytest.raises(FileNotFoundError) as exc_info:
                 get_template_agent()
-            
+
             assert "Config file not found" in str(exc_info.value)
 
     def test_get_template_agent_invalid_config_should_raise_error(self):
         """
         FAILING TEST: Should raise error for invalid configuration structure.
-        
+
         RED phase: Tests configuration validation error handling.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             # Simulate invalid config structure
             mock_agent_class.from_yaml.side_effect = ValueError("Invalid agent configuration")
-            
+
             with pytest.raises(ValueError) as exc_info:
                 get_template_agent()
-            
+
             assert "Invalid agent configuration" in str(exc_info.value)
 
 
@@ -126,16 +127,16 @@ class TestTemplateAgentBehavior:
     def test_template_agent_should_use_no_parameters(self):
         """
         FAILING TEST: Should create agent without any parameters.
-        
+
         RED phase: Tests template agent simplicity pattern.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             mock_agent_instance = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
+
             # Template agent should not accept parameters
             result = get_template_agent()
-            
+
             assert result == mock_agent_instance
             # Should be called with only the config path, no additional parameters
             assert len(mock_agent_class.from_yaml.call_args[0]) == 1
@@ -154,27 +155,27 @@ class TestTemplateAgentBehavior:
 
         # Verify function signature accepts **kwargs (Agno v2 pattern)
         sig = inspect.signature(get_template_agent)
-        assert 'kwargs' in sig.parameters, "Template agent should accept **kwargs for Agno v2 flexibility"
+        assert "kwargs" in sig.parameters, "Template agent should accept **kwargs for Agno v2 flexibility"
 
     def test_template_agent_should_provide_foundational_pattern(self):
         """
         FAILING TEST: Should provide foundational pattern for specialized agents.
-        
+
         RED phase: Tests template agent role as foundation.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             mock_agent_instance = Mock()
             mock_agent_instance.name = "Template Agent"
             mock_agent_instance.agent_id = "template-agent"
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
+
             result = get_template_agent()
-            
+
             # Template agent should provide basic agent structure
             assert result.name == "Template Agent"
             assert result.agent_id == "template-agent"
-            assert hasattr(result, 'name'), "Should have agent name attribute"
-            assert hasattr(result, 'agent_id'), "Should have agent ID attribute"
+            assert hasattr(result, "name"), "Should have agent name attribute"
+            assert hasattr(result, "agent_id"), "Should have agent ID attribute"
 
 
 class TestTemplateAgentFilePathHandling:
@@ -183,24 +184,24 @@ class TestTemplateAgentFilePathHandling:
     def test_template_agent_path_replacement_should_handle_different_paths(self):
         """
         FAILING TEST: Should handle various file path formats correctly.
-        
+
         RED phase: Tests path manipulation robustness.
         """
         test_cases = [
-            ('/absolute/path/to/agent.py', '/absolute/path/to/config.yaml'),
-            ('relative/path/agent.py', 'relative/path/config.yaml'),
-            ('/complex/path/with.dots/agent.py', '/complex/path/with.dots/config.yaml'),
-            ('agent.py', 'config.yaml')
+            ("/absolute/path/to/agent.py", "/absolute/path/to/config.yaml"),
+            ("relative/path/agent.py", "relative/path/config.yaml"),
+            ("/complex/path/with.dots/agent.py", "/complex/path/with.dots/config.yaml"),
+            ("agent.py", "config.yaml"),
         ]
-        
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             mock_agent_instance = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
+
             for input_path, expected_path in test_cases:
-                with patch.object(template_agent_module, '__file__', input_path):
+                with patch.object(template_agent_module, "__file__", input_path):
                     get_template_agent()
-                    
+
                     call_args = mock_agent_class.from_yaml.call_args
                     actual_path = call_args[0][0]
                     assert actual_path == expected_path, f"Path replacement failed for {input_path}"
@@ -208,15 +209,15 @@ class TestTemplateAgentFilePathHandling:
     def test_template_agent_should_handle_missing_file_attribute(self):
         """
         FAILING TEST: Should handle missing __file__ attribute gracefully.
-        
+
         RED phase: Tests edge case for __file__ attribute.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             mock_agent_class.from_yaml.side_effect = AttributeError("__file__ not available")
-            
+
             with pytest.raises(AttributeError) as exc_info:
                 get_template_agent()
-            
+
             assert "__file__ not available" in str(exc_info.value)
 
 
@@ -226,21 +227,21 @@ class TestTemplateAgentIntegration:
     def test_template_agent_export_should_include_factory_function(self):
         """
         FAILING TEST: Should export get_template_agent in __all__.
-        
+
         RED phase: Tests module exports for template agent API.
         """
         # Use the loaded module instead of direct import due to hyphen in module name
-        module_all = getattr(template_agent_module, '__all__')
-        
+        module_all = template_agent_module.__all__
+
         assert "get_template_agent" in module_all, "Template factory function should be exported"
 
     def test_template_agent_creation_should_work_with_realistic_config(self):
         """
         FAILING TEST: Should create agent with realistic template configuration.
-        
+
         RED phase: Tests end-to-end template agent creation.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             # Mock realistic template agent instance
             mock_agent_instance = Mock()
             mock_agent_instance.name = "Template Agent"
@@ -248,9 +249,9 @@ class TestTemplateAgentIntegration:
             mock_agent_instance.description = "Foundational agent template"
             mock_agent_instance.model = "anthropic:claude-3"
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
+
             result = get_template_agent()
-            
+
             # Verify realistic template agent properties
             assert result.name == "Template Agent"
             assert result.agent_id == "template-agent"
@@ -260,10 +261,10 @@ class TestTemplateAgentIntegration:
     def test_template_agent_should_serve_as_foundation_for_specialized_agents(self):
         """
         FAILING TEST: Should provide foundation patterns for other agent types.
-        
+
         RED phase: Tests template agent's role in agent ecosystem.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class:
+        with patch.object(template_agent_module, "Agent") as mock_agent_class:
             mock_agent_instance = Mock()
             # Template should provide standard agent interface
             mock_agent_instance.run = Mock()
@@ -271,14 +272,14 @@ class TestTemplateAgentIntegration:
             mock_agent_instance.memory = Mock()
             mock_agent_instance.db = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
-            
+
             result = get_template_agent()
-            
+
             # Verify foundational interface is available
-            assert hasattr(result, 'run'), "Should provide run method interface"
-            assert hasattr(result, 'chat'), "Should provide chat method interface"
-            assert hasattr(result, 'memory'), "Should provide memory interface"
-            assert hasattr(result, 'db'), "Should provide db interface"
+            assert hasattr(result, "run"), "Should provide run method interface"
+            assert hasattr(result, "chat"), "Should provide chat method interface"
+            assert hasattr(result, "memory"), "Should provide memory interface"
+            assert hasattr(result, "db"), "Should provide db interface"
 
     def test_template_agent_config_loading_should_use_agent_from_yaml_correctly(self):
         """
@@ -286,9 +287,10 @@ class TestTemplateAgentIntegration:
 
         Tests proper integration with Agno v2 Agent.from_yaml method.
         """
-        with patch.object(template_agent_module, 'Agent') as mock_agent_class, \
-             patch.object(template_agent_module, '__file__', '/test/template/agent.py'):
-
+        with (
+            patch.object(template_agent_module, "Agent") as mock_agent_class,
+            patch.object(template_agent_module, "__file__", "/test/template/agent.py"),
+        ):
             mock_agent_instance = Mock()
             mock_agent_class.from_yaml.return_value = mock_agent_instance
 
@@ -297,8 +299,8 @@ class TestTemplateAgentIntegration:
             # Verify correct usage of Agent.from_yaml (Agno v2 includes knowledge parameter)
             mock_agent_class.from_yaml.assert_called_once()
             call_args = mock_agent_class.from_yaml.call_args
-            assert call_args[0][0] == '/test/template/config.yaml', "Should use correct config path"
-            assert 'knowledge' in call_args[1], "Should pass knowledge parameter (Agno v2)"
+            assert call_args[0][0] == "/test/template/config.yaml", "Should use correct config path"
+            assert "knowledge" in call_args[1], "Should pass knowledge parameter (Agno v2)"
             assert result == mock_agent_instance
 
 

@@ -76,9 +76,7 @@ class AuthInitService:
             env_content.append(f"{self.api_key_var}={api_key}")
 
         # Ensure AUTH_DISABLED is set to false if not present
-        has_auth_disabled = any(
-            line.startswith(f"{self.auth_disabled_var}=") for line in env_content
-        )
+        has_auth_disabled = any(line.startswith(f"{self.auth_disabled_var}=") for line in env_content)
         if not has_auth_disabled:
             env_content.append(f"{self.auth_disabled_var}=false")
 
@@ -105,6 +103,7 @@ class AuthInitService:
         logger.info("🔐 \nUse this key in your API requests:")
         logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\\\')
         from lib.config.settings import settings
+
         logger.info(f"🔐      http://localhost:{settings().hive_api_port}/api/v1/health")
         logger.info("🔐 \n" + "=" * 60 + "\n")
 

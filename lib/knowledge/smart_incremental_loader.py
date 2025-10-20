@@ -80,19 +80,13 @@ class SmartIncrementalLoader:
 
         # Resolve CSV path: prefer explicit arg, else from config relative to this file
         if csv_path is None:
-            cfg_rel = (
-                self.config.get("knowledge", {}).get("csv_file_path", "test.csv")
-            )
+            cfg_rel = self.config.get("knowledge", {}).get("csv_file_path", "test.csv")
             self.csv_path = Path(__file__).parent / cfg_rel
         else:
             self.csv_path = Path(csv_path)
 
         # Table name from config (with default)
-        self.table_name = (
-            self.config.get("knowledge", {})
-            .get("vector_db", {})
-            .get("table_name", "knowledge_base")
-        )
+        self.table_name = self.config.get("knowledge", {}).get("vector_db", {}).get("table_name", "knowledge_base")
 
         # DB URL is required by tests
         db_url_env = os.getenv("HIVE_DATABASE_URL")
@@ -171,9 +165,7 @@ class SmartIncrementalLoader:
             try:
                 engine = self._engine()
                 with engine.connect() as conn:
-                    result = conn.execute(
-                        text("SELECT COUNT(*) FROM agno.knowledge_base")
-                    )
+                    result = conn.execute(text("SELECT COUNT(*) FROM agno.knowledge_base"))
                     row = result.fetchone()
                     if row is not None and row[0] is not None:
                         entries_processed = int(row[0])
@@ -229,53 +221,63 @@ class SmartIncrementalLoader:
             return {"error": f"Incremental update failed: {exc}"}
 
     def analyze_changes(self) -> dict[str, Any]:
-        """Analyze CSV vs DB and report whether processing is needed.
+        """Analyze CSV vs DB using hash-based change detection.
 
-        To match tests, we:
-        - error when CSV file missing
-        - count CSV rows via pandas
-        - for each row, query DB for existence (COUNT(*)) using a simple LIKE
-        - return counts and a status string
+        Uses content hashes for reliable comparison instead of LIKE pattern matching.
+        Returns detailed change information including new and removed rows.
         """
         if not Path(self.csv_path).exists():
             return {"error": "CSV file not found"}
 
         try:
-            df = pd.read_csv(self.csv_path)
-            total_rows = 0
-            existing_rows = 0
+            # Get current CSV rows with hashes
+            csv_rows = self._get_csv_rows_with_hashes()
+            csv_hashes = {row["hash"] for row in csv_rows}
+            csv_total_rows = len(csv_rows)
 
-            engine = self._engine()
-            with engine.connect() as conn:
-                for _, row in df.iterrows():
-                    total_rows += 1
-                    # Check for presence by matching the beginning of the content
-                    problem = str(row.get("problem", ""))
-                    question = str(row.get("question", ""))
-                    prefix = f"**Q:** {question}" if question else f"**Problem:** {problem}"
-                    result = conn.execute(
-                        text(
-                            "SELECT COUNT(*) FROM agno.knowledge_base WHERE content LIKE :prefix"
-                        ),
-                        {"prefix": f"{prefix}%"},
-                    )
-                    db_row = result.fetchone()
-                    count = int(db_row[0]) if db_row is not None and db_row[0] is not None else 0
-                    if count > 0:
-                        existing_rows += 1
+            # Get existing hashes from database
+            db_hashes = self._get_existing_row_hashes()
+            existing_rows = len(db_hashes)
 
-            needs_processing = existing_rows != total_rows
-            status = "up_to_date" if not needs_processing else "incremental_update_required"
+            # Calculate changes using set operations
+            new_hashes = csv_hashes - db_hashes
+            removed_hashes = db_hashes - csv_hashes
 
-            return {
-                "csv_total_rows": total_rows,
+            # Build new and removed row details
+            new_rows = [row for row in csv_rows if row["hash"] in new_hashes]
+            removed_rows_list = list(removed_hashes)
+
+            needs_processing = len(new_rows) > 0 or len(removed_rows_list) > 0
+
+            if needs_processing:
+                status = "incremental_update_required"
+            else:
+                status = "up_to_date"
+
+            result = {
+                "csv_total_rows": csv_total_rows,
                 "existing_vector_rows": existing_rows,
-                "new_rows_count": max(total_rows - existing_rows, 0),
-                "removed_rows_count": 0,
+                "new_rows_count": len(new_rows),
+                "removed_rows_count": len(removed_rows_list),
                 "needs_processing": needs_processing,
                 "status": status,
+                "new_rows": new_rows,  # Include for incremental update
+                "removed_hashes": removed_rows_list,  # Include for cleanup
             }
+
+            if needs_processing:
+                app_log.logger.debug(
+                    "CSV changes detected",
+                    new_rows=len(new_rows),
+                    removed_rows=len(removed_rows_list),
+                    csv_total=csv_total_rows,
+                    db_total=existing_rows,
+                )
+
+            return result
+
         except Exception as exc:  # pragma: no cover - handled by tests
+            app_log.logger.warning("Change analysis failed", error=str(exc))
             return {"error": str(exc)}
 
     # ----------------- Low-level helpers expected by tests -----------------
@@ -299,7 +301,8 @@ class SmartIncrementalLoader:
             df = pd.read_csv(self.csv_path)
             rows: list[dict[str, Any]] = []
             for idx, row in df.iterrows():
-                h = self._hash_row(row)
+                # Use hash manager which leverages KB's signature computation
+                h = self._hash_manager.hash_row(int(idx), row)
                 rows.append({"index": idx, "hash": h, "data": row.to_dict()})
             return rows
         except Exception as exc:
@@ -338,21 +341,13 @@ class SmartIncrementalLoader:
                 ).fetchone()
                 has_hash = int(hash_row[0]) if hash_row and hash_row[0] is not None else 0
                 if has_hash == 0:
-                    app_log.logger.warning(
-                        "Table exists but no content_hash column - will recreate with hash tracking"
-                    )
+                    app_log.logger.warning("Table exists but no content_hash column - will recreate with hash tracking")
                     return set()
 
                 result = conn.execute(
-                    text(
-                        "SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL"
-                    )
+                    text("SELECT DISTINCT content_hash FROM agno.knowledge_base WHERE content_hash IS NOT NULL")
                 )
-                return {
-                    cast(str, row[0])
-                    for row in result.fetchall()
-                    if row[0] is not None
-                }
+                return {cast(str, row[0]) for row in result.fetchall() if row[0] is not None}
         except Exception as exc:
             app_log.logger.warning("Could not check existing hashes", error=str(exc))
             return set()
@@ -377,24 +372,50 @@ class SmartIncrementalLoader:
 
     def _process_single_row(self, row_data: dict[str, Any]) -> bool:
         try:
-            # Write a minimal temporary CSV with the single row
-            temp_path = Path(self.csv_path).with_suffix(".tmp.csv")
-            df = pd.DataFrame([row_data["data"]])
-            df.to_csv(temp_path, index=False)
-
-            # Trigger upsert on provided KB
             if self.kb is None:
+                app_log.logger.warning("Knowledge base not available for row processing")
                 return False
-            self.kb.load(recreate=False, upsert=True)
 
-            # Update hash in DB
-            self._update_row_hash(row_data["data"], row_data["hash"])
+            # Build document from row data using KB's method
+            row_dict = row_data["data"]
+            row_index = row_data.get("index", 0)
 
-            # Cleanup
-            if temp_path.exists():
-                temp_path.unlink()
+            # Use knowledge base's document builder
+            document = self.kb.build_document_from_row(row_index, row_dict)
 
+            if document is None:
+                app_log.logger.warning(
+                    "Failed to build document from row",
+                    row_index=row_index,
+                )
+                return False
+
+            # Add document using KB's method which handles async properly
+            try:
+                self.kb.add_document(document, upsert=True, skip_if_exists=False)
+                app_log.logger.debug(
+                    "Document upserted to vector DB",
+                    doc_name=document.name,
+                    content_hash=row_data["hash"],
+                )
+            except Exception as upsert_exc:
+                app_log.logger.error(
+                    "Vector DB upsert failed",
+                    error=str(upsert_exc),
+                    doc_name=document.name,
+                )
+                return False
+
+            # Update hash in DB for tracking
+            self._update_row_hash(row_dict, row_data["hash"])
+
+            app_log.logger.debug(
+                "Single row processed successfully",
+                row_index=row_index,
+                content_hash=row_data["hash"],
+            )
             return True
+
         except Exception as exc:
             app_log.logger.error("Error processing single row", error=str(exc))
             return False
@@ -444,9 +465,7 @@ class SmartIncrementalLoader:
                     try:
                         conn.rollback()
                     except Exception as rollback_exc:
-                        app_log.logger.debug(
-                            "Rollback failed during removal", error=str(rollback_exc)
-                        )
+                        app_log.logger.debug("Rollback failed during removal", error=str(rollback_exc))
                     raise
                 app_log.logger.info("Removed obsolete rows", removed_count=removed)
                 return removed
