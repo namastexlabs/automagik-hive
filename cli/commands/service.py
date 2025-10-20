@@ -263,6 +263,7 @@ class ServiceManager:
                 # Try package installation location (uvx/pip install)
                 try:
                     import importlib.resources as pkg_resources
+
                     env_example_pkg = pkg_resources.files("automagik_hive") / "templates" / ".env.example"
                     if env_example_pkg.is_file():
                         shutil.copy(env_example_pkg, workspace_path / ".env.example")
