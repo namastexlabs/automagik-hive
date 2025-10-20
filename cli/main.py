@@ -164,6 +164,19 @@ Use --help for detailed options or see documentation.
     start_parser = subparsers.add_parser("start", help="Start API server (production mode, no auto-reload)")
     start_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
 
+    # PostgreSQL subcommands for better UX
+    postgres_parser = subparsers.add_parser("postgres-start", help="Start PostgreSQL container")
+    postgres_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    postgres_stop_parser = subparsers.add_parser("postgres-stop", help="Stop PostgreSQL container")
+    postgres_stop_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    postgres_status_parser = subparsers.add_parser("postgres-status", help="Check PostgreSQL container status")
+    postgres_status_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    postgres_logs_parser = subparsers.add_parser("postgres-logs", help="Show PostgreSQL container logs")
+    postgres_logs_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
     return parser
 
 
@@ -190,6 +203,10 @@ def main() -> int:
         args.command == "install",
         args.command == "uninstall",
         args.command == "agentos-config",
+        args.command == "postgres-start",
+        args.command == "postgres-stop",
+        args.command == "postgres-status",
+        args.command == "postgres-logs",
         args.stop,
         args.restart,
         args.status,
@@ -278,6 +295,27 @@ def main() -> int:
             service_manager = ServiceManager()
             workspace = getattr(args, "workspace", ".") or "."
             return 0 if service_manager.uninstall_environment(workspace) else 1
+
+        # PostgreSQL subcommands
+        if args.command == "postgres-start":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.start_postgres(workspace) else 1
+
+        if args.command == "postgres-stop":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.stop_postgres(workspace) else 1
+
+        if args.command == "postgres-status":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.postgres_status(workspace) else 1
+
+        if args.command == "postgres-logs":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.postgres_logs(workspace) else 1
 
         if args.command == "agentos-config":
             if not _is_agentos_cli_enabled():
