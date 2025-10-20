@@ -545,6 +545,8 @@ class MainService:
             elif docker_compose_root.exists():
                 compose_file = docker_compose_root
             else:
+                # Docker compose file not found
+                # This is expected for init-only workspaces that haven't been fully installed yet
                 return False
 
             # Ensure data directory exists (reuse existing pattern)

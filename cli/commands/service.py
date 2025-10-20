@@ -289,6 +289,47 @@ class ServiceManager:
             if not env_example_found:
                 print("  ⚠️  .env.example not found (you'll need to create it manually)")
 
+            # Copy Docker configuration
+            docker_copied = False
+            docker_source = project_root / "docker"
+            if docker_source.exists() and docker_source.is_dir():
+                try:
+                    shutil.copytree(docker_source, workspace_path / "docker")
+                    print("  ✅ Docker configuration")
+                    docker_copied = True
+                except Exception:
+                    pass
+
+            # Fallback: Download Docker files from GitHub
+            if not docker_copied:
+                try:
+                    import urllib.request
+
+                    (workspace_path / "docker" / "main").mkdir(parents=True, exist_ok=True)
+
+                    print("  📥 Downloading Docker configuration from GitHub...")
+
+                    # Download docker-compose.yml
+                    github_compose = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
+                    compose_target = workspace_path / "docker" / "main" / "docker-compose.yml"
+                    urllib.request.urlretrieve(github_compose, compose_target)
+
+                    # Download Dockerfile
+                    github_dockerfile = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
+                    dockerfile_target = workspace_path / "docker" / "main" / "Dockerfile"
+                    urllib.request.urlretrieve(github_dockerfile, dockerfile_target)
+
+                    # Download .dockerignore
+                    github_dockerignore = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
+                    dockerignore_target = workspace_path / "docker" / "main" / ".dockerignore"
+                    urllib.request.urlretrieve(github_dockerignore, dockerignore_target)
+
+                    print("  ✅ Docker configuration")
+                    docker_copied = True
+                except Exception as e:
+                    print(f"  ⚠️  Could not download Docker config: {e}")
+                    print("  💡 PostgreSQL will need manual setup")
+
             # Create knowledge directory marker
             (workspace_path / "knowledge" / ".gitkeep").touch()
 
