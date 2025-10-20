@@ -7,20 +7,20 @@ All tests should now PASS after implementing comprehensive verbose logging
 and better error messages with diagnostic information.
 """
 
+import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import subprocess
+from unittest.mock import MagicMock, patch
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import pytest
+import pytest  # noqa: E402
 
-from cli.core.main_service import MainService
-from cli.commands.service import ServiceManager
+from cli.commands.service import ServiceManager  # noqa: E402
+from cli.core.main_service import MainService  # noqa: E402
 
 
 class TestPostgresSetupValidation:
@@ -43,7 +43,7 @@ class TestPostgresSetupValidation:
         (tmp_path / "data").mkdir(parents=True)
 
         # Attempt to start PostgreSQL
-        with patch('builtins.print') as mock_print:
+        with patch("builtins.print") as mock_print:
             success = main_service.start_postgres_only(workspace_path)
 
             # Should fail (no compose file)
@@ -54,10 +54,12 @@ class TestPostgresSetupValidation:
             output = " ".join(print_calls).lower()
 
             # Expected diagnostic information
-            assert any(phrase in output for phrase in ["docker-compose.yml", "compose file", "docker file"]), \
+            assert any(phrase in output for phrase in ["docker-compose.yml", "compose file", "docker file"]), (
                 "Should mention missing docker-compose.yml in error output"
-            assert any(phrase in output for phrase in ["not found", "missing", "does not exist"]), \
+            )
+            assert any(phrase in output for phrase in ["not found", "missing", "does not exist"]), (
                 "Should clearly state file is missing"
+            )
 
     def test_start_postgres_checks_docker_main_first(self, tmp_path, main_service):
         """Test that PostgreSQL setup checks docker/main/ directory first.
@@ -81,24 +83,25 @@ services:
 """)
 
         # Mock subprocess to avoid actual Docker call
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-            success = main_service.start_postgres_only(workspace_path)
+            main_service.start_postgres_only(workspace_path)
 
             # Should use docker/main/docker-compose.yml (priority)
             assert mock_run.called, "Should attempt to run docker compose"
 
             call_args = str(mock_run.call_args)
-            assert "docker/main/docker-compose.yml" in call_args, \
+            assert "docker/main/docker-compose.yml" in call_args, (
                 "Should use docker/main/docker-compose.yml when available"
+            )
 
     def test_start_postgres_provides_actionable_error_messages(self, tmp_path, main_service):
         """Test that PostgreSQL setup errors include actionable guidance."""
         workspace_path = str(tmp_path)
 
         # Missing Docker directory entirely
-        with patch('builtins.print') as mock_print:
+        with patch("builtins.print") as mock_print:
             success = main_service.start_postgres_only(workspace_path)
 
             assert not success, "Should fail when Docker not set up"
@@ -114,8 +117,7 @@ services:
             ]
 
             has_guidance = any(term in output for term in expected_guidance)
-            assert has_guidance, \
-                "Error message should provide actionable guidance (run init/install)"
+            assert has_guidance, "Error message should provide actionable guidance (run init/install)"
 
     def test_start_postgres_subprocess_failure_handling(self, tmp_path, main_service):
         """Test handling when docker compose command fails.
@@ -131,15 +133,13 @@ services:
         compose_file.write_text("version: '3.8'\nservices:\n  hive-postgres:\n    image: postgres:15\n")
 
         # Mock subprocess to fail
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             # Simulate docker compose failure
             mock_run.return_value = MagicMock(
-                returncode=1,
-                stdout="",
-                stderr="Error: service 'hive-postgres' not found"
+                returncode=1, stdout="", stderr="Error: service 'hive-postgres' not found"
             )
 
-            with patch('builtins.print') as mock_print:
+            with patch("builtins.print") as mock_print:
                 success = main_service.start_postgres_only(workspace_path)
 
                 assert not success, "Should return False on subprocess failure"
@@ -149,8 +149,9 @@ services:
                 output = " ".join(print_calls).lower()
 
                 # Should mention Docker or PostgreSQL in error context
-                assert any(term in output for term in ["docker", "postgres", "error", "failed"]), \
+                assert any(term in output for term in ["docker", "postgres", "error", "failed"]), (
                     "Should report Docker/PostgreSQL error context"
+                )
 
     def test_start_postgres_timeout_handling(self, tmp_path, main_service):
         """Test handling when docker compose times out.
@@ -166,8 +167,8 @@ services:
         compose_file.write_text("version: '3.8'\nservices:\n  hive-postgres:\n    image: postgres:15\n")
 
         # Mock subprocess to timeout
-        with patch('subprocess.run', side_effect=subprocess.TimeoutExpired("docker compose", 120)):
-            with patch('builtins.print') as mock_print:
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("docker compose", 120)):
+            with patch("builtins.print") as mock_print:
                 success = main_service.start_postgres_only(workspace_path)
 
                 assert not success, "Should return False on timeout"
@@ -176,8 +177,9 @@ services:
                 output = " ".join(print_calls).lower()
 
                 # Should mention timeout in error
-                assert any(term in output for term in ["timeout", "timed out", "taking too long"]), \
+                assert any(term in output for term in ["timeout", "timed out", "taking too long"]), (
                     "Should report timeout condition"
+                )
 
 
 class TestPostgresInstallErrorReporting:
@@ -195,10 +197,10 @@ class TestPostgresInstallErrorReporting:
         # Create minimal workspace (no Docker files)
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
-        with patch('builtins.print') as mock_print:
-            with patch('builtins.input', return_value='local_hybrid'):  # Choose deployment mode
+        with patch("builtins.print") as mock_print:
+            with patch("builtins.input", return_value="local_hybrid"):  # Choose deployment mode
                 # Mock credential service to avoid actual file operations
-                with patch('lib.auth.credential_service.CredentialService'):
+                with patch("lib.auth.credential_service.CredentialService"):
                     # Call the actual method - install_full_environment
                     success = service_manager.install_full_environment(workspace_path)
 
@@ -210,8 +212,7 @@ class TestPostgresInstallErrorReporting:
                     output = " ".join(print_calls).lower()
 
                     # Should mention Docker configuration missing
-                    assert "docker" in output or "compose" in output, \
-                        "Should mention Docker configuration in error"
+                    assert "docker" in output or "compose" in output, "Should mention Docker configuration in error"
 
     def test_install_reports_docker_compose_location_attempted(self, tmp_path, service_manager):
         """Test that install reports which docker-compose.yml location it tried."""
@@ -220,9 +221,9 @@ class TestPostgresInstallErrorReporting:
         # Create .env but no Docker files
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
-        with patch('builtins.print') as mock_print:
-            with patch('builtins.input', return_value='local_hybrid'):
-                with patch('lib.auth.credential_service.CredentialService'):
+        with patch("builtins.print") as mock_print:
+            with patch("builtins.input", return_value="local_hybrid"):
+                with patch("lib.auth.credential_service.CredentialService"):
                     # Run install with verbose to see paths checked
                     service_manager.install_full_environment(workspace_path, verbose=True)
 
@@ -230,14 +231,10 @@ class TestPostgresInstallErrorReporting:
                     output = " ".join(print_calls)
 
                     # Should mention specific paths checked
-                    expected_paths = [
-                        "docker/main/docker-compose.yml",
-                        "docker-compose.yml"
-                    ]
+                    expected_paths = ["docker/main/docker-compose.yml", "docker-compose.yml"]
 
                     mentions_path = any(path in output for path in expected_paths)
-                    assert mentions_path, \
-                        "Should mention specific docker-compose.yml paths checked"
+                    assert mentions_path, "Should mention specific docker-compose.yml paths checked"
 
     def test_install_suggests_running_init_first(self, tmp_path, service_manager):
         """Test that install suggests running init when Docker files missing."""
@@ -246,17 +243,16 @@ class TestPostgresInstallErrorReporting:
         # Create .env but no Docker files (typical mistake: install before init)
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
-        with patch('builtins.print') as mock_print:
-            with patch('builtins.input', return_value='local_hybrid'):
-                with patch('lib.auth.credential_service.CredentialService'):
-                    success = service_manager.install_full_environment(workspace_path)
+        with patch("builtins.print") as mock_print:
+            with patch("builtins.input", return_value="local_hybrid"):
+                with patch("lib.auth.credential_service.CredentialService"):
+                    service_manager.install_full_environment(workspace_path)
 
                     print_calls = [str(call) for call in mock_print.call_args_list]
                     output = " ".join(print_calls).lower()
 
                     # Should suggest running init
-                    assert "init" in output, \
-                        "Should suggest running 'automagik-hive init' first"
+                    assert "init" in output, "Should suggest running 'automagik-hive init' first"
 
     def test_install_validates_docker_compose_service_names(self, tmp_path, service_manager):
         """Test that install validates docker-compose.yml has required services."""
@@ -275,25 +271,24 @@ services:
 
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
-        with patch('builtins.print') as mock_print:
-            with patch('builtins.input', return_value='local_hybrid'):
-                with patch('lib.auth.credential_service.CredentialService'):
+        with patch("builtins.print") as mock_print:
+            with patch("builtins.input", return_value="local_hybrid"):
+                with patch("lib.auth.credential_service.CredentialService"):
                     # Mock subprocess to simulate docker compose error
-                    with patch('subprocess.run') as mock_run:
+                    with patch("subprocess.run") as mock_run:
                         mock_run.return_value = MagicMock(
-                            returncode=1,
-                            stdout="",
-                            stderr="Error: service 'hive-postgres' not found"
+                            returncode=1, stdout="", stderr="Error: service 'hive-postgres' not found"
                         )
 
-                        success = service_manager.install_full_environment(workspace_path)
+                        service_manager.install_full_environment(workspace_path)
 
                         print_calls = [str(call) for call in mock_print.call_args_list]
                         output = " ".join(print_calls).lower()
 
                         # Should detect and report service name mismatch
-                        assert any(term in output for term in ["service", "hive-postgres", "not found", "error"]), \
+                        assert any(term in output for term in ["service", "hive-postgres", "not found", "error"]), (
                             "Should report that hive-postgres service not found in compose file"
+                        )
 
 
 class TestPostgresConnectionDiagnostics:
@@ -325,21 +320,17 @@ services:
 """)
 
         # Mock subprocess to fail with port conflict
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=1,
-                stderr="Error: port 5432 is already allocated"
-            )
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=1, stderr="Error: port 5432 is already allocated")
 
-            with patch('builtins.print') as mock_print:
-                success = main_service.start_postgres_only(workspace_path)
+            with patch("builtins.print") as mock_print:
+                main_service.start_postgres_only(workspace_path)
 
                 print_calls = [str(call) for call in mock_print.call_args_list]
                 output = " ".join(print_calls).lower()
 
                 # Should mention port conflict
-                assert "port" in output or "5432" in output, \
-                    "Should mention port conflict in error"
+                assert "port" in output or "5432" in output, "Should mention port conflict in error"
 
     def test_postgres_start_checks_docker_daemon_running(self, tmp_path, main_service):
         """Test that PostgreSQL start checks if Docker daemon is running.
@@ -356,23 +347,24 @@ services:
         compose_file.write_text("version: '3.8'\nservices:\n  hive-postgres:\n    image: postgres:15\n")
 
         # Mock subprocess to fail with "docker daemon not running" error
-        with patch('subprocess.run', side_effect=FileNotFoundError("docker: command not found")):
-            with patch('builtins.print') as mock_print:
-                success = main_service.start_postgres_only(workspace_path)
+        with patch("subprocess.run", side_effect=FileNotFoundError("docker: command not found")):
+            with patch("builtins.print") as mock_print:
+                main_service.start_postgres_only(workspace_path)
 
                 print_calls = [str(call) for call in mock_print.call_args_list]
                 output = " ".join(print_calls).lower()
 
                 # Should mention Docker installation/daemon
-                assert any(term in output for term in ["docker", "daemon", "not running", "not found"]), \
+                assert any(term in output for term in ["docker", "daemon", "not running", "not found"]), (
                     "Should report Docker daemon/installation issue"
+                )
 
     def test_postgres_start_provides_recovery_steps(self, tmp_path, main_service):
         """Test that PostgreSQL failures include recovery steps."""
         workspace_path = str(tmp_path)
 
         # Missing docker-compose.yml
-        with patch('builtins.print') as mock_print:
+        with patch("builtins.print") as mock_print:
             success = main_service.start_postgres_only(workspace_path)
 
             assert not success
@@ -384,5 +376,6 @@ services:
             recovery_terms = ["troubleshooting", "verify", "check", "init"]
             has_recovery_guidance = any(term in output for term in recovery_terms)
 
-            assert has_recovery_guidance, \
+            assert has_recovery_guidance, (
                 "Error message should include recovery steps (troubleshooting, verify, check, init)"
+            )
