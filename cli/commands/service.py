@@ -321,10 +321,15 @@ class ServiceManager:
             cli_root = files("cli")
 
             # Navigate to the shared-data templates directory
-            # In a wheel, shared-data is at ../automagik_hive/templates relative to packages
+            # In a wheel with shared-data, the structure is:
+            # {venv_root}/lib/python3.X/site-packages/cli  <- cli package
+            # {venv_root}/automagik_hive/templates/        <- shared-data
+            # So we need to go up 3 levels from site-packages
             cli_path = Path(str(cli_root))
-            parent_dir = cli_path.parent
-            template_path = parent_dir / "automagik_hive" / "templates"
+            # cli_path.parent = site-packages
+            # .parent.parent.parent = venv_root
+            venv_root = cli_path.parent.parent.parent
+            template_path = venv_root / "automagik_hive" / "templates"
 
             if template_path.exists() and (template_path / "agents" / "template-agent").exists():
                 return template_path
