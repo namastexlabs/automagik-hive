@@ -85,17 +85,25 @@ jobs:
 
       - name: Verify build artifacts
         run: |
-          if [ ! -f "dist/automagik_hive-${{ steps.version.outputs.version }}-py3-none-any.whl" ]; then
+          # Python normalizes version strings (0.2.0.rc1 → 0.2.0rc1)
+          # So we just check if wheel and tar.gz exist
+          WHEEL_COUNT=$(ls dist/*.whl 2>/dev/null | wc -l)
+          TAR_COUNT=$(ls dist/*.tar.gz 2>/dev/null | wc -l)
+
+          if [ "$WHEEL_COUNT" -eq 0 ]; then
             echo "❌ Wheel file not found!"
+            ls -la dist/
             exit 1
           fi
 
-          if [ ! -f "dist/automagik-hive-${{ steps.version.outputs.version }}.tar.gz" ]; then
+          if [ "$TAR_COUNT" -eq 0 ]; then
             echo "❌ Source distribution not found!"
+            ls -la dist/
             exit 1
           fi
 
-          echo "✅ All build artifacts present"
+          echo "✅ Build artifacts present:"
+          ls -lh dist/
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
