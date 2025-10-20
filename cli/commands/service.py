@@ -570,6 +570,19 @@ class ServiceManager:
     def _prompt_deployment_choice(self) -> str:
         """Interactive deployment choice selection - NEW METHOD."""
 
+        print("\n🚀 Deployment Mode Selection")
+        print("=" * 50)
+        print("\nA) Local Hybrid (Recommended)")
+        print("   - API runs locally with hot reload")
+        print("   - PostgreSQL in Docker")
+        print("   - Fast development cycle")
+        print("   - Lower resource usage")
+        print("\nB) Full Docker")
+        print("   - Everything in containers")
+        print("   - Production-like environment")
+        print("   - Isolated and reproducible")
+        print("=" * 50)
+
         while True:
             try:
                 choice = input("\nEnter your choice (A/B) [default: A]: ").strip().upper()
