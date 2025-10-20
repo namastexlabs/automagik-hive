@@ -610,12 +610,6 @@ class MainService:
                 return False
 
             if result.returncode == 0:
-                response = input("Start main server now? (Y/n): ").strip().lower()
-                if response in ["", "y", "yes"]:
-                    subprocess.run(["uv", "run", "automagik-hive", "dev"])
-                else:
-                    pass
-
                 return True
             else:
                 return False
