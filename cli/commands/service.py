@@ -252,10 +252,25 @@ class ServiceManager:
                 templates_copied += 1
 
             # Copy .env.example
-            env_example = template_root / ".env.example"
-            if env_example.exists():
-                shutil.copy(env_example, workspace_path / ".env.example")
+            # Try source directory first (for development)
+            project_root = Path(__file__).parent.parent.parent
+            env_example_source = project_root / ".env.example"
+
+            if env_example_source.exists():
+                shutil.copy(env_example_source, workspace_path / ".env.example")
                 print("  ✅ Environment template (.env.example)")
+            else:
+                # Try package installation location (uvx/pip install)
+                try:
+                    import importlib.resources as pkg_resources
+                    env_example_pkg = pkg_resources.files("automagik_hive") / "templates" / ".env.example"
+                    if env_example_pkg.is_file():
+                        shutil.copy(env_example_pkg, workspace_path / ".env.example")
+                        print("  ✅ Environment template (.env.example)")
+                    else:
+                        print("  ⚠️  .env.example not found (you'll need to create it manually)")
+                except (ImportError, FileNotFoundError, AttributeError):
+                    print("  ⚠️  .env.example not found (you'll need to create it manually)")
 
             # Create knowledge directory marker
             (workspace_path / "knowledge" / ".gitkeep").touch()
