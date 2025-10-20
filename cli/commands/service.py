@@ -281,7 +281,7 @@ class ServiceManager:
                     env_target = workspace_path / ".env.example"
 
                     print("  📥 Downloading .env.example from GitHub...")
-                    urllib.request.urlretrieve(github_url, env_target)
+                    urllib.request.urlretrieve(github_url, env_target)  # noqa: S310
                     print("  ✅ Environment template (.env.example)")
                     env_example_found = True
                 except Exception as e:
@@ -332,21 +332,21 @@ class ServiceManager:
                     # Download docker-compose.yml
                     github_compose = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
                     compose_target = workspace_path / "docker" / "main" / "docker-compose.yml"
-                    urllib.request.urlretrieve(github_compose, compose_target)
+                    urllib.request.urlretrieve(github_compose, compose_target)  # noqa: S310
 
                     # Download Dockerfile
                     github_dockerfile = (
                         "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
                     )
                     dockerfile_target = workspace_path / "docker" / "main" / "Dockerfile"
-                    urllib.request.urlretrieve(github_dockerfile, dockerfile_target)
+                    urllib.request.urlretrieve(github_dockerfile, dockerfile_target)  # noqa: S310
 
                     # Download .dockerignore
                     github_dockerignore = (
                         "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
                     )
                     dockerignore_target = workspace_path / "docker" / "main" / ".dockerignore"
-                    urllib.request.urlretrieve(github_dockerignore, dockerignore_target)
+                    urllib.request.urlretrieve(github_dockerignore, dockerignore_target)  # noqa: S310
 
                     # Verify files were actually downloaded
                     compose_exists = compose_target.exists() and compose_target.stat().st_size > 0

@@ -12,16 +12,16 @@ EXPECTED FAILURES:
 
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import pytest
+import pytest  # noqa: E402
 
-from cli.commands.service import ServiceManager
+from cli.commands.service import ServiceManager  # noqa: E402
 
 
 class TestDockerTemplateDiscovery:
@@ -42,7 +42,7 @@ class TestDockerTemplateDiscovery:
         service_manager = ServiceManager()
 
         # Initialize workspace
-        success = service_manager.init_workspace(workspace_name, force=False)
+        service_manager.init_workspace(workspace_name, force=False)
 
         # Verify Docker directory structure created
         workspace_path = Path(workspace_name)
@@ -94,28 +94,37 @@ class TestDockerTemplateDiscovery:
         service_manager = ServiceManager()
 
         # Mock _locate_template_root to return None (simulate missing local templates)
-        with patch.object(service_manager, '_locate_template_root', return_value=None):
+        with patch.object(service_manager, "_locate_template_root", return_value=None):
             # Mock urllib to simulate successful GitHub download
-            with patch('urllib.request.urlretrieve') as mock_retrieve:
+            with patch("urllib.request.urlretrieve") as mock_retrieve:
                 mock_retrieve.return_value = (None, None)
 
                 # Initialize workspace
-                success = service_manager.init_workspace(workspace_name, force=False)
+                service_manager.init_workspace(workspace_name, force=False)
 
                 # Verify GitHub download attempted for Docker files
-                docker_compose_url = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
-                dockerfile_url = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
-                dockerignore_url = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
+                docker_compose_url = (
+                    "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
+                )
+                dockerfile_url = (
+                    "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
+                )
+                dockerignore_url = (
+                    "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
+                )
 
                 # Check that Docker files were downloaded
                 calls = [str(call) for call in mock_retrieve.call_args_list]
 
-                assert any(docker_compose_url in str(call) for call in calls), \
+                assert any(docker_compose_url in str(call) for call in calls), (
                     "Should attempt to download docker-compose.yml from GitHub"
-                assert any(dockerfile_url in str(call) for call in calls), \
+                )
+                assert any(dockerfile_url in str(call) for call in calls), (
                     "Should attempt to download Dockerfile from GitHub"
-                assert any(dockerignore_url in str(call) for call in calls), \
+                )
+                assert any(dockerignore_url in str(call) for call in calls), (
                     "Should attempt to download .dockerignore from GitHub"
+                )
 
     def test_init_creates_complete_docker_structure(self, tmp_path):
         """Test that init creates complete Docker directory structure.
@@ -154,22 +163,21 @@ class TestDockerTemplateDiscovery:
         service_manager = ServiceManager()
 
         # Mock both local and GitHub sources to fail
-        with patch.object(service_manager, '_locate_template_root', return_value=None):
-            with patch('urllib.request.urlretrieve', side_effect=Exception("Network error")):
-
+        with patch.object(service_manager, "_locate_template_root", return_value=None):
+            with patch("urllib.request.urlretrieve", side_effect=Exception("Network error")):
                 # Capture output
-                with patch('builtins.print') as mock_print:
-                    success = service_manager.init_workspace(workspace_name, force=False)
+                with patch("builtins.print") as mock_print:
+                    service_manager.init_workspace(workspace_name, force=False)
 
                     # Verify error messages printed
                     print_calls = [str(call) for call in mock_print.call_args_list]
                     output = " ".join(print_calls)
 
                     # Should warn about Docker configuration issues
-                    assert "Docker" in output or "docker" in output, \
-                        "Should mention Docker in error output"
-                    assert "PostgreSQL" in output or "postgres" in output or "manual" in output, \
+                    assert "Docker" in output or "docker" in output, "Should mention Docker in error output"
+                    assert "PostgreSQL" in output or "postgres" in output or "manual" in output, (
                         "Should warn that PostgreSQL needs manual setup"
+                    )
 
     def test_init_docker_templates_source_priority(self, tmp_path):
         """Test that local source templates take priority over GitHub download.
@@ -186,22 +194,19 @@ class TestDockerTemplateDiscovery:
 
         if docker_source.exists():
             # Mock GitHub download to track if it's called
-            with patch('urllib.request.urlretrieve') as mock_retrieve:
-                success = service_manager.init_workspace(workspace_name, force=False)
+            with patch("urllib.request.urlretrieve") as mock_retrieve:
+                service_manager.init_workspace(workspace_name, force=False)
 
                 # Verify local source used, GitHub NOT called for Docker files
-                docker_urls = [
-                    "docker/main/docker-compose.yml",
-                    "docker/main/Dockerfile",
-                    "docker/main/.dockerignore"
-                ]
+                docker_urls = ["docker/main/docker-compose.yml", "docker/main/Dockerfile", "docker/main/.dockerignore"]
 
                 calls = [str(call) for call in mock_retrieve.call_args_list]
 
                 # GitHub should NOT be called if local Docker templates exist
                 for url in docker_urls:
-                    assert not any(url in str(call) for call in calls), \
+                    assert not any(url in str(call) for call in calls), (
                         f"Should use local Docker templates, not download from GitHub: {url}"
+                    )
 
     def test_init_workspace_docker_validation(self, tmp_path):
         """Test that initialized workspace passes Docker validation.
@@ -240,13 +245,11 @@ class TestDockerTemplateFallbackScenarios:
         service_manager = ServiceManager()
 
         # Mock scenario: compose file exists but Dockerfile missing
-        project_root = Path(__file__).parent.parent.parent.parent
-
-        with patch('shutil.copytree', side_effect=FileNotFoundError("Dockerfile missing")):
-            with patch('urllib.request.urlretrieve') as mock_retrieve:
+        with patch("shutil.copytree", side_effect=FileNotFoundError("Dockerfile missing")):
+            with patch("urllib.request.urlretrieve") as mock_retrieve:
                 mock_retrieve.return_value = (None, None)
 
-                success = service_manager.init_workspace(workspace_name, force=False)
+                service_manager.init_workspace(workspace_name, force=False)
 
                 # Should attempt GitHub fallback for missing files
                 assert mock_retrieve.called, "Should attempt GitHub download when copy fails"
@@ -260,19 +263,20 @@ class TestDockerTemplateFallbackScenarios:
         workspace_name = str(tmp_path / "test-workspace")
         service_manager = ServiceManager()
 
-        with patch.object(service_manager, '_locate_template_root', return_value=None):
-            with patch('urllib.request.urlretrieve') as mock_retrieve:
+        with patch.object(service_manager, "_locate_template_root", return_value=None):
+            with patch("urllib.request.urlretrieve") as mock_retrieve:
                 # Simulate successful download
                 def fake_download(url, target):
                     # Verify parent directory exists before "download"
                     target_path = Path(target)
-                    assert target_path.parent.exists(), \
+                    assert target_path.parent.exists(), (
                         f"Parent directory should exist before download: {target_path.parent}"
+                    )
                     target_path.touch()
 
                 mock_retrieve.side_effect = fake_download
 
-                success = service_manager.init_workspace(workspace_name, force=False)
+                service_manager.init_workspace(workspace_name, force=False)
 
                 # Verify docker/main directory was created
                 docker_main = Path(workspace_name) / "docker" / "main"
@@ -287,13 +291,14 @@ class TestDockerTemplateFallbackScenarios:
         workspace_name = str(tmp_path / "test-workspace")
         service_manager = ServiceManager()
 
-        with patch('builtins.print') as mock_print:
-            success = service_manager.init_workspace(workspace_name, force=False)
+        with patch("builtins.print") as mock_print:
+            service_manager.init_workspace(workspace_name, force=False)
 
             print_calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(print_calls).lower()
 
             # Should explicitly mention Docker configuration status
             assert "docker" in output, "Should mention Docker in output"
-            assert any(marker in output for marker in ["✅", "⚠️", "❌"]), \
+            assert any(marker in output for marker in ["✅", "⚠️", "❌"]), (
                 "Should use status indicators for Docker files"
+            )

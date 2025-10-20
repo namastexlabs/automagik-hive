@@ -11,16 +11,16 @@ Tests the comprehensive diagnostic tool that helps users troubleshoot:
 import os
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import pytest
+import pytest  # noqa: E402
 
-from cli.commands.diagnose import DiagnoseCommands
+from cli.commands.diagnose import DiagnoseCommands  # noqa: E402
 
 
 class TestDiagnoseCommands:
@@ -151,7 +151,7 @@ class TestDockerDaemonCheck:
 
     def test_check_docker_daemon_passes_when_running(self, diagnose_commands):
         """Test Docker daemon check passes when Docker is running."""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0)
 
             check_name, passed, issues = diagnose_commands._check_docker_daemon()
@@ -162,7 +162,7 @@ class TestDockerDaemonCheck:
 
     def test_check_docker_daemon_fails_when_not_running(self, diagnose_commands):
         """Test Docker daemon check fails when Docker not running."""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=1)
 
             check_name, passed, issues = diagnose_commands._check_docker_daemon()
@@ -173,7 +173,7 @@ class TestDockerDaemonCheck:
 
     def test_check_docker_daemon_handles_not_installed(self, diagnose_commands):
         """Test Docker daemon check handles Docker not installed."""
-        with patch('subprocess.run', side_effect=FileNotFoundError):
+        with patch("subprocess.run", side_effect=FileNotFoundError):
             check_name, passed, issues = diagnose_commands._check_docker_daemon()
 
             assert passed is False
@@ -191,12 +191,8 @@ class TestPostgresStatusCheck:
 
     def test_check_postgres_status_passes_when_running(self, diagnose_commands):
         """Test PostgreSQL status check passes when container running."""
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="Up 5 minutes",
-                text=True
-            )
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="Up 5 minutes", text=True)
 
             check_name, passed, issues = diagnose_commands._check_postgres_status()
 
@@ -206,12 +202,8 @@ class TestPostgresStatusCheck:
 
     def test_check_postgres_status_fails_when_not_running(self, diagnose_commands):
         """Test PostgreSQL status check fails when container not running."""
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="Exited (0) 2 minutes ago",
-                text=True
-            )
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="Exited (0) 2 minutes ago", text=True)
 
             check_name, passed, issues = diagnose_commands._check_postgres_status()
 
@@ -221,12 +213,8 @@ class TestPostgresStatusCheck:
 
     def test_check_postgres_status_fails_when_not_found(self, diagnose_commands):
         """Test PostgreSQL status check fails when container not found."""
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="",
-                text=True
-            )
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="", text=True)
 
             check_name, passed, issues = diagnose_commands._check_postgres_status()
 
@@ -305,9 +293,7 @@ class TestAPIKeysCheck:
 
     def test_check_api_keys_passes_with_valid_key(self, diagnose_commands):
         """Test API keys check passes when valid key configured."""
-        with patch.dict('os.environ', {
-            'ANTHROPIC_API_KEY': 'sk-ant-api03-abcdef1234567890'
-        }):
+        with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-ant-api03-abcdef1234567890"}):
             check_name, passed, issues = diagnose_commands._check_api_keys()
 
             assert check_name == "API Keys"
@@ -317,7 +303,7 @@ class TestAPIKeysCheck:
 
     def test_check_api_keys_fails_without_any_keys(self, diagnose_commands):
         """Test API keys check fails when no keys configured."""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             check_name, passed, issues = diagnose_commands._check_api_keys()
 
             assert passed is False
@@ -326,7 +312,7 @@ class TestAPIKeysCheck:
     def test_check_api_keys_ignores_placeholder_values(self, diagnose_commands):
         """Test API keys check ignores placeholder values."""
         # Save original values
-        provider_keys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY', 'GROQ_API_KEY']
+        provider_keys = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY"]
         original_values = {key: os.environ.get(key) for key in provider_keys}
 
         try:
@@ -334,7 +320,7 @@ class TestAPIKeysCheck:
             for key in provider_keys:
                 if key in os.environ:
                     del os.environ[key]
-            os.environ['ANTHROPIC_API_KEY'] = 'your-key-here'
+            os.environ["ANTHROPIC_API_KEY"] = "your-key-here"
 
             check_name, passed, issues = diagnose_commands._check_api_keys()
             assert passed is False
@@ -381,7 +367,8 @@ HIVE_API_KEY=hive_1234567890abcdef1234567890abcdef
 """)
 
         # Mock Docker and PostgreSQL checks
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
+
             def docker_side_effect(*args, **kwargs):
                 command = args[0] if args else []
                 if "ps" in command and "--filter" in command:
@@ -390,7 +377,7 @@ HIVE_API_KEY=hive_1234567890abcdef1234567890abcdef
 
             mock_run.side_effect = docker_side_effect
 
-            with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'sk-ant-valid-key'}):
+            with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-ant-valid-key"}):
                 result = diagnose_commands.diagnose_installation()
 
         assert result is True
@@ -402,7 +389,7 @@ HIVE_API_KEY=hive_1234567890abcdef1234567890abcdef
 
     def test_diagnose_installation_shows_all_issues(self, diagnose_commands):
         """Test diagnose_installation shows all issues, not just first."""
-        with patch('builtins.print') as mock_print:
+        with patch("builtins.print") as mock_print:
             diagnose_commands.diagnose_installation()
 
             print_calls = [str(call) for call in mock_print.call_args_list]
@@ -438,7 +425,8 @@ HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/db
 HIVE_API_KEY=hive_1234567890abcdef1234567890abcdef
 """)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
+
             def docker_side_effect(*args, **kwargs):
                 command = args[0] if args else []
                 if "ps" in command and "--filter" in command:
@@ -447,8 +435,8 @@ HIVE_API_KEY=hive_1234567890abcdef1234567890abcdef
 
             mock_run.side_effect = docker_side_effect
 
-            with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'sk-ant-valid'}):
-                with patch('builtins.print') as mock_print:
+            with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-ant-valid"}):
+                with patch("builtins.print") as mock_print:
                     diagnose_commands.diagnose_installation()
 
                     print_calls = [str(call) for call in mock_print.call_args_list]
@@ -482,7 +470,8 @@ HIVE_DATABASE_URL=postgresql://user:pass@localhost:5432/db
 HIVE_API_KEY=hive_1234567890abcdef1234567890abcdef
 """)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
+
             def docker_side_effect(*args, **kwargs):
                 command = args[0] if args else []
                 if "ps" in command and "--filter" in command:
@@ -491,8 +480,8 @@ HIVE_API_KEY=hive_1234567890abcdef1234567890abcdef
 
             mock_run.side_effect = docker_side_effect
 
-            with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'sk-ant-valid'}):
-                with patch('builtins.print') as mock_print:
+            with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-ant-valid"}):
+                with patch("builtins.print") as mock_print:
                     diagnose_commands.diagnose_installation(verbose=True)
 
                     print_calls = [str(call) for call in mock_print.call_args_list]
