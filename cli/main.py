@@ -156,9 +156,13 @@ Use --help for detailed options or see documentation.
         help="Display raw AgentOS configuration as JSON",
     )
 
-    # Dev subcommand
-    dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
+    # Dev subcommand (with auto-reload)
+    dev_parser = subparsers.add_parser("dev", help="Start development server with auto-reload")
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    # Start subcommand (production-like, no auto-reload)
+    start_parser = subparsers.add_parser("start", help="Start API server (production mode, no auto-reload)")
+    start_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
 
     return parser
 
@@ -181,6 +185,7 @@ def main() -> int:
         args.postgres_health,
         args.command == "genie",
         args.command == "dev",
+        args.command == "start",
         args.command == "init",
         args.command == "install",
         args.command == "uninstall",
@@ -243,10 +248,16 @@ def main() -> int:
                 parser.parse_args(["genie", "--help"])
                 return 1
 
-        # Development server (subcommand)
+        # Development server (subcommand with auto-reload)
         if args.command == "dev":
             service_manager = ServiceManager()
             result = service_manager.serve_local(args.host, args.port, reload=True)
+            return 0 if result else 1
+
+        # Start server (production mode, no auto-reload)
+        if args.command == "start":
+            service_manager = ServiceManager()
+            result = service_manager.serve_local(args.host, args.port, reload=False)
             return 0 if result else 1
 
         # Init subcommand - lightweight template copying
