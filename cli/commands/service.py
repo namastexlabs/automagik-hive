@@ -252,6 +252,9 @@ class ServiceManager:
                 templates_copied += 1
 
             # Copy .env.example
+            # Use template_root to find .env.example (same location as other templates)
+            env_example_found = False
+
             # Try source directory first (for development)
             project_root = Path(__file__).parent.parent.parent
             env_example_source = project_root / ".env.example"
@@ -259,19 +262,17 @@ class ServiceManager:
             if env_example_source.exists():
                 shutil.copy(env_example_source, workspace_path / ".env.example")
                 print("  ✅ Environment template (.env.example)")
-            else:
-                # Try package installation location (uvx/pip install)
-                try:
-                    import importlib.resources as pkg_resources
+                env_example_found = True
+            elif template_root is not None:
+                # For package installations, .env.example is in the same templates directory
+                env_example_pkg = template_root / ".env.example"
+                if env_example_pkg.exists():
+                    shutil.copy(env_example_pkg, workspace_path / ".env.example")
+                    print("  ✅ Environment template (.env.example)")
+                    env_example_found = True
 
-                    env_example_pkg = pkg_resources.files("automagik_hive") / "templates" / ".env.example"
-                    if env_example_pkg.is_file():
-                        shutil.copy(env_example_pkg, workspace_path / ".env.example")
-                        print("  ✅ Environment template (.env.example)")
-                    else:
-                        print("  ⚠️  .env.example not found (you'll need to create it manually)")
-                except (ImportError, FileNotFoundError, AttributeError):
-                    print("  ⚠️  .env.example not found (you'll need to create it manually)")
+            if not env_example_found:
+                print("  ⚠️  .env.example not found (you'll need to create it manually)")
 
             # Create knowledge directory marker
             (workspace_path / "knowledge" / ".gitkeep").touch()
@@ -312,14 +313,22 @@ class ServiceManager:
             return source_templates
 
         # Try package resources (for uvx/pip install)
+        # Use the 'cli' module (which IS a package) to navigate to shared-data directory
         try:
             from importlib.resources import files
 
-            template_path = files("automagik_hive") / "templates"
+            # Get the cli package location
+            cli_root = files("cli")
+
+            # Navigate to the shared-data templates directory
+            # In a wheel, shared-data is at ../automagik_hive/templates relative to packages
+            cli_path = Path(str(cli_root))
+            parent_dir = cli_path.parent
+            template_path = parent_dir / "automagik_hive" / "templates"
 
             if template_path.exists() and (template_path / "agents" / "template-agent").exists():
                 return template_path
-        except (ImportError, FileNotFoundError, TypeError):
+        except (ImportError, FileNotFoundError, TypeError, AttributeError):
             pass
 
         return None
