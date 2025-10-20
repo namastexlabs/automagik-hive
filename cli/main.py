@@ -58,6 +58,7 @@ PRODUCTION ENVIRONMENT:
 SUBCOMMANDS:
   init [NAME]                 Initialize new workspace with AI templates (lightweight)
   install                     Setup environment (credentials, PostgreSQL, deployment)
+  diagnose [--verbose]        Diagnose installation and configuration issues
   uninstall                   COMPLETE SYSTEM WIPE - uninstall ALL environments
   genie                       Launch claude with AGENTS.md as system prompt
   dev                         Start development server (alternative syntax)
@@ -127,6 +128,7 @@ Use --help for detailed options or see documentation.
         "install", help="Complete environment setup with .env generation and PostgreSQL"
     )
     install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    install_parser.add_argument("-v", "--verbose", action="store_true", help="Enable detailed diagnostic output")
 
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
@@ -177,6 +179,11 @@ Use --help for detailed options or see documentation.
     postgres_logs_parser = subparsers.add_parser("postgres-logs", help="Show PostgreSQL container logs")
     postgres_logs_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
 
+    # Diagnose subcommand - troubleshooting installation issues
+    diagnose_parser = subparsers.add_parser("diagnose", help="Diagnose installation and configuration issues")
+    diagnose_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    diagnose_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed diagnostic information")
+
     return parser
 
 
@@ -202,6 +209,7 @@ def main() -> int:
         args.command == "init",
         args.command == "install",
         args.command == "uninstall",
+        args.command == "diagnose",
         args.command == "agentos-config",
         args.command == "postgres-start",
         args.command == "postgres-stop",
@@ -259,7 +267,8 @@ def main() -> int:
                     else 1
                 )
             elif hasattr(args, "genie_command") and args.genie_command == "claude":
-                return 0 if genie_cmd.launch_claude(getattr(args, "args", None)) else 1
+                claude_args = getattr(args, "args", None)
+                return 0 if genie_cmd.launch_claude(claude_args if isinstance(claude_args, list) else []) else 1
             else:
                 # Fallback for legacy "genie" without subcommand - show help
                 parser.parse_args(["genie", "--help"])
@@ -288,7 +297,8 @@ def main() -> int:
         if args.command == "install":
             service_manager = ServiceManager()
             workspace = getattr(args, "workspace", ".") or "."
-            return 0 if service_manager.install_full_environment(workspace) else 1
+            verbose = getattr(args, "verbose", False)
+            return 0 if service_manager.install_full_environment(workspace, verbose=verbose) else 1
 
         # Uninstall subcommand
         if args.command == "uninstall":
@@ -316,6 +326,17 @@ def main() -> int:
             service_manager = ServiceManager()
             workspace = getattr(args, "workspace", ".") or "."
             return 0 if service_manager.postgres_logs(workspace) else 1
+
+        # Diagnose subcommand
+        if args.command == "diagnose":
+            from pathlib import Path
+
+            from .commands.diagnose import DiagnoseCommands
+
+            workspace = getattr(args, "workspace", ".") or "."
+            verbose = getattr(args, "verbose", False)
+            diagnose_cmd = DiagnoseCommands(workspace_path=Path(workspace))
+            return 0 if diagnose_cmd.diagnose_installation(verbose=verbose) else 1
 
         if args.command == "agentos-config":
             if not _is_agentos_cli_enabled():
@@ -372,7 +393,7 @@ if __name__ == "__main__":
 
 
 # Functions expected by tests
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse arguments (stub for tests)."""
     return create_parser().parse_args()
 
@@ -380,16 +401,16 @@ def parse_args():
 class LazyCommandLoader:
     """Lazy command loader (stub for tests)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def load_command(self, command_name: str):
+    def load_command(self, command_name: str) -> object:
         """Load command stub."""
         return lambda: f"Command {command_name} loaded"
 
 
 # Expected by some tests
-def app():
+def app() -> int:
     """App function that calls main for compatibility."""
     return main()
 
