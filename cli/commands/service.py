@@ -677,6 +677,59 @@ class ServiceManager:
         except Exception:
             return False
 
+    # PostgreSQL commands (delegated to MainService)
+    def start_postgres(self, workspace: str = ".") -> bool:
+        """Start PostgreSQL container."""
+        print("🐘 Starting PostgreSQL container...")
+        try:
+            success = self.main_service.start_postgres_only(workspace)
+            if success:
+                print("✅ PostgreSQL started successfully")
+                print("🔌 Database: localhost:5532")
+            else:
+                print("⚠️  PostgreSQL failed to start")
+            return success
+        except Exception as e:
+            print(f"❌ Error starting PostgreSQL: {e}")
+            return False
+
+    def stop_postgres(self, workspace: str = ".") -> bool:
+        """Stop PostgreSQL container."""
+        print("🛑 Stopping PostgreSQL container...")
+        try:
+            success = self.main_service.stop_postgres_only(workspace)
+            if success:
+                print("✅ PostgreSQL stopped")
+            else:
+                print("⚠️  PostgreSQL failed to stop")
+            return success
+        except Exception as e:
+            print(f"❌ Error stopping PostgreSQL: {e}")
+            return False
+
+    def postgres_status(self, workspace: str = ".") -> bool:
+        """Check PostgreSQL container status."""
+        try:
+            status = self.main_service.get_postgres_status(workspace)
+            if status:
+                print(f"📊 PostgreSQL Status: {status}")
+                return True
+            else:
+                print("🛑 PostgreSQL is not running")
+                return False
+        except Exception as e:
+            print(f"❌ Error checking PostgreSQL status: {e}")
+            return False
+
+    def postgres_logs(self, workspace: str = ".", tail: int = 50) -> bool:
+        """Show PostgreSQL container logs."""
+        print(f"📄 PostgreSQL Logs (last {tail} lines):")
+        try:
+            return self.main_service.show_postgres_logs(workspace, tail)
+        except Exception as e:
+            print(f"❌ Error showing PostgreSQL logs: {e}")
+            return False
+
     def uninstall_environment(self, workspace: str = ".") -> bool:
         """Uninstall main environment - COMPLETE SYSTEM WIPE."""
         try:
