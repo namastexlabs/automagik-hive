@@ -193,7 +193,7 @@ class TestPostgresInstallErrorReporting:
         workspace_path = str(tmp_path)
 
         # Create minimal workspace (no Docker files)
-        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=test123\n")
+        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch('builtins.print') as mock_print:
             with patch('builtins.input', return_value='local_hybrid'):  # Choose deployment mode
@@ -218,7 +218,7 @@ class TestPostgresInstallErrorReporting:
         workspace_path = str(tmp_path)
 
         # Create .env but no Docker files
-        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=test123\n")
+        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch('builtins.print') as mock_print:
             with patch('builtins.input', return_value='local_hybrid'):
@@ -244,7 +244,7 @@ class TestPostgresInstallErrorReporting:
         workspace_path = str(tmp_path)
 
         # Create .env but no Docker files (typical mistake: install before init)
-        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=test123\n")
+        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch('builtins.print') as mock_print:
             with patch('builtins.input', return_value='local_hybrid'):
@@ -273,7 +273,7 @@ services:
     image: postgres:15
 """)
 
-        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=test123\n")
+        (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch('builtins.print') as mock_print:
             with patch('builtins.input', return_value='local_hybrid'):
