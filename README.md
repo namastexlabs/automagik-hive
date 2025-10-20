@@ -17,12 +17,13 @@
   <a href="https://github.com/namastexlabs/automagik-hive/pkgs/container/automagik-hive"><img alt="Docker Image" src="https://img.shields.io/badge/docker-ghcr.io-00D9FF?style=flat-square&logo=docker" /></a>
   <a href="https://github.com/namastexlabs/automagik-hive/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/namastexlabs/automagik-hive?style=flat-square&color=00D9FF" /></a>
   <a href="https://discord.gg/xcW8c7fF3R"><img alt="Discord" src="https://img.shields.io/discord/1095114867012292758?style=flat-square&color=00D9FF&label=discord" /></a>
+  <a href="https://github.com/orgs/namastexlabs/projects/9/views/1?filterQuery=project%3Ahive"><img alt="Roadmap" src="https://img.shields.io/badge/📍_roadmap-view_initiatives-5319E7?style=flat-square" /></a>
 </p>
 
 <p align="center">
   <a href="#-key-features">Features</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-roadmap">Roadmap</a> •
+  <a href="https://github.com/orgs/namastexlabs/projects/9/views/1?filterQuery=project%3Ahive">Roadmap</a> •
   <a href="#-development">Development</a> •
   <a href="#-contributing">Contributing</a>
 </p>
