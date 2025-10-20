@@ -324,11 +324,14 @@ class ServiceManager:
             # In a wheel with shared-data, the structure is:
             # {venv_root}/lib/python3.X/site-packages/cli  <- cli package
             # {venv_root}/automagik_hive/templates/        <- shared-data
-            # So we need to go up 3 levels from site-packages
+            # So we need to go up 4 levels from cli package
             cli_path = Path(str(cli_root))
-            # cli_path.parent = site-packages
-            # .parent.parent.parent = venv_root
-            venv_root = cli_path.parent.parent.parent
+            # cli_path                = .../site-packages/cli
+            # cli_path.parent         = .../site-packages
+            # .parent.parent          = .../python3.X
+            # .parent.parent.parent   = .../lib
+            # .parent.parent.parent.parent = {venv_root}
+            venv_root = cli_path.parent.parent.parent.parent
             template_path = venv_root / "automagik_hive" / "templates"
 
             if template_path.exists() and (template_path / "agents" / "template-agent").exists():
