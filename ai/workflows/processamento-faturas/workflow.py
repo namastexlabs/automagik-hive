@@ -77,7 +77,8 @@ class ProcessingStatus(Enum):
 class MinutaProcessingStatus(str, Enum):
     """MINUTA Processing Status Enum"""
     PENDING = "PENDING"
-    CLARO_GENERATED = "CLARO_GENERATED"  # After minutGen
+    CHECK_ORDER_STATUS = "CHECK_ORDER_STATUS"  # After minutGen - awaiting claroCheck validation
+    CLARO_GENERATED = "CLARO_GENERATED"  # After claroCheck approval
     ESL_GENERATED = "ESL_GENERATED"      # After main-minut-gen (3min wait)
     DOWNLOADED = "DOWNLOADED"            # After main-minut-download
     REGIONAL_DOWNLOADED = "REGIONAL_DOWNLOADED"  # After palmas/aracaju (if applicable)
@@ -562,6 +563,43 @@ class BrowserAPIClient:
 
         except Exception:
             return False, "FAILED_VALIDATION", "Response parsing error"
+
+    def parse_claro_check_response_for_minuta(self, api_response: dict[str, Any]) -> tuple[bool, str, str]:
+        """
+        Parse claroCheck response for MINUTA workflow with simplified status logic.
+
+        Only transitions to CLARO_GENERATED when order is approved for invoice generation.
+
+        Status Mapping:
+        - "Aguardando Liberação" → CHECK_ORDER_STATUS (retry next run)
+        - "Agendamento Pendente" → CLARO_GENERATED (approved)
+        - "Autorizada Emissão Nota Fiscal" → CLARO_GENERATED (approved)
+        - Other/Empty → FAILED_GENERATION
+
+        Returns:
+            (success: bool, status: str, message: str)
+        """
+        try:
+            output_status = api_response.get("raw_response", {}).get("output", {}).get("status", "")
+
+            # Handle empty/None status
+            if not output_status.strip():
+                return False, "FAILED_GENERATION", "Empty or missing status from browser agent"
+
+            # LIBERADO → CLARO_GENERATED (approved for pipeline)
+            if output_status in ["Agendamento Pendente", "Autorizado Emissão de NF", "Autorizada Emissão Nota Fiscal"]:
+                return True, "CLARO_GENERATED", f"Order approved ({output_status}) - ready for multi-hop pipeline"
+
+            # NÃO LIBERADO → CHECK_ORDER_STATUS (remains, retry next run)
+            if output_status == "Aguardando Liberação":
+                return True, "CHECK_ORDER_STATUS", "Order still awaiting release - will retry next run"
+
+            # Unknown status
+            return False, "FAILED_GENERATION", f"Unknown status received: {output_status}"
+
+        except Exception as e:
+            logger.error(f"Error parsing claroCheck response for MINUTA: {e}")
+            return False, "FAILED_GENERATION", f"Response parsing error: {str(e)}"
 
     def parse_invoice_upload_response(self, api_response: dict[str, Any]) -> tuple[bool, str, str]:
         """Extract protocol from invoiceUpload response"""
@@ -3708,9 +3746,15 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 
 ⏱️ *Tempo total:* {total_execution_time_minutes:.1f} minutos""".strip()
 
+        # Log WhatsApp message before sending
+        logger.info("📱 Mensagem WhatsApp que será enviada:")
+        logger.info("=" * 60)
+        logger.info(whatsapp_message)
+        logger.info("=" * 60)
+
         # Send WhatsApp notification via Omni API
         import requests
-        
+
         logger.info(f"📱 Using Omni API: {omni_api_url} -> {len(omni_phone_numbers)} recipients (key: ...{omni_api_key[-6:]})")
         
         url = omni_api_url
@@ -3782,13 +3826,15 @@ async def execute_daily_completion_step(step_input: StepInput) -> StepOutput:
 
 def build_minuta_whatsapp_message(
     cnpj_groups_processed: int,
-    minutas_processed: int,
     cnpj_groups_failed: int,
+    protocolos_gerados: int,
+    pedidos_liberados: int,
+    minutas_concluidas: int,
+    minutas_processadas: int,
+    minutas_falharam: int,
     regional_downloads: int,
     total_value: float,
     execution_time: float,
-    po_completed: int = 0,
-    po_failed: int = 0,
     cnpj_details: list[dict] | None = None
 ) -> str:
     """
@@ -3796,13 +3842,15 @@ def build_minuta_whatsapp_message(
 
     Args:
         cnpj_groups_processed: Number of CNPJ groups successfully processed
-        minutas_processed: Total number of MINUTA documents generated
         cnpj_groups_failed: Number of CNPJ groups that failed processing
+        protocolos_gerados: Number of POs that got protocols (PENDING → CHECK_ORDER_STATUS)
+        pedidos_liberados: Number of POs released for invoice generation (CHECK_ORDER_STATUS → CLARO_GENERATED)
+        minutas_concluidas: Number of POs that completed multihop pipeline
+        minutas_processadas: Number of POs that updated status successfully
+        minutas_falharam: Number of POs that failed (not counting CHECK_ORDER_STATUS)
         regional_downloads: Number of regional downloads (Palmas/Aracaju)
         total_value: Total monetary value of MINUTAs processed (R$)
         execution_time: Total execution time in minutes
-        po_completed: Number of POs completed during pipeline
-        po_failed: Number of POs that ended with failure in this run
         cnpj_details: Optional list of CNPJ processing details with status
 
     Returns:
@@ -3810,48 +3858,16 @@ def build_minuta_whatsapp_message(
     """
     message = f"""📋 *PROCESSAMENTO MINUTA CONCLUÍDO*
 
-✅ *CNPJs processados:* {cnpj_groups_processed}
-📄 *Minutas processadas:* {minutas_processed}
-📦 *POs concluídos:* {po_completed}
-⚠️ *POs com falha:* {po_failed}
+📄 *Minutas processadas:* {minutas_processadas}
+❌ *Minutas falharam:* {minutas_falharam}
+
+🔖 *Protocolos gerados:* {protocolos_gerados}
+📤 *Pedidos liberados para emissão de NF:* {pedidos_liberados}
+✅ *Minutas concluídas:* {minutas_concluidas}
+
 💰 *Valor total:* R$ {total_value:,.2f}
 
-📍 *Downloads regionais:* {regional_downloads}
-❌ *CNPJs falharam:* {cnpj_groups_failed}
-⏱️ *Tempo execução:* {execution_time:.1f} minutos
-
-🔗 *Status por CNPJ:*"""
-
-    # Add CNPJ-specific details if provided
-    if cnpj_details:
-        for detail in cnpj_details[:10]:  # Limit to 10 CNPJs to avoid message length issues
-            cnpj = detail.get("cnpj", "N/A")
-            status = detail.get("status", "UNKNOWN")
-            minutas_count = detail.get("minutas_count", 0)
-
-            # Status emoji mapping
-            status_emoji = {
-                "COMPLETED": "✅",
-                "UPLOADED": "📤",
-                "CONCATENATED": "📎",
-                "DOWNLOADED": "📥",
-                "REGIONAL_DOWNLOADED": "📍",
-                "ESL_GENERATED": "📋",
-                "CLARO_GENERATED": "📝",
-                "PENDING": "⏳",
-                "FAILED_GENERATION": "❌",
-                "FAILED_DOWNLOAD": "❌",
-                "FAILED_REGIONAL": "❌",
-                "FAILED_CONCATENATION": "❌",
-                "FAILED_UPLOAD": "❌"
-            }.get(status, "❓")
-
-            message += f"\n{status_emoji} {cnpj}: {minutas_count} minutas - {status}"
-
-        # Add "more CNPJs" indicator if truncated
-        if len(cnpj_details) > 10:
-            remaining = len(cnpj_details) - 10
-            message += f"\n... e mais {remaining} CNPJs"
+⏱️ *Tempo execução:* {execution_time:.1f} minutos"""
 
     return message.strip()
 
@@ -3872,6 +3888,7 @@ async def execute_minuta_json_analysis_step(step_input: StepInput) -> StepOutput
     # Clean architecture: Detect ALL relevant statuses for hybrid processing
     processing_categories = {
         "pending_cnpjs": [],           # PENDING → minutGen
+        "check_order_cnpjs": [],       # CHECK_ORDER_STATUS → claroCheck
         "claro_generated_cnpjs": [],   # CLARO/ESL/DOWNLOADED/etc → multi-hop pipeline
         "failed_cnpjs": [],            # FAILED_* → manual intervention
         "completed_cnpjs": []          # UPLOADED/COMPLETED → skip
@@ -3882,6 +3899,7 @@ async def execute_minuta_json_analysis_step(step_input: StepInput) -> StepOutput
         "analysis_summary": {
             "total_cnpj_groups_found": 0,
             "pending_count": 0,
+            "check_order_count": 0,
             "claro_generated_count": 0,
             "failed_count": 0,
             "completed_count": 0
@@ -4030,7 +4048,17 @@ async def execute_minuta_json_analysis_step(step_input: StepInput) -> StepOutput
                 "uploaded_pos": uploaded_pos
             }
 
-            if not pending_pos and uploaded_pos:
+            # Get CNPJ-level status
+            cnpj_status = entry["status"]
+
+            # Categorize by CNPJ-level status
+            if cnpj_status == MinutaProcessingStatus.PENDING.value:
+                processing_categories["pending_cnpjs"].append(entry)
+                analysis_results["analysis_summary"]["pending_count"] += 1
+            elif cnpj_status == MinutaProcessingStatus.CHECK_ORDER_STATUS.value:
+                processing_categories["check_order_cnpjs"].append(entry)
+                analysis_results["analysis_summary"]["check_order_count"] += 1
+            elif not pending_pos and uploaded_pos:
                 processing_categories["completed_cnpjs"].append(entry)
                 analysis_results["analysis_summary"]["completed_count"] += 1
             elif pending_pos:
@@ -4055,6 +4083,7 @@ async def execute_minuta_json_analysis_step(step_input: StepInput) -> StepOutput
     logger.info("🔍 MINUTA JSON analysis completed:")
     logger.info(f"  📋 Total CNPJs: {analysis_results['analysis_summary']['total_cnpj_groups_found']}")
     logger.info(f"  ⏳ PENDING (→ minutGen): {analysis_results['analysis_summary']['pending_count']}")
+    logger.info(f"  🔍 CHECK_ORDER_STATUS (→ claroCheck): {analysis_results['analysis_summary']['check_order_count']}")
     logger.info(f"  🚀 CLARO_GENERATED (→ pipeline): {analysis_results['analysis_summary']['claro_generated_count']}")
     logger.info(f"  ❌ FAILED: {analysis_results['analysis_summary']['failed_count']}")
     logger.info(f"  ✅ COMPLETED: {analysis_results['analysis_summary']['completed_count']}")
@@ -4063,7 +4092,7 @@ async def execute_minuta_json_analysis_step(step_input: StepInput) -> StepOutput
 
 
 async def execute_minuta_status_routing_step(step_input: StepInput) -> StepOutput:
-    """Route CNPJs to 2 queues: minutGen (PENDING) OR multi-hop pipeline (CLARO_GENERATED)"""
+    """Route CNPJs to 3 queues: minutGen (PENDING) → claroCheck (CHECK_ORDER_STATUS) → multi-hop pipeline (CLARO_GENERATED)"""
     logger.info("🎯 Starting MINUTA routing (hybrid architecture)...")
 
     previous_output = step_input.get_step_output("minuta_json_analysis")
@@ -4076,21 +4105,34 @@ async def execute_minuta_status_routing_step(step_input: StepInput) -> StepOutpu
     api_orchestrator = create_api_orchestrator_agent()
     _ = api_orchestrator.run("MINUTA ROUTING")
 
-    # Clean architecture: 2 queues only
+    # Clean architecture: 3 queues for sequential processing
     processing_queues = {}
 
-    # Queue 1: PENDING → CLARO_GENERATED (minutGen isolated)
+    # Queue 1: PENDING → CHECK_ORDER_STATUS (minutGen isolated)
     pending_cnpjs = processing_categories.get("pending_cnpjs", [])
     if pending_cnpjs:
         processing_queues["minuta_generation_queue"] = {
             "action": "minutGen",
             "current_status": "PENDING",
-            "next_status": "CLARO_GENERATED",
+            "next_status": "CHECK_ORDER_STATUS",
             "cnpjs": pending_cnpjs
         }
         logger.info(f"📝 Queue 1: {len(pending_cnpjs)} CNPJs routed to minutGen")
 
-    # Queue 2: CLARO_GENERATED → UPLOADED (multi-hop pipeline)
+    # Queue 2: CHECK_ORDER_STATUS → CLARO_GENERATED (claroCheck validation)
+    check_order_cnpjs = processing_categories.get("check_order_cnpjs", [])
+    if check_order_cnpjs:
+        processing_queues["order_validation_queue"] = {
+            "action": "claroCheck",
+            "current_status": "CHECK_ORDER_STATUS",
+            "next_status_if_approved": "CLARO_GENERATED",
+            "next_status_if_pending": "CHECK_ORDER_STATUS",
+            "batch_processing": False,  # Process individual POs
+            "cnpjs": check_order_cnpjs
+        }
+        logger.info(f"🔍 Queue 2: {len(check_order_cnpjs)} CNPJs routed to claroCheck validation")
+
+    # Queue 3: CLARO_GENERATED → UPLOADED (multi-hop pipeline)
     claro_generated_cnpjs = processing_categories.get("claro_generated_cnpjs", [])
     if claro_generated_cnpjs:
         enriched_entries = []
@@ -4139,7 +4181,7 @@ async def execute_minuta_status_routing_step(step_input: StepInput) -> StepOutpu
                 ],
                 "cnpjs": enriched_entries
             }
-            logger.info(f"🚀 Queue 2: {len(enriched_entries)} CNPJs com POs pendentes na pipeline")
+            logger.info(f"🚀 Queue 3: {len(enriched_entries)} CNPJs com POs pendentes na pipeline")
         else:
             logger.info("ℹ️ Nenhum PO pendente para multi-hop nesta rodada")
 
@@ -4157,9 +4199,10 @@ async def execute_minuta_status_routing_step(step_input: StepInput) -> StepOutpu
 
 async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutput:
     """
-    Clean hybrid processing: 2 distinct branches
-    - Branch 1: minutGen (PENDING → CLARO_GENERATED)
-    - Branch 2: Multi-hop pipeline (CLARO_GENERATED → UPLOADED)
+    Clean hybrid processing: 3 distinct branches
+    - Branch 1: minutGen (PENDING → CHECK_ORDER_STATUS)
+    - Branch 2: claroCheck (CHECK_ORDER_STATUS → CLARO_GENERATED or stays)
+    - Branch 3: Multi-hop pipeline (CLARO_GENERATED → UPLOADED)
     """
     logger.info("⚙️ Starting MINUTA CNPJ processing (hybrid architecture)...")
 
@@ -4171,9 +4214,11 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
             "execution_summary": {
                 "cnpjs_updated": 0,
                 "cnpjs_failed": 0,
-                "po_completed": 0,
-                "po_failed": 0,
-                "minutas_generated": 0,
+                "protocolos_gerados": 0,
+                "pedidos_liberados": 0,
+                "minutas_concluidas": 0,
+                "minutas_processadas": 0,
+                "minutas_falharam": 0,
                 "total_value": 0.0,
                 "regional_downloads": 0,
                 "pipeline_executions": 0,
@@ -4194,9 +4239,11 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
             "execution_summary": {
                 "cnpjs_updated": 0,
                 "cnpjs_failed": 0,
-                "po_completed": 0,
-                "po_failed": 0,
-                "minutas_generated": 0,
+                "protocolos_gerados": 0,
+                "pedidos_liberados": 0,
+                "minutas_concluidas": 0,
+                "minutas_processadas": 0,
+                "minutas_falharam": 0,
                 "total_value": 0.0,
                 "regional_downloads": 0,
                 "pipeline_executions": 0,
@@ -4215,9 +4262,11 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
     execution_summary = {
         "cnpjs_updated": 0,
         "cnpjs_failed": 0,
-        "po_completed": 0,
-        "po_failed": 0,
-        "minutas_generated": 0,
+        "protocolos_gerados": 0,  # Branch 1: POs PENDING → CHECK_ORDER_STATUS
+        "pedidos_liberados": 0,    # Branch 2: POs CHECK_ORDER_STATUS → CLARO_GENERATED
+        "minutas_concluidas": 0,   # Branch 3: POs que completaram multihop pipeline
+        "minutas_processadas": 0,  # POs que atualizaram status com sucesso
+        "minutas_falharam": 0,     # POs que falharam (não contando CHECK_ORDER_STATUS)
         "total_value": 0.0,
         "regional_downloads": 0,
         "pipeline_executions": 0,
@@ -4227,7 +4276,7 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
     }
 
     # ═══════════════════════════════════════════════════════════════
-    # BRANCH 1: minutGen Isolated (PENDING → CLARO_GENERATED)
+    # BRANCH 1: minutGen Isolated (PENDING → CHECK_ORDER_STATUS)
     # ═══════════════════════════════════════════════════════════════
     if "minuta_generation_queue" in processing_queues:
         queue_info = processing_queues["minuta_generation_queue"]
@@ -4240,18 +4289,64 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
 
             if result["success"]:
                 execution_summary["cnpjs_updated"] += 1
+
+                # Count POs that got protocols generated (PENDING → CHECK_ORDER_STATUS)
+                cnpj_group = load_cnpj_group_from_json(entry["json_file"], entry["cnpj"])
+                if cnpj_group:
+                    po_count = len(cnpj_group.get("po_list", []))
+                    execution_summary["protocolos_gerados"] += po_count
+                    execution_summary["minutas_processadas"] += po_count  # POs que mudaram status
             else:
                 execution_summary["cnpjs_failed"] += 1
 
+                # Count POs that failed
+                cnpj_group = load_cnpj_group_from_json(entry["json_file"], entry["cnpj"])
+                if cnpj_group:
+                    execution_summary["minutas_falharam"] += len(cnpj_group.get("po_list", []))
+
     # ═══════════════════════════════════════════════════════════════
-    # BRANCH 2: Multi-Hop Pipeline (CLARO_GENERATED → UPLOADED)
+    # BRANCH 2: claroCheck Validation (CHECK_ORDER_STATUS → CLARO_GENERATED or stays)
+    # ═══════════════════════════════════════════════════════════════
+    if "order_validation_queue" in processing_queues:
+        queue_info = processing_queues["order_validation_queue"]
+        cnpjs = queue_info.get("cnpjs", [])
+
+        logger.info(f"🔍 Branch 2: Validating {len(cnpjs)} CNPJs via claroCheck...")
+
+        for entry in cnpjs:
+            result = await execute_claro_check_for_minuta(entry, api_client)
+
+            if result["success"]:
+                if result["status"] == MinutaProcessingStatus.CLARO_GENERATED.value:
+                    execution_summary["cnpjs_updated"] += 1
+
+                    # Count POs released for invoice generation (CHECK_ORDER_STATUS → CLARO_GENERATED)
+                    pos_approved_count = len(result["pos_approved"])
+                    execution_summary["pedidos_liberados"] += pos_approved_count
+                    execution_summary["minutas_processadas"] += pos_approved_count  # POs que mudaram status
+
+                    # Load CNPJ group to get total value
+                    cnpj_group = load_cnpj_group_from_json(entry["json_file"], result["cnpj"])
+                    if cnpj_group:
+                        execution_summary["total_value"] += cnpj_group.get("total_value", 0.0)
+
+                    logger.info(f"✅ CNPJ {result['cnpj']} approved → CLARO_GENERATED ({pos_approved_count} POs)")
+                else:
+                    # POs still pending (CHECK_ORDER_STATUS) - not failures, just waiting
+                    logger.info(f"⏳ CNPJ {result['cnpj']} still pending → CHECK_ORDER_STATUS ({len(result['pos_pending'])} POs)")
+            else:
+                execution_summary["cnpjs_failed"] += 1
+                logger.error(f"❌ CNPJ {entry['cnpj']} validation failed")
+
+    # ═══════════════════════════════════════════════════════════════
+    # BRANCH 3: Multi-Hop Pipeline (CLARO_GENERATED → UPLOADED)
     # ═══════════════════════════════════════════════════════════════
     if "multi_hop_pipeline_queue" in processing_queues:
         queue_info = processing_queues["multi_hop_pipeline_queue"]
         cnpjs = queue_info.get("cnpjs", [])
         pipeline_steps = queue_info.get("pipeline_steps", [])
 
-        logger.info(f"🚀 Branch 2: Processing {len(cnpjs)} CNPJs via multi-hop pipeline...")
+        logger.info(f"🚀 Branch 3: Processing {len(cnpjs)} CNPJs via multi-hop pipeline...")
 
         for entry in cnpjs:
             pipeline_start = datetime.now(UTC)
@@ -4264,8 +4359,15 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
                 execution_summary["pipeline_failures"] += 1
             if processed and not failed:
                 execution_summary["pipeline_completions"] += 1
-            execution_summary["po_completed"] += len(processed)
-            execution_summary["po_failed"] += len(failed)
+
+            # Count minutas (POs) that completed the entire multihop pipeline
+            if processed and not failed:
+                execution_summary["minutas_concluidas"] += len(processed)
+                execution_summary["minutas_processadas"] += len(processed)  # POs que mudaram status
+
+            # Count minutas that failed in pipeline
+            if failed:
+                execution_summary["minutas_falharam"] += len(failed)
 
             if processed:
                 execution_summary["cnpjs_updated"] += 1
@@ -4273,7 +4375,6 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
             if failed:
                 execution_summary["cnpjs_failed"] += 1
 
-            execution_summary["minutas_generated"] += result.get("minutas_count", 0)
             execution_summary["total_value"] += result.get("total_value", 0.0)
             execution_summary["regional_downloads"] += result.get("regional_downloads", 0)
 
@@ -4314,7 +4415,7 @@ async def execute_minutgen_only(
     cnpj_entry: dict,
     api_client: "BrowserAPIClient"
 ) -> dict:
-    """Execute ONLY minutGen for a CNPJ (PENDING → CLARO_GENERATED)"""
+    """Execute ONLY minutGen for a CNPJ (PENDING → CHECK_ORDER_STATUS)"""
     cnpj_claro = cnpj_entry.get("cnpj")
     json_file_path = cnpj_entry.get("json_file")
 
@@ -4336,32 +4437,32 @@ async def execute_minutgen_only(
     browser_success = response.get("api_result", {}).get("success", http_success)
 
     if http_success and browser_success:
-        # Update status: PENDING → CLARO_GENERATED
+        # Update status: PENDING → CHECK_ORDER_STATUS (awaiting claroCheck validation)
         await update_cnpj_status_in_json(
             json_file_path,
             cnpj_claro,
-            MinutaProcessingStatus.CLARO_GENERATED
+            MinutaProcessingStatus.CHECK_ORDER_STATUS
         )
 
-        # Ensure per-PO statuses advance to CLARO_GENERATED
+        # Ensure per-PO statuses advance to CHECK_ORDER_STATUS
         try:
             for po_number in cnpj_group.get("po_list", []):
                 await update_po_status_in_json(
                     json_file_path,
                     cnpj_claro,
                     str(po_number),
-                    MinutaProcessingStatus.CLARO_GENERATED,
+                    MinutaProcessingStatus.CHECK_ORDER_STATUS,
                     pipeline_progress={
-                        "current_step": 1,
+                        "current_step": 0,
                         "total_steps": 5,
-                        "last_step_completed": "main-minut-gen",
+                        "last_step_completed": "minutGen",
                         "last_step_timestamp": datetime.now(UTC).isoformat(),
                         "failed_step": None
                     }
                 )
         except Exception as exc:
             logger.warning(f"⚠️ Failed to update PO statuses after minutGen: {exc}")
-        logger.info(f"✅ minutGen completed: {cnpj_claro} → CLARO_GENERATED")
+        logger.info(f"✅ minutGen completed: {cnpj_claro} → CHECK_ORDER_STATUS (awaiting claroCheck)")
         return {"success": True}
     else:
         # Update status: FAILED_GENERATION
@@ -4387,6 +4488,155 @@ async def execute_minutgen_only(
         error_msg = response.get("api_result", {}).get("error") or response.get("error", "minutGen API failed")
         logger.error(f"❌ minutGen failed: {cnpj_claro} - {error_msg}")
         return {"success": False, "error": error_msg}
+
+
+async def execute_claro_check_for_minuta(
+    cnpj_entry: dict,
+    api_client: "BrowserAPIClient"
+) -> dict:
+    """
+    Execute claroCheck validation for MINUTA CNPJ.
+
+    Validates each PO individually via claroCheck API. Transitions to CLARO_GENERATED
+    ONLY when order is approved for invoice generation.
+
+    Transitions:
+    - Approved → CLARO_GENERATED (ready for multi-hop pipeline)
+    - Still Pending → CHECK_ORDER_STATUS (remains for next run)
+
+    Returns:
+        {
+            "success": bool,
+            "cnpj": str,
+            "status": str,  # Final CNPJ status
+            "pos_checked": int,
+            "pos_approved": list[str],
+            "pos_pending": list[str],
+            "error": str | None
+        }
+    """
+    cnpj_claro = cnpj_entry.get("cnpj")
+    json_file_path = cnpj_entry.get("json_file")
+    pending_pos = cnpj_entry.get("pending_pos", [])
+
+    if not cnpj_claro or not json_file_path:
+        return {"success": False, "error": "Missing CNPJ or file path"}
+
+    if not pending_pos:
+        logger.warning(f"⚠️ No pending POs for CNPJ {cnpj_claro} - skipping claroCheck")
+        return {"success": False, "error": "No pending POs"}
+
+    logger.info(f"🔍 Executing claroCheck for CNPJ {cnpj_claro} ({len(pending_pos)} POs)...")
+
+    # Load CNPJ group
+    cnpj_group = load_cnpj_group_from_json(json_file_path, cnpj_claro)
+    if not cnpj_group:
+        return {"success": False, "error": "CNPJ not found in JSON"}
+
+    pos_approved = []
+    pos_still_pending = []
+
+    # Check each PO individually
+    for po_number in pending_pos:
+        try:
+            # Build payload
+            payload = api_client.build_claro_check_payload(str(po_number))
+
+            # Execute API call
+            api_response = await api_client.execute_api_call("claroCheck", payload)
+
+            if not api_response["success"]:
+                logger.error(f"❌ claroCheck API call failed for PO {po_number}")
+                pos_still_pending.append(str(po_number))
+                continue
+
+            # Parse response with MINUTA-specific logic
+            browser_success, new_status, message = api_client.parse_claro_check_response_for_minuta(
+                api_response.get("api_result", {})
+            )
+
+            if not browser_success:
+                logger.error(f"❌ claroCheck validation failed for PO {po_number}: {message}")
+                pos_still_pending.append(str(po_number))
+                continue
+
+            # Categorize by status
+            if new_status == "CLARO_GENERATED":
+                pos_approved.append(str(po_number))
+                logger.info(f"✅ PO {po_number} APPROVED → ready for CLARO_GENERATED")
+            elif new_status == "CHECK_ORDER_STATUS":
+                pos_still_pending.append(str(po_number))
+                logger.info(f"⏳ PO {po_number} STILL PENDING → retry next run")
+
+            # Small delay between individual PO checks
+            await asyncio.sleep(0.5)
+
+        except Exception as e:
+            logger.error(f"❌ Exception checking PO {po_number}: {e}")
+            pos_still_pending.append(str(po_number))
+
+    # Determine CNPJ-level status
+    if pos_approved and not pos_still_pending:
+        # ALL POs approved → CLARO_GENERATED
+        final_status = MinutaProcessingStatus.CLARO_GENERATED
+        logger.info(f"🎉 All POs approved for CNPJ {cnpj_claro} → CLARO_GENERATED")
+    elif pos_approved and pos_still_pending:
+        # PARTIAL approval → remain CHECK_ORDER_STATUS
+        final_status = MinutaProcessingStatus.CHECK_ORDER_STATUS
+        logger.info(f"⏳ Partial approval for CNPJ {cnpj_claro} ({len(pos_approved)}/{len(pending_pos)} approved) → remains CHECK_ORDER_STATUS")
+    else:
+        # NO approvals → remain CHECK_ORDER_STATUS
+        final_status = MinutaProcessingStatus.CHECK_ORDER_STATUS
+        logger.info(f"⏳ No approvals yet for CNPJ {cnpj_claro} → remains CHECK_ORDER_STATUS")
+
+    # Update JSON with new status
+    await update_cnpj_status_in_json(
+        json_file_path=json_file_path,
+        cnpj_claro=cnpj_claro,
+        new_status=final_status
+    )
+
+    # Update per-PO statuses
+    try:
+        for po_number in pos_approved:
+            await update_po_status_in_json(
+                json_file_path,
+                cnpj_claro,
+                str(po_number),
+                MinutaProcessingStatus.CLARO_GENERATED,
+                pipeline_progress={
+                    "current_step": 1,
+                    "total_steps": 5,
+                    "last_step_completed": "claroCheck",
+                    "last_step_timestamp": datetime.now(UTC).isoformat(),
+                    "failed_step": None
+                }
+            )
+        for po_number in pos_still_pending:
+            await update_po_status_in_json(
+                json_file_path,
+                cnpj_claro,
+                str(po_number),
+                MinutaProcessingStatus.CHECK_ORDER_STATUS,
+                pipeline_progress={
+                    "current_step": 0,
+                    "total_steps": 5,
+                    "last_step_completed": "claroCheck",
+                    "last_step_timestamp": datetime.now(UTC).isoformat(),
+                    "failed_step": None
+                }
+            )
+    except Exception as exc:
+        logger.warning(f"⚠️ Failed to update PO statuses after claroCheck: {exc}")
+
+    return {
+        "success": True,
+        "cnpj": cnpj_claro,
+        "status": final_status.value,
+        "pos_checked": len(pending_pos),
+        "pos_approved": pos_approved,
+        "pos_pending": pos_still_pending
+    }
 
 
 async def execute_multi_hop_pipeline(
@@ -4841,12 +5091,14 @@ async def execute_minuta_completion_step(step_input: StepInput) -> StepOutput:
     # Extract metrics from processing results
     execution_summary = processing_results.get("execution_summary", {})
     cnpj_groups_processed = execution_summary.get("cnpjs_updated", 0)
-    minutas_processed = execution_summary.get("minutas_generated", 0)
     cnpj_groups_failed = execution_summary.get("cnpjs_failed", 0)
+    protocolos_gerados = execution_summary.get("protocolos_gerados", 0)
+    pedidos_liberados = execution_summary.get("pedidos_liberados", 0)
+    minutas_concluidas = execution_summary.get("minutas_concluidas", 0)
+    minutas_processadas = execution_summary.get("minutas_processadas", 0)
+    minutas_falharam = execution_summary.get("minutas_falharam", 0)
     regional_downloads = execution_summary.get("regional_downloads", 0)
     total_value = execution_summary.get("total_value", 0.0)
-    po_completed = execution_summary.get("po_completed", 0)
-    po_failed = execution_summary.get("po_failed", 0)
     pipeline_executions = execution_summary.get("pipeline_executions", 0)
     pipeline_completions = execution_summary.get("pipeline_completions", 0)
     pipeline_failures = execution_summary.get("pipeline_failures", 0)
@@ -4866,12 +5118,14 @@ async def execute_minuta_completion_step(step_input: StepInput) -> StepOutput:
         },
         "minuta_statistics": {
             "cnpj_groups_processed": cnpj_groups_processed,
-            "minutas_processed": minutas_processed,
             "cnpj_groups_failed": cnpj_groups_failed,
+            "protocolos_gerados": protocolos_gerados,
+            "pedidos_liberados": pedidos_liberados,
+            "minutas_concluidas": minutas_concluidas,
+            "minutas_processadas": minutas_processadas,
+            "minutas_falharam": minutas_falharam,
             "regional_downloads": regional_downloads,
             "total_value": total_value,
-            "po_completed": po_completed,
-            "po_failed": po_failed,
             "pipeline_executions": pipeline_executions,
             "pipeline_completions": pipeline_completions,
             "pipeline_failures": pipeline_failures,
@@ -4884,9 +5138,12 @@ async def execute_minuta_completion_step(step_input: StepInput) -> StepOutput:
     # Log MINUTA-specific metrics with emoji prefixes
     logger.info("📋 ===== MINUTA PROCESSING COMPLETE =====")
     logger.info(f"✅ CNPJs processados: {cnpj_groups_processed}")
-    logger.info(f"📄 Minutas geradas: {minutas_processed}")
     logger.info(f"❌ CNPJs falharam: {cnpj_groups_failed}")
-    logger.info(f"📦 POs concluídos: {po_completed} | POs com falha: {po_failed}")
+    logger.info(f"📄 Minutas processadas: {minutas_processadas}")
+    logger.info(f"❌ Minutas falharam: {minutas_falharam}")
+    logger.info(f"🔖 Protocolos gerados: {protocolos_gerados}")
+    logger.info(f"📤 Pedidos liberados para emissão de NF: {pedidos_liberados}")
+    logger.info(f"✅ Minutas concluídas: {minutas_concluidas}")
     logger.info(f"📍 Downloads regionais: {regional_downloads}")
     logger.info(f"💰 Valor total: R$ {total_value:,.2f}")
     logger.info(
@@ -4919,15 +5176,23 @@ async def execute_minuta_completion_step(step_input: StepInput) -> StepOutput:
             # Build WhatsApp message using helper function
             whatsapp_message = build_minuta_whatsapp_message(
                 cnpj_groups_processed=cnpj_groups_processed,
-                minutas_processed=minutas_processed,
                 cnpj_groups_failed=cnpj_groups_failed,
+                protocolos_gerados=protocolos_gerados,
+                pedidos_liberados=pedidos_liberados,
+                minutas_concluidas=minutas_concluidas,
+                minutas_processadas=minutas_processadas,
+                minutas_falharam=minutas_falharam,
                 regional_downloads=regional_downloads,
                 total_value=total_value,
                 execution_time=execution_time_minutes,
-                po_completed=po_completed,
-                po_failed=po_failed,
                 cnpj_details=cnpj_details
             )
+
+            # Log WhatsApp message before sending
+            logger.info("📱 Mensagem WhatsApp MINUTA que será enviada:")
+            logger.info("=" * 60)
+            logger.info(whatsapp_message)
+            logger.info("=" * 60)
 
             # Send WhatsApp notification via Omni API
             import requests
