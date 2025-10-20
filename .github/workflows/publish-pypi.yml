@@ -134,44 +134,27 @@ jobs:
           echo "### ⏰ Availability" >> $GITHUB_STEP_SUMMARY
           echo "Package will be available on PyPI in ~5-10 minutes" >> $GITHUB_STEP_SUMMARY
 
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          # Extract the markdown template from RELEASE_NOTES_TEMPLATE.md
+          sed -n '/^## Default Template$/,/^```$/p' .github/RELEASE_NOTES_TEMPLATE.md | \
+            sed '1d;$d' | \
+            sed 's/^```markdown$//' | \
+            sed 's/\\```/```/g' | \
+            sed "s/{{VERSION}}/${{ steps.version.outputs.version }}/g" | \
+            sed "s|{{REPOSITORY}}|${{ github.repository }}|g" \
+            > release-notes.md
+
+          echo "📝 Generated release notes:"
+          cat release-notes.md
+
       - name: Update GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: dist/*
-          body: |
-            ## 📦 PyPI Release ${{ steps.version.outputs.version }}
-
-            This release has been published to PyPI and is ready for installation and testing.
-
-            ### 🚀 Installation
-
-            ```bash
-            # Install from PyPI
-            pip install automagik-hive==${{ steps.version.outputs.version }}
-
-            # Or run directly with uvx (recommended)
-            uvx automagik-hive@${{ steps.version.outputs.version }} --version
-            ```
-
-            ### 🔗 Links
-
-            - 📦 [PyPI Package](https://pypi.org/project/automagik-hive/${{ steps.version.outputs.version }}/)
-            - 📚 [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
-            - 🔀 [View Pull Request](https://github.com/${{ github.repository }}/pull/56)
-            - 📝 [Full Changelog](https://github.com/${{ github.repository }}/compare/v0.1.1b2...v${{ steps.version.outputs.version }})
-
-            ### 📋 Release Assets
-
-            This release includes:
-            - Python wheel (`.whl`) for fast installation
-            - Source distribution (`.tar.gz`) for building from source
-            - Digital attestations for supply chain security
-
-            ---
-
-            🤖 **Automated Release**: Published via GitHub Actions using [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
-
-            **Co-Authored-By**: Automagik Genie 🧞 <genie@namastex.ai>
+          body_path: release-notes.md
           draft: false
           prerelease: ${{ steps.version.outputs.prerelease }}
           generate_release_notes: true
+          append_body: true
