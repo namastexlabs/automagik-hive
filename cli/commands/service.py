@@ -103,20 +103,22 @@ class ServiceManager:
             if not use_graceful:
                 # Backward-compatible path used by tests
                 try:
-                    subprocess.run(cmd, check=False)
+                    subprocess.run([str(c) for c in cmd if c is not None], check=False)
                 except KeyboardInterrupt:
                     return True
                 return True
 
             system = platform.system()
+            # Filter out None values and ensure all are strings
+            filtered_cmd = [str(c) for c in cmd if c is not None]
             proc: subprocess.Popen
             if system == "Windows":
                 # Create separate process group on Windows
                 creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-                proc = subprocess.Popen(cmd, creationflags=creationflags)
+                proc = subprocess.Popen(filtered_cmd, creationflags=creationflags)
             else:
                 # POSIX: start child in its own process group/session
-                proc = subprocess.Popen(cmd, preexec_fn=os.setsid)
+                proc = subprocess.Popen(filtered_cmd, preexec_fn=os.setsid)
 
             try:
                 returncode = proc.wait()
@@ -289,16 +291,34 @@ class ServiceManager:
             if not env_example_found:
                 print("  ⚠️  .env.example not found (you'll need to create it manually)")
 
-            # Copy Docker configuration
+            # Copy Docker configuration using dedicated locator
             docker_copied = False
-            docker_source = project_root / "docker"
-            if docker_source.exists() and docker_source.is_dir():
+            docker_source = self._locate_docker_templates()
+
+            if docker_source is not None:
                 try:
-                    shutil.copytree(docker_source, workspace_path / "docker")
-                    print("  ✅ Docker configuration")
+                    # Create docker directory in workspace
+                    (workspace_path / "docker" / "main").mkdir(parents=True, exist_ok=True)
+
+                    # Copy docker-compose.yml
+                    compose_src = docker_source / "docker-compose.yml"
+                    if compose_src.exists():
+                        shutil.copy(compose_src, workspace_path / "docker" / "main" / "docker-compose.yml")
+
+                    # Copy Dockerfile
+                    dockerfile_src = docker_source / "Dockerfile"
+                    if dockerfile_src.exists():
+                        shutil.copy(dockerfile_src, workspace_path / "docker" / "main" / "Dockerfile")
+
+                    # Copy .dockerignore
+                    dockerignore_src = docker_source / ".dockerignore"
+                    if dockerignore_src.exists():
+                        shutil.copy(dockerignore_src, workspace_path / "docker" / "main" / ".dockerignore")
+
+                    print("  ✅ Docker configuration (from local templates)")
                     docker_copied = True
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"  ⚠️  Failed to copy local Docker templates: {e}")
 
             # Fallback: Download Docker files from GitHub
             if not docker_copied:
@@ -315,20 +335,36 @@ class ServiceManager:
                     urllib.request.urlretrieve(github_compose, compose_target)
 
                     # Download Dockerfile
-                    github_dockerfile = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
+                    github_dockerfile = (
+                        "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
+                    )
                     dockerfile_target = workspace_path / "docker" / "main" / "Dockerfile"
                     urllib.request.urlretrieve(github_dockerfile, dockerfile_target)
 
                     # Download .dockerignore
-                    github_dockerignore = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
+                    github_dockerignore = (
+                        "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
+                    )
                     dockerignore_target = workspace_path / "docker" / "main" / ".dockerignore"
                     urllib.request.urlretrieve(github_dockerignore, dockerignore_target)
 
-                    print("  ✅ Docker configuration")
-                    docker_copied = True
+                    # Verify files were actually downloaded
+                    compose_exists = compose_target.exists() and compose_target.stat().st_size > 0
+                    dockerfile_exists = dockerfile_target.exists() and dockerfile_target.stat().st_size > 0
+
+                    if compose_exists and dockerfile_exists:
+                        print("  ✅ Docker configuration (from GitHub)")
+                        docker_copied = True
+                    else:
+                        print("  ⚠️  Docker files downloaded but appear incomplete")
+                        docker_copied = False
                 except Exception as e:
                     print(f"  ⚠️  Could not download Docker config: {e}")
                     print("  💡 PostgreSQL will need manual setup")
+
+            # Warn if Docker setup failed completely
+            if not docker_copied:
+                print("  ⚠️  Docker configuration unavailable - manual setup required")
 
             # Create knowledge directory marker
             (workspace_path / "knowledge" / ".gitkeep").touch()
@@ -341,7 +377,22 @@ class ServiceManager:
                 print("⚠️  Warning: No templates were copied (not found)")
                 return False
 
+            # Verify workspace structure after initialization
+            print("\n🔍 Verifying workspace structure...")
+            is_valid, issues = self._verify_workspace_structure(workspace_path)
+
+            if not is_valid:
+                print("⚠️  Workspace verification found issues:")
+                for issue in issues:
+                    print(f"   ❌ {issue}")
+                print("\n💡 Some components may need manual setup")
+                print("   However, workspace can still be used with limitations")
+
             print(f"\n✅ Workspace initialized: {workspace_name}")
+
+            if is_valid:
+                print("✅ All critical files verified")
+
             print("\n📂 Next steps:")
             print(f"   cd {workspace_name}")
             print("   cp .env.example .env")
@@ -397,6 +448,70 @@ class ServiceManager:
 
         return None
 
+    def _locate_docker_templates(self) -> Path | None:
+        """Locate docker/main templates from source or package.
+
+        Returns:
+            Path to docker/main directory or None if not found
+        """
+        # Try source directory first (for development)
+        project_root = Path(__file__).parent.parent.parent
+        docker_main = project_root / "docker" / "main"
+        if docker_main.exists() and (docker_main / "docker-compose.yml").exists():
+            return docker_main
+
+        # Try package resources (for uvx/pip install)
+        try:
+            from importlib.resources import files
+
+            # Get the cli package location
+            cli_root = files("cli")
+            cli_path = Path(str(cli_root))
+
+            # Navigate to shared-data docker/main directory
+            # {venv_root}/automagik_hive/docker/main/
+            venv_root = cli_path.parent.parent.parent.parent
+            docker_main_path = venv_root / "automagik_hive" / "docker" / "main"
+
+            if docker_main_path.exists() and (docker_main_path / "docker-compose.yml").exists():
+                return docker_main_path
+        except (ImportError, FileNotFoundError, TypeError, AttributeError):
+            pass
+
+        return None
+
+    def _verify_workspace_structure(self, workspace_path: Path) -> tuple[bool, list[str]]:
+        """Verify workspace has required files after init.
+
+        Args:
+            workspace_path: Path to workspace directory
+
+        Returns:
+            Tuple of (success, list of missing/broken items)
+        """
+        issues = []
+
+        # Check Docker configuration
+        compose_file = workspace_path / "docker" / "main" / "docker-compose.yml"
+        if not compose_file.exists():
+            issues.append("docker/main/docker-compose.yml missing")
+
+        dockerfile = workspace_path / "docker" / "main" / "Dockerfile"
+        if not dockerfile.exists():
+            issues.append("docker/main/Dockerfile missing")
+
+        # Check environment template
+        env_example = workspace_path / ".env.example"
+        if not env_example.exists():
+            issues.append(".env.example missing")
+
+        # Check AI templates
+        template_agent = workspace_path / "ai" / "agents" / "template-agent"
+        if not template_agent.exists():
+            issues.append("ai/agents/template-agent missing")
+
+        return len(issues) == 0, issues
+
     def _create_workspace_metadata(self, workspace_path: Path) -> None:
         """Create workspace metadata file for version tracking.
 
@@ -425,8 +540,13 @@ class ServiceManager:
         with open(metadata_file, "w") as f:
             yaml.dump(metadata, f, default_flow_style=False)
 
-    def install_full_environment(self, workspace: str = ".") -> bool:
-        """Complete environment setup with deployment choice - ENHANCED METHOD."""
+    def install_full_environment(self, workspace: str = ".", verbose: bool = False) -> bool:
+        """Complete environment setup with deployment choice - ENHANCED METHOD.
+
+        Args:
+            workspace: Path to workspace directory
+            verbose: Enable detailed diagnostic output for troubleshooting
+        """
         try:
             resolved_workspace = self._resolve_install_root(workspace)
             if Path(workspace).resolve() != resolved_workspace:
@@ -457,7 +577,7 @@ class ServiceManager:
             print("-" * 50)
 
             if deployment_mode == "local_hybrid":
-                success = self._setup_local_hybrid_deployment(str(resolved_workspace))
+                success = self._setup_local_hybrid_deployment(str(resolved_workspace), verbose=verbose)
             else:  # full_docker
                 success = self.main_service.install_main_environment(str(resolved_workspace))
 
@@ -671,21 +791,44 @@ class ServiceManager:
             except (EOFError, KeyboardInterrupt):
                 return "local_hybrid"  # Default for automated scenarios
 
-    def _setup_local_hybrid_deployment(self, workspace: str) -> bool:
-        """Setup local main + PostgreSQL docker only - NEW METHOD."""
+    def _setup_local_hybrid_deployment(self, workspace: str, verbose: bool = False) -> bool:
+        """Setup local main + PostgreSQL docker only - NEW METHOD.
+
+        Args:
+            workspace: Path to workspace directory
+            verbose: Enable detailed diagnostic output for troubleshooting
+        """
         try:
+            if verbose:
+                print("   🔍 Validating Docker installation...")
+
             print("   🐘 Starting PostgreSQL container...")
-            success = self.main_service.start_postgres_only(workspace)
+            success = self.main_service.start_postgres_only(workspace, verbose=verbose)
+
             if success:
                 print("   ✅ PostgreSQL started successfully")
                 print("   🔌 Database: localhost:5532")
+                if verbose:
+                    print("   📊 Verify with: docker ps | grep hive-postgres")
             else:
-                print("   ⚠️  PostgreSQL setup skipped or failed")
-                print("   💡 You can start it later with: automagik-hive postgres-start")
+                print("   ❌ PostgreSQL failed to start")
+                print("\n💡 Diagnostic steps:")
+                print("   1. Check Docker is running: docker ps")
+                print("   2. Verify compose file exists: ls docker/main/docker-compose.yml")
+                print("   3. Check logs: docker logs hive-postgres")
+                print("   4. Run install with --verbose flag for details")
+                if not verbose:
+                    print("   5. Retry with: automagik-hive install --verbose")
+
             return True  # Don't fail installation if PostgreSQL setup has issues
         except Exception as e:
             print(f"   ⚠️  PostgreSQL setup error: {e}")
             print("   💡 You can start it later with: automagik-hive postgres-start")
+            if verbose:
+                import traceback
+
+                print("\n🔍 Full error trace:")
+                traceback.print_exc()
             return True  # Don't fail installation if PostgreSQL setup has issues
 
     # Credential generation handled by CredentialService.install_all_modes()
@@ -738,12 +881,30 @@ class ServiceManager:
         """Stop PostgreSQL container."""
         print("🛑 Stopping PostgreSQL container...")
         try:
-            success = self.main_service.stop_postgres_only(workspace)
-            if success:
+            # Find compose file
+            workspace_path = Path(workspace).resolve()
+            compose_file = workspace_path / "docker" / "main" / "docker-compose.yml"
+            if not compose_file.exists():
+                compose_file = workspace_path / "docker-compose.yml"
+
+            if not compose_file.exists():
+                print("❌ No docker-compose.yml found")
+                return False
+
+            # Stop postgres container
+            result = subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "stop", "hive-postgres"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
                 print("✅ PostgreSQL stopped")
+                return True
             else:
                 print("⚠️  PostgreSQL failed to stop")
-            return success
+                return False
         except Exception as e:
             print(f"❌ Error stopping PostgreSQL: {e}")
             return False
@@ -751,8 +912,16 @@ class ServiceManager:
     def postgres_status(self, workspace: str = ".") -> bool:
         """Check PostgreSQL container status."""
         try:
-            status = self.main_service.get_postgres_status(workspace)
-            if status:
+            # Check if container is running
+            result = subprocess.run(
+                ["docker", "ps", "--filter", "name=hive-postgres", "--format", "{{.Status}}"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0 and result.stdout.strip():
+                status = result.stdout.strip()
                 print(f"📊 PostgreSQL Status: {status}")
                 return True
             else:
@@ -766,7 +935,18 @@ class ServiceManager:
         """Show PostgreSQL container logs."""
         print(f"📄 PostgreSQL Logs (last {tail} lines):")
         try:
-            return self.main_service.show_postgres_logs(workspace, tail)
+            result = subprocess.run(
+                ["docker", "logs", "--tail", str(tail), "hive-postgres"], check=False, capture_output=True, text=True
+            )
+
+            if result.returncode == 0:
+                print(result.stdout)
+                if result.stderr:
+                    print(result.stderr)
+                return True
+            else:
+                print("❌ Failed to retrieve logs")
+                return False
         except Exception as e:
             print(f"❌ Error showing PostgreSQL logs: {e}")
             return False
