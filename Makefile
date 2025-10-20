@@ -302,6 +302,14 @@ help: ## 🐝 Show this help message
 	@echo -e "  $(FONT_PURPLE)uninstall-workspace$(FONT_RESET) Uninstall current workspace (mirrors uninstall)"
 	@echo -e "  $(FONT_PURPLE)uninstall-global$(FONT_RESET) Uninstall global installation (mirrors --uninstall-global)"
 	@echo ""
+	@echo -e "$(FONT_CYAN)📦 Release & Publishing:$(FONT_RESET)"
+	@echo -e "  $(FONT_PURPLE)bump-major$(FONT_RESET)      Bump major version (1.0.0 → 2.0.0)"
+	@echo -e "  $(FONT_PURPLE)bump-minor$(FONT_RESET)      Bump minor version (0.1.0 → 0.2.0)"
+	@echo -e "  $(FONT_PURPLE)bump-patch$(FONT_RESET)      Bump patch version (0.1.0 → 0.1.1)"
+	@echo -e "  $(FONT_PURPLE)bump-rc$(FONT_RESET)         Add/bump RC suffix (0.2.0 → 0.2.0rc1)"
+	@echo -e "  $(FONT_PURPLE)bump$(FONT_RESET)            Bump beta version (0.1.1b2 → 0.1.1b3)"
+	@echo -e "  $(FONT_PURPLE)release-rc$(FONT_RESET)      Commit, tag, and publish release"
+	@echo ""
 	@echo -e "$(FONT_YELLOW)💡 For detailed commands, inspect the Makefile.$(FONT_RESET)"
 	@echo ""
 
@@ -514,6 +522,63 @@ uninstall-global: ## 🗑️ Uninstall global installation (mirrors --uninstall-
 # ===========================================
 
 # ===========================================
+# 🚀 Semantic Version Bumping
+# ===========================================
+.PHONY: bump-major
+bump-major: ## 🏷️ Bump major version (X.0.0)
+	@$(call print_status,Bumping major version...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/[-+].*//' | sed 's/[a-z].*//'  | sed 's/rc.*//' | sed 's/b.*//'); \
+	MAJOR=$$(echo "$$BASE_VERSION" | cut -d'.' -f1); \
+	NEW_MAJOR=$$((MAJOR + 1)); \
+	NEW_VERSION="$${NEW_MAJOR}.0.0"; \
+	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
+	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
+	$(call print_success,Version bumped to $$NEW_VERSION); \
+	echo -e "$(FONT_CYAN)💡 Next: make release-rc (or make bump-rc for RC)$(FONT_RESET)"
+
+.PHONY: bump-minor
+bump-minor: ## 🏷️ Bump minor version (0.X.0)
+	@$(call print_status,Bumping minor version...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/[-+].*//' | sed 's/[a-z].*//' | sed 's/rc.*//' | sed 's/b.*//'); \
+	MAJOR=$$(echo "$$BASE_VERSION" | cut -d'.' -f1); \
+	MINOR=$$(echo "$$BASE_VERSION" | cut -d'.' -f2); \
+	NEW_MINOR=$$((MINOR + 1)); \
+	NEW_VERSION="$${MAJOR}.$${NEW_MINOR}.0"; \
+	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
+	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
+	$(call print_success,Version bumped to $$NEW_VERSION); \
+	echo -e "$(FONT_CYAN)💡 Next: make release-rc (or make bump-rc for RC)$(FONT_RESET)"
+
+.PHONY: bump-patch
+bump-patch: ## 🏷️ Bump patch version (0.0.X)
+	@$(call print_status,Bumping patch version...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/[-+].*//' | sed 's/[a-z].*//' | sed 's/rc.*//' | sed 's/b.*//'); \
+	MAJOR=$$(echo "$$BASE_VERSION" | cut -d'.' -f1); \
+	MINOR=$$(echo "$$BASE_VERSION" | cut -d'.' -f2); \
+	PATCH=$$(echo "$$BASE_VERSION" | cut -d'.' -f3); \
+	NEW_PATCH=$$((PATCH + 1)); \
+	NEW_VERSION="$${MAJOR}.$${MINOR}.$${NEW_PATCH}"; \
+	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
+	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
+	$(call print_success,Version bumped to $$NEW_VERSION); \
+	echo -e "$(FONT_CYAN)💡 Next: make release-rc (or make bump-rc for RC)$(FONT_RESET)"
+
+# ===========================================
 # 🚀 Release & Publishing (Beta)
 # ===========================================
 .PHONY: bump
@@ -604,8 +669,8 @@ publish: ## 📦 Build and publish beta release to PyPI
 # 🚀 Release Candidate Publishing
 # ===========================================
 .PHONY: bump-rc
-bump-rc: ## 🏷️ Bump release candidate version
-	@$(call print_status,Bumping release candidate version...)
+bump-rc: ## 🏷️ Add/bump RC suffix to current version
+	@$(call print_status,Adding/bumping release candidate suffix...)
 	@if [ ! -f "pyproject.toml" ]; then \
 		$(call print_error,pyproject.toml not found); \
 		exit 1; \
@@ -616,17 +681,15 @@ bump-rc: ## 🏷️ Bump release candidate version
 		NEW_RC_NUM=$$((RC_NUM + 1)); \
 		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/rc[0-9]*$$//'); \
 		NEW_VERSION="$${BASE_VERSION}rc$${NEW_RC_NUM}"; \
+		$(call print_status,Bumping RC: $$CURRENT_VERSION → $$NEW_VERSION); \
 	else \
-		$(call print_status,Creating first release candidate from $$CURRENT_VERSION); \
-		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/b[0-9]*$$//'); \
+		BASE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/[-+].*//' | sed 's/[a-z].*//' | sed 's/b.*//'); \
 		NEW_VERSION="$${BASE_VERSION}rc1"; \
+		$(call print_status,Adding RC suffix: $$CURRENT_VERSION → $$NEW_VERSION); \
 	fi; \
-	$(call print_status,Updating version from $$CURRENT_VERSION to $$NEW_VERSION); \
 	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
 	$(call print_success,Version bumped to $$NEW_VERSION); \
-	echo -e "$(FONT_CYAN)💡 Next steps:$(FONT_RESET)"; \
-	echo -e "  1. make release-rc    (commit, tag, and trigger GitHub Actions)"; \
-	echo -e "  2. GitHub Actions will automatically publish to TestPyPI then PyPI"
+	echo -e "$(FONT_CYAN)💡 Next: make release-rc (commit, tag, and publish)$(FONT_RESET)"
 
 .PHONY: release-rc
 release-rc: ## 🚀 Create release (commit, tag, push) - triggers GitHub Actions publishing
@@ -679,7 +742,7 @@ release-rc: ## 🚀 Create release (commit, tag, push) - triggers GitHub Actions
 # ===========================================
 # 🧹 Phony Targets
 # ===========================================
-.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump publish bump-rc release-rc
+.PHONY: help install install-local dev prod stop restart status logs logs-live health clean test uninstall serve version postgres-status postgres-start postgres-stop postgres-restart postgres-logs postgres-health uninstall-workspace uninstall-global bump-major bump-minor bump-patch bump publish bump-rc release-rc
 # ===========================================
 # 🔑 UNIFIED CREDENTIAL MANAGEMENT SYSTEM
 # ===========================================
