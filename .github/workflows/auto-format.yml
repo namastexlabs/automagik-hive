@@ -1,0 +1,111 @@
+# Auto-format code with Ruff and commit fixable issues
+# This workflow runs on PRs and pushes, automatically fixing formatting issues
+# CI checks will only fail on unfixable issues
+
+name: Auto Format
+
+on:
+  push:
+    branches: [ main, v2, develop, 'fix/**', 'feat/**', 'feature/**' ]
+  pull_request:
+    branches: [ main, v2, develop ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  auto-format:
+    name: Auto Format with Ruff
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync
+
+      - name: Run Ruff format (auto-fix)
+        id: format
+        run: |
+          echo "Running ruff format..."
+          uv run ruff format .
+
+          echo "Running ruff check with auto-fix..."
+          uv run ruff check . --fix || true
+
+          # Check if there are changes
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Auto-fixable issues were found and fixed"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No auto-fixable issues found"
+          fi
+
+      - name: Configure Git
+        if: steps.format.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Commit and push changes
+        if: steps.format.outputs.changes == 'true'
+        run: |
+          git add -A
+
+          # Create commit with co-authorship and skip CI
+          git commit -m "style: auto-format code with ruff [skip ci]
+
+Applied automatic formatting and linting fixes:
+- ruff format: code style and formatting
+- ruff check --fix: auto-fixable linting issues
+
+This commit ensures CI checks only fail on unfixable issues.
+Skipping CI to avoid redundant pipeline runs.
+
+Co-authored-by: Automagik Genie 🧞 <genie@namastex.ai>"
+
+          # Push changes
+          git push
+
+      - name: Summary
+        if: steps.format.outputs.changes == 'true'
+        run: |
+          echo "### 🎨 Auto-Format Applied" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Automatically fixed formatting issues with:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`uv run ruff format .\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`uv run ruff check . --fix\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Changes have been committed and pushed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "CI checks will now only fail on unfixable issues." >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes needed
+        if: steps.format.outputs.changes == 'false'
+        run: |
+          echo "### ✨ Code Already Formatted" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No auto-fixable formatting issues found." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Code is already compliant with Ruff standards! 🎉" >> $GITHUB_STEP_SUMMARY

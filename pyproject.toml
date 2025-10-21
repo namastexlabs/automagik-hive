@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.2.0rc2"
+version = "0.2.0rc16"
 description = "Automagik Hive"
 readme = "README.md"
 requires-python = ">=3.12"
