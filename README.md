@@ -218,13 +218,15 @@ We created Automagik Hive at Namastex Labs after building multi-agent systems fo
 ### Prerequisites
 
 - Python 3.12+
-- PostgreSQL 16+ (optional - SQLite works for development)
 - One AI provider key (Anthropic, OpenAI, Google, etc.)
+- **Docker is OPTIONAL** (only required for PostgreSQL backend)
+
+**Note:** Automagik Hive now uses **PGlite** as the default database backend, eliminating Docker as a requirement. See [Database Backend Selection](#-database-backend-selection) for details.
 
 ### One-Line Installation
 
 ```bash
-# Install and setup
+# Install with PGlite (default - no Docker required)
 curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
 
 # Start development server
@@ -233,6 +235,8 @@ automagik-hive dev
 # Open http://localhost:8886 🎉
 ```
 
+**Backend Selection:** PGlite is the recommended default. See [Database Backend Selection](#-database-backend-selection) for SQLite and PostgreSQL options.
+
 ### Manual Installation
 
 ```bash
@@ -240,16 +244,25 @@ automagik-hive dev
 git clone https://github.com/namastexlabs/automagik-hive.git
 cd automagik-hive
 
-# Install with UV (project standard)
-uv sync
+# Install with PGlite backend (recommended - no Docker)
+make install-pglite
 
-# Set up environment
-cp .env.example .env
-# Edit .env with your settings
+# Or install with SQLite backend (alternative - no Docker)
+make install-sqlite
+
+# Or install with PostgreSQL backend (requires Docker)
+make install-postgres
 
 # Start development server
-uv run automagik-hive dev
+make dev
 ```
+
+**Backend Options:**
+- `make install-pglite` - PGlite backend (default, no Docker required)
+- `make install-sqlite` - SQLite backend (minimal dependencies)
+- `make install-postgres` - PostgreSQL backend (requires Docker)
+
+See [Database Backend Selection](#-database-backend-selection) for detailed comparison.
 
 ### Create Your First Agent
 
@@ -263,6 +276,140 @@ nano ai/agents/my-agent/config.yaml
 # Restart server (or wait for hot reload)
 # Your agent is now live!
 ```
+
+---
+
+## 🗄️ Database Backend Selection
+
+Automagik Hive supports three database backends to match your deployment needs:
+
+### PGlite (Default - Recommended)
+
+**WebAssembly-based PostgreSQL** - Full PostgreSQL compatibility without Docker.
+
+**Best For:**
+- Development and prototyping
+- Small-to-medium deployments
+- Browser-compatible applications
+- Quick setup and iteration
+
+**Advantages:**
+- ✅ No Docker required
+- ✅ Fast installation (<1 minute)
+- ✅ Full PostgreSQL feature set
+- ✅ Browser-compatible engine
+- ✅ Simple file-based storage
+
+**Installation:**
+```bash
+make install-pglite
+# or
+automagik-hive install --backend pglite
+```
+
+**Configuration:**
+```bash
+HIVE_DATABASE_BACKEND=pglite
+HIVE_DATABASE_URL=pglite://./data/automagik_hive.db
+```
+
+### SQLite (Fallback)
+
+**Simple file-based database** - Minimal dependencies, maximum simplicity.
+
+**Best For:**
+- Embedded use cases
+- Testing environments
+- Minimal dependency requirements
+- Single-user scenarios
+
+**Advantages:**
+- ✅ Zero configuration
+- ✅ Smallest footprint
+- ✅ No external dependencies
+- ✅ Proven reliability
+
+**Limitations:**
+- ❌ Limited concurrent write support
+- ❌ Basic vector search performance
+- ❌ No advanced PostgreSQL features
+
+**Installation:**
+```bash
+make install-sqlite
+# or
+automagik-hive install --backend sqlite
+```
+
+**Configuration:**
+```bash
+HIVE_DATABASE_BACKEND=sqlite
+HIVE_DATABASE_URL=sqlite:///./data/automagik_hive.db
+```
+
+### PostgreSQL (Optional)
+
+**Production-grade database** - Full PostgreSQL with Docker orchestration.
+
+**Best For:**
+- Production deployments
+- High concurrency workloads
+- Large-scale knowledge bases
+- Advanced vector search
+
+**Advantages:**
+- ✅ Production-grade reliability
+- ✅ Best concurrent performance
+- ✅ Advanced indexing (HNSW)
+- ✅ Full pgvector optimization
+
+**Requirements:**
+- Docker 20.10+
+- Docker Compose 2.0+
+
+**Installation:**
+```bash
+make install-postgres
+# or
+automagik-hive install --backend postgresql
+```
+
+**Configuration:**
+```bash
+HIVE_DATABASE_BACKEND=postgresql
+HIVE_DATABASE_URL=postgresql+psycopg://user:password@localhost:5532/hive
+```
+
+### Backend Comparison
+
+| Feature | PGlite | SQLite | PostgreSQL |
+|---------|--------|--------|------------|
+| Docker Required | ❌ No | ❌ No | ✅ Yes |
+| Setup Time | <1 min | <1 min | 2-3 min |
+| Concurrent Writes | ✅ Good | ⚠️ Limited | ✅ Excellent |
+| Vector Search | ✅ Good | ⚠️ Basic | ✅ Excellent |
+| Production Ready | ✅ Yes* | ⚠️ Limited | ✅ Yes |
+| Browser Compatible | ✅ Yes | ❌ No | ❌ No |
+| Memory Footprint | ~50MB | ~10MB | ~100MB |
+
+\* PGlite is production-ready for small-to-medium deployments
+
+### Switching Backends
+
+You can switch backends at any time:
+
+```bash
+# Update .env file
+HIVE_DATABASE_BACKEND=pglite  # or sqlite, postgresql
+HIVE_DATABASE_URL=<backend-specific-url>
+
+# Restart application
+make dev
+```
+
+Schema migrations run automatically. Session history and runtime data will reset.
+
+**For detailed migration instructions, see:** [PGlite Migration Guide](docs/MIGRATION_PGLITE.md)
 
 ---
 
