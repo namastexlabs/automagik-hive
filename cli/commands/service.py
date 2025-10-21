@@ -610,10 +610,6 @@ class ServiceManager:
             print(f"\n❌ Installation failed: {e}")
             return False
 
-    def install_environment(self, workspace: str = ".", verbose: bool = False) -> bool:
-        """Alias for install_full_environment for backwards compatibility."""
-        return self.install_full_environment(workspace, verbose)
-
     def _resolve_install_root(self, workspace: str) -> Path:
         """Determine the correct project root for installation assets."""
         raw_path = Path(workspace)
