@@ -198,7 +198,7 @@ class TestPostgresInstallErrorReporting:
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch("builtins.print") as mock_print:
-            with patch("builtins.input", return_value="local_hybrid"):  # Choose deployment mode
+            with patch("builtins.input", return_value="A"):  # Choose deployment mode (A = local_hybrid)
                 # Mock credential service to avoid actual file operations
                 with patch("lib.auth.credential_service.CredentialService"):
                     # Call the actual method - install_full_environment
@@ -222,7 +222,7 @@ class TestPostgresInstallErrorReporting:
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch("builtins.print") as mock_print:
-            with patch("builtins.input", return_value="local_hybrid"):
+            with patch("builtins.input", return_value="A"):  # A = local_hybrid deployment mode
                 with patch("lib.auth.credential_service.CredentialService"):
                     # Run install with verbose to see paths checked
                     service_manager.install_full_environment(workspace_path, verbose=True)
@@ -244,7 +244,7 @@ class TestPostgresInstallErrorReporting:
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch("builtins.print") as mock_print:
-            with patch("builtins.input", return_value="local_hybrid"):
+            with patch("builtins.input", return_value="A"):  # A = local_hybrid deployment mode
                 with patch("lib.auth.credential_service.CredentialService"):
                     service_manager.install_full_environment(workspace_path)
 
@@ -272,7 +272,7 @@ services:
         (tmp_path / ".env.example").write_text("POSTGRES_PASSWORD=fake-test-password-not-real\n")
 
         with patch("builtins.print") as mock_print:
-            with patch("builtins.input", return_value="local_hybrid"):
+            with patch("builtins.input", return_value="A"):  # A = local_hybrid deployment mode
                 with patch("lib.auth.credential_service.CredentialService"):
                     # Mock subprocess to simulate docker compose error
                     with patch("subprocess.run") as mock_run:
