@@ -530,30 +530,57 @@ class MainService:
             # Return True even on exceptions - cleanup should be best-effort
             return True
 
-    def start_postgres_only(self, workspace_path: str) -> bool:
-        """Start only PostgreSQL container for local hybrid deployment - NEW METHOD."""
+    def start_postgres_only(self, workspace_path: str, verbose: bool = False) -> bool:
+        """Start only PostgreSQL container for local hybrid deployment.
+
+        Args:
+            workspace_path: Path to workspace directory
+            verbose: Enable detailed diagnostic output for troubleshooting
+
+        Returns:
+            True if PostgreSQL started successfully, False otherwise
+        """
         try:
             # Normalize workspace path
             workspace = Path(workspace_path).resolve()
+
+            if verbose:
+                print("🔍 Searching for Docker Compose files...")
+                print(f"   Checking: {workspace}/docker/main/docker-compose.yml")
+                print(f"   Checking: {workspace}/docker-compose.yml")
 
             # Use existing Docker Compose file resolution logic
             docker_compose_main = workspace / "docker" / "main" / "docker-compose.yml"
             docker_compose_root = workspace / "docker-compose.yml"
 
+            compose_file = None
             if docker_compose_main.exists():
                 compose_file = docker_compose_main
             elif docker_compose_root.exists():
                 compose_file = docker_compose_root
-            else:
+
+            if not compose_file:
                 # Docker compose file not found
-                # This is expected for init-only workspaces that haven't been fully installed yet
+                print("❌ Docker Compose file not found")
+                print("\n💡 Troubleshooting steps:")
+                print("   1. Verify workspace was initialized: automagik-hive init <name>")
+                print("   2. Check docker/main/ directory exists")
+                if verbose:
+                    print("   3. Try re-initializing: automagik-hive init --force <name>")
                 return False
+
+            if verbose:
+                print(f"✅ Found compose file: {compose_file}")
 
             # Ensure data directory exists (reuse existing pattern)
             data_dir = workspace / "data"
             data_dir.mkdir(parents=True, exist_ok=True)
             postgres_data_dir = data_dir / "postgres"
             postgres_data_dir.mkdir(parents=True, exist_ok=True)
+
+            if verbose:
+                print("🐳 Starting PostgreSQL container...")
+                print(f"   Command: docker compose -f {compose_file} up -d hive-postgres")
 
             # Start only postgres service (pattern from _ensure_postgres_dependency)
             result = subprocess.run(
@@ -563,20 +590,51 @@ class MainService:
                 timeout=120,
             )
 
-            if result.returncode == 0:
-                response = input("Start main server now? (Y/n): ").strip().lower()
-                if response in ["", "y", "yes"]:
-                    subprocess.run(["uv", "run", "automagik-hive", "dev"])
-                else:
-                    pass
+            if verbose:
+                if result.stdout:
+                    print("\n📤 Docker stdout:")
+                    print(result.stdout)
+                if result.stderr:
+                    print("\n📥 Docker stderr:")
+                    print(result.stderr)
 
+            if result.returncode != 0:
+                print(f"❌ Docker command failed (exit code: {result.returncode})")
+                if not verbose and result.stderr:
+                    # Show truncated error in non-verbose mode
+                    error_preview = result.stderr[:200]
+                    print(f"   Error: {error_preview}")
+                    if len(result.stderr) > 200:
+                        print("   ... (truncated)")
+                    print("   💡 Run with --verbose for full output")
+                return False
+
+            if result.returncode == 0:
                 return True
             else:
                 return False
 
         except subprocess.TimeoutExpired:
+            print("❌ Docker command timed out after 120 seconds")
+            if verbose:
+                print("\n💡 Troubleshooting steps:")
+                print("   1. Check Docker daemon is running: docker ps")
+                print("   2. Check system resources (CPU/memory)")
+                print("   3. Try pulling the image manually: docker pull postgres:15")
             return False
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            print(f"❌ Docker command not found: {e}")
+            if verbose:
+                print("\n💡 Troubleshooting steps:")
+                print("   1. Verify Docker is installed: which docker")
+                print("   2. Verify Docker Compose is available: docker compose version")
+                print("   3. Check Docker daemon is running: docker ps")
             return False
-        except Exception:
+        except Exception as e:
+            print(f"❌ Unexpected error during PostgreSQL setup: {e}")
+            if verbose:
+                import traceback
+
+                print("\n🔍 Full error trace:")
+                traceback.print_exc()
             return False
