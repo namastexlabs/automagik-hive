@@ -228,6 +228,7 @@ class ServiceManager:
                 print("💡 Templates may not be installed correctly")
                 print("   If using uvx, try: pip install automagik-hive")
                 print("   If developing, ensure you're in the project directory")
+                print("   Docker and PostgreSQL will need manual setup")
                 return False
 
             templates_copied = 0
@@ -608,6 +609,10 @@ class ServiceManager:
         except Exception as e:
             print(f"\n❌ Installation failed: {e}")
             return False
+
+    def install_environment(self, workspace: str = ".", verbose: bool = False) -> bool:
+        """Alias for install_full_environment for backwards compatibility."""
+        return self.install_full_environment(workspace, verbose)
 
     def _resolve_install_root(self, workspace: str) -> Path:
         """Determine the correct project root for installation assets."""
