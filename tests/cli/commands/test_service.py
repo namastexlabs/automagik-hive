@@ -421,7 +421,7 @@ class TestServiceManagerEnvironmentSetup:
         mock_credential_service_class.assert_called_once()
         called_kwargs = mock_credential_service_class.call_args.kwargs
         assert called_kwargs.get("project_root") == repo_root
-        mock_local.assert_called_once_with(str(repo_root))
+        mock_local.assert_called_once_with(str(repo_root), verbose=False)
 
     def test_install_full_environment_env_setup_fails(self):
         """Test environment installation when env setup fails."""
