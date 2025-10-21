@@ -124,9 +124,14 @@ Use --help for detailed options or see documentation.
 
     # Install subcommand
     install_parser = subparsers.add_parser(
-        "install", help="Complete environment setup with .env generation and PostgreSQL"
+        "install", help="Complete environment setup with .env generation and database backend selection"
     )
     install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    install_parser.add_argument(
+        "--backend",
+        choices=["postgresql", "pglite", "sqlite"],
+        help="Database backend to use (overrides interactive prompt)",
+    )
 
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
@@ -260,7 +265,8 @@ def main() -> int:
         if args.command == "install":
             service_manager = ServiceManager()
             workspace = getattr(args, "workspace", ".") or "."
-            return 0 if service_manager.install_full_environment(workspace) else 1
+            backend_override = getattr(args, "backend", None)
+            return 0 if service_manager.install_full_environment(workspace, backend_override=backend_override) else 1
 
         # Uninstall subcommand
         if args.command == "uninstall":
