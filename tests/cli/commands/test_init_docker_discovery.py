@@ -87,44 +87,53 @@ class TestDockerTemplateDiscovery:
     def test_init_github_fallback_when_local_templates_missing(self, tmp_path):
         """Test GitHub fallback when local Docker templates not found.
 
-        EXPECTED TO FAIL: GitHub fallback logic may not be properly implemented
-        or tested for Docker configuration files.
+        Verifies that when Docker templates are not found locally,
+        the system falls back to downloading them from GitHub.
         """
         workspace_name = str(tmp_path / "test-workspace")
         service_manager = ServiceManager()
 
-        # Mock _locate_template_root to return None (simulate missing local templates)
-        with patch.object(service_manager, "_locate_template_root", return_value=None):
-            # Mock urllib to simulate successful GitHub download
-            with patch("urllib.request.urlretrieve") as mock_retrieve:
-                mock_retrieve.return_value = (None, None)
+        # Mock _locate_template_root to return a valid path (so init doesn't exit early)
+        # but mock _locate_docker_templates to return None (to trigger Docker GitHub fallback)
+        fake_template_root = tmp_path / "fake_templates" / "ai"
+        fake_template_root.mkdir(parents=True)
 
-                # Initialize workspace
-                service_manager.init_workspace(workspace_name, force=False)
+        # Create minimal agent/team/workflow templates so init can proceed
+        for component in ["agents", "teams", "workflows"]:
+            component_dir = fake_template_root / component / f"template-{component[:-1]}"
+            component_dir.mkdir(parents=True)
+            (component_dir / "config.yaml").write_text("# minimal config")
 
-                # Verify GitHub download attempted for Docker files
-                docker_compose_url = (
-                    "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
-                )
-                dockerfile_url = (
-                    "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
-                )
-                dockerignore_url = (
-                    "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
-                )
+        with patch.object(service_manager, "_locate_template_root", return_value=fake_template_root):
+            with patch.object(service_manager, "_locate_docker_templates", return_value=None):
+                # Mock urllib to simulate successful GitHub download
+                with patch("urllib.request.urlretrieve") as mock_retrieve:
+                    mock_retrieve.return_value = (None, None)
 
-                # Check that Docker files were downloaded
-                calls = [str(call) for call in mock_retrieve.call_args_list]
+                    # Initialize workspace
+                    service_manager.init_workspace(workspace_name, force=False)
 
-                assert any(docker_compose_url in str(call) for call in calls), (
-                    "Should attempt to download docker-compose.yml from GitHub"
-                )
-                assert any(dockerfile_url in str(call) for call in calls), (
-                    "Should attempt to download Dockerfile from GitHub"
-                )
-                assert any(dockerignore_url in str(call) for call in calls), (
-                    "Should attempt to download .dockerignore from GitHub"
-                )
+                    # Verify GitHub download attempted for Docker files
+                    docker_compose_url = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
+                    dockerfile_url = (
+                        "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
+                    )
+                    dockerignore_url = (
+                        "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
+                    )
+
+                    # Check that Docker files were downloaded
+                    calls = [str(call) for call in mock_retrieve.call_args_list]
+
+                    assert any(docker_compose_url in str(call) for call in calls), (
+                        "Should attempt to download docker-compose.yml from GitHub"
+                    )
+                    assert any(dockerfile_url in str(call) for call in calls), (
+                        "Should attempt to download Dockerfile from GitHub"
+                    )
+                    assert any(dockerignore_url in str(call) for call in calls), (
+                        "Should attempt to download .dockerignore from GitHub"
+                    )
 
     def test_init_creates_complete_docker_structure(self, tmp_path):
         """Test that init creates complete Docker directory structure.
