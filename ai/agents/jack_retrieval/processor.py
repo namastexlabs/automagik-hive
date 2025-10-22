@@ -191,7 +191,7 @@ class CTEProcessor:
             logger.info(f"ℹ️ No MINUTA JSON files found in {directory_path}")
             return 0
 
-        logger.info(f"Processing {len(json_files)} MINUTA JSON files from {directory_path}")
+        logger.info(f"📁 Processing {len(json_files)} MINUTA JSON files from {directory_path}")
 
         total_groups = 0
         for json_file in json_files:
