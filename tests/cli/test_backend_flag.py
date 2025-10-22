@@ -40,7 +40,7 @@ class TestBackendFlag:
                 result = main()
 
                 # Verify installation was called with backend override
-                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="postgresql")
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="postgresql", verbose=False)
                 assert result == 0
 
     def test_valid_backend_pglite(self, monkeypatch):
@@ -55,7 +55,7 @@ class TestBackendFlag:
 
                 result = main()
 
-                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="pglite")
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="pglite", verbose=False)
                 assert result == 0
 
     def test_valid_backend_sqlite(self, monkeypatch):
@@ -70,7 +70,7 @@ class TestBackendFlag:
 
                 result = main()
 
-                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="sqlite")
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="sqlite", verbose=False)
                 assert result == 0
 
     def test_invalid_backend_rejected(self, monkeypatch, capsys):
@@ -110,7 +110,7 @@ class TestBackendFlag:
                 result = main()
 
                 # Flag should override environment
-                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="pglite")
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="pglite", verbose=False)
                 assert result == 0
 
     def test_backend_flag_overrides_interactive_prompt(self, monkeypatch):
@@ -131,7 +131,7 @@ class TestBackendFlag:
                     mock_prompt.assert_not_called()
 
                     # But installation should proceed with flag value
-                    mock_manager.install_full_environment.assert_called_once_with(".", backend_override="sqlite")
+                    mock_manager.install_full_environment.assert_called_once_with(".", backend_override="sqlite", verbose=False)
                     assert result == 0
 
     def test_case_insensitive_backend_values(self, monkeypatch):
@@ -157,7 +157,7 @@ class TestBackendFlag:
 
                 result = main()
 
-                mock_manager.install_full_environment.assert_called_once_with(".", backend_override=expected_normalized)
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override=expected_normalized, verbose=False)
                 assert result == 0
 
     def test_backend_flag_without_install_command(self, monkeypatch, capsys):
@@ -211,5 +211,5 @@ class TestBackendFlag:
                 result = main()
 
                 # Should be called with None backend_override (triggers prompt)
-                mock_manager.install_full_environment.assert_called_once_with(".", backend_override=None)
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override=None, verbose=False)
                 assert result == 0
