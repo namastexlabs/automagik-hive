@@ -76,9 +76,16 @@ class ServiceManager:
             actual_host = host or os.getenv("HIVE_API_HOST", "0.0.0.0")  # noqa: S104
             actual_port = port or int(os.getenv("HIVE_API_PORT", "8886"))
 
-            # Check and auto-start PostgreSQL dependency if needed
-            postgres_running, postgres_started = self._ensure_postgres_dependency()
-            if not postgres_running:
+            # Detect backend type from environment (Group D)
+            backend_type = self._detect_backend_from_env()
+
+            # Check and auto-start PostgreSQL dependency ONLY if backend is PostgreSQL
+            if backend_type == "postgresql":
+                postgres_running, postgres_started = self._ensure_postgres_dependency()
+                if not postgres_running:
+                    pass
+            else:
+                # Non-PostgreSQL backends don't need Docker PostgreSQL
                 pass
 
             # Build uvicorn command
@@ -541,11 +548,14 @@ class ServiceManager:
         with open(metadata_file, "w") as f:
             yaml.dump(metadata, f, default_flow_style=False)
 
-    def install_full_environment(self, workspace: str = ".", verbose: bool = False) -> bool:
+    def install_full_environment(
+        self, workspace: str = ".", backend_override: str | None = None, verbose: bool = False
+    ) -> bool:
         """Complete environment setup with deployment choice - ENHANCED METHOD.
 
         Args:
             workspace: Path to workspace directory
+            backend_override: Override database backend selection (postgresql, pglite, sqlite)
             verbose: Enable detailed diagnostic output for troubleshooting
         """
         try:
@@ -558,6 +568,12 @@ class ServiceManager:
 
             # 1. DEPLOYMENT CHOICE SELECTION (NEW)
             deployment_mode = self._prompt_deployment_choice()
+
+            # 1a. BACKEND SELECTION (NEW - Group D)
+            backend_type = backend_override or self._prompt_backend_selection()
+
+            # Store backend choice in environment for later use
+            self._store_backend_choice(resolved_workspace, backend_type)
 
             # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
             print("\n📝 Step 1/2: Generating Credentials")
@@ -791,6 +807,108 @@ class ServiceManager:
                     pass
             except (EOFError, KeyboardInterrupt):
                 return "local_hybrid"  # Default for automated scenarios
+
+    def _prompt_backend_selection(self) -> str:
+        """Interactive database backend selection - Group D."""
+        print("\n" + "=" * 70)
+        print("📊 DATABASE BACKEND SELECTION")
+        print("=" * 70)
+        print("\nChoose your database backend:\n")
+        print("  A) PostgreSQL (Docker) - Production-ready, full features")
+        print("     • Requires Docker installed and running")
+        print("     • Full PostgreSQL compatibility")
+        print("     • Recommended for production\n")
+        print("  B) PGlite (WebAssembly) - Lightweight, no Docker needed")
+        print("     • Runs PostgreSQL via WebAssembly bridge")
+        print("     • No Docker required")
+        print("     • Great for development and testing\n")
+        print("  C) SQLite - Simple file-based database")
+        print("     • Minimal dependencies")
+        print("     • Single file storage")
+        print("     • Best for simple use cases\n")
+
+        while True:
+            try:
+                choice = input("Enter your choice (A/B/C) [default: B]: ").strip().upper()
+                if choice == "" or choice == "B":
+                    return "pglite"
+                elif choice == "A":
+                    return "postgresql"
+                elif choice == "C":
+                    return "sqlite"
+                else:
+                    print("❌ Invalid choice. Please enter A, B, or C.")
+            except (EOFError, KeyboardInterrupt):
+                return "pglite"  # Default for automated scenarios
+
+    def _store_backend_choice(self, workspace: Path, backend_type: str) -> None:
+        """Store backend choice in .env file for runtime detection."""
+        env_file = workspace / ".env"
+        if not env_file.exists():
+            return
+
+        # Read existing .env
+        env_lines = []
+        backend_found = False
+        with open(env_file) as f:
+            for line in f:
+                if line.startswith("HIVE_DATABASE_BACKEND="):
+                    env_lines.append(f"HIVE_DATABASE_BACKEND={backend_type}\n")
+                    backend_found = True
+                else:
+                    env_lines.append(line)
+
+        # Add backend if not found
+        if not backend_found:
+            env_lines.append(
+                f"\n# Database backend type (auto-generated during install)\nHIVE_DATABASE_BACKEND={backend_type}\n"
+            )
+
+        # Update database URL based on backend
+        url_map = {
+            "pglite": "pglite://./data/automagik_hive.db",
+            "postgresql": "postgresql+psycopg://hive_user:${HIVE_POSTGRES_PASSWORD}@localhost:${HIVE_POSTGRES_PORT}/automagik_hive",
+            "sqlite": "sqlite:///./data/automagik_hive.db",
+        }
+
+        # Update URL if it's a placeholder
+        updated_lines = []
+        for line in env_lines:
+            if line.startswith("HIVE_DATABASE_URL="):
+                # Only update if it's the default placeholder
+                if "your_database_url_here" in line or not line.strip().endswith(
+                    ("pglite://", "postgresql://", "sqlite://")
+                ):
+                    updated_lines.append(f"HIVE_DATABASE_URL={url_map[backend_type]}\n")
+                else:
+                    updated_lines.append(line)
+            else:
+                updated_lines.append(line)
+
+        # Write back
+        with open(env_file, "w") as f:
+            f.writelines(updated_lines)
+
+    def _detect_backend_from_env(self) -> str:
+        """Detect database backend type from environment - Group D integration."""
+        # Try explicit backend setting first
+        backend_env = os.getenv("HIVE_DATABASE_BACKEND")
+        if backend_env:
+            return backend_env.lower()
+
+        # Fall back to URL detection using backend factory
+        db_url = os.getenv("HIVE_DATABASE_URL")
+        if db_url:
+            try:
+                from lib.database.backend_factory import detect_backend_from_url
+
+                backend_type = detect_backend_from_url(db_url)
+                return backend_type.value  # Return string value of enum
+            except Exception:  # noqa: S110
+                pass  # Intentionally ignoring URL parsing errors - will fall back to PostgreSQL default
+
+        # Default to PostgreSQL for backward compatibility
+        return "postgresql"
 
     def _setup_local_hybrid_deployment(self, workspace: str, verbose: bool = False) -> bool:
         """Setup local main + PostgreSQL docker only - NEW METHOD.

@@ -382,20 +382,22 @@ class TestServiceManagerEnvironmentSetup:
         """Test successful full environment installation."""
         manager = ServiceManager()
         with patch.object(manager, "_prompt_deployment_choice", return_value="full_docker"):
-            resolved_path = Path("/resolved/workspace")
-            with patch("lib.auth.credential_service.CredentialService") as mock_credential_service_class:
-                mock_credential_service = mock_credential_service_class.return_value
-                mock_credential_service.install_all_modes.return_value = {}
-                with patch.object(manager, "main_service") as mock_main:
-                    mock_main.install_main_environment.return_value = True
-                    with patch.object(manager, "_resolve_install_root", return_value=resolved_path):
-                        result = manager.install_full_environment("./test")
+            with patch.object(manager, "_prompt_backend_selection", return_value="postgresql"):
+                with patch.object(manager, "_store_backend_choice"):
+                    resolved_path = Path("/resolved/workspace")
+                    with patch("lib.auth.credential_service.CredentialService") as mock_credential_service_class:
+                        mock_credential_service = mock_credential_service_class.return_value
+                        mock_credential_service.install_all_modes.return_value = {}
+                        with patch.object(manager, "main_service") as mock_main:
+                            mock_main.install_main_environment.return_value = True
+                            with patch.object(manager, "_resolve_install_root", return_value=resolved_path):
+                                result = manager.install_full_environment("./test")
 
-                    assert result is True
-                    mock_main.install_main_environment.assert_called_once_with(str(resolved_path))
-                    mock_credential_service_class.assert_called_once()
-                    kwargs = mock_credential_service_class.call_args.kwargs
-                    assert kwargs.get("project_root") == resolved_path
+                            assert result is True
+                            mock_main.install_main_environment.assert_called_once_with(str(resolved_path))
+                            mock_credential_service_class.assert_called_once()
+                            kwargs = mock_credential_service_class.call_args.kwargs
+                            assert kwargs.get("project_root") == resolved_path
 
     def test_install_full_environment_uses_parent_workspace(self, tmp_path):
         """Install should pivot to parent directory when AI bundle lacks markers."""
@@ -410,12 +412,16 @@ class TestServiceManagerEnvironmentSetup:
 
         manager = ServiceManager()
         with patch.object(manager, "_prompt_deployment_choice", return_value="local_hybrid"):
-            with patch("lib.auth.credential_service.CredentialService") as mock_credential_service_class:
-                credential_instance = mock_credential_service_class.return_value
-                credential_instance.install_all_modes.return_value = {}
-                with patch.object(manager, "main_service"):
-                    with patch.object(manager, "_setup_local_hybrid_deployment", return_value=True) as mock_local:
-                        result = manager.install_full_environment(str(ai_dir))
+            with patch.object(manager, "_prompt_backend_selection", return_value="postgresql"):
+                with patch.object(manager, "_store_backend_choice"):
+                    with patch("lib.auth.credential_service.CredentialService") as mock_credential_service_class:
+                        credential_instance = mock_credential_service_class.return_value
+                        credential_instance.install_all_modes.return_value = {}
+                        with patch.object(manager, "main_service"):
+                            with patch.object(
+                                manager, "_setup_local_hybrid_deployment", return_value=True
+                            ) as mock_local:
+                                result = manager.install_full_environment(str(ai_dir))
 
         assert result is True
         mock_credential_service_class.assert_called_once()

@@ -1,5 +1,6 @@
 """Simple CLI utilities."""
 
+import os
 import subprocess
 
 
@@ -27,13 +28,26 @@ def run_command(cmd: list, capture_output: bool = False, cwd: str | None = None)
 
 
 def check_docker_available() -> bool:
-    """Check if Docker is available and running."""
+    """Check if Docker is available and running.
+
+    NOTE: Docker is OPTIONAL. Only required when using PostgreSQL backend.
+    PGlite and SQLite backends do not require Docker.
+    """
+    backend = os.getenv("HIVE_DATABASE_BACKEND", "pglite").lower()
+
+    # Docker not required for PGlite or SQLite backends
+    if backend in ("pglite", "sqlite"):
+        return True
+
+    # PostgreSQL backend requires Docker
     if not run_command(["docker", "--version"], capture_output=True):
         print("❌ Docker not found. Please install Docker first.")
+        print("💡 Or switch to PGlite backend: HIVE_DATABASE_BACKEND=pglite")
         return False
 
     if not run_command(["docker", "ps"], capture_output=True):
         print("❌ Docker daemon not running. Please start Docker.")
+        print("💡 Or switch to PGlite backend: HIVE_DATABASE_BACKEND=pglite")
         return False
 
     return True
