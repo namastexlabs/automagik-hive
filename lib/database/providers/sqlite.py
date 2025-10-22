@@ -33,6 +33,9 @@ class SQLiteBackend(BaseDatabaseBackend):
             min_size: Unused (SQLite doesn't support pooling)
             max_size: Unused (SQLite doesn't support pooling)
         """
+        # Store original URL for interface compatibility
+        self.db_url = db_url or f"sqlite:///{os.getenv('SQLITE_DB_PATH', './data/automagik-hive.db')}"
+
         # Parse database path from URL
         if db_url:
             if db_url.startswith("sqlite:///"):

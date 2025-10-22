@@ -47,13 +47,20 @@ def detect_backend_from_url(db_url: str) -> DatabaseBackendType:
         return DatabaseBackendType.POSTGRESQL
 
 
-def create_backend(backend_type: DatabaseBackendType | None = None, db_url: str | None = None) -> BaseDatabaseBackend:
+def create_backend(
+    backend_type: DatabaseBackendType | None = None,
+    db_url: str | None = None,
+    min_size: int = 2,
+    max_size: int = 10,
+) -> BaseDatabaseBackend:
     """
     Create database backend instance.
 
     Args:
         backend_type: Explicit backend type, or None for auto-detection
         db_url: Database URL for auto-detection, or None to use env var
+        min_size: Minimum connection pool size (default: 2)
+        max_size: Maximum connection pool size (default: 10)
 
     Returns:
         BaseDatabaseBackend: Configured backend instance
@@ -62,6 +69,12 @@ def create_backend(backend_type: DatabaseBackendType | None = None, db_url: str 
         ValueError: If backend type is invalid or URL is missing
         ImportError: If backend dependencies are not installed
     """
+    # Validate inputs
+    if db_url == "":
+        raise ValueError("Database URL cannot be empty string")
+    if db_url is not None and not isinstance(db_url, str):
+        raise TypeError(f"db_url must be a string, got {type(db_url)}")
+
     # Auto-detect from URL if backend type not specified
     if backend_type is None:
         if db_url is None:
@@ -75,17 +88,17 @@ def create_backend(backend_type: DatabaseBackendType | None = None, db_url: str 
     if backend_type == DatabaseBackendType.PGLITE:
         from .providers.pglite import PGliteBackend
 
-        return PGliteBackend(db_url=db_url)
+        return PGliteBackend(db_url=db_url, min_size=min_size, max_size=max_size)
 
     elif backend_type == DatabaseBackendType.POSTGRESQL:
         from .providers.postgresql import PostgreSQLBackend
 
-        return PostgreSQLBackend(db_url=db_url)
+        return PostgreSQLBackend(db_url=db_url, min_size=min_size, max_size=max_size)
 
     elif backend_type == DatabaseBackendType.SQLITE:
         from .providers.sqlite import SQLiteBackend
 
-        return SQLiteBackend(db_url=db_url)
+        return SQLiteBackend(db_url=db_url, min_size=min_size, max_size=max_size)
 
     else:
         raise ValueError(f"Unknown backend type: {backend_type}")

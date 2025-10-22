@@ -19,12 +19,20 @@ class DatabaseBackendType(str, Enum):
 
 
 # Lazy imports to avoid circular dependencies
-def get_database_backend(backend_type: DatabaseBackendType | str | None = None):
+def get_database_backend(
+    backend_type: DatabaseBackendType | str | None = None,
+    db_url: str | None = None,
+    min_size: int = 2,
+    max_size: int = 10,
+):
     """
     Get database backend instance based on type or auto-detection.
 
     Args:
         backend_type: Backend type to use, or None for auto-detection
+        db_url: Database URL, or None to use environment variable
+        min_size: Minimum connection pool size (default: 2)
+        max_size: Maximum connection pool size (default: 10)
 
     Returns:
         BaseDatabaseBackend: Configured backend instance
@@ -38,7 +46,7 @@ def get_database_backend(backend_type: DatabaseBackendType | str | None = None):
     if isinstance(backend_type, str):
         backend_type = DatabaseBackendType(backend_type)
 
-    return create_backend(backend_type)
+    return create_backend(backend_type, db_url=db_url, min_size=min_size, max_size=max_size)
 
 
 __all__ = [

@@ -32,7 +32,7 @@ class TestPostgreSQLBackend:
     @pytest.fixture
     def mock_pool(self):
         """Mock AsyncConnectionPool."""
-        with patch("psycopg_pool.AsyncConnectionPool") as mock_pool_class:
+        with patch("lib.database.providers.postgresql.AsyncConnectionPool") as mock_pool_class:
             mock_pool = AsyncMock()
             mock_pool_class.return_value = mock_pool
             yield mock_pool
