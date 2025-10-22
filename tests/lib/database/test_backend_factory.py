@@ -85,9 +85,9 @@ class TestBackendFactoryCreation:
 
         backend = create_backend(backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db")
 
-        from lib.database.providers import PgLiteBackend
+        from lib.database.providers import PGliteBackend
 
-        assert isinstance(backend, PgLiteBackend)
+        assert isinstance(backend, PGliteBackend)
 
     def test_create_postgresql_backend(self, mock_env_vars):
         """Test creating PostgreSQL backend instance."""
@@ -161,10 +161,10 @@ class TestGetDatabaseBackend:
             },
         ):
             from lib.database import get_database_backend
-            from lib.database.providers import PgLiteBackend
+            from lib.database.providers import PGliteBackend
 
             backend = get_database_backend()
-            assert isinstance(backend, PgLiteBackend)
+            assert isinstance(backend, PGliteBackend)
 
     def test_get_backend_from_settings_postgresql(self):
         """Test getting PostgreSQL backend from settings."""

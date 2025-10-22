@@ -5,10 +5,10 @@ class TestProviderModuleExports:
     """Test that providers module exports backend implementations."""
 
     def test_pglite_backend_exported(self):
-        """Test that PgLiteBackend class is exported."""
-        from lib.database.providers import PgLiteBackend
+        """Test that PGliteBackend class is exported."""
+        from lib.database.providers import PGliteBackend
 
-        assert PgLiteBackend is not None
+        assert PGliteBackend is not None
 
     def test_postgresql_backend_exported(self):
         """Test that PostgreSQLBackend class is exported."""
@@ -26,12 +26,12 @@ class TestProviderModuleExports:
         """Test that all backend implementations inherit from base."""
         from lib.database import BaseDatabaseBackend
         from lib.database.providers import (
-            PgLiteBackend,
+            PGliteBackend,
             PostgreSQLBackend,
             SQLiteBackend,
         )
 
-        assert issubclass(PgLiteBackend, BaseDatabaseBackend)
+        assert issubclass(PGliteBackend, BaseDatabaseBackend)
         assert issubclass(PostgreSQLBackend, BaseDatabaseBackend)
         assert issubclass(SQLiteBackend, BaseDatabaseBackend)
 
@@ -40,7 +40,7 @@ class TestProviderModuleExports:
         import lib.database.providers
 
         assert hasattr(lib.database.providers, "__all__")
-        assert "PgLiteBackend" in lib.database.providers.__all__
+        assert "PGliteBackend" in lib.database.providers.__all__
         assert "PostgreSQLBackend" in lib.database.providers.__all__
         assert "SQLiteBackend" in lib.database.providers.__all__
 
@@ -49,11 +49,11 @@ class TestProviderBackendInstantiation:
     """Test that provider backends can be instantiated."""
 
     def test_pglite_backend_instantiation(self, mock_env_vars):
-        """Test PgLiteBackend can be instantiated."""
-        from lib.database.providers import PgLiteBackend
+        """Test PGliteBackend can be instantiated."""
+        from lib.database.providers import PGliteBackend
 
         # Should accept database URL
-        backend = PgLiteBackend(db_url="pglite://./test.db")
+        backend = PGliteBackend(db_url="pglite://./test.db")
         assert backend is not None
 
     def test_postgresql_backend_instantiation(self, mock_env_vars):
@@ -75,13 +75,13 @@ class TestProviderBackendInstantiation:
     def test_backends_accept_pool_parameters(self, mock_env_vars):
         """Test that backends accept connection pool parameters."""
         from lib.database.providers import (
-            PgLiteBackend,
+            PGliteBackend,
             PostgreSQLBackend,
             SQLiteBackend,
         )
 
         # PgLite
-        pglite = PgLiteBackend(db_url="pglite://./test.db", min_size=2, max_size=10)
+        pglite = PGliteBackend(db_url="pglite://./test.db", min_size=2, max_size=10)
         assert pglite is not None
 
         # PostgreSQL
@@ -98,11 +98,11 @@ class TestProviderBackendEnvironmentDetection:
 
     def test_detect_pglite_from_url(self):
         """Test detection of PgLite from URL scheme."""
-        from lib.database.providers import PgLiteBackend
+        from lib.database.providers import PGliteBackend
 
         # URL starting with pglite:// should be detected
         url = "pglite://./data/test.db"
-        backend = PgLiteBackend(db_url=url)
+        backend = PGliteBackend(db_url=url)
         assert backend.db_url.startswith("pglite://")
 
     def test_detect_postgresql_from_url(self):
@@ -126,13 +126,13 @@ class TestProviderBackendEnvironmentDetection:
     def test_backend_url_normalization(self):
         """Test that backends normalize URLs correctly."""
         from lib.database.providers import (
-            PgLiteBackend,
+            PGliteBackend,
             PostgreSQLBackend,
             SQLiteBackend,
         )
 
         # PgLite should handle pglite:// URLs
-        pglite = PgLiteBackend(db_url="pglite://./test.db")
+        pglite = PGliteBackend(db_url="pglite://./test.db")
         assert pglite.db_url is not None
 
         # PostgreSQL should strip +psycopg if present

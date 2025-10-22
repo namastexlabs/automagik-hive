@@ -7,6 +7,8 @@ Supports PGlite (WebAssembly), PostgreSQL (native/Docker), and SQLite (fallback)
 
 from enum import Enum
 
+from .providers.base import BaseDatabaseBackend
+
 
 class DatabaseBackendType(str, Enum):
     """Supported database backend types."""
@@ -40,6 +42,7 @@ def get_database_backend(backend_type: DatabaseBackendType | str | None = None):
 
 
 __all__ = [
+    "BaseDatabaseBackend",
     "DatabaseBackendType",
     "get_database_backend",
 ]
