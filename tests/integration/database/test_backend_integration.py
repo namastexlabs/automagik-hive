@@ -147,7 +147,10 @@ class TestGetActiveBackend:
             with patch("lib.database.backend_factory.logger") as mock_logger:
                 backend = get_active_backend()
                 assert backend.__class__.__name__ == "SQLiteBackend"
-                mock_logger.warning.assert_called_once()
+                # Expect 2 warnings:
+                # 1. Invalid HIVE_DATABASE_BACKEND warning
+                # 2. SQLite backend limitation warning
+                assert mock_logger.warning.call_count == 2
 
 
 class TestSQLiteBackendIntegration:
