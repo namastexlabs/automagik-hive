@@ -87,14 +87,21 @@ define show_hive_logo
 endef
 
 define check_docker
+    BACKEND=$$(grep -E '^HIVE_DATABASE_BACKEND=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ' || echo "pglite"); \
+    if [ "$$BACKEND" = "pglite" ] || [ "$$BACKEND" = "sqlite" ]; then \
+        $(call print_status,Using $$BACKEND backend - Docker not required); \
+        exit 0; \
+    fi; \
     if ! command -v docker >/dev/null 2>&1; then \
         $(call print_error,Docker not found); \
         echo -e "$(FONT_YELLOW)💡 Install Docker: https://docs.docker.com/get-docker/$(FONT_RESET)"; \
+        echo -e "$(FONT_YELLOW)💡 Or switch to PGlite: HIVE_DATABASE_BACKEND=pglite$(FONT_RESET)"; \
         exit 1; \
     fi; \
     if ! docker info >/dev/null 2>&1; then \
         $(call print_error,Docker daemon not running); \
         echo -e "$(FONT_YELLOW)💡 Start Docker service$(FONT_RESET)"; \
+        echo -e "$(FONT_YELLOW)💡 Or switch to PGlite: HIVE_DATABASE_BACKEND=pglite$(FONT_RESET)"; \
         exit 1; \
     fi
 endef
@@ -265,7 +272,10 @@ help: ## 🐝 Show this help message
 	@echo -e "$(FONT_PURPLE)🐝 Usage: make [command]$(FONT_RESET)"
 	@echo ""
 	@echo -e "$(FONT_CYAN)🚀 Getting Started:$(FONT_RESET)"
-	@echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install environment with optional PostgreSQL setup"
+	@echo -e "  $(FONT_PURPLE)install$(FONT_RESET)         Install environment (PGlite by default - no Docker)"
+	@echo -e "  $(FONT_PURPLE)install-pglite$(FONT_RESET)  Install with PGlite backend (no Docker required)"
+	@echo -e "  $(FONT_PURPLE)install-sqlite$(FONT_RESET)  Install with SQLite backend (no Docker required)"
+	@echo -e "  $(FONT_PURPLE)install-postgres$(FONT_RESET) Install with PostgreSQL + Docker"
 	@echo -e "  $(FONT_PURPLE)dev$(FONT_RESET)             Start local development server (with hot-reload)"
 	@echo -e "  $(FONT_PURPLE)serve$(FONT_RESET)           Start workspace server (mirrors --serve)"
 	@echo -e "  $(FONT_PURPLE)prod$(FONT_RESET)            Start production stack via Docker"
@@ -336,6 +346,46 @@ install: ## 🛠️ Complete environment setup - mirrors CLI install
 	@$(call sync_mcp_config_with_credentials)
 	@$(call print_success,Environment ready!)
 	@echo -e "$(FONT_CYAN)🌐 API available at: http://localhost:$(HIVE_PORT)$(FONT_RESET)"
+
+.PHONY: install-pglite
+install-pglite: ## 🛠️ Install with PGlite backend (no Docker required)
+	@$(call print_status,Installing Automagik Hive with PGlite backend...)
+	@$(call check_prerequisites)
+	@$(call setup_python_env)
+	@$(call check_env_file)
+	@sed -i 's/^HIVE_DATABASE_BACKEND=.*/HIVE_DATABASE_BACKEND=pglite/' .env
+	@sed -i 's|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=pglite://./data/automagik_hive.db|' .env
+	@$(call show_hive_logo)
+	@$(call show_api_key_info)
+	@$(call print_success,PGlite environment ready - no Docker required!)
+	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
+
+.PHONY: install-sqlite
+install-sqlite: ## 🛠️ Install with SQLite backend (no Docker required)
+	@$(call print_status,Installing Automagik Hive with SQLite backend...)
+	@$(call check_prerequisites)
+	@$(call setup_python_env)
+	@$(call check_env_file)
+	@sed -i 's/^HIVE_DATABASE_BACKEND=.*/HIVE_DATABASE_BACKEND=sqlite/' .env
+	@sed -i 's|^HIVE_DATABASE_URL=.*|HIVE_DATABASE_URL=sqlite:///./data/automagik_hive.db|' .env
+	@$(call show_hive_logo)
+	@$(call show_api_key_info)
+	@$(call print_success,SQLite environment ready - no Docker required!)
+	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
+
+.PHONY: install-postgres
+install-postgres: ## 🛠️ Install with PostgreSQL backend (requires Docker)
+	@$(call print_status,Installing Automagik Hive with PostgreSQL backend...)
+	@$(call check_docker)
+	@$(call check_prerequisites)
+	@$(call setup_python_env)
+	@$(call check_env_file)
+	@sed -i 's/^HIVE_DATABASE_BACKEND=.*/HIVE_DATABASE_BACKEND=postgresql/' .env
+	@$(call setup_docker_postgres)
+	@$(call show_hive_logo)
+	@$(call show_api_key_info)
+	@$(call print_success,PostgreSQL environment ready!)
+	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
 
 
 # ===========================================

@@ -1,6 +1,36 @@
 # Docker Architecture Overview
 
+> **⚠️ IMPORTANT: Docker is OPTIONAL with Automagik Hive**
+>
+> **Docker is only required for the PostgreSQL backend.**
+>
+> **PGlite (default) and SQLite backends work without Docker.**
+>
+> See [PGlite Migration Guide](../docs/MIGRATION_PGLITE.md) for backend selection details.
+
 This directory contains all Docker-related files for the Automagik Hive multi-agent system.
+
+## When Do You Need Docker?
+
+Docker is **only required** if you choose the **PostgreSQL backend**:
+
+- ✅ **PGlite Backend** (default) - No Docker needed
+- ✅ **SQLite Backend** - No Docker needed
+- ⚠️ **PostgreSQL Backend** - Docker required
+
+**For most users:** You can skip Docker entirely and use PGlite or SQLite.
+
+**Backend Selection:**
+```bash
+# No Docker required
+make install-pglite   # Default - WebAssembly PostgreSQL
+make install-sqlite   # Minimal dependencies
+
+# Docker required
+make install-postgres # Full PostgreSQL with Docker
+```
+
+See [Backend Comparison](../docs/MIGRATION_PGLITE.md#backend-comparison) for detailed feature comparison.
 
 ## Directory Structure
 
@@ -22,18 +52,47 @@ docker/
 └── README.md                   # This file
 ```
 
-## Environment
+## PostgreSQL Backend Setup (Optional)
 
-### Main Environment (docker/main/)
-- **Ports**: API 8886, PostgreSQL 5532
-- **Usage**: Primary development and production workloads
-- **Integration**: Used by `make prod`, `make dev`
+**Only follow these steps if you explicitly chose PostgreSQL backend.**
 
-## Quick Commands
+### Prerequisites
+
+- Docker 20.10+
+- Docker Compose 2.0+
+
+### Installation
 
 ```bash
-# Main environment
-docker compose -f docker/main/docker-compose.yml up -d
+# Install with PostgreSQL backend
+make install-postgres
+
+# This automatically:
+# - Checks for Docker
+# - Generates secure credentials
+# - Starts PostgreSQL container
+# - Configures application
+```
+
+### Environment (docker/main/)
+
+- **Ports**: API 8886, PostgreSQL 5532
+- **Usage**: PostgreSQL backend deployments only
+- **Integration**: Used by `make postgres-*` commands
+
+### Quick Commands
+
+```bash
+# PostgreSQL management
+make postgres-start    # Start PostgreSQL container
+make postgres-stop     # Stop PostgreSQL container
+make postgres-status   # Check PostgreSQL status
+make postgres-logs     # View PostgreSQL logs
+make postgres-health   # Health check
+
+# Docker Compose (manual)
+docker compose -f docker/main/docker-compose.yml up -d postgres
+docker compose -f docker/main/docker-compose.yml down
 
 # Validate environment
 bash docker/scripts/validate.sh
@@ -49,6 +108,42 @@ Set `HIVE_EMBED_PLAYGROUND=false` to run the API without mounting the Playground
 
 > Compose deployments should now proxy the Hive API directly instead of exposing a separate `localhost:8000` Playground stack. The optional compose services remain available for local infrastructure, but the authoritative routes live inside the Hive server.
 
+## Migrating Away from Docker
+
+If you previously used PostgreSQL with Docker and want to simplify:
+
+### Option 1: Switch to PGlite (Recommended)
+
+```bash
+# Stop PostgreSQL
+make postgres-stop
+
+# Update .env
+HIVE_DATABASE_BACKEND=pglite
+HIVE_DATABASE_URL=pglite://./data/automagik_hive.db
+
+# Restart with PGlite
+make dev
+```
+
+### Option 2: Switch to SQLite
+
+```bash
+# Stop PostgreSQL
+make postgres-stop
+
+# Update .env
+HIVE_DATABASE_BACKEND=sqlite
+HIVE_DATABASE_URL=sqlite:///./data/automagik_hive.db
+
+# Restart with SQLite
+make dev
+```
+
+**Note:** Session history will reset. Agent configurations and knowledge base (CSV) remain unchanged.
+
+**Full migration guide:** [PGlite Migration Guide](../docs/MIGRATION_PGLITE.md)
+
 ## Migration Notes
 
 This structure was created by consolidating Docker files from the root directory:
@@ -57,3 +152,4 @@ This structure was created by consolidating Docker files from the root directory
 - Templates consolidated from /templates/ directory
 - Docker libraries moved from /lib/docker/ to /docker/lib/
 - All references updated throughout the codebase
+- Docker is now **optional** (PGlite migration, v0.2.0+)
