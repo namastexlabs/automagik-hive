@@ -24,8 +24,8 @@ project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.database import DatabaseBackendType
-from lib.database.backend_factory import create_backend
+from lib.database import DatabaseBackendType  # noqa: E402
+from lib.database.backend_factory import create_backend  # noqa: E402
 
 
 class TestConnectionPerformance:
@@ -323,7 +323,7 @@ class TestResourceCleanup:
         """Test multiple initialize/close cycles."""
         backend = create_backend(db_url="sqlite:///:memory:")
 
-        for cycle in range(3):
+        for _cycle in range(3):  # Intentionally unused loop variable
             await backend.initialize()
             assert backend._initialized is True
 

@@ -44,8 +44,9 @@ class TestBackendFactoryImports:
 
     def test_get_database_backend_signature(self):
         """Test get_database_backend has correct signature."""
-        from lib.database import get_database_backend
         import inspect
+
+        from lib.database import get_database_backend
 
         sig = inspect.signature(get_database_backend)
         params = list(sig.parameters.keys())
@@ -88,14 +89,14 @@ class TestBackendFactoryDefaultBehavior:
 
     def test_get_backend_with_explicit_type(self, mock_env_vars):
         """Test get_database_backend with explicit backend type."""
-        from lib.database import get_database_backend, DatabaseBackendType
+        from lib.database import DatabaseBackendType, get_database_backend
 
         backend = get_database_backend(backend_type=DatabaseBackendType.SQLITE)
         assert backend is not None
 
     def test_get_backend_returns_base_interface(self, mock_env_vars):
         """Test that returned backend implements BaseDatabaseBackend."""
-        from lib.database import get_database_backend, BaseDatabaseBackend
+        from lib.database import BaseDatabaseBackend, get_database_backend
 
         backend = get_database_backend()
         assert isinstance(backend, BaseDatabaseBackend)

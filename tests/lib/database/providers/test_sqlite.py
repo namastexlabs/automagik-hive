@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -11,7 +11,7 @@ project_root = Path(__file__).parent.parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.database.providers.sqlite import SQLiteBackend
+from lib.database.providers.sqlite import SQLiteBackend  # noqa: E402
 
 
 class TestSQLiteBackend:
@@ -218,8 +218,8 @@ class TestSQLiteBackend:
         assert not backend._initialized
 
         # Getting connection should auto-initialize
-        async with backend.get_connection() as conn:
-            pass
+        async with backend.get_connection():
+            pass  # Context manager verifies connection works
 
         # Verify initialized
         assert backend._initialized

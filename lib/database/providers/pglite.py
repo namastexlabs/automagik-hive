@@ -10,7 +10,7 @@ import os
 import re
 import subprocess
 from contextlib import asynccontextmanager
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -27,7 +27,7 @@ class PGliteBackend(BaseDatabaseBackend):
     through HTTP endpoints. Compatible with psycopg3 patterns.
     """
 
-    def __init__(self, db_url: Optional[str] = None, min_size: int = 2, max_size: int = 10):
+    def __init__(self, db_url: str | None = None, min_size: int = 2, max_size: int = 10):
         """
         Initialize PGlite backend.
 
@@ -40,8 +40,8 @@ class PGliteBackend(BaseDatabaseBackend):
         self.port = int(os.getenv("PGLITE_PORT", "5532"))
         self.base_url = f"http://127.0.0.1:{self.port}"
 
-        self.bridge_process: Optional[subprocess.Popen] = None
-        self.client: Optional[httpx.AsyncClient] = None
+        self.bridge_process: subprocess.Popen | None = None
+        self.client: httpx.AsyncClient | None = None
 
         # Connection pool size (unused but stored for interface compatibility)
         self.min_size = min_size
@@ -164,7 +164,7 @@ class PGliteBackend(BaseDatabaseBackend):
         # PGlite bridge doesn't use connections - yield self for interface compatibility
         yield self
 
-    async def execute(self, query: str, params: Optional[dict[str, Any]] = None) -> None:
+    async def execute(self, query: str, params: dict[str, Any] | None = None) -> None:
         """
         Execute a query without returning results.
 
@@ -197,7 +197,7 @@ class PGliteBackend(BaseDatabaseBackend):
             logger.error("PGlite execute failed", query=query[:100], error=str(e))
             raise
 
-    async def fetch_one(self, query: str, params: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+    async def fetch_one(self, query: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """
         Fetch single row as dictionary.
 
@@ -235,7 +235,7 @@ class PGliteBackend(BaseDatabaseBackend):
             logger.error("PGlite fetch_one failed", query=query[:100], error=str(e))
             raise
 
-    async def fetch_all(self, query: str, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    async def fetch_all(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
         Fetch all rows as list of dictionaries.
 

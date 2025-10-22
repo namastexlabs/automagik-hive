@@ -7,7 +7,7 @@ Mirrors the DatabaseService pattern for drop-in compatibility.
 
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
-from typing import Any, Optional
+from typing import Any
 
 
 class BaseDatabaseBackend(ABC):
@@ -19,7 +19,7 @@ class BaseDatabaseBackend(ABC):
     """
 
     @abstractmethod
-    def __init__(self, db_url: Optional[str] = None, min_size: int = 2, max_size: int = 10):
+    def __init__(self, db_url: str | None = None, min_size: int = 2, max_size: int = 10):
         """
         Initialize database backend.
 
@@ -57,7 +57,7 @@ class BaseDatabaseBackend(ABC):
         pass
 
     @abstractmethod
-    async def execute(self, query: str, params: Optional[dict[str, Any]] = None) -> None:
+    async def execute(self, query: str, params: dict[str, Any] | None = None) -> None:
         """
         Execute a query without returning results.
 
@@ -68,7 +68,7 @@ class BaseDatabaseBackend(ABC):
         pass
 
     @abstractmethod
-    async def fetch_one(self, query: str, params: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+    async def fetch_one(self, query: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """
         Fetch single row as dictionary.
 
@@ -82,7 +82,7 @@ class BaseDatabaseBackend(ABC):
         pass
 
     @abstractmethod
-    async def fetch_all(self, query: str, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    async def fetch_all(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
         Fetch all rows as list of dictionaries.
 

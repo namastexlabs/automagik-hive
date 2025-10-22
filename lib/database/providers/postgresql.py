@@ -7,7 +7,7 @@ Provides connection pooling and async operations for PostgreSQL.
 
 import os
 from contextlib import asynccontextmanager
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from psycopg.rows import dict_row
@@ -26,7 +26,7 @@ class PostgreSQLBackend(BaseDatabaseBackend):
     Compatible with BaseDatabaseBackend interface.
     """
 
-    def __init__(self, db_url: Optional[str] = None, min_size: int = 2, max_size: int = 10):
+    def __init__(self, db_url: str | None = None, min_size: int = 2, max_size: int = 10):
         """
         Initialize PostgreSQL backend with connection pool.
 
@@ -52,7 +52,7 @@ class PostgreSQLBackend(BaseDatabaseBackend):
         # Convert SQLAlchemy URL format to psycopg format by removing dialect identifier
         self.db_url = raw_db_url.replace("postgresql+psycopg://", "postgresql://")
 
-        self.pool: Optional[AsyncConnectionPool] = None
+        self.pool: AsyncConnectionPool | None = None
         self.min_size = min_size
         self.max_size = max_size
 
@@ -97,7 +97,7 @@ class PostgreSQLBackend(BaseDatabaseBackend):
         async with self.pool.connection() as conn:
             yield conn
 
-    async def execute(self, query: str, params: Optional[dict[str, Any]] = None) -> None:
+    async def execute(self, query: str, params: dict[str, Any] | None = None) -> None:
         """
         Execute a query without returning results.
 
@@ -108,7 +108,7 @@ class PostgreSQLBackend(BaseDatabaseBackend):
         async with self.get_connection() as conn:
             await conn.execute(query, params)
 
-    async def fetch_one(self, query: str, params: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+    async def fetch_one(self, query: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """
         Fetch single row as dictionary.
 
@@ -124,7 +124,7 @@ class PostgreSQLBackend(BaseDatabaseBackend):
                 await cur.execute(query, params)
                 return await cur.fetchone()
 
-    async def fetch_all(self, query: str, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    async def fetch_all(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
         Fetch all rows as list of dictionaries.
 

@@ -22,8 +22,8 @@ project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.database import DatabaseBackendType
-from lib.database.backend_factory import create_backend
+from lib.database import DatabaseBackendType  # noqa: E402
+from lib.database.backend_factory import create_backend  # noqa: E402
 
 
 class TestCrossPlatformSchemaCompatibility:
@@ -287,7 +287,7 @@ class TestMigrationErrorHandling:
 
         try:
             # Try to read from non-existent table
-            with pytest.raises(Exception):  # Will raise an SQLite error
+            with pytest.raises((Exception, RuntimeError)):  # SQLite table not found wrapped as RuntimeError
                 await backend.fetch_all("SELECT * FROM nonexistent_table")
 
         finally:
@@ -347,7 +347,7 @@ class TestMigrationErrorHandling:
                 ("INSERT INTO test (id, value) VALUES (?, ?)", {"id": 1, "value": 300}),  # Duplicate key
             ]
 
-            with pytest.raises(Exception):
+            with pytest.raises((Exception, RuntimeError)):  # Integrity errors wrapped as RuntimeError
                 await backend.execute_transaction(operations)
 
             # Verify rollback - should have no rows

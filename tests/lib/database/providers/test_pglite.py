@@ -11,7 +11,7 @@ project_root = Path(__file__).parent.parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.database.providers.pglite import PGliteBackend
+from lib.database.providers.pglite import PGliteBackend  # noqa: E402
 
 
 class TestPGliteBackend:
@@ -211,7 +211,7 @@ class TestPGliteBackend:
         await backend.initialize()
 
         bridge_process = backend.bridge_process
-        client = backend.client
+        _ = backend.client  # Store for verification but not directly used
 
         await backend.close()
 

@@ -5,19 +5,16 @@ prompt display, user input validation, default selection, and
 environment file updates.
 """
 
-import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
-
-import pytest
+from unittest.mock import patch
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from cli.commands.service import ServiceManager
+from cli.commands.service import ServiceManager  # noqa: E402
 
 
 class TestBackendPrompt:
@@ -29,7 +26,7 @@ class TestBackendPrompt:
 
         # Mock input to select default
         with patch("builtins.input", return_value=""):
-            backend = service_manager._prompt_backend_selection()
+            _ = service_manager._prompt_backend_selection()  # Result intentionally unused
 
         # Capture output
         captured = capsys.readouterr()
@@ -287,7 +284,7 @@ OTHER_VAR=value
         inputs = ["A", "B", "C", "a", "b", "c", ""]
         expected = ["postgresql", "pglite", "sqlite", "postgresql", "pglite", "sqlite", "pglite"]
 
-        for input_val, expected_backend in zip(inputs, expected):
+        for input_val, expected_backend in zip(inputs, expected, strict=False):
             with patch("builtins.input", return_value=input_val):
                 backend = service_manager._prompt_backend_selection()
                 assert backend == expected_backend

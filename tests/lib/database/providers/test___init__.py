@@ -1,6 +1,5 @@
 """Tests for lib/database/providers/__init__.py - Provider exports."""
 
-import pytest
 
 
 class TestProviderModuleExports:

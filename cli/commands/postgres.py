@@ -7,7 +7,6 @@ NOTE: These commands are OPTIONAL. Only required when using PostgreSQL backend.
 PGlite and SQLite backends do not require Docker containers.
 """
 
-import os
 from pathlib import Path
 
 from ..docker_manager import DockerManager

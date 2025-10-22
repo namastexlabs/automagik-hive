@@ -7,7 +7,7 @@ File-based storage with transaction support.
 
 import os
 from contextlib import asynccontextmanager
-from typing import Any, Optional
+from typing import Any
 
 import aiosqlite
 
@@ -24,7 +24,7 @@ class SQLiteBackend(BaseDatabaseBackend):
     Compatible with BaseDatabaseBackend interface.
     """
 
-    def __init__(self, db_url: Optional[str] = None, min_size: int = 2, max_size: int = 10):
+    def __init__(self, db_url: str | None = None, min_size: int = 2, max_size: int = 10):
         """
         Initialize SQLite backend.
 
@@ -45,7 +45,7 @@ class SQLiteBackend(BaseDatabaseBackend):
             # Default to local file
             self.db_path = os.getenv("SQLITE_DB_PATH", "./data/automagik-hive.db")
 
-        self.connection: Optional[aiosqlite.Connection] = None
+        self.connection: aiosqlite.Connection | None = None
         self._initialized = False
 
         # Connection pool size (unused but stored for interface compatibility)
@@ -107,7 +107,7 @@ class SQLiteBackend(BaseDatabaseBackend):
 
         yield self.connection
 
-    async def execute(self, query: str, params: Optional[dict[str, Any]] = None) -> None:
+    async def execute(self, query: str, params: dict[str, Any] | None = None) -> None:
         """
         Execute a query without returning results.
 
@@ -121,7 +121,7 @@ class SQLiteBackend(BaseDatabaseBackend):
             await conn.execute(query, param_tuple)
             await conn.commit()
 
-    async def fetch_one(self, query: str, params: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+    async def fetch_one(self, query: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """
         Fetch single row as dictionary.
 
@@ -142,9 +142,9 @@ class SQLiteBackend(BaseDatabaseBackend):
 
             # Convert row to dictionary using cursor description
             columns = [description[0] for description in cursor.description]
-            return dict(zip(columns, row))
+            return dict(zip(columns, row, strict=False))
 
-    async def fetch_all(self, query: str, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    async def fetch_all(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
         Fetch all rows as list of dictionaries.
 
@@ -165,7 +165,7 @@ class SQLiteBackend(BaseDatabaseBackend):
 
             # Convert rows to dictionaries using cursor description
             columns = [description[0] for description in cursor.description]
-            return [dict(zip(columns, row)) for row in rows]
+            return [dict(zip(columns, row, strict=False)) for row in rows]
 
     async def execute_transaction(self, operations: list[tuple]) -> None:
         """
@@ -194,7 +194,7 @@ class SQLiteBackend(BaseDatabaseBackend):
                 logger.error("SQLite transaction failed, rolled back", error=str(e))
                 raise
 
-    def _convert_params(self, params: Optional[dict[str, Any]]) -> tuple:
+    def _convert_params(self, params: dict[str, Any] | None) -> tuple:
         """
         Convert parameter dict to tuple for SQLite.
 

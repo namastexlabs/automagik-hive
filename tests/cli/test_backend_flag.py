@@ -17,7 +17,7 @@ project_root = Path(__file__).parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from cli.main import create_parser, main
+from cli.main import create_parser, main  # noqa: E402
 
 
 class TestBackendFlag:

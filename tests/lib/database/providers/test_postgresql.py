@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -11,7 +11,7 @@ project_root = Path(__file__).parent.parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.database.providers.postgresql import PostgreSQLBackend
+from lib.database.providers.postgresql import PostgreSQLBackend  # noqa: E402
 
 
 class TestPostgreSQLBackend:
@@ -232,8 +232,8 @@ class TestPostgreSQLBackend:
         mock_pool.connection.return_value.__aenter__.return_value = mock_conn
 
         # Getting connection should auto-initialize
-        async with backend.get_connection() as conn:
-            pass
+        async with backend.get_connection():
+            pass  # Context manager verifies connection works
 
         # Verify pool opened
         mock_pool.open.assert_called_once()

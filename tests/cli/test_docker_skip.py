@@ -6,19 +6,16 @@ for error messages and fallback behavior.
 """
 
 import os
-import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from cli.docker_manager import DockerManager
+from cli.docker_manager import DockerManager  # noqa: E402
 
 
 class TestDockerSkipLogic:
@@ -150,7 +147,7 @@ class TestDockerSkipLogic:
             with patch.object(manager, "_run_command") as mock_run:
                 mock_run.return_value = "Docker version 20.10.0"
 
-                result = manager._check_docker()
+                _ = manager._check_docker()  # Result intentionally unused
 
                 # Should perform Docker check
                 assert mock_run.call_count >= 1
@@ -303,8 +300,8 @@ class TestDockerSkipLogic:
                 with patch.object(service_manager, "_ensure_postgres_dependency") as mock_ensure:
                     try:
                         service_manager.serve_local()
-                    except Exception:
-                        pass  # We're just testing the flow, not execution
+                    except Exception:  # noqa: S110
+                        pass  # Intentionally ignoring execution errors - testing flow control only
 
                     # PostgreSQL dependency should NOT be checked for PGlite
                     mock_ensure.assert_not_called()

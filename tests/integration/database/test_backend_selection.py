@@ -20,8 +20,8 @@ project_root = Path(__file__).parent.parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from lib.database import DatabaseBackendType
-from lib.database.backend_factory import create_backend, detect_backend_from_url, get_active_backend
+from lib.database import DatabaseBackendType  # noqa: E402
+from lib.database.backend_factory import create_backend, detect_backend_from_url, get_active_backend  # noqa: E402
 
 
 class TestBackendEnvironmentDetection:

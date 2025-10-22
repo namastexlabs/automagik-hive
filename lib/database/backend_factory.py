@@ -5,7 +5,6 @@ Creates appropriate database backend instances based on configuration or URL det
 """
 
 import os
-from typing import Optional
 from urllib.parse import urlparse
 
 from lib.logging import logger
@@ -48,7 +47,7 @@ def detect_backend_from_url(db_url: str) -> DatabaseBackendType:
         return DatabaseBackendType.POSTGRESQL
 
 
-def create_backend(backend_type: Optional[DatabaseBackendType] = None, db_url: Optional[str] = None) -> BaseDatabaseBackend:
+def create_backend(backend_type: DatabaseBackendType | None = None, db_url: str | None = None) -> BaseDatabaseBackend:
     """
     Create database backend instance.
 

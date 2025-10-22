@@ -1,7 +1,7 @@
 """Tests for lib/database/backend_factory.py - Backend factory logic."""
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

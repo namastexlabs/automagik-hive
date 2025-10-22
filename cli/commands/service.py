@@ -869,13 +869,11 @@ class ServiceManager:
 
         # Update URL if it's a placeholder
         updated_lines = []
-        url_found = False
         for line in env_lines:
             if line.startswith("HIVE_DATABASE_URL="):
                 # Only update if it's the default placeholder
                 if "your_database_url_here" in line or not line.strip().endswith(("pglite://", "postgresql://", "sqlite://")):
                     updated_lines.append(f"HIVE_DATABASE_URL={url_map[backend_type]}\n")
-                    url_found = True
                 else:
                     updated_lines.append(line)
             else:
@@ -900,8 +898,8 @@ class ServiceManager:
 
                 backend_type = detect_backend_from_url(db_url)
                 return backend_type.value  # Return string value of enum
-            except Exception:
-                pass
+            except Exception:  # noqa: S110
+                pass  # Intentionally ignoring URL parsing errors - will fall back to PostgreSQL default
 
         # Default to PostgreSQL for backward compatibility
         return "postgresql"
