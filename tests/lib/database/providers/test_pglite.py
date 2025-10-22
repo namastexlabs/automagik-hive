@@ -38,7 +38,9 @@ class TestPGliteBackend:
     def mock_health_check(self):
         """Mock health check responses and _wait_for_bridge_ready."""
         # Directly patch the _wait_for_bridge_ready method to avoid async context issues
-        with patch("lib.database.providers.pglite.PGliteBackend._wait_for_bridge_ready", new_callable=AsyncMock) as mock_wait:
+        with patch(
+            "lib.database.providers.pglite.PGliteBackend._wait_for_bridge_ready", new_callable=AsyncMock
+        ) as mock_wait:
             mock_wait.return_value = None  # Health check passes immediately
             yield mock_wait
 
@@ -100,11 +102,13 @@ class TestPGliteBackend:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.raise_for_status = Mock()
-        mock_response.json = Mock(return_value={
-            "success": True,
-            "rows": [{"id": 1, "name": "test"}],
-            "rowCount": 1,
-        })
+        mock_response.json = Mock(
+            return_value={
+                "success": True,
+                "rows": [{"id": 1, "name": "test"}],
+                "rowCount": 1,
+            }
+        )
 
         async def mock_post(*args, **kwargs):
             return mock_response
@@ -129,11 +133,13 @@ class TestPGliteBackend:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.raise_for_status = Mock()
-        mock_response.json = Mock(return_value={
-            "success": True,
-            "rows": [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}],
-            "rowCount": 2,
-        })
+        mock_response.json = Mock(
+            return_value={
+                "success": True,
+                "rows": [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}],
+                "rowCount": 2,
+            }
+        )
 
         async def mock_post(*args, **kwargs):
             return mock_response
@@ -175,7 +181,7 @@ class TestPGliteBackend:
         await backend.execute_transaction(operations)
 
         # Verify transaction sent to bridge
-        assert hasattr(mock_post, 'last_call')
+        assert hasattr(mock_post, "last_call")
         _, kwargs = mock_post.last_call
         sql = kwargs["json"]["sql"]
         assert "BEGIN" in sql
@@ -260,7 +266,7 @@ class TestPGliteBackend:
         await backend.execute(query, params)
 
         # Verify params converted to list
-        assert hasattr(mock_post, 'last_call')
+        assert hasattr(mock_post, "last_call")
         _, kwargs = mock_post.last_call
         assert "params" in kwargs["json"]
         assert isinstance(kwargs["json"]["params"], list)
