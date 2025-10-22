@@ -49,7 +49,7 @@ class CTEProcessor:
             orders = data.get('orders', [])
             
             if not orders:
-                logger.info(f"No orders found in {Path(file_path).name}")
+                logger.info(f"ℹ️ No orders found in {Path(file_path).name}")
                 return
             
             # Process orders via database connection
@@ -65,7 +65,7 @@ class CTEProcessor:
                     await conn.commit()
             
             print(f"✅ Processados {len(orders)} pedidos de {Path(file_path).name}")
-            logger.info(f"Processed {len(orders)} orders from {Path(file_path).name}")
+            logger.info(f"✅ Processed {len(orders)} orders from {Path(file_path).name}")
             
         except Exception as e:
             error_msg = f"❌ Erro processando {file_path}: {e}"
@@ -137,16 +137,16 @@ class CTEProcessor:
         directory = Path(directory_path)
         
         if not directory.exists():
-            logger.warning(f"Directory does not exist: {directory_path}")
+            logger.warning(f"⚠️ Directory does not exist: {directory_path}")
             return
         
         json_files = list(directory.glob("*.json"))
         
         if not json_files:
-            logger.info(f"No JSON files found in {directory_path}")
+            logger.info(f"ℹ️ No JSON files found in {directory_path}")
             return
         
-        logger.info(f"Processing {len(json_files)} JSON files from {directory_path}")
+        logger.info(f"📁 Processing {len(json_files)} JSON files from {directory_path}")
         
         for json_file in json_files:
             await self.process_cte_file(str(json_file))
@@ -165,7 +165,7 @@ class CTEProcessor:
                     result = await cur.fetchone()
                     return result[0] if result else 0
         except Exception as e:
-            logger.error(f"Error getting order count: {e}")
+            logger.error(f"❌ Error getting order count: {e}")
             return 0
     # ========== MINUTA PROCESSING METHODS ==========
 
@@ -182,13 +182,13 @@ class CTEProcessor:
         directory = Path(directory_path)
 
         if not directory.exists():
-            logger.warning(f"MINUTA directory does not exist: {directory_path}")
+            logger.warning(f"⚠️ MINUTA directory does not exist: {directory_path}")
             return 0
 
         json_files = glob.glob(f"{directory_path}/minutas_*.json")
 
         if not json_files:
-            logger.info(f"No MINUTA JSON files found in {directory_path}")
+            logger.info(f"ℹ️ No MINUTA JSON files found in {directory_path}")
             return 0
 
         logger.info(f"Processing {len(json_files)} MINUTA JSON files from {directory_path}")
@@ -220,7 +220,7 @@ class CTEProcessor:
             cnpj_groups = data.get('cnpj_groups', [])
 
             if not cnpj_groups:
-                logger.info(f"No CNPJ groups found in {Path(file_path).name}")
+                logger.info(f"ℹ️ No CNPJ groups found in {Path(file_path).name}")
                 return 0
 
             # Process CNPJ groups via database connection
@@ -235,11 +235,11 @@ class CTEProcessor:
 
                     await conn.commit()
 
-            logger.info(f"Processed {len(cnpj_groups)} CNPJ groups from {Path(file_path).name}")
+            logger.info(f"✅ Processed {len(cnpj_groups)} CNPJ groups from {Path(file_path).name}")
             return len(cnpj_groups)
 
         except Exception as e:
-            error_msg = f"Error processing MINUTA file {file_path}: {e}"
+            error_msg = f"❌ Error processing MINUTA file {file_path}: {e}"
             logger.error(error_msg)
             return 0
 
@@ -355,5 +355,5 @@ class CTEProcessor:
                     result = await cur.fetchone()
                     return result[0] if result else 0
         except Exception as e:
-            logger.error(f"Error getting MINUTA count: {e}")
+            logger.error(f"❌ Error getting MINUTA count: {e}")
             return 0
