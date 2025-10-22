@@ -1,6 +1,6 @@
 # Docker Architecture Overview
 
-This directory contains all Docker-related files for the Automagik Hive multi-agent system, organized by environment and purpose.
+This directory contains all Docker-related files for the Automagik Hive multi-agent system.
 
 ## Directory Structure
 
@@ -11,17 +11,8 @@ docker/
 │   ├── docker-compose.yml     # Main services orchestration
 │   ├── .dockerignore          # Main-specific ignore patterns
 │   └── README.md              # Main environment documentation
-├── agent/                      # Agent development environment
-│   ├── Dockerfile             # Agent all-in-one container
-│   ├── docker-compose.yml     # Agent services (port 38886/35532)
-│   └── README.md              # Agent environment documentation
-├── genie/                      # Genie consultation environment
-│   ├── Dockerfile             # Genie all-in-one container
-│   ├── docker-compose.yml     # Genie services (port 48886)
-│   └── README.md              # Genie environment documentation
 ├── templates/                  # Reusable Docker templates
-│   ├── workspace.yml          # Generic workspace template
-│   └── genie.yml             # Genie service template
+│   └── workspace.yml          # Generic workspace template
 ├── scripts/                    # Docker-related scripts
 │   └── validate.sh            # Validation script
 ├── lib/                        # Docker service libraries
@@ -31,22 +22,12 @@ docker/
 └── README.md                   # This file
 ```
 
-## Environment Separation
+## Environment
 
 ### Main Environment (docker/main/)
 - **Ports**: API 8886, PostgreSQL 5532
 - **Usage**: Primary development and production workloads
 - **Integration**: Used by `make prod`, `make dev`
-
-### Agent Environment (docker/agent/)
-- **Ports**: API 38886, PostgreSQL 35532
-- **Usage**: Isolated agent development and testing
-- **Integration**: Used by `make agent`, `make install-agent`
-
-### Genie Environment (docker/genie/)
-- **Ports**: API 48886
-- **Usage**: Specialized Genie consultation workflows
-- **Integration**: Manual or specialized workflows
 
 ## Quick Commands
 
@@ -54,15 +35,19 @@ docker/
 # Main environment
 docker compose -f docker/main/docker-compose.yml up -d
 
-# Agent environment
-docker compose -f docker/agent/docker-compose.yml up -d
-
-# Genie environment
-docker compose -f docker/genie/docker-compose.yml up -d
-
-# Validate all environments
+# Validate environment
 bash docker/scripts/validate.sh
 ```
+
+## Runtime Surfaces
+
+- **Agno Playground**: Enabled by default inside the Hive API when `HIVE_EMBED_PLAYGROUND=true` (default). Access it at `http://<HIVE_API_HOST>:<HIVE_API_PORT>/playground` (defaults to `http://localhost:8886/playground`).
+- **AgentOS Control Pane**: Point control pane tooling at the Hive server base URL (`HIVE_CONTROL_PANE_BASE_URL`, default is the API base). The AgentOS config endpoint lives at `/api/v1/agentos/config`.
+- **Authentication**: Playground honours the API key guard; disable authentication only for local development.
+
+Set `HIVE_EMBED_PLAYGROUND=false` to run the API without mounting the Playground. Override the mount path with `HIVE_PLAYGROUND_MOUNT_PATH` when reverse proxies require a different location.
+
+> Compose deployments should now proxy the Hive API directly instead of exposing a separate `localhost:8000` Playground stack. The optional compose services remain available for local infrastructure, but the authoritative routes live inside the Hive server.
 
 ## Migration Notes
 

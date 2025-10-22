@@ -139,9 +139,7 @@ class DockerComposeManager:
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return False
 
-    def get_service_logs(
-        self, service: str, tail: int = 50, workspace_path: str = "."
-    ) -> str | None:
+    def get_service_logs(self, service: str, tail: int = 50, workspace_path: str = ".") -> str | None:
         """Get logs for specific service.
 
         Args:
@@ -214,9 +212,7 @@ class DockerComposeManager:
         except subprocess.SubprocessError:
             return False
 
-    def get_service_status(
-        self, service: str, workspace_path: str = "."
-    ) -> ServiceStatus:
+    def get_service_status(self, service: str, workspace_path: str = ".") -> ServiceStatus:
         """Get status of specific service.
 
         Args:
@@ -278,9 +274,7 @@ class DockerComposeManager:
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             return ServiceStatus.NOT_EXISTS
 
-    def get_all_services_status(
-        self, workspace_path: str = "."
-    ) -> dict[str, ServiceInfo]:
+    def get_all_services_status(self, workspace_path: str = ".") -> dict[str, ServiceInfo]:
         """Get status of all services in docker-compose.yml.
 
         Args:
@@ -327,7 +321,7 @@ class DockerComposeManager:
                     container_name=container_name,
                 )
 
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
 
         return services

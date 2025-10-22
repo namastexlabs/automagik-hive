@@ -1,15 +1,16 @@
 """
 Concise startup display utility for Automagik Hive system.
 Replaces verbose startup logs with clean table format.
-Enhanced with contextual emoji detection for improved visual scanning.
+Features contextual emoji detection for visual scanning.
 """
 
-import os
 from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+from lib.config.settings import settings
 
 # Import simplified emoji system
 try:
@@ -33,6 +34,7 @@ class StartupDisplay:
         self.version_sync_logs: list[str] = []
         self.sync_results: dict[str, Any] | None = None
         self.migration_status: str | None = None
+        self.surfaces: dict[str, dict[str, str]] = {}
 
     def add_agent(
         self,
@@ -40,12 +42,16 @@ class StartupDisplay:
         name: str,
         version: int | None = None,
         status: str = "✅",
+        db_label: str | None = None,
+        dependencies: list[str] | None = None,
     ):
         """Add agent to display table."""
         self.agents[agent_id] = {
             "name": name,
             "version": version or "latest",
             "status": status,
+            "db": db_label or "—",
+            "dependency_keys": sorted(dependencies or []),
         }
 
     def add_team(
@@ -55,6 +61,7 @@ class StartupDisplay:
         agent_count: int,
         version: int | None = None,
         status: str = "✅",
+        db_label: str | None = None,
     ):
         """Add team to display table."""
         self.teams[team_id] = {
@@ -62,6 +69,7 @@ class StartupDisplay:
             "agents": agent_count,
             "version": version or "latest",
             "status": status,
+            "db": db_label or "—",
         }
 
     def add_workflow(
@@ -70,12 +78,14 @@ class StartupDisplay:
         name: str,
         version: int | None = None,
         status: str = "✅",
+        db_label: str | None = None,
     ):
         """Add workflow to display table."""
         self.workflows[workflow_id] = {
             "name": name,
             "version": version or "latest",
             "status": status,
+            "db": db_label or "—",
         }
 
     def add_error(self, component: str, message: str) -> None:
@@ -89,6 +99,23 @@ class StartupDisplay:
     def set_sync_results(self, sync_results: dict[str, Any]) -> None:
         """Store sync results for version information."""
         self.sync_results = sync_results
+
+    def add_surface(
+        self,
+        key: str,
+        name: str,
+        status: str,
+        url: str | None = None,
+        note: str | None = None,
+    ) -> None:
+        """Track availability of runtime surfaces like Playground or Control Pane."""
+
+        self.surfaces[key] = {
+            "name": name,
+            "status": status,
+            "url": url or "—",
+            "note": note or "—",
+        }
 
     def add_migration_status(self, migration_result: dict[str, Any]) -> None:
         """Add database migration status to display."""
@@ -142,12 +169,8 @@ class StartupDisplay:
         # Display migration status
         if self.migration_status:
             if self.migration_status["status"].startswith("✅"):
-                console.print(
-                    "\n[bold green]🔧 Database Migration Status:[/bold green]"
-                )
-                console.print(
-                    f"  {self.migration_status['status']} - Revision: {self.migration_status['revision']}"
-                )
+                console.print("\n[bold green]🔧 Database Migration Status:[/bold green]")
+                console.print(f"  {self.migration_status['status']} - Revision: {self.migration_status['revision']}")
             else:
                 console.print("\n[bold red]🔧 Database Migration Status:[/bold red]")
                 console.print(
@@ -162,20 +185,12 @@ class StartupDisplay:
 
             if DevMode.is_enabled():
                 console.print("\n[bold blue]ℹ️ Development Mode:[/bold blue]")
-                console.print(
-                    "  📄 Using YAML-only configuration (database sync disabled)"
-                )
-                console.print(
-                    "  💡 Set HIVE_DEV_MODE=false to enable database synchronization"
-                )
+                console.print("  📄 Using YAML-only configuration (database sync disabled)")
+                console.print("  💡 Set HIVE_DEV_MODE=false to enable database synchronization")
             else:
                 console.print("\n[bold yellow]⚠️ Database Sync Warning:[/bold yellow]")
-                console.print(
-                    "  📄 Versions are being read from YAML files (database sync unavailable)"
-                )
-                console.print(
-                    "  💡 Check DATABASE_URL configuration and database connectivity"
-                )
+                console.print("  📄 Versions are being read from YAML files (database sync unavailable)")
+                console.print("  💡 Check DATABASE_URL configuration and database connectivity")
             console.print()
 
         # Create main components table
@@ -188,6 +203,7 @@ class StartupDisplay:
         table.add_column("ID", style="yellow", width=30)
         table.add_column("Name", style="green", width=45)
         table.add_column("Version", style="blue", width=12)
+        table.add_column("Db", style="magenta", width=18)
 
         # Add teams
         for team_id, info in self.teams.items():
@@ -197,6 +213,7 @@ class StartupDisplay:
                 team_id,
                 info["name"],
                 version_info or "N/A",
+                info.get("db", "—"),
             )
 
         # Add agents
@@ -207,6 +224,7 @@ class StartupDisplay:
                 agent_id,
                 info["name"],
                 version_info or "N/A",
+                info.get("db", "—"),
             )
 
         # Add workflows
@@ -217,15 +235,37 @@ class StartupDisplay:
                 workflow_id,
                 info["name"],
                 version_info or "N/A",
+                info.get("db", "—"),
             )
 
         console.print(table)
 
+        # Runtime Surfaces table removed - AgentOS endpoints are auto-discovered via /config
+        # if self.surfaces:
+        #     surface_table = Table(
+        #         title="🗺️ Runtime Surfaces",
+        #         show_header=True,
+        #         header_style="bold cyan",
+        #     )
+        #     surface_table.add_column("Surface", style="magenta", width=22)
+        #     surface_table.add_column("Status", style="green", width=18)
+        #     surface_table.add_column("URL", style="yellow", overflow="fold")
+        #     surface_table.add_column("Notes", style="white", overflow="fold")
+        #
+        #     for surface in self.surfaces.values():
+        #         surface_table.add_row(
+        #             surface.get("name", "—"),
+        #             surface.get("status", "—"),
+        #             surface.get("url", "—"),
+        #             surface.get("note", "—"),
+        #         )
+        #
+        #     console.print("\n")
+        #     console.print(surface_table)
+
         # Display errors if any
         if self.errors:
-            error_table = Table(
-                title="⚠️ Issues", show_header=True, header_style="bold red"
-            )
+            error_table = Table(title="⚠️ Issues", show_header=True, header_style="bold red")
             error_table.add_column("Component", style="yellow", width=20)
             error_table.add_column("Message", style="red")
 
@@ -241,6 +281,10 @@ class StartupDisplay:
         summary_text = f"[green]✅ {total_components} components loaded[/green]"
         if self.errors:
             summary_text += f" | [red]⚠️ {len(self.errors)} issues[/red]"
+
+        dependency_total = sum(len(info.get("dependency_keys", [])) for info in self.agents.values())
+        if dependency_total:
+            summary_text += f" | [cyan]🔗 {dependency_total} agent dependencies mapped[/cyan]"
 
         console.print(f"\n{summary_text}")
 
@@ -275,9 +319,7 @@ class StartupDisplay:
         # Fallback: Read version directly from YAML file
         return self._read_version_from_yaml(component_id, component_type)
 
-    def _read_version_from_yaml(
-        self, component_id: str, component_type: str
-    ) -> str | None:
+    def _read_version_from_yaml(self, component_id: str, component_type: str) -> str | None:
         """Read version directly from YAML configuration file as fallback."""
         import glob
 
@@ -319,19 +361,16 @@ class StartupDisplay:
 
                     # If this is the component we're looking for
                     # Handle both dash and underscore formats for workflow IDs
-                    if (
-                        found_component_id == component_id
-                        or found_component_id == component_id.replace("_", "-")
-                    ):
+                    if found_component_id == component_id or found_component_id == component_id.replace("_", "-"):
                         version = component_section.get("version")
                         if version:
                             return str(version)  # Return version from YAML fallback
 
-                except Exception:
+                except Exception:  # noqa: S112 - Continue after exception is intentional
                     # Skip files that can't be read or parsed
                     continue
 
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             # If glob or directory access fails, return None
             pass
 
@@ -343,9 +382,7 @@ def create_startup_display() -> StartupDisplay:
     return StartupDisplay()
 
 
-def display_simple_status(
-    team_name: str, team_id: str, agent_count: int, workflow_count: int = 0
-) -> None:
+def display_simple_status(team_name: str, team_id: str, agent_count: int, workflow_count: int = 0) -> None:
     """Quick display for simple startup scenarios."""
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("", style="cyan")
@@ -365,10 +402,7 @@ def display_simple_status(
     table.add_row(f"{agent_emoji} Agents:", str(agent_count))
     if workflow_count > 0:
         table.add_row(f"{workflow_emoji} Workflows:", str(workflow_count))
-    port = os.getenv("HIVE_API_PORT", "8886")
-    table.add_row(f"{api_emoji} API:", f"http://localhost:{port}")
+    table.add_row(f"{api_emoji} API:", f"http://localhost:{settings().hive_api_port}")
 
-    panel = Panel(
-        table, title="[bold green]System Ready[/bold green]", border_style="green"
-    )
+    panel = Panel(table, title="[bold green]System Ready[/bold green]", border_style="green")
     console.print(panel)

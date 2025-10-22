@@ -1,1 +1,1 @@
-"""Test fixtures package."""
+"""Shared utilities test package."""

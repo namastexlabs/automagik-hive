@@ -1,25 +1,27 @@
 workflow:
   name: Template Workflow
   workflow_id: template-workflow
-  version: 7
+  version: 1
   description: Template demonstrating all Agno Workflow parameters
+  background_execution: true
 model:
   provider: anthropic
   id: claude-sonnet-4-20250514
   temperature: 0.7
   max_tokens: 2000
 mcp_servers:
-  - "automagik-forge:*"
   - "ask-repo-agent:*"
   - "search-repo-docs:*"
   - "send_whatsapp_message:*"
   - "postgres:query"
   - "claude-mcp:*"
   - "automagik-hive:*"
-storage:
+db:
   type: postgres
   table_name: template_agents
   auto_upgrade_schema: true
+
+dependencies: {}
 memory:
   num_history_runs: 10
   enable_user_memories: true
@@ -32,10 +34,6 @@ display:
   markdown: false
   show_tool_calls: true
   add_datetime_to_instructions: true
-context:
-  add_state_in_messages: true
-  enable_agentic_context: true
-  share_member_interactions: true
 events:
   store_events: true
   events_to_skip: []

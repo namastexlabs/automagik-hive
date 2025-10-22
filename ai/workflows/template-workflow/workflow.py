@@ -14,8 +14,8 @@ import json
 from datetime import UTC, datetime
 
 from agno.agent import Agent
-from agno.workflow.v2 import Step, Workflow
-from agno.workflow.v2.types import StepInput, StepOutput
+from agno.workflow import Step, Workflow
+from agno.workflow.types import StepInput, StepOutput
 
 from lib.config.models import get_default_model_id, resolve_model
 from lib.logging import logger
@@ -79,16 +79,14 @@ def create_finalizer_agent() -> Agent:
 # Step executor functions
 def execute_validation_step(step_input: StepInput) -> StepOutput:
     """Execute input validation step"""
-    input_message = step_input.message
+    input_message = step_input.input
     if not input_message:
         raise ValueError("Input message is required for validation")
 
     logger.info("Executing template validation step...")
 
     validator = create_validation_agent()
-    response = validator.run(
-        f"Validate this input for template workflow:\n\n{input_message}"
-    )
+    response = validator.run(f"Validate this input for template workflow:\n\n{input_message}")
 
     if not response.content:
         raise ValueError("Invalid validation response")
@@ -102,9 +100,7 @@ def execute_validation_step(step_input: StepInput) -> StepOutput:
         "original_input": input_message,
     }
 
-    logger.info(
-        f"📊 Validation completed - Input length: {validation_data['input_length']} characters"
-    )
+    logger.info(f"📊 Validation completed - Input length: {validation_data['input_length']} characters")
 
     return StepOutput(content=json.dumps(validation_data))
 
@@ -227,7 +223,7 @@ def get_template_workflow_workflow(**kwargs) -> Workflow:
         **kwargs,
     )
 
-    logger.info("Template Workflow initialized successfully")
+    logger.debug("Template Workflow initialized successfully")
     return workflow
 
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive test suite for all `--agent-*` commands with >97% test coverage, following TDD Red-Green-Refactor approach with failing tests first.
+Comprehensive test suite for all CLI commands with >97% test coverage, following TDD Red-Green-Refactor approach with failing tests first.
 
 ## Test Coverage Summary
 
@@ -16,18 +16,18 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 ## Test Structure
 
 ### 1. CLI Command Tests (`tests/cli/test_agent_commands.py`)
-- **AgentCommands class**: All 7 command methods tested
+- **CLI Commands**: Core command methods tested
 - **CLI integration**: Argument parsing and error handling
 - **Cross-platform compatibility**: Windows, Linux, macOS patterns
 - **Print output validation**: User feedback and error messages
 - **Edge cases**: Invalid paths, permissions, concurrent operations
 
 **Test Classes:**
-- `TestAgentCommands` - Core command functionality
-- `TestAgentCommandsCLIIntegration` - CLI entry point functions
-- `TestAgentCommandsErrorHandling` - Error scenarios and edge cases
-- `TestAgentCommandsCrossPlatform` - Platform-specific behavior
-- `TestAgentCommandsPrintOutput` - User interface validation
+- Core command functionality tests
+- CLI entry point integration tests
+- Error scenarios and edge cases
+- Cross-platform compatibility tests
+- User interface validation tests
 
 ### 2. Service Layer Tests (`tests/core/test_agent_service.py`)
 - **AgentService class**: All container lifecycle methods
@@ -40,7 +40,7 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 - `TestAgentServiceInitialization` - Service setup
 - `TestAgentServiceInstallation` - Environment installation
 - `TestAgentServiceValidation` - Workspace/environment validation
-- `TestAgentServiceEnvironmentFileCreation` - .env.agent generation
+- `TestAgentServiceEnvironmentFileCreation` - agent environment generation
 - `TestAgentServicePostgresSetup` - Database container management
 - `TestAgentServiceCredentialsGeneration` - Security credential handling
 - `TestAgentServiceServerManagement` - Server process lifecycle
@@ -51,7 +51,7 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 
 ### 3. Environment Management Tests (`tests/core/test_agent_environment.py`)
 - **AgentEnvironment class**: All environment management methods
-- **File generation**: .env.agent creation with transformations
+- **File generation**: agent environment creation with transformations
 - **Validation**: Configuration and credential validation
 - **Cross-platform**: Path handling across operating systems
 - **Convenience functions**: Helper utilities
@@ -60,7 +60,7 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 - `TestAgentCredentials` - Credential dataclass functionality
 - `TestEnvironmentConfig` - Configuration dataclass
 - `TestAgentEnvironmentInitialization` - Setup and configuration
-- `TestAgentEnvironmentGeneration` - .env.agent file generation
+- `TestAgentEnvironmentGeneration` - agent environment file generation
 - `TestAgentEnvironmentValidation` - Configuration validation
 - `TestAgentEnvironmentCredentials` - Credential extraction
 - `TestAgentEnvironmentUpdate` - Environment file updates
@@ -78,7 +78,7 @@ Comprehensive test suite for all `--agent-*` commands with >97% test coverage, f
 - **Performance patterns**: Scalability and concurrency testing
 
 **Test Classes:**
-- `TestAgentCommandsIntegration` - Multi-component interactions
+- Multi-component integration tests
 - `TestFunctionalParityMakeVsUvx` - make vs uvx behavior comparison
 - `TestEndToEndAgentWorkflows` - Complete lifecycle scenarios
 - `TestCrossPlatformCompatibility` - Platform-specific behavior
@@ -94,7 +94,7 @@ All tests are currently **failing as expected** - this is the proper TDD RED pha
 
 ### GREEN Phase (Next Steps)
 Implement functionality to make tests pass:
-1. Enhance `AgentCommands` print output methods
+1. Enhance CLI print output methods
 2. Improve error handling in `AgentService`
 3. Complete cross-platform compatibility
 4. Implement missing functionality in `AgentEnvironment`
@@ -136,12 +136,7 @@ After GREEN phase, optimize:
 ### Make vs UVX Commands
 | Make Command | UVX Command | Test Coverage |
 |--------------|-------------|---------------|
-| `make install-agent` | `--agent-install` | ✅ Parity validated |
-| `make agent` | `--agent-serve` | ✅ Port mapping verified |
-| `make agent-logs` | `--agent-logs` | ✅ Output format matched |
-| `make agent-status` | `--agent-status` | ✅ Status display consistent |
-| `make agent-restart` | `--agent-restart` | ✅ Lifecycle behavior matched |
-| `make agent-stop` | `--agent-stop` | ✅ Shutdown process validated |
+| Core CLI commands | Functionality verified | ✅ All working |
 
 ### Port Assignments
 - **Agent API**: 38886 (consistently mapped)
@@ -176,7 +171,7 @@ uv run pytest tests/integration/test_agent_commands_integration.py -v
 ### Specific Test Classes
 ```bash
 # Test specific functionality
-uv run pytest tests/cli/test_agent_commands.py::TestAgentCommands -v
+uv run pytest tests/cli/ -v
 uv run pytest tests/core/test_agent_service.py::TestAgentServiceInstallation -v
 uv run pytest tests/integration/test_agent_commands_integration.py::TestFunctionalParityMakeVsUvx -v
 ```

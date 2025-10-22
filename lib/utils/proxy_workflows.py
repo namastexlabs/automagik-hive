@@ -10,7 +10,7 @@ import inspect
 from collections.abc import Callable
 from typing import Any
 
-from agno.workflow.v2.workflow import Workflow
+from agno.workflow import Workflow
 
 from lib.logging import logger
 
@@ -19,7 +19,7 @@ from .agno_storage_utils import create_dynamic_storage
 
 class AgnoWorkflowProxy:
     """
-    Dynamic proxy that automatically maps config parameters to Agno Workflow (v2) constructor.
+    Dynamic proxy that automatically maps config parameters to Agno Workflow constructor.
 
     This proxy introspects the current Agno Workflow class to discover all supported
     parameters and automatically maps config values, ensuring future compatibility
@@ -30,9 +30,7 @@ class AgnoWorkflowProxy:
         """Initialize the proxy by introspecting the current Agno Workflow class."""
         self._supported_params = self._discover_workflow_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.info(
-            f"🤖 AgnoWorkflowProxy initialized with {len(self._supported_params)} Agno Workflow parameters"
-        )
+        logger.info(f"🤖 AgnoWorkflowProxy initialized with {len(self._supported_params)} Agno Workflow parameters")
 
     def _discover_workflow_parameters(self) -> set[str]:
         """
@@ -46,15 +44,9 @@ class AgnoWorkflowProxy:
             sig = inspect.signature(Workflow.__init__)
 
             # Extract all parameter names except 'self'
-            params = {
-                param_name
-                for param_name, param in sig.parameters.items()
-                if param_name != "self"
-            }
+            params = {param_name for param_name, param in sig.parameters.items() if param_name != "self"}
 
-            logger.debug(
-                f"🤖 Discovered {len(params)} Agno Workflow parameters: {sorted(params)}"
-            )
+            logger.debug(f"🤖 Discovered {len(params)} Agno Workflow parameters: {sorted(params)}")
             return params
 
         except Exception as e:
@@ -71,10 +63,11 @@ class AgnoWorkflowProxy:
         """
         return {
             # Core Workflow Settings
-            "workflow_id",
+            "id",
             "name",
             "description",
-            "storage",
+            "db",
+            "dependencies",
             "steps",
             # Session Settings
             "session_id",
@@ -99,7 +92,9 @@ class AgnoWorkflowProxy:
             Dictionary mapping custom parameter names to handler functions
         """
         return {
-            # Storage configuration (now uses shared utilities)
+            # Database configuration (uses shared db utilities)
+            "db": self._handle_db_config,
+            # Legacy storage support (deprecated path)
             "storage": self._handle_storage_config,
             # Workflow metadata
             "workflow": self._handle_workflow_metadata,
@@ -145,7 +140,7 @@ class AgnoWorkflowProxy:
         # Add runtime parameters
         workflow_params.update(
             {
-                "workflow_id": component_id,
+                "id": component_id,
                 "session_id": session_id,
                 "debug_mode": debug_mode,
                 "user_id": user_id,
@@ -154,9 +149,7 @@ class AgnoWorkflowProxy:
 
         # Filter to only supported Agno parameters
         filtered_params = {
-            key: value
-            for key, value in workflow_params.items()
-            if key in self._supported_params and value is not None
+            key: value for key, value in workflow_params.items() if key in self._supported_params and value is not None
         }
 
         logger.debug(f"🤖 Creating workflow with {len(filtered_params)} parameters")
@@ -185,23 +178,70 @@ class AgnoWorkflowProxy:
         for key, value in config.items():
             if key in self._custom_params:
                 # Use custom handler
-                handler_result = self._custom_params[key](
-                    value, config, component_id, db_url, **kwargs
-                )
+                handler = self._custom_params[key]
+                try:
+                    handler_result = handler(
+                        value,
+                        config,
+                        component_id,
+                        db_url,
+                        processed=processed,
+                        **kwargs,
+                    )
+                except TypeError as exc:
+                    if "processed" in str(exc):
+                        handler_result = handler(value, config, component_id, db_url, **kwargs)
+                    else:
+                        raise
                 if isinstance(handler_result, dict):
                     processed.update(handler_result)
                 else:
                     processed[key] = handler_result
             elif key in self._supported_params:
                 # Direct mapping for supported parameters
-                processed[key] = value
+                if (
+                    key == "dependencies"
+                    and isinstance(value, dict)
+                    and isinstance(processed.get("dependencies"), dict)
+                ):
+                    merged_dependencies = {**processed["dependencies"], **value}
+                    processed["dependencies"] = merged_dependencies
+                else:
+                    processed[key] = value
             else:
                 # Log unknown parameters for debugging
-                logger.debug(
-                    f"🤖 Unknown Workflow parameter '{key}' in config for {component_id}"
-                )
+                logger.debug(f"🤖 Unknown Workflow parameter '{key}' in config for {component_id}")
 
         return processed
+
+    def _handle_db_config(
+        self,
+        db_config: dict[str, Any] | None,
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+        **kwargs,
+    ):
+        """Handle db configuration using shared utilities."""
+        if db_config is None:
+            logger.debug("🤖 No db configuration provided for workflow '%s'", component_id)
+            return {}
+
+        if not isinstance(db_config, dict):
+            logger.warning(
+                "🤖 Invalid db config for workflow %s: expected dict, got %s",
+                component_id,
+                type(db_config),
+            )
+            return {}
+
+        resources = create_dynamic_storage(
+            storage_config=db_config,
+            component_id=component_id,
+            component_mode="workflow",
+            db_url=db_url,
+        )
+        return resources
 
     def _handle_storage_config(
         self,
@@ -211,12 +251,17 @@ class AgnoWorkflowProxy:
         db_url: str | None,
         **kwargs,
     ):
-        """Handle storage configuration using shared utilities."""
-        return create_dynamic_storage(
-            storage_config=storage_config,
-            component_id=component_id,
-            component_mode="workflow",
-            db_url=db_url,
+        """Backwards-compatible storage handler delegating to db handler."""
+        logger.warning(
+            "🤖 'storage' configuration detected for workflow '%s'. Please migrate to 'db'.",
+            component_id,
+        )
+        return self._handle_db_config(
+            storage_config,
+            config,
+            component_id,
+            db_url,
+            **kwargs,
         )
 
     def _handle_workflow_metadata(
@@ -257,9 +302,7 @@ class AgnoWorkflowProxy:
         if callable(steps_config):
             logger.debug(f"🤖 Steps config is a callable function for {component_id}")
         elif isinstance(steps_config, list):
-            logger.debug(
-                f"🤖 Steps config is a list of {len(steps_config)} steps for {component_id}"
-            )
+            logger.debug(f"🤖 Steps config is a list of {len(steps_config)} steps for {component_id}")
         else:
             logger.debug(f"🤖 Steps config is custom configuration for {component_id}")
 
@@ -276,9 +319,7 @@ class AgnoWorkflowProxy:
         """Handle custom parameters that should be stored in metadata only."""
         return
 
-    def _create_metadata(
-        self, config: dict[str, Any], component_id: str
-    ) -> dict[str, Any]:
+    def _create_metadata(self, config: dict[str, Any], component_id: str) -> dict[str, Any]:
         """Create metadata dictionary for the workflow."""
         workflow_config = config.get("workflow", {})
 

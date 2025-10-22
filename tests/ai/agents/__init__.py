@@ -1,1 +1,1 @@
-"""Agent test package."""
+"""Registry test package."""

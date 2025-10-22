@@ -1,0 +1,22 @@
+# Default AgentOS configuration scaffold.
+# Runtime builders merge Automagik Hive metadata into this skeleton.
+
+available_models: []
+
+chat:
+  quick_prompts: {}
+
+session:
+  display_name: Sessions
+
+memory:
+  display_name: Memories
+
+metrics:
+  display_name: Metrics
+
+knowledge:
+  display_name: Knowledge Base
+
+evals:
+  display_name: Evaluations

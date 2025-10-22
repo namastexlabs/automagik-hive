@@ -104,9 +104,7 @@ class ComponentVersionService:
 
         return result["id"]
 
-    async def get_component_version(
-        self, component_id: str, version: int
-    ) -> ComponentVersion | None:
+    async def get_component_version(self, component_id: str, version: int) -> ComponentVersion | None:
         """Get specific component version."""
         db = await self._get_db_service()
 
@@ -117,9 +115,7 @@ class ComponentVersionService:
         WHERE component_id = %(component_id)s AND version = %(version)s
         """
 
-        result = await db.fetch_one(
-            query, {"component_id": component_id, "version": version}
-        )
+        result = await db.fetch_one(query, {"component_id": component_id, "version": version})
 
         if result:
             return ComponentVersion(
@@ -127,9 +123,7 @@ class ComponentVersionService:
                 component_id=result["component_id"],
                 component_type=result["component_type"],
                 version=result["version"],
-                config=json.loads(result["config"])
-                if isinstance(result["config"], str)
-                else result["config"],
+                config=json.loads(result["config"]) if isinstance(result["config"], str) else result["config"],
                 description=result["description"],
                 is_active=result["is_active"],
                 created_at=result["created_at"],
@@ -156,9 +150,7 @@ class ComponentVersionService:
                 component_id=result["component_id"],
                 component_type=result["component_type"],
                 version=result["version"],
-                config=json.loads(result["config"])
-                if isinstance(result["config"], str)
-                else result["config"],
+                config=json.loads(result["config"]) if isinstance(result["config"], str) else result["config"],
                 description=result["description"],
                 is_active=result["is_active"],
                 created_at=result["created_at"],
@@ -166,9 +158,7 @@ class ComponentVersionService:
             )
         return None
 
-    async def set_active_version(
-        self, component_id: str, version: int, changed_by: str = "system"
-    ) -> bool:
+    async def set_active_version(self, component_id: str, version: int, changed_by: str = "system") -> bool:
         """Set a version as active (deactivates others)."""
         db = await self._get_db_service()
 
@@ -199,9 +189,7 @@ class ComponentVersionService:
         await db.execute_transaction(operations)
         return True
 
-    async def list_component_versions(
-        self, component_id: str
-    ) -> list[ComponentVersion]:
+    async def list_component_versions(self, component_id: str) -> list[ComponentVersion]:
         """List all versions for a component."""
         db = await self._get_db_service()
 
@@ -221,9 +209,7 @@ class ComponentVersionService:
                 component_id=row["component_id"],
                 component_type=row["component_type"],
                 version=row["version"],
-                config=json.loads(row["config"])
-                if isinstance(row["config"], str)
-                else row["config"],
+                config=json.loads(row["config"]) if isinstance(row["config"], str) else row["config"],
                 description=row["description"],
                 is_active=row["is_active"],
                 created_at=row["created_at"],

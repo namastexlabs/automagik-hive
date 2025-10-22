@@ -16,19 +16,21 @@ from agno.workflow import Workflow
 from dotenv import load_dotenv
 
 from lib.logging import logger
+from lib.utils.user_context_helper import create_user_context_state
 
 # Load environment variables
 load_dotenv()
 
 # Knowledge base creation is now handled by Agno CSVKnowledgeBase + PgVector directly
 
-from lib.utils.yaml_cache import (
-    get_yaml_cache_manager,
+from lib.utils.yaml_cache import (  # noqa: E402 - Dynamic conditional imports based on configuration
     load_yaml_cached,
 )
-from lib.versioning import AgnoVersionService
-from lib.versioning.bidirectional_sync import BidirectionalSync
-from lib.versioning.dev_mode import DevMode
+from lib.versioning import AgnoVersionService  # noqa: E402 - Dynamic conditional imports based on configuration
+from lib.versioning.bidirectional_sync import (  # noqa: E402 - Conditional import
+    BidirectionalSync,  # noqa: E402 - Dynamic conditional imports based on configuration
+)
+from lib.versioning.dev_mode import DevMode  # noqa: E402 - Dynamic conditional imports based on configuration
 
 
 def load_global_knowledge_config():
@@ -54,7 +56,7 @@ class VersionFactory:
     Creates versioned components with modern patterns.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with database URL from environment."""
         self.db_url = os.getenv("HIVE_DATABASE_URL")
         if not self.db_url:
@@ -62,6 +64,8 @@ class VersionFactory:
 
         self.version_service = AgnoVersionService(self.db_url)
         self.sync_engine = BidirectionalSync(self.db_url)
+        # Track YAML fallback usage for monitoring/debugging
+        self.yaml_fallback_count = 0
 
     async def create_versioned_component(
         self,
@@ -92,33 +96,47 @@ class VersionFactory:
         """
 
         # Clean two-path logic: DEV vs PRODUCTION
-        if DevMode.is_enabled():
+        # Note: If a specific version is requested, always use database regardless of dev mode
+        if version is not None:
+            # Specific version requested: Always use database
+            logger.debug(f"Loading {component_id} version {version} from database")
+            config = await self._load_with_bidirectional_sync(component_id, component_type, version, **kwargs)
+        elif DevMode.is_enabled():
             # Dev mode: YAML only, no DB interaction
             logger.debug(f"Dev mode: Loading {component_id} from YAML only")
-            config = await self._load_from_yaml_only(
-                component_id, component_type, **kwargs
-            )
+            config = await self._load_from_yaml_only(component_id, component_type, **kwargs)
+            # Track YAML fallback usage
+            self.yaml_fallback_count += 1
         else:
             # Production: Always bidirectional sync
-            logger.debug(
-                f"Production mode: Loading {component_id} with bidirectional sync"
-            )
-            config = await self._load_with_bidirectional_sync(
-                component_id, component_type, version, **kwargs
-            )
+            logger.debug(f"Production mode: Loading {component_id} with bidirectional sync")
+            try:
+                config = await self._load_with_bidirectional_sync(component_id, component_type, version, **kwargs)
+            except Exception as e:
+                # Fallback to YAML if sync fails (e.g., no database data yet)
+                logger.warning(f"Bidirectional sync failed for {component_id}, falling back to YAML: {e}")
+                # Track YAML fallback usage
+                self.yaml_fallback_count += 1
+                return await self._create_component_from_yaml(
+                    component_id=component_id,
+                    component_type=component_type,
+                    session_id=session_id,
+                    debug_mode=debug_mode,
+                    user_id=user_id,
+                    metrics_service=metrics_service,
+                    **kwargs,
+                )
+                # This return bypasses the rest of the method
 
         # Validate component configuration contains expected type
         if component_type not in config:
-            raise ValueError(
-                f"Component type {component_type} not found in configuration for {component_id}"
-            )
+            raise ValueError(f"Component type {component_type} not found in configuration for {component_id}")
 
         # Create component using type-specific method
         creation_methods = {
             "agent": self._create_agent,
             "team": self._create_team,
             "workflow": self._create_workflow,
-            "coordinator": self._create_coordinator,
         }
 
         if component_type not in creation_methods:
@@ -126,7 +144,7 @@ class VersionFactory:
 
         return await creation_methods[component_type](
             component_id=component_id,
-            config=config,
+            config=config,  # Pass full config - let methods extract what they need
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -146,8 +164,18 @@ class VersionFactory:
     ) -> Agent:
         """Create versioned agent using dynamic Agno proxy with inheritance support."""
 
+        # Extract agent-specific config if full config provided
+        if "agent" in config:
+            agent_config = config["agent"].copy()  # Start with agent section
+            # Merge in root-level configurations (model, tools, etc.)
+            for key in config:
+                if key != "agent" and key not in agent_config:
+                    agent_config[key] = config[key]
+        else:
+            agent_config = config
+
         # Apply inheritance from team configuration if agent is part of a team
-        enhanced_config = self._apply_team_inheritance(component_id, config)
+        inherited_config = self._apply_team_inheritance(component_id, agent_config)
 
         # Use the dynamic proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_proxy
@@ -155,23 +183,26 @@ class VersionFactory:
         proxy = get_agno_proxy()
 
         # Load custom tools
-        tools = self._load_agent_tools(component_id, enhanced_config)
+        tools = self._load_agent_tools(component_id, inherited_config)
 
         # Prepare config with AGNO native context support
         if tools:
-            enhanced_config["tools"] = tools
+            inherited_config["tools"] = tools
 
-        # Add AGNO native context parameters - direct pass-through
-        enhanced_config["context"] = context_kwargs  # Direct context data
-        enhanced_config["add_context"] = (
-            True  # Automatically inject context into messages
-        )
-        enhanced_config["resolve_context"] = True  # Resolve context at runtime
+        # Build session state for Agno v2 runtime instead of legacy context kwargs
+        session_state = create_user_context_state(user_id=user_id, **context_kwargs)
+        session_keys = sorted(session_state.get("user_context", {}).keys())
+        if session_keys:
+            inherited_config["session_state"] = session_state
+        # Ensure legacy context parameters are not forwarded
+        inherited_config.pop("context", None)
+        inherited_config.pop("add_context", None)
+        inherited_config.pop("resolve_context", None)
 
         # Create agent using dynamic proxy with native context
         agent = await proxy.create_agent(
             component_id=component_id,
-            config=enhanced_config,
+            config=inherited_config,
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -179,118 +210,50 @@ class VersionFactory:
             metrics_service=metrics_service,
         )
 
-        logger.debug(
-            f"🤖 Agent {component_id} created with inheritance and {len(proxy.get_supported_parameters())} available parameters"
-        )
+        # Attach knowledge base if agent needs it (for AgentOS knowledge discovery)
+        # Check if knowledge should be enabled for this agent
+        knowledge_enabled = inherited_config.get("enable_knowledge", False)
+        if knowledge_enabled:
+            try:
+                from lib.knowledge import get_knowledge_base
+
+                # Get shared knowledge base (thread-safe singleton)
+                knowledge = get_knowledge_base(
+                    num_documents=inherited_config.get("knowledge_results", 5),
+                    csv_path=inherited_config.get("csv_file_path"),
+                )
+                # Attach knowledge to agent for AgentOS discovery
+                agent.knowledge = knowledge
+                logger.debug(f"📚 Knowledge base attached to agent {component_id} for AgentOS discovery")
+            except Exception as e:
+                logger.warning(f"Failed to attach knowledge to agent {component_id}: {e}")
+
+        # Get supported parameters count safely
+        try:
+            supported_params = proxy.get_supported_parameters()
+            if hasattr(supported_params, "__await__"):
+                # Handle async case in testing scenarios
+                supported_params = await supported_params
+            param_count = len(supported_params)
+        except Exception:
+            # Fallback if parameters aren't available
+            param_count = "unknown"
+
+        logger.debug(f"🤖 Agent {component_id} created with inheritance and {param_count} available parameters")
+
+        # Stash runtime context metadata for startup summaries
+        if session_keys:
+            metadata = getattr(agent, "metadata", {}) or {}
+            metadata.setdefault("runtime_context_keys", session_keys)
+            agent.metadata = metadata
 
         return agent
 
-    def _apply_team_inheritance(
-        self, agent_id: str, config: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _apply_team_inheritance(self, agent_id: str, config: dict[str, Any]) -> dict[str, Any]:
         """Apply team inheritance to agent configuration if agent is part of a team."""
-        try:
-            import os
-
-            from lib.utils.config_inheritance import ConfigInheritanceManager
-
-            # Check if strict validation is enabled (fail-fast mode) - defaults to true
-            strict_validation = (
-                os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
-            )
-
-            # Find team that contains this agent using cache
-            cache_manager = get_yaml_cache_manager()
-            team_id = cache_manager.get_agent_team_mapping(agent_id)
-            team_config = None
-            failed_team_configs = []
-
-            if team_id:
-                # Load the specific team config using cache
-                team_config_file = f"ai/teams/{team_id}/config.yaml"
-                try:
-                    team_config = load_yaml_cached(team_config_file)
-                    if not team_config:
-                        failed_team_configs.append(team_config_file)
-                        error_msg = f"Error reading team config {team_config_file}: file not found or invalid"
-
-                        if strict_validation:
-                            logger.error(f"🔧 STRICT VALIDATION FAILED: {error_msg}")
-                            raise ValueError(
-                                f"Agent {agent_id} inheritance validation failed: Cannot read team config {team_config_file}"
-                            )
-                        logger.warning(f"🔧 {error_msg}")
-
-                except Exception as e:
-                    failed_team_configs.append(team_config_file)
-                    error_msg = f"Error reading team config {team_config_file}: {e}"
-
-                    if strict_validation:
-                        logger.error(f"🔧 STRICT VALIDATION FAILED: {error_msg}")
-                        raise ValueError(
-                            f"Agent {agent_id} inheritance validation failed: Cannot read team config {team_config_file}"
-                        )
-                    logger.warning(f"🔧 {error_msg}")
-
-            # Report failed team configs if any
-            if failed_team_configs and strict_validation:
-                logger.error(
-                    f"🔧 Agent {agent_id} inheritance check failed to read {len(failed_team_configs)} team configs: {failed_team_configs}"
-                )
-
-            if not team_config:
-                logger.debug(
-                    f"🔧 No team found for agent {agent_id}, using config as-is"
-                )
-                return config
-
-            # Apply inheritance
-            manager = ConfigInheritanceManager()
-            agent_configs = {agent_id: config}
-            enhanced_configs = manager.apply_inheritance(team_config, agent_configs)
-
-            # Validate inheritance
-            errors = manager.validate_configuration(team_config, enhanced_configs)
-            if errors:
-                if strict_validation:
-                    logger.error(
-                        f"🔧 STRICT VALIDATION FAILED: Inheritance validation errors for agent {agent_id}:"
-                    )
-                    for error in errors:
-                        logger.error(f"  ❌ {error}")
-                    raise ValueError(
-                        f"Agent {agent_id} inheritance validation failed: {len(errors)} configuration errors"
-                    )
-                logger.warning(
-                    f"🔧 Inheritance validation warnings for agent {agent_id}:"
-                )
-                for error in errors:
-                    logger.warning(f"  ⚠️  {error}")
-
-            # Generate inheritance report
-            report = manager.generate_inheritance_report(
-                team_config, agent_configs, enhanced_configs
-            )
-            logger.debug(f"🔧 Agent {agent_id} in team {team_id}: {report}")
-
-            return enhanced_configs[agent_id]
-
-        except ValueError:
-            # Re-raise validation errors (these are intentional failures)
-            raise
-        except Exception as e:
-            error_msg = f"Error applying inheritance to agent {agent_id}: {e}"
-            strict_validation = (
-                os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
-            )
-
-            if strict_validation:
-                logger.error(f"🔧 STRICT VALIDATION FAILED: {error_msg}")
-                raise ValueError(
-                    f"Agent {agent_id} inheritance failed due to unexpected error: {e}"
-                )
-            logger.warning(f"🔧 {error_msg}")
-            return config  # Fallback to original config
+        # Config inheritance system removed - return config unchanged
+        logger.debug(f"🔧 No inheritance applied for agent {agent_id} - inheritance system removed")
+        return config
 
     def _load_agent_tools(self, component_id: str, config: dict[str, Any]) -> list:
         """Load tools from YAML config via central registry (replaces tools.py approach)."""
@@ -302,9 +265,7 @@ class VersionFactory:
         tools = []
 
         # Check if strict validation is enabled (fail-fast mode) - defaults to true
-        strict_validation = (
-            os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
-        )
+        strict_validation = os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
 
         try:
             # Get tool configurations from YAML
@@ -317,36 +278,25 @@ class VersionFactory:
                         error_msg = f"Invalid tool configuration: {tool_config}"
                         if strict_validation:
                             logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
-                            raise ValueError(
-                                f"Agent {component_id} tool validation failed: {error_msg}"
-                            )
+                            raise ValueError(f"Agent {component_id} tool validation failed: {error_msg}")
                         logger.warning(f"{error_msg}")
 
                 # Load tools via central registry
-                tools = ToolRegistry.load_tools(tool_configs)
+                tools, successfully_loaded_names = ToolRegistry.load_tools(tool_configs)
 
-                # Extract tool names for better logging (sorted for deterministic output)
-                tool_names = []
-                for tool_config in tool_configs:
-                    if isinstance(tool_config, str):
-                        tool_names.append(tool_config)
-                    elif isinstance(tool_config, dict) and "name" in tool_config:
-                        tool_names.append(tool_config["name"])
-
-                if tool_names:
+                if successfully_loaded_names:
                     # Sort tool names alphabetically for consistent display
-                    sorted_tool_names = sorted(tool_names)
-                    logger.info(
-                        f"Loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}"
-                    )
+                    sorted_tool_names = sorted(successfully_loaded_names)
+                    logger.info(f"Successfully loaded tools for agent {component_id}: {', '.join(sorted_tool_names)}")
+                elif tools:
+                    logger.info(f"Loaded {len(tools)} tools for agent {component_id} via central registry")
                 else:
-                    logger.info(
-                        f"Loaded {len(tools)} tools for agent {component_id} via central registry"
-                    )
+                    logger.info(f"No tools successfully loaded for agent {component_id}")
 
             else:
                 # No tools configured - that's okay for agents without specific tool requirements
                 logger.debug(f"No tools configured for agent {component_id}")
+                tools = []
 
         except ValueError:
             # Re-raise validation errors (these are intentional failures)
@@ -356,9 +306,7 @@ class VersionFactory:
 
             if strict_validation:
                 logger.error(f"STRICT VALIDATION FAILED: {error_msg}")
-                raise ValueError(
-                    f"Agent {component_id} tool loading failed due to unexpected error: {e}"
-                )
+                raise ValueError(f"Agent {component_id} tool loading failed due to unexpected error: {e}")
             logger.error(f"{error_msg}")
 
         return tools
@@ -395,14 +343,12 @@ class VersionFactory:
     ) -> Team:
         """Create team using dynamic Agno Team proxy with inheritance validation."""
 
-        logger.debug(
-            f"🔧 Creating team {component_id} (session_id={session_id}, debug_mode={debug_mode})"
-        )
+        logger.debug(f"🔧 Creating team {component_id} (session_id={session_id}, debug_mode={debug_mode})")
 
         try:
-            # Validate team inheritance configuration
+            # Validate team inheritance configuration using full config
             logger.debug(f"🔧 Validating inheritance for team {component_id}")
-            enhanced_config = self._validate_team_inheritance(component_id, config)
+            validated_config = self._validate_team_inheritance(component_id, config)
             logger.debug(f"🔧 Team {component_id} inheritance validation completed")
 
             # Use the dynamic team proxy system for automatic Agno compatibility
@@ -410,15 +356,13 @@ class VersionFactory:
             from lib.utils.agno_proxy import get_agno_team_proxy
 
             proxy = get_agno_team_proxy()
-            logger.debug(
-                f"🔧 AgnoTeamProxy loaded successfully for team {component_id}"
-            )
+            logger.debug(f"🔧 AgnoTeamProxy loaded successfully for team {component_id}")
 
-            # Create team using dynamic proxy
+            # Create team using dynamic proxy with full config
             logger.debug(f"🔧 Creating team instance via proxy for {component_id}")
             team = await proxy.create_team(
                 component_id=component_id,
-                config=enhanced_config,
+                config=validated_config,  # Pass full validated config
                 session_id=session_id,
                 debug_mode=debug_mode,
                 user_id=user_id,
@@ -427,8 +371,19 @@ class VersionFactory:
                 **kwargs,
             )
 
+            # Get supported parameters count safely
+            try:
+                supported_params = proxy.get_supported_parameters()
+                if hasattr(supported_params, "__await__"):
+                    # Handle async case in testing scenarios
+                    supported_params = await supported_params
+                param_count = len(supported_params)
+            except Exception:
+                # Fallback if parameters aren't available
+                param_count = "unknown"
+
             logger.debug(
-                f"🤖 Team {component_id} created with inheritance validation and {len(proxy.get_supported_parameters())} available parameters"
+                f"🤖 Team {component_id} created with inheritance validation and {param_count} available parameters"
             )
 
             return team
@@ -439,119 +394,11 @@ class VersionFactory:
             )
             raise
 
-    def _validate_team_inheritance(
-        self, team_id: str, config: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _validate_team_inheritance(self, team_id: str, config: dict[str, Any]) -> dict[str, Any]:
         """Validate team configuration for proper inheritance setup."""
-        try:
-            import os
-
-            from lib.utils.config_inheritance import ConfigInheritanceManager
-
-            # Check if strict validation is enabled (fail-fast mode) - defaults to true
-            strict_validation = (
-                os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
-            )
-
-            # Load all member agent configurations
-            agent_configs = {}
-            members = config.get("members") or []
-            missing_members = []
-            logger.debug(f"🔧 Team {team_id} has members: {members}")
-
-            for member_id in members:
-                agent_config_path = f"ai/agents/{member_id}/config.yaml"
-                logger.debug(f"🔧 Loading member config: {agent_config_path}")
-                try:
-                    agent_config = load_yaml_cached(agent_config_path)
-                    if agent_config:
-                        agent_configs[member_id] = agent_config
-                        logger.debug(
-                            f"🔧 Successfully loaded config for member {member_id}"
-                        )
-                    else:
-                        raise FileNotFoundError(
-                            f"Config file not found or invalid: {agent_config_path}"
-                        )
-                except Exception as e:
-                    missing_members.append(member_id)
-                    error_msg = f"Could not load member config for {member_id}: {e}"
-
-                    if strict_validation:
-                        logger.error(f"🔧 STRICT VALIDATION FAILED: {error_msg}")
-                        logger.error(f"🔧 Failed path: {agent_config_path}")
-                        raise ValueError(
-                            f"Team {team_id} dependency validation failed: Missing required member '{member_id}' at {agent_config_path}"
-                        )
-                    logger.warning(f"🔧 {error_msg}")
-                    logger.debug(f"🔧 Failed path: {agent_config_path}")
-                    continue
-
-            # Validate that we have at least some members loaded
-            if not agent_configs:
-                error_msg = f"No member agents found for team {team_id}"
-                if strict_validation:
-                    logger.error(f"🔧 STRICT VALIDATION FAILED: {error_msg}")
-                    raise ValueError(
-                        f"Team {team_id} has no valid members. Missing members: {missing_members}"
-                    )
-                logger.warning(f"🔧 {error_msg}")
-                return config
-
-            # Report missing members summary
-            if missing_members:
-                if strict_validation:
-                    logger.error(
-                        f"🔧 Team {team_id} missing {len(missing_members)} required members: {missing_members}"
-                    )
-                else:
-                    logger.warning(
-                        f"🔧 Team {team_id} missing {len(missing_members)} members (non-critical): {missing_members}"
-                    )
-
-            # Validate inheritance setup
-            manager = ConfigInheritanceManager()
-            errors = manager.validate_configuration(config, agent_configs)
-
-            if errors:
-                if strict_validation:
-                    logger.error(
-                        f"🔧 STRICT VALIDATION FAILED: Team inheritance validation errors for {team_id}:"
-                    )
-                    for error in errors:
-                        logger.error(f"  ❌ {error}")
-                    raise ValueError(
-                        f"Team {team_id} inheritance validation failed: {len(errors)} configuration errors"
-                    )
-                logger.warning(f"🔧 Team inheritance validation errors for {team_id}:")
-                for error in errors:
-                    logger.warning(f"  ⚠️  {error}")
-
-            # Generate inheritance preview report
-            enhanced_agent_configs = manager.apply_inheritance(config, agent_configs)
-            report = manager.generate_inheritance_report(
-                config, agent_configs, enhanced_agent_configs
-            )
-            logger.debug(f"🔧 Team {team_id}: {report}")
-
-            return config
-
-        except ValueError:
-            # Re-raise validation errors (these are intentional failures)
-            raise
-        except Exception as e:
-            error_msg = f"Error validating team inheritance for {team_id}: {e}"
-            strict_validation = (
-                os.getenv("HIVE_STRICT_VALIDATION", "true").lower() == "true"
-            )
-
-            if strict_validation:
-                logger.error(f"🔧 STRICT VALIDATION FAILED: {error_msg}")
-                raise ValueError(
-                    f"Team {team_id} validation failed due to unexpected error: {e}"
-                )
-            logger.warning(f"🔧 {error_msg}")
-            return config  # Fallback to original config
+        # Config inheritance system removed - return config unchanged
+        logger.debug(f"🔧 No inheritance validation for team {team_id} - inheritance system removed")
+        return config
 
     async def _create_workflow(
         self,
@@ -565,6 +412,9 @@ class VersionFactory:
     ) -> Workflow:
         """Create workflow using dynamic Agno Workflow proxy for future compatibility."""
 
+        # Extract workflow-specific config if full config provided
+        workflow_config = config.get("workflow", config) if "workflow" in config else config
+
         # Use the dynamic workflow proxy system for automatic Agno compatibility
         from lib.utils.agno_proxy import get_agno_workflow_proxy
 
@@ -573,7 +423,7 @@ class VersionFactory:
         # Create workflow using dynamic proxy
         workflow = await proxy.create_workflow(
             component_id=component_id,
-            config=config,
+            config=workflow_config,
             session_id=session_id,
             debug_mode=debug_mode,
             user_id=user_id,
@@ -582,50 +432,22 @@ class VersionFactory:
             **kwargs,
         )
 
-        logger.debug(
-            f"🤖 Workflow {component_id} created with {len(proxy.get_supported_parameters())} available Agno Workflow parameters"
-        )
+        # Get supported parameters count safely
+        try:
+            supported_params = proxy.get_supported_parameters()
+            if hasattr(supported_params, "__await__"):
+                # Handle async case in testing scenarios
+                supported_params = await supported_params
+            param_count = len(supported_params)
+        except Exception:
+            # Fallback if parameters aren't available
+            param_count = "unknown"
+
+        logger.debug(f"🤖 Workflow {component_id} created with {param_count} available Agno Workflow parameters")
 
         return workflow
 
-    async def _create_coordinator(
-        self,
-        component_id: str,
-        config: dict[str, Any],
-        session_id: str | None,
-        debug_mode: bool,
-        user_id: str | None,
-        metrics_service: object | None = None,
-        **kwargs,
-    ) -> Agent:
-        """Create coordinator using dynamic Agno Agent proxy configured as coordinator."""
-
-        # Use the dynamic coordinator proxy system for automatic Agno compatibility
-        from lib.utils.agno_proxy import get_agno_coordinator_proxy
-
-        proxy = get_agno_coordinator_proxy()
-
-        # Create coordinator using dynamic proxy
-        coordinator = await proxy.create_coordinator(
-            component_id=component_id,
-            config=config,
-            session_id=session_id,
-            debug_mode=debug_mode,
-            user_id=user_id,
-            db_url=self.db_url,
-            metrics_service=metrics_service,
-            **kwargs,
-        )
-
-        logger.debug(
-            f"🎯 Coordinator {component_id} created with {len(proxy.get_supported_parameters())} available Agno Agent parameters"
-        )
-
-        return coordinator
-
-    async def _load_from_yaml_only(
-        self, component_id: str, component_type: str, **kwargs
-    ) -> dict:
+    async def _load_from_yaml_only(self, component_id: str, component_type: str, **kwargs) -> dict:
         """
         Load component configuration from YAML only (dev mode).
 
@@ -644,7 +466,6 @@ class VersionFactory:
             "agent": f"ai/agents/{component_id}/config.yaml",
             "team": f"ai/teams/{component_id}/config.yaml",
             "workflow": f"ai/workflows/{component_id}/config.yaml",
-            "coordinator": f"ai/coordinators/{component_id}/config.yaml",
         }
 
         config_file = config_paths.get(component_type)
@@ -663,13 +484,9 @@ class VersionFactory:
             raise ValueError(f"Failed to load YAML config from {config_file}: {e}")
 
         if not yaml_config or component_type not in yaml_config:
-            raise ValueError(
-                f"Invalid YAML config in {config_file}: missing '{component_type}' section"
-            )
+            raise ValueError(f"Invalid YAML config in {config_file}: missing '{component_type}' section")
 
-        logger.debug(
-            f"Dev mode: Loaded {component_type} {component_id} configuration from YAML"
-        )
+        logger.debug(f"Dev mode: Loaded {component_type} {component_id} configuration from YAML")
         return yaml_config
 
     async def _load_with_bidirectional_sync(
@@ -693,11 +510,10 @@ class VersionFactory:
         """
         if version is not None:
             # Load specific version from database
-            version_record = await self.version_service.get_version(
-                component_id, version
-            )
+            version_record = await self.version_service.get_version(component_id, version)
             if not version_record:
                 raise ValueError(f"Version {version} not found for {component_id}")
+            # Return the config directly as it already has the correct structure
             return version_record.config
         # Perform bidirectional sync and return result
         return await self.sync_engine.sync_component(component_id, component_type)
@@ -723,7 +539,6 @@ class VersionFactory:
             "agent": f"ai/agents/{component_id}/config.yaml",
             "team": f"ai/teams/{component_id}/config.yaml",
             "workflow": f"ai/workflows/{component_id}/config.yaml",
-            "coordinator": f"ai/coordinators/{component_id}/config.yaml",
         }
 
         config_file = config_paths.get(component_type)
@@ -742,20 +557,15 @@ class VersionFactory:
             raise ValueError(f"Failed to load YAML config from {config_file}: {e}")
 
         if not yaml_config or component_type not in yaml_config:
-            raise ValueError(
-                f"Invalid YAML config in {config_file}: missing '{component_type}' section"
-            )
+            raise ValueError(f"Invalid YAML config in {config_file}: missing '{component_type}' section")
 
-        logger.debug(
-            f"🔧 Loading {component_type} {component_id} from YAML (first startup fallback)"
-        )
+        logger.debug(f"🔧 Loading {component_type} {component_id} from YAML (first startup fallback)")
 
         # Use the same creation methods but with YAML config
         creation_methods = {
             "agent": self._create_agent,
             "team": self._create_team,
             "workflow": self._create_workflow,
-            "coordinator": self._create_coordinator,
         }
 
         return await creation_methods[component_type](
@@ -806,26 +616,6 @@ async def create_team(
     )
 
 
-async def create_versioned_workflow(
-    workflow_id: str, version: int | None = None, **kwargs
-) -> Workflow:
+async def create_versioned_workflow(workflow_id: str, version: int | None = None, **kwargs) -> Workflow:
     """Create versioned workflow using Agno storage."""
-    return await get_version_factory().create_versioned_component(
-        workflow_id, "workflow", version, **kwargs
-    )
-
-
-async def create_coordinator(
-    coordinator_id: str,
-    version: int | None = None,
-    metrics_service: object | None = None,
-    **kwargs,
-) -> Agent:
-    """Create coordinator using factory pattern."""
-    return await get_version_factory().create_versioned_component(
-        coordinator_id,
-        "coordinator",
-        version,
-        metrics_service=metrics_service,
-        **kwargs,
-    )
+    return await get_version_factory().create_versioned_component(workflow_id, "workflow", version, **kwargs)

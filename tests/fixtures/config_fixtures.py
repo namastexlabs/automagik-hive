@@ -29,14 +29,18 @@ def temp_project_dir() -> Generator[Path, None, None]:
 def mock_env_vars() -> Generator[dict[str, str], None, None]:
     """Mock environment variables for testing."""
     env_vars = {
+        # Required fields (fail-fast validation)
         "HIVE_ENVIRONMENT": "development",
-        "HIVE_API_HOST": "localhost",
         "HIVE_API_PORT": "8888",
+        "HIVE_DATABASE_URL": "sqlite:///test.db",
+        "HIVE_API_KEY": "hive_test_key_1234567890abcdef1234567890",  # 37+ chars with hive_ prefix
+        "HIVE_CORS_ORIGINS": "http://localhost:3000,http://localhost:8888",
+        # Optional fields
+        "HIVE_API_HOST": "localhost",
         "HIVE_API_WORKERS": "2",
         "HIVE_LOG_LEVEL": "DEBUG",
         "ANTHROPIC_API_KEY": "test-anthropic-key",
         "OPENAI_API_KEY": "test-openai-key",
-        "HIVE_DATABASE_URL": "sqlite:///test.db",
         "HIVE_MAX_CONVERSATION_TURNS": "10",
         "HIVE_SESSION_TIMEOUT": "600",
         "HIVE_MAX_CONCURRENT_USERS": "50",
@@ -165,8 +169,8 @@ def mock_yaml_operations():
 
 @pytest.fixture
 def mock_database_url():
-    """Mock database URL for testing."""
-    return "postgresql+psycopg://test:test@localhost:5432/test_db"
+    """Mock database URL for testing - use SQLite for reliability."""
+    return "sqlite:///test.db"
 
 
 @pytest.fixture

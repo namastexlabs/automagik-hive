@@ -2,7 +2,7 @@
 Tests for ai/workflows/registry.py - Workflow Registry and factory functions
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -18,15 +18,15 @@ from ai.workflows.registry import (
 class TestWorkflowDiscovery:
     """Test workflow discovery functionality."""
 
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_directory(self, mock_path) -> None:
+    def test_discover_workflows_no_directory(self, tmp_path) -> None:
         """Test discovery when workflows directory doesn't exist."""
-        mock_workflows_dir = Mock()
-        mock_workflows_dir.exists.return_value = False
-        mock_path.return_value = mock_workflows_dir
+        # Create AI root without workflows directory
+        ai_root = tmp_path / "ai"
+        ai_root.mkdir(parents=True)
 
-        result = _discover_workflows()
-        assert result == {}
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
     def test_discover_workflows_success_integration(self) -> None:
         """Test successful workflow discovery using integration approach."""
@@ -35,159 +35,115 @@ class TestWorkflowDiscovery:
         assert isinstance(result, dict)
         # The result could be empty or contain actual workflows
 
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_skips_files(self, mock_path) -> None:
+    def test_discover_workflows_skips_files(self, tmp_path) -> None:
         """Test that discovery skips files and only processes directories."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflows directory containing a file
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflows_dir.mkdir(parents=True)
 
-        mock_file = MagicMock()
-        mock_file.is_dir.return_value = False
+        # Create a file (not a directory)
+        (workflows_dir / "file.py").write_text("# Not a workflow directory")
 
-        mock_workflows_dir.iterdir.return_value = [mock_file]
-        mock_path.return_value = mock_workflows_dir
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
-        result = _discover_workflows()
-        assert result == {}
-
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_skips_underscore_dirs(self, mock_path) -> None:
+    def test_discover_workflows_skips_underscore_dirs(self, tmp_path) -> None:
         """Test that discovery skips directories starting with underscore."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflows directory containing a private directory
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflows_dir.mkdir(parents=True)
 
-        mock_private_dir = MagicMock()
-        mock_private_dir.is_dir.return_value = True
-        mock_private_dir.name = "_private-workflow"
+        # Create a directory starting with underscore
+        private_dir = workflows_dir / "_private-workflow"
+        private_dir.mkdir()
 
-        mock_workflows_dir.iterdir.return_value = [mock_private_dir]
-        mock_path.return_value = mock_workflows_dir
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
-        result = _discover_workflows()
-        assert result == {}
-
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_missing_config(self, mock_path) -> None:
+    def test_discover_workflows_missing_config(self, tmp_path) -> None:
         """Test workflow discovery when config.yaml is missing."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory but no config.yaml
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "incomplete-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "incomplete-workflow"
+        # Create workflow.py but not config.yaml
+        (workflow_dir / "workflow.py").write_text("# Workflow without config")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = False  # Missing config
-        mock_workflow_file.exists.return_value = True
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
-
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        result = _discover_workflows()
-        assert result == {}
-
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_missing_workflow_file(self, mock_path) -> None:
+    def test_discover_workflows_missing_workflow_file(self, tmp_path) -> None:
         """Test workflow discovery when workflow.py is missing."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory but no workflow.py
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "incomplete-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "incomplete-workflow"
+        # Create config.yaml but not workflow.py
+        (workflow_dir / "config.yaml").write_text("workflow:\n  workflow_id: incomplete-workflow\n")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = True
-        mock_workflow_file.exists.return_value = False  # Missing workflow.py
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_workflows()
+            assert result == {}
 
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
-
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        result = _discover_workflows()
-        assert result == {}
-
-    @patch("ai.workflows.registry.importlib.util")
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_no_factory_function(
-        self, mock_path, mock_importlib
-    ) -> None:
+    def test_discover_workflows_no_factory_function(self, tmp_path) -> None:
         """Test discovery when workflow module has no factory function."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "no-factory-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "no-factory-workflow"
+        # Create config.yaml
+        (workflow_dir / "config.yaml").write_text("workflow:\n  workflow_id: no-factory\n")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = True
-        mock_workflow_file.exists.return_value = True
+        # Create workflow.py without factory function
+        workflow_code = """
+# Workflow module without factory function
+def some_other_function():
+    pass
+"""
+        (workflow_dir / "workflow.py").write_text(workflow_code)
 
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
-
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        # Mock module loading
-        mock_spec = Mock()
-        mock_module = Mock()
-
-        # Mock that the factory function doesn't exist
-        def mock_hasattr(obj, name):
-            return False  # No factory function found
-
-        with patch("builtins.hasattr", side_effect=mock_hasattr):
-            mock_importlib.spec_from_file_location.return_value = mock_spec
-            mock_importlib.module_from_spec.return_value = mock_module
-
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
             result = _discover_workflows()
 
+        # Should skip workflow without factory function
         assert result == {}
 
-    @patch("ai.workflows.registry.importlib.util")
-    @patch("ai.workflows.registry.Path")
-    def test_discover_workflows_import_exception(
-        self, mock_path, mock_importlib
-    ) -> None:
+    def test_discover_workflows_import_exception(self, tmp_path) -> None:
         """Test discovery handles import exceptions gracefully."""
-        mock_workflows_dir = MagicMock()
-        mock_workflows_dir.exists.return_value = True
+        # Create AI root with workflow directory
+        ai_root = tmp_path / "ai"
+        workflows_dir = ai_root / "workflows"
+        workflow_dir = workflows_dir / "broken-workflow"
+        workflow_dir.mkdir(parents=True)
 
-        mock_workflow_dir = MagicMock()
-        mock_workflow_dir.is_dir.return_value = True
-        mock_workflow_dir.name = "broken-workflow"
+        # Create config.yaml
+        (workflow_dir / "config.yaml").write_text("workflow:\n  workflow_id: broken\n")
 
-        mock_config_file = MagicMock()
-        mock_workflow_file = MagicMock()
-        mock_config_file.exists.return_value = True
-        mock_workflow_file.exists.return_value = True
+        # Create workflow.py with syntax error to cause import failure
+        workflow_code = """
+# This will cause an import error
+def get_broken_workflow_workflow():
+    # Invalid syntax - missing closing parenthesis
+    return Workflow(
+        name="Broken"
+"""
+        (workflow_dir / "workflow.py").write_text(workflow_code)
 
-        mock_workflow_dir.__truediv__.side_effect = (
-            lambda x: mock_config_file if x == "config.yaml" else mock_workflow_file
-        )
+        with patch("ai.workflows.registry.resolve_ai_root", return_value=ai_root):
+            result = _discover_workflows()
 
-        mock_workflows_dir.iterdir.return_value = [mock_workflow_dir]
-        mock_path.return_value = mock_workflows_dir
-
-        # Mock import failure
-        mock_importlib.spec_from_file_location.side_effect = ImportError(
-            "Failed to import",
-        )
-
-        result = _discover_workflows()
+        # Should gracefully skip workflow that fails to import
         assert result == {}
 
     def test_hyphen_to_underscore_conversion_logic(self) -> None:
@@ -343,16 +299,18 @@ class TestWorkflowRegistry:
         with patch("ai.workflows.registry.logger") as mock_logger:
             get_workflow_registry()
 
-            # Should log debug and info messages
-            mock_logger.debug.assert_called_once()
-            mock_logger.info.assert_called_once()
+            # Should log debug messages twice (not info)
+            assert mock_logger.debug.call_count == 2
 
-            # Check log content
-            debug_call = mock_logger.debug.call_args[0][0]
-            info_call = mock_logger.info.call_args[0][0]
+            # Check log content - first debug call
+            first_debug_call = mock_logger.debug.call_args_list[0][0][0]
+            # Second debug call with keyword arguments
+            second_debug_args = mock_logger.debug.call_args_list[1]
 
-            assert "Initializing workflow registry" in debug_call
-            assert "Workflow registry initialized" in info_call
+            assert "Initializing workflow registry" in first_debug_call
+            assert "Workflow registry initialized" in second_debug_args[0][0]
+            # Verify the workflow count was logged
+            assert second_debug_args[1]["workflow_count"] == 2
 
 
 if __name__ == "__main__":

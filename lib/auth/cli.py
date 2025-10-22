@@ -12,9 +12,11 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from lib.auth.credential_service import CredentialService
-from lib.auth.init_service import AuthInitService
-from lib.logging import logger
+from lib.auth.credential_service import (  # noqa: E402 - Path setup required
+    CredentialService,  # noqa: E402 - Environment setup required before module imports
+)
+from lib.auth.init_service import AuthInitService  # noqa: E402 - Environment setup required before module imports
+from lib.logging import logger  # noqa: E402 - Environment setup required before module imports
 
 
 def show_current_key() -> None:
@@ -23,8 +25,9 @@ def show_current_key() -> None:
     key = init_service.get_current_key()
 
     if key:
-        logger.info("Current API key retrieved", key_length=len(key))
-        os.getenv("HIVE_API_PORT", "8886")
+        from lib.config.settings import settings
+
+        logger.info("Current API key retrieved", key_length=len(key), port=settings().hive_api_port)
     else:
         logger.warning("No API key found")
 
@@ -32,8 +35,8 @@ def show_current_key() -> None:
 def regenerate_key() -> None:
     """Generate a new API key."""
     init_service = AuthInitService()
-    new_key = init_service.regenerate_key()
-    logger.info("New API key generated", key_length=len(new_key))
+    api_key = init_service.regenerate_key()
+    logger.info("API key regenerated", key_length=len(api_key))
 
 
 def show_auth_status() -> None:
@@ -69,9 +72,7 @@ def generate_postgres_credentials(
     credential_service = CredentialService(env_file)
     creds = credential_service.generate_postgres_credentials(host, port, database)
 
-    logger.info(
-        "PostgreSQL credentials generated via CLI", database=database, port=port
-    )
+    logger.info("PostgreSQL credentials generated via CLI", database=database, port=port)
 
     return creds
 
@@ -94,18 +95,10 @@ def generate_complete_workspace_credentials(
     Returns:
         Complete credentials dictionary
     """
-    env_file = None
-    if workspace_path:
-        env_file = workspace_path / ".env"
+    credential_service = CredentialService(project_root=workspace_path)
+    creds = credential_service.setup_complete_credentials(postgres_host, postgres_port, postgres_database)
 
-    credential_service = CredentialService(env_file)
-    creds = credential_service.setup_complete_credentials(
-        postgres_host, postgres_port, postgres_database
-    )
-
-    logger.info(
-        "Complete workspace credentials generated", workspace_path=str(workspace_path)
-    )
+    logger.info("Complete workspace credentials generated", workspace_path=str(workspace_path))
 
     return creds
 
@@ -159,9 +152,7 @@ def show_credential_status(env_file: Path | None = None) -> None:
         status["postgres_credentials"]
 
 
-def sync_mcp_credentials(
-    mcp_file: Path | None = None, env_file: Path | None = None
-) -> None:
+def sync_mcp_credentials(mcp_file: Path | None = None, env_file: Path | None = None) -> None:
     """
     Synchronize MCP configuration with current credentials.
 
@@ -178,9 +169,7 @@ def sync_mcp_credentials(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Automagik Hive Authentication and Credential Management"
-    )
+    parser = argparse.ArgumentParser(description="Automagik Hive Authentication and Credential Management")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -194,42 +183,26 @@ if __name__ == "__main__":
 
     # Credential management commands
     cred_parser = subparsers.add_parser("credentials", help="Credential management")
-    cred_subparsers = cred_parser.add_subparsers(
-        dest="cred_action", help="Credential actions"
-    )
+    cred_subparsers = cred_parser.add_subparsers(dest="cred_action", help="Credential actions")
 
     # PostgreSQL credentials
-    postgres_parser = cred_subparsers.add_parser(
-        "postgres", help="Generate PostgreSQL credentials"
-    )
+    postgres_parser = cred_subparsers.add_parser("postgres", help="Generate PostgreSQL credentials")
     postgres_parser.add_argument("--host", default="localhost", help="Database host")
     postgres_parser.add_argument("--port", type=int, default=5532, help="Database port")
     postgres_parser.add_argument("--database", default="hive", help="Database name")
     postgres_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
     # Agent credentials
-    agent_parser = cred_subparsers.add_parser(
-        "agent", help="Generate agent credentials"
-    )
-    agent_parser.add_argument(
-        "--port", type=int, default=35532, help="Agent database port"
-    )
-    agent_parser.add_argument(
-        "--database", default="hive_agent", help="Agent database name"
-    )
+    agent_parser = cred_subparsers.add_parser("agent", help="Generate agent credentials")
+    agent_parser.add_argument("--port", type=int, default=35532, help="Agent database port")
+    agent_parser.add_argument("--database", default="hive_agent", help="Agent database name")
     agent_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
     # Complete workspace credentials
-    workspace_parser = cred_subparsers.add_parser(
-        "workspace", help="Generate complete workspace credentials"
-    )
-    workspace_parser.add_argument(
-        "workspace_path", type=Path, help="Workspace directory path"
-    )
+    workspace_parser = cred_subparsers.add_parser("workspace", help="Generate complete workspace credentials")
+    workspace_parser.add_argument("workspace_path", type=Path, help="Workspace directory path")
     workspace_parser.add_argument("--host", default="localhost", help="Database host")
-    workspace_parser.add_argument(
-        "--port", type=int, default=5532, help="Database port"
-    )
+    workspace_parser.add_argument("--port", type=int, default=5532, help="Database port")
     workspace_parser.add_argument("--database", default="hive", help="Database name")
 
     # Credential status
@@ -237,9 +210,7 @@ if __name__ == "__main__":
     status_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
     # MCP sync
-    mcp_parser = cred_subparsers.add_parser(
-        "sync-mcp", help="Sync MCP configuration with credentials"
-    )
+    mcp_parser = cred_subparsers.add_parser("sync-mcp", help="Sync MCP configuration with credentials")
     mcp_parser.add_argument("--mcp-file", type=Path, help="MCP config file path")
     mcp_parser.add_argument("--env-file", type=Path, help="Environment file path")
 
@@ -264,9 +235,7 @@ if __name__ == "__main__":
                 env_file=args.env_file,
             )
         elif args.cred_action == "agent":
-            generate_agent_credentials(
-                port=args.port, database=args.database, env_file=args.env_file
-            )
+            generate_agent_credentials(port=args.port, database=args.database, env_file=args.env_file)
         elif args.cred_action == "workspace":
             generate_complete_workspace_credentials(
                 workspace_path=args.workspace_path,

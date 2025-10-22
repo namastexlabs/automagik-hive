@@ -35,19 +35,11 @@ class MetricsConfig:
             return value.lower() in ("true", "1", "yes", "on")
 
         # Core metrics collection flags
-        collect_tokens = parse_bool(
-            os.getenv("HIVE_METRICS_COLLECT_TOKENS", "true"), True
-        )
+        collect_tokens = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TOKENS", "true"), True)
         collect_time = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TIME", "true"), True)
-        collect_tools = parse_bool(
-            os.getenv("HIVE_METRICS_COLLECT_TOOLS", "true"), True
-        )
-        collect_events = parse_bool(
-            os.getenv("HIVE_METRICS_COLLECT_EVENTS", "true"), True
-        )
-        collect_content = parse_bool(
-            os.getenv("HIVE_METRICS_COLLECT_CONTENT", "true"), True
-        )
+        collect_tools = parse_bool(os.getenv("HIVE_METRICS_COLLECT_TOOLS", "true"), True)
+        collect_events = parse_bool(os.getenv("HIVE_METRICS_COLLECT_EVENTS", "true"), True)
+        collect_content = parse_bool(os.getenv("HIVE_METRICS_COLLECT_CONTENT", "true"), True)
 
         # Monitoring configuration
         agno_monitor = parse_bool(os.getenv("HIVE_AGNO_MONITOR", "false"), False)

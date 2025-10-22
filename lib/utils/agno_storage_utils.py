@@ -1,11 +1,6 @@
-"""
-Shared Storage Utilities for Agno Proxy System
+"""Shared database utilities for the Agno proxy system."""
 
-This module provides shared storage functionality to eliminate code duplication
-across Agent, Team, and Workflow proxy classes. It implements the dynamic
-storage creation pattern with introspection that maintains 1:1 compatibility
-with all Agno storage backends.
-"""
+from __future__ import annotations
 
 import importlib
 import inspect
@@ -13,58 +8,47 @@ from typing import Any
 
 from lib.logging import logger
 
+_DEFAULT_SCHEMA = "agno"
+
 
 def get_storage_type_mapping() -> dict[str, str]:
-    """
-    Centralized mapping of storage types to their Agno module paths.
+    """Return mapping of logical storage types to Agno Db class paths."""
 
-    Returns:
-        Dictionary mapping storage type names to their full module.class paths
-    """
     return {
-        "postgres": "agno.storage.postgres.PostgresStorage",
-        "sqlite": "agno.storage.sqlite.SqliteStorage",
-        "mongodb": "agno.storage.mongodb.MongoDbStorage",
-        "redis": "agno.storage.redis.RedisStorage",
-        "dynamodb": "agno.storage.dynamodb.DynamoDbStorage",
-        "json": "agno.storage.json.JsonStorage",
-        "yaml": "agno.storage.yaml.YamlStorage",
-        "singlestore": "agno.storage.singlestore.SingleStoreStorage",
+        "postgres": "agno.db.postgres.PostgresDb",
+        "sqlite": "agno.db.sqlite.SqliteDb",
+        "mongodb": "agno.db.mongo.MongoDb",
+        "redis": "agno.db.redis.RedisDb",
+        "dynamodb": "agno.db.dynamo.DynamoDb",
+        "json": "agno.db.json.JsonDb",
+        "yaml": "agno.db.yaml.YamlDb",
+        "singlestore": "agno.db.singlestore.SingleStoreDb",
     }
 
 
 def get_storage_class(storage_type: str):
-    """
-    Dynamic storage class resolution using importlib.
+    """Resolve the Agno Db class for the requested storage type."""
 
-    Args:
-        storage_type: Storage type from YAML (postgres, sqlite, mongodb, etc.)
-
-    Returns:
-        Storage class ready for instantiation
-
-    Raises:
-        ValueError: If storage type is not supported
-        ImportError: If storage class cannot be imported
-    """
     storage_type_map = get_storage_type_mapping()
 
     if storage_type not in storage_type_map:
         supported_types = list(storage_type_map.keys())
-        raise ValueError(
-            f"Unsupported storage type: {storage_type}. "
-            f"Supported types: {supported_types}"
-        )
+        raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: {supported_types}")
 
-    # Dynamic import and class resolution
     module_path, class_name = storage_type_map[storage_type].rsplit(".", 1)
     try:
         module = importlib.import_module(module_path)
         storage_class = getattr(module, class_name)
-        logger.debug(f"🔧 Successfully imported {storage_type} storage class")
+        class_name_repr = getattr(storage_class, "__name__", type(storage_class).__name__)
+        logger.debug("Resolved %s -> %s", storage_type, class_name_repr)
         return storage_class
-    except (ImportError, AttributeError) as e:
-        raise ImportError(f"Failed to import {storage_type} storage class: {e}")
+    except (ImportError, AttributeError) as exc:
+        raise ImportError(f"Failed to import {storage_type} storage class: {exc}")
+
+
+def _default_table_name(component_mode: str, component_id: str, suffix: str) -> str:
+    safe_component = component_id.replace("-", "_")
+    return f"{component_mode}_{safe_component}_{suffix}"
 
 
 def create_dynamic_storage(
@@ -73,110 +57,107 @@ def create_dynamic_storage(
     component_mode: str,
     db_url: str | None,
 ):
-    """
-    Fully dynamic storage creation using introspection.
+    """Build an Agno Db instance and dependency bundle for a component."""
 
-    This function implements the same introspection pattern used for Agent
-    parameter discovery, ensuring 1:1 compatibility with all Agno storage
-    backends without hardcoding parameters.
-
-    Args:
-        storage_config: Storage configuration from YAML
-        component_id: Component identifier (agent/team/workflow ID)
-        component_mode: "agent", "team", or "workflow"
-        db_url: Database URL if needed
-
-    Returns:
-        Dynamically created storage instance
-
-    Raises:
-        ValueError: If storage type is unsupported
-        ImportError: If storage class cannot be imported
-        Exception: If storage instantiation fails
-    """
-    # 1. Get storage type from YAML (default to postgres for backward compatibility)
+    storage_config = storage_config or {}
     storage_type = storage_config.get("type", "postgres")
 
-    # 2. Dynamic storage class resolution
     storage_class = get_storage_class(storage_type)
 
-    # 3. Introspect storage class constructor (same pattern as Agent discovery)
     try:
-        sig = inspect.signature(storage_class.__init__)
-    except Exception as e:
-        raise Exception(f"Failed to introspect {storage_type} storage constructor: {e}")
+        signature = inspect.signature(storage_class.__init__)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        raise Exception(f"Failed to introspect {storage_type} storage constructor: {exc}") from exc
 
-    storage_params = {}
+    db_kwargs: dict[str, Any] = {}
+    safe_component = component_id.replace("-", "_")
+    table_name_override = storage_config.get("table_name")
+    base_for_related = table_name_override or f"{component_mode}_{safe_component}"
+    session_default = table_name_override or f"{component_mode}_{safe_component}_sessions"
 
-    # 4. Auto-map ALL compatible parameters using introspection
-    for param_name in sig.parameters:
+    for param_name, _param in signature.parameters.items():
         if param_name == "self":
             continue
-        if param_name == "mode":
-            # Auto-infer mode from component type
-            storage_params["mode"] = component_mode
-        elif param_name == "schema" and param_name not in storage_config:
-            # Always use agno schema for Agno framework tables
-            storage_params["schema"] = "agno"
-        elif param_name == "table_name" and "table_name" not in storage_config:
-            # Auto-generate table name if not specified
-            storage_params["table_name"] = f"{component_mode}s_{component_id}"
+
+        if param_name == "db_url":
+            candidate_url = storage_config.get("db_url") or db_url
+            if candidate_url is not None:
+                db_kwargs["db_url"] = candidate_url
+        elif param_name == "db_schema":
+            schema = storage_config.get("db_schema") or storage_config.get("schema")
+            if schema is None and storage_type == "postgres":
+                schema = _DEFAULT_SCHEMA
+            if schema is not None:
+                db_kwargs["db_schema"] = schema
+        elif param_name == "session_table":
+            db_kwargs["session_table"] = storage_config.get("session_table") or session_default
+        elif param_name == "memory_table":
+            db_kwargs["memory_table"] = storage_config.get("memory_table") or f"{base_for_related}_memories"
+        elif param_name == "metrics_table":
+            db_kwargs["metrics_table"] = storage_config.get("metrics_table") or f"{base_for_related}_metrics"
+        elif param_name == "eval_table":
+            db_kwargs["eval_table"] = storage_config.get("eval_table") or f"{base_for_related}_evals"
+        elif param_name == "knowledge_table":
+            db_kwargs["knowledge_table"] = storage_config.get("knowledge_table") or f"{base_for_related}_knowledge"
+        elif param_name == "id":
+            db_kwargs["id"] = storage_config.get("id") or f"{component_mode}-{component_id}"
         elif param_name in storage_config:
-            # Direct mapping from YAML config
-            storage_params[param_name] = storage_config[param_name]
-        elif param_name == "db_url" and db_url:
-            storage_params["db_url"] = db_url
+            db_kwargs[param_name] = storage_config[param_name]
+        else:
+            # Leave unspecified parameters to their defaults
+            continue
 
     logger.debug(
-        f"🐛 Creating {storage_type} storage for {component_mode} '{component_id}' with {len(storage_params)} parameters: {list(storage_params.keys())}"
+        "Creating %s db for %s '%s' with kwargs: %s",
+        storage_type,
+        component_mode,
+        component_id,
+        db_kwargs,
     )
 
     try:
-        # 5. Dynamic instantiation with mapped parameters
-        storage_instance = storage_class(**storage_params)
-        logger.debug(
-            f"🔧 Successfully created {storage_type} storage for {component_id}"
-        )
-        return storage_instance
-    except Exception as e:
+        db_instance = storage_class(**db_kwargs)
+    except Exception as exc:  # pragma: no cover - surfaced in tests via mocks
         logger.error(
-            f"🚨 Failed to create {storage_type} storage for {component_id}: {e}"
+            "Failed to instantiate %s db for %s '%s': %s",
+            storage_type,
+            component_mode,
+            component_id,
+            exc,
         )
-        logger.debug(f"🔧 Attempted parameters: {storage_params}")
         raise
+
+    dependencies_config = storage_config.get("dependencies") or {}
+    if not isinstance(dependencies_config, dict):
+        logger.warning("Ignoring non-dict dependencies config for %s '%s'", component_mode, component_id)
+        dependencies_config = {}
+
+    dependencies = dict(dependencies_config)
+    dependencies.setdefault("db", db_instance)
+
+    return {"db": db_instance, "dependencies": dependencies}
 
 
 def get_supported_storage_types() -> list:
-    """
-    Get list of all supported storage types.
+    """Expose supported storage/db types for diagnostics."""
 
-    Returns:
-        List of supported storage type names
-    """
     return list(get_storage_type_mapping().keys())
 
 
 def validate_storage_config(storage_config: dict[str, Any]) -> dict[str, Any]:
-    """
-    Validate storage configuration and return analysis.
+    """Return a simple validation report for a storage configuration."""
 
-    Args:
-        storage_config: Storage configuration dictionary
-
-    Returns:
-        Dictionary with validation results
-    """
     storage_type = storage_config.get("type", "postgres")
     supported_types = get_supported_storage_types()
 
-    validation_result = {
+    result = {
         "storage_type": storage_type,
         "is_supported": storage_type in supported_types,
         "supported_types": supported_types,
         "config_keys": list(storage_config.keys()),
     }
 
-    if not validation_result["is_supported"]:
-        validation_result["error"] = f"Unsupported storage type: {storage_type}"
+    if not result["is_supported"]:
+        result["error"] = f"Unsupported storage type: {storage_type}"
 
-    return validation_result
+    return result

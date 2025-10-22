@@ -1,6 +1,49 @@
-# AI TOOLS - CLAUDE.md
+# CLAUDE.md - AI Tools
 
-This document provides guidance for AI Tools development within the Automagik Hive ecosystem.
+## Context & Scope
+
+[CONTEXT]
+- Describes how to design, configure, and register reusable AI tools.
+- Tools extend agents/teams/workflows through `BaseTool` inheritance and YAML metadata.
+- Follow this with `/ai/CLAUDE.md` and `/CLAUDE.md` for orchestration and tooling rules.
+
+[CONTEXT MAP]
+@ai/tools/
+@ai/tools/base_tool.py
+@ai/tools/registry.py
+@ai/tools/template-tool/
+
+[SUCCESS CRITERIA]
+✅ Each tool ships with a config YAML, implementation, and passing tests.
+✅ Registry discovery lists new tools without import errors.
+✅ Tool execution returns standardized `{status, result, metadata}` responses.
+✅ Version numbers reflect breaking vs additive changes.
+
+[NEVER DO]
+❌ Hardcode credentials or environment-specific values inside tools.
+❌ Modify registry logic to bypass dynamic discovery.
+❌ Skip pytest coverage (unit + integration) for new tools.
+❌ Diverge from template layout or forget to update documentation.
+
+## Task Decomposition
+```
+<task_breakdown>
+1. [Discovery] Understand tool impact
+   - Review existing tool directory (config.yaml, tool.py).
+   - Inspect registry usage and consumer agents/workflows.
+   - Check related tests in `tests/ai/tools/` and integration suites.
+
+2. [Implementation] Build or modify tool
+   - Copy `template-tool/` for new tools or edit existing files.
+   - Update YAML metadata, implement logic, and bump version.
+   - Ensure execute() returns standardized payloads and handles errors.
+
+3. [Verification] Validate tool stability
+   - Run `uv run pytest tests/ai/tools/` (or equivalent) plus integration paths.
+   - Manual smoke test via a consumer agent/workflow if applicable.
+   - Log outcomes inside the active wish or Forge record.
+</task_breakdown>
+```
 
 ## 🔧 TOOLS ARCHITECTURE
 
@@ -132,6 +175,185 @@ tool = get_tool("my-custom-tool")
 # Execute tool
 result = tool.execute("input data", {"option1": "value1"})
 ```
+
+## 🔌 AGNO NATIVE TOOL CONFIGURATION
+
+Automagik Hive supports native Agno tools (like `ShellTools`) with flexible YAML configuration patterns. The tool registry provides three configuration approaches for controlling tool behavior and instructions.
+
+### Configuration Patterns
+
+#### Pattern 1: Zero Config (Recommended - Uses Toolkit Defaults)
+
+When no configuration is provided, the registry uses the tool's built-in instructions:
+
+```yaml
+# Agent config.yaml
+tools:
+  - ShellTools  # Simple string - uses native Agno tool instructions
+```
+
+**Behavior:**
+- Loads native Agno tool directly
+- Uses toolkit-provided instructions (if available)
+- No custom instruction override
+- Best for standard tool usage
+
+#### Pattern 2: Custom Instructions Override
+
+Override toolkit instructions with YAML configuration:
+
+```yaml
+# Agent config.yaml
+tools:
+  - name: ShellTools
+    instructions:
+      - "Always confirm destructive operations before executing"
+      - "Use absolute paths for all file operations"
+      - "Never execute commands with sudo privileges"
+```
+
+**Supported formats:**
+```yaml
+# List format (recommended for multiple instructions)
+tools:
+  - name: ShellTools
+    instructions:
+      - "First instruction"
+      - "Second instruction"
+
+# String format (single instruction)
+tools:
+  - name: ShellTools
+    instructions: "Single instruction here"
+```
+
+**Behavior:**
+- Replaces toolkit default instructions
+- Instructions injected into LLM system prompt
+- Full control over tool behavior
+- Best for domain-specific customization
+
+#### Pattern 3: Explicit Disable Instructions
+
+Disable all instructions with empty list:
+
+```yaml
+# Agent config.yaml
+tools:
+  - name: ShellTools
+    instructions: []  # Explicitly disable instructions
+```
+
+**Behavior:**
+- Tool loaded without any instructions
+- No instruction injection into LLM
+- Raw tool functionality only
+- Best when instructions would conflict with agent logic
+
+### Critical Implementation Detail
+
+**The `add_instructions=True` Flag**
+
+The tool registry automatically sets `add_instructions=True` when creating native Agno tools. This flag is **required** for instruction injection into the LLM system prompt:
+
+```python
+# Internal registry implementation
+tool_instance = ToolClass(
+    add_instructions=True  # ← Critical for LLM instruction injection
+)
+```
+
+**Without this flag:**
+- Instructions would be ignored by the agent
+- Tool would function without behavioral guidance
+- Configuration would have no effect
+
+**This is handled automatically by the registry** - no manual configuration needed.
+
+### Tool Options
+
+Additional tool options can be specified in YAML configuration:
+
+```yaml
+tools:
+  - name: ShellTools
+    instructions:
+      - "Confirm before executing"
+    show_result: true
+    requires_confirmation: true
+```
+
+**Common options:**
+- `instructions`: Custom instructions (string or list)
+- `add_instructions`: Auto-set to `true` by registry
+- `show_result`: Display tool execution results
+- `requires_confirmation`: Require user confirmation
+- `use_python_repl`: Use Python REPL for execution
+
+### Currently Supported Native Agno Tools
+
+**ShellTools**
+- Shell command execution with safety controls
+- Configuration: All three patterns supported
+- Status: Actively used in template-agent
+- Documentation: See [Agno ShellTools docs](https://docs.agno.com)
+
+**Future Native Tools**
+Additional native Agno tools can be added to the registry by extending the `_load_native_agno_tool()` method in `lib/tools/registry.py`.
+
+### Integration Example
+
+**Complete agent configuration with native Agno tools:**
+
+```yaml
+# config.yaml
+agent:
+  name: "My Agent"
+  agent_id: "my-agent"
+
+tools:
+  # Zero config - uses defaults
+  - ShellTools
+
+  # Custom instructions
+  - name: PandasTools
+    instructions:
+      - "Use 'DataFrame' not 'pd.DataFrame'"
+      - "Always validate data before operations"
+
+  # Disabled instructions
+  - name: CalculatorTools
+    instructions: []  # Raw functionality only
+
+instructions: |
+  You are an agent with native Agno tool support.
+  Follow tool-specific instructions for safe operations.
+```
+
+### Best Practices
+
+1. **Use Zero Config First**: Start with default instructions, customize only when needed
+2. **Document Custom Instructions**: Explain why custom instructions are required
+3. **Test Tool Behavior**: Validate that custom instructions work as expected
+4. **Keep Instructions Focused**: Short, specific guidance works best
+5. **Version Control**: Bump agent version when tool instructions change
+
+### Troubleshooting
+
+**Tool not loading?**
+- Verify tool name matches native Agno tool exactly (case-sensitive)
+- Check that tool exists in Agno framework
+- Review logs for import errors
+
+**Instructions not working?**
+- Confirm `add_instructions=True` is set (automatic in registry)
+- Verify instructions format (string or list)
+- Check that instructions don't conflict with agent instructions
+
+**Tool behavior unexpected?**
+- Review toolkit default instructions
+- Test with zero config to isolate custom instruction issues
+- Validate YAML syntax in configuration file
 
 ## 🎯 TOOL CATEGORIES
 

@@ -7,48 +7,46 @@ Provides input validation and sanitization for all API endpoints.
 import re
 from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class BaseValidatedRequest(BaseModel):
     """Base model for all validated requests."""
 
-    class Config:
+    model_config = {
         # Allow extra fields but validate known ones
-        extra = "forbid"
+        "extra": "forbid",
         # Validate assignment to prevent modification after creation
-        validate_assignment = True
+        "validate_assignment": True,
         # Use enum values instead of names
-        use_enum_values = True
+        "use_enum_values": True,
+    }
 
 
 class AgentRequest(BaseValidatedRequest):
     """Request model for agent interactions."""
 
-    message: str = Field(
-        ..., min_length=1, max_length=10000, description="Message to send to the agent"
-    )
+    message: str = Field(..., min_length=1, max_length=10000, description="Message to send to the agent")
     session_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional session ID for conversation continuity",
     )
     user_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional user ID for personalization",
     )
-    context: dict[str, Any] | None = Field(
-        None, description="Optional context data for the agent"
-    )
+    context: dict[str, Any] | None = Field(None, description="Optional context data for the agent")
     stream: bool = Field(False, description="Whether to stream the response")
 
-    @validator("message")
-    def sanitize_message(self, v):
+    @field_validator("message")
+    @classmethod
+    def sanitize_message(cls, v):
         """Sanitize message content."""
         if not v or not v.strip():
             raise ValueError("Message cannot be empty")
@@ -57,8 +55,9 @@ class AgentRequest(BaseValidatedRequest):
         # This is a basic sanitization - adjust based on your needs
         return re.sub(r'[<>"\']', "", v.strip())
 
-    @validator("context")
-    def validate_context(self, v):
+    @field_validator("context")
+    @classmethod
+    def validate_context(cls, v):
         """Validate context dictionary."""
         if v is None:
             return v
@@ -79,37 +78,34 @@ class AgentRequest(BaseValidatedRequest):
 class TeamRequest(BaseValidatedRequest):
     """Request model for team interactions."""
 
-    task: str = Field(
-        ..., min_length=1, max_length=5000, description="Task description for the team"
-    )
+    task: str = Field(..., min_length=1, max_length=5000, description="Task description for the team")
     team_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=50,
         description="Optional specific team ID",
     )
     session_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional session ID for conversation continuity",
     )
     user_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional user ID",
     )
-    context: dict[str, Any] | None = Field(
-        default_factory=dict, description="Context data for the team"
-    )
+    context: dict[str, Any] | None = Field(default_factory=dict, description="Context data for the team")
     stream: bool = Field(False, description="Whether to stream the response")
 
-    @validator("task")
-    def sanitize_task(self, v):
+    @field_validator("task")
+    @classmethod
+    def sanitize_task(cls, v):
         """Sanitize task description."""
         if not v or not v.strip():
             raise ValueError("Task cannot be empty")
@@ -123,31 +119,30 @@ class WorkflowRequest(BaseValidatedRequest):
 
     workflow_id: str = Field(
         ...,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=50,
         description="Workflow identifier",
     )
-    input_data: dict[str, Any] = Field(
-        default_factory=dict, description="Input data for workflow execution"
-    )
+    input_data: dict[str, Any] = Field(default_factory=dict, description="Input data for workflow execution")
     session_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional session ID",
     )
     user_id: str | None = Field(
         None,
-        regex=r"^[a-zA-Z0-9_-]+$",
+        pattern=r"^[a-zA-Z0-9_-]+$",
         min_length=1,
         max_length=100,
         description="Optional user ID",
     )
 
-    @validator("input_data")
-    def validate_input_data(self, v):
+    @field_validator("input_data")
+    @classmethod
+    def validate_input_data(cls, v):
         """Validate workflow input data."""
         if len(str(v)) > 10000:
             raise ValueError("Input data too large (max 10000 characters)")
@@ -181,9 +176,7 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error message")
     detail: str | None = Field(None, description="Additional error details")
-    error_code: str | None = Field(
-        None, description="Error code for programmatic handling"
-    )
+    error_code: str | None = Field(None, description="Error code for programmatic handling")
 
 
 class SuccessResponse(BaseModel):

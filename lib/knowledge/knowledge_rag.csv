@@ -1,4 +1,0 @@
-query,context,business_unit,product,conclusion
-"How to get started with the system","Welcome to the enterprise multi-agent system. To get started, please review the documentation and configure your agents according to your business needs.","Support","General","Orientation"
-"System architecture overview","The system is built on Clean Architecture principles with YAML-first configuration, intelligent routing, and enterprise-grade deployment capabilities.","Technical","Framework","Information"
-"Agent configuration guide","Agents are configured using YAML files with versioning, knowledge filters, and memory management. See the documentation for detailed examples.","Technical","Agents","Orientation"

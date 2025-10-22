@@ -25,10 +25,8 @@ class AuthService:
             # Production override: ALWAYS enable authentication regardless of HIVE_AUTH_DISABLED
             self.auth_disabled = False
         else:
-            # Development/staging: respect HIVE_AUTH_DISABLED setting (default: disabled for easier onboarding)
-            self.auth_disabled = (
-                os.getenv("HIVE_AUTH_DISABLED", "true").lower() == "true"
-            )
+            # Development/staging: respect HIVE_AUTH_DISABLED setting (default: enabled for security)
+            self.auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
 
     async def validate_api_key(self, provided_key: str | None) -> bool:
         """
@@ -62,19 +60,18 @@ class AuthService:
 
     def regenerate_key(self) -> str:
         """Regenerate API key."""
-        new_key = self.init_service.regenerate_key()
-        self.api_key = new_key
-        return new_key
+        api_key = self.init_service.regenerate_key()
+        self.api_key = api_key
+        return api_key
 
     def get_auth_status(self) -> dict[str, str | bool]:
         """Get current authentication status and configuration."""
-        raw_auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "true").lower() == "true"
+        raw_auth_disabled = os.getenv("HIVE_AUTH_DISABLED", "false").lower() == "true"
 
         return {
             "environment": self.environment,
             "auth_enabled": not self.auth_disabled,
-            "production_override_active": self.environment == "production"
-            and raw_auth_disabled,
+            "production_override_active": self.environment == "production" and raw_auth_disabled,
             "raw_hive_auth_disabled_setting": raw_auth_disabled,
             "effective_auth_disabled": self.auth_disabled,
             "security_note": "Authentication is ALWAYS enabled in production regardless of HIVE_AUTH_DISABLED setting",

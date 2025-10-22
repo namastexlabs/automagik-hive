@@ -82,13 +82,9 @@ class LangWatchManager:
         # Wait for global setup completion (non-blocking for agents)
         try:
             await asyncio.wait_for(_setup_complete.wait(), timeout=5.0)
-            logger.debug(
-                "🔧 Global LangWatch setup confirmed, proceeding with instrumentor"
-            )
+            logger.debug("🔧 Global LangWatch setup confirmed, proceeding with instrumentor")
         except TimeoutError:
-            logger.warning(
-                "⚠️  LangWatch global setup timed out, proceeding anyway for graceful degradation"
-            )
+            logger.warning("⚠️  LangWatch global setup timed out, proceeding anyway for graceful degradation")
 
         try:
             # Import and create instrumentor instance only
@@ -102,24 +98,18 @@ class LangWatchManager:
             self.instrumentor.instrument()
 
             self._initialized = True
-            logger.info(
-                "🚀 LangWatch AgnoInstrumentor initialized and instrumented successfully"
-            )
+            logger.debug("🚀 LangWatch AgnoInstrumentor initialized and instrumented successfully")
             return True
 
         except ImportError as e:
             if "langwatch" in str(e):
-                logger.warning(
-                    "⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration"
-                )
+                logger.warning("⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration")
             elif "openinference" in str(e):
                 logger.warning(
                     "⚠️  OpenInference Agno instrumentor not available - install 'openinference-instrumentation-agno' package"
                 )
             else:
-                logger.warning(
-                    f"⚠️  LangWatch integration dependencies not available: {e}"
-                )
+                logger.warning(f"⚠️  LangWatch integration dependencies not available: {e}")
             return False
         except Exception as e:
             logger.error(f"🚨 Failed to initialize LangWatch: {e}")
@@ -245,9 +235,7 @@ class DualPathMetricsCoordinator:
         )
         return status
 
-    def extract_metrics(
-        self, response: Any, yaml_overrides: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def extract_metrics(self, response: Any, yaml_overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Extract metrics using AgnoMetricsBridge.
 
@@ -302,9 +290,7 @@ class DualPathMetricsCoordinator:
                 yaml_overrides=yaml_overrides,
             )
 
-            logger.debug(
-                f"Metrics collection delegation result for {agent_name}: {'success' if result else 'failed'}"
-            )
+            logger.debug(f"Metrics collection delegation result for {agent_name}: {'success' if result else 'failed'}")
             return result
 
         except Exception as e:
@@ -374,9 +360,7 @@ class DualPathMetricsCoordinator:
                 "metrics_source": "AGNO native metrics",
             },
             "opentelemetry_path": {
-                "active": self.langwatch_manager.is_active()
-                if self.langwatch_manager
-                else False,
+                "active": self.langwatch_manager.is_active() if self.langwatch_manager else False,
                 "component": "LangWatch AgnoInstrumentor",
                 "storage": "OpenTelemetry backend",
                 "metrics_source": "AGNO native metrics",
@@ -444,13 +428,11 @@ async def _do_setup(config: dict[str, Any]) -> bool:
 
         langwatch.setup(**config)
         _setup_complete.set()
-        logger.info("🚀 LangWatch global async setup completed successfully")
+        logger.debug("🚀 LangWatch global async setup completed successfully")
         return True
     except ImportError as e:
         if "langwatch" in str(e):
-            logger.warning(
-                "⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration"
-            )
+            logger.warning("⚠️  LangWatch not available - install 'langwatch' package for OpenTelemetry integration")
         elif "openinference" in str(e):
             logger.warning(
                 "⚠️  OpenInference dependencies not available - install 'openinference-instrumentation-agno' package"
@@ -465,9 +447,7 @@ async def _do_setup(config: dict[str, Any]) -> bool:
         return False
 
 
-def initialize_langwatch(
-    enabled: bool = False, config: dict[str, Any] | None = None
-) -> LangWatchManager:
+def initialize_langwatch(enabled: bool = False, config: dict[str, Any] | None = None) -> LangWatchManager:
     """
     Create or retrieve the global LangWatch manager instance.
 
@@ -536,21 +516,15 @@ def initialize_dual_path_metrics(
 
     # Return existing coordinator if available
     if _coordinator is not None:
-        logger.debug(
-            "🔧 Dual-path metrics coordinator already exists, returning existing instance"
-        )
+        logger.debug("🔧 Dual-path metrics coordinator already exists, returning existing instance")
         return _coordinator
 
     # Create LangWatch manager if needed
     langwatch_manager = initialize_langwatch(langwatch_enabled, langwatch_config)
 
     # Create coordinator with AsyncMetricsService (async initialization deferred)
-    _coordinator = DualPathMetricsCoordinator(
-        agno_bridge, langwatch_manager, async_metrics_service
-    )
-    logger.debug(
-        "Dual-path metrics coordinator created (async initialization deferred)"
-    )
+    _coordinator = DualPathMetricsCoordinator(agno_bridge, langwatch_manager, async_metrics_service)
+    logger.debug("Dual-path metrics coordinator created (async initialization deferred)")
 
     return _coordinator
 

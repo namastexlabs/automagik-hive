@@ -1,14 +1,29 @@
-"""
-AGNO Native Metrics Bridge
+"""AGNO Native Metrics Bridge with Agno v2 schema compatibility."""
 
-Drop-in replacement for manual metrics extraction using AGNO's native metrics system.
-Provides comprehensive metrics collection with superior coverage compared to manual extraction.
-"""
+from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any
 
 from lib.logging import logger
 from lib.metrics.config import MetricsConfig
+
+LEGACY_FIELD_MAPPING = {
+    "prompt_tokens": "input_tokens",
+    "completion_tokens": "output_tokens",
+    "time": "duration",
+    "audio_tokens": "audio_total_tokens",
+    "input_audio_tokens": "audio_input_tokens",
+    "output_audio_tokens": "audio_output_tokens",
+    "cached_tokens": "cache_read_tokens",
+}
+
+PROVIDER_FIELD_MAPPING = {
+    "prompt_tokens": "input_tokens",
+    "completion_tokens": "output_tokens",
+}
+
+DETAILED_FIELDS = {"prompt_tokens_details", "completion_tokens_details"}
 
 
 class AgnoMetricsBridge:
@@ -24,11 +39,11 @@ class AgnoMetricsBridge:
     - message.metrics: Per-message MessageMetrics objects
 
     Comprehensive Coverage:
-    - Token metrics: input_tokens, output_tokens, total_tokens, prompt_tokens, completion_tokens
-    - Advanced tokens: audio_tokens, cached_tokens, reasoning_tokens, cache_write_tokens
-    - Timing metrics: time, time_to_first_token
-    - Content metrics: prompt_tokens_details, completion_tokens_details
-    - Additional metrics: any model-specific metrics
+    - Token metrics: input_tokens, output_tokens, total_tokens
+    - Advanced tokens: audio_total_tokens, audio_input_tokens, audio_output_tokens,
+      cache_read_tokens, cache_write_tokens, reasoning_tokens
+    - Timing metrics: duration, time_to_first_token
+    - Content metrics: additional_metrics, provider_metrics
     """
 
     def __init__(self, config: MetricsConfig | None = None):
@@ -40,9 +55,7 @@ class AgnoMetricsBridge:
         """
         self.config = config or MetricsConfig()
 
-    def extract_metrics(
-        self, response: Any, yaml_overrides: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def extract_metrics(self, response: Any, yaml_overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Extract comprehensive metrics from AGNO response using native metrics.
 
@@ -67,13 +80,16 @@ class AgnoMetricsBridge:
                 metrics = self._extract_basic_metrics(response)
                 logger.debug(f"🔧 Using basic metrics fallback - {len(metrics)} fields")
 
+            # Normalize to Agno v2 schema
+            metrics = self._normalize_metrics_dict(metrics)
+
             # Apply configuration-based filtering
             if self.config:
                 metrics = self._filter_by_config(metrics)
 
             # Apply YAML overrides
             if yaml_overrides:
-                metrics.update(yaml_overrides)
+                metrics = {**metrics, **yaml_overrides}
 
         except Exception as e:
             logger.warning(f"⚡ Error extracting metrics from response: {e}")
@@ -93,9 +109,7 @@ class AgnoMetricsBridge:
             True if AGNO response, False otherwise
         """
         # Check for AGNO agent response
-        if hasattr(response, "run_response") and hasattr(
-            response.run_response, "metrics"
-        ):
+        if hasattr(response, "run_response") and hasattr(response.run_response, "metrics"):
             return True
 
         # Check for AGNO session_metrics
@@ -120,109 +134,108 @@ class AgnoMetricsBridge:
         Returns:
             Dictionary with comprehensive AGNO metrics
         """
-        metrics = {}
+        metrics: dict[str, Any] = {}
 
         # Primary: Try to get session_metrics (most comprehensive)
         if hasattr(response, "session_metrics") and response.session_metrics:
-            session_metrics = response.session_metrics
-
-            # Extract all available SessionMetrics fields
-            metrics.update(
-                {
-                    "input_tokens": getattr(session_metrics, "input_tokens", 0),
-                    "output_tokens": getattr(session_metrics, "output_tokens", 0),
-                    "total_tokens": getattr(session_metrics, "total_tokens", 0),
-                    "prompt_tokens": getattr(session_metrics, "prompt_tokens", 0),
-                    "completion_tokens": getattr(
-                        session_metrics, "completion_tokens", 0
-                    ),
-                    "audio_tokens": getattr(session_metrics, "audio_tokens", 0),
-                    "input_audio_tokens": getattr(
-                        session_metrics, "input_audio_tokens", 0
-                    ),
-                    "output_audio_tokens": getattr(
-                        session_metrics, "output_audio_tokens", 0
-                    ),
-                    "cached_tokens": getattr(session_metrics, "cached_tokens", 0),
-                    "cache_write_tokens": getattr(
-                        session_metrics, "cache_write_tokens", 0
-                    ),
-                    "reasoning_tokens": getattr(session_metrics, "reasoning_tokens", 0),
-                    "time": getattr(session_metrics, "time", 0.0),
-                    "time_to_first_token": getattr(
-                        session_metrics, "time_to_first_token", 0.0
-                    ),
-                }
-            )
-
-            # Extract optional detailed metrics
-            if (
-                hasattr(session_metrics, "prompt_tokens_details")
-                and session_metrics.prompt_tokens_details
-            ):
-                metrics["prompt_tokens_details"] = session_metrics.prompt_tokens_details
-
-            if (
-                hasattr(session_metrics, "completion_tokens_details")
-                and session_metrics.completion_tokens_details
-            ):
-                metrics["completion_tokens_details"] = (
-                    session_metrics.completion_tokens_details
-                )
-
-            if (
-                hasattr(session_metrics, "additional_metrics")
-                and session_metrics.additional_metrics
-            ):
-                metrics["additional_metrics"] = session_metrics.additional_metrics
+            metrics.update(self._collect_session_metrics(response.session_metrics))
 
         # Secondary: Try run_response.metrics (per-response metrics)
-        elif hasattr(response, "run_response") and hasattr(
-            response.run_response, "metrics"
-        ):
+        elif hasattr(response, "run_response") and hasattr(response.run_response, "metrics"):
             run_metrics = response.run_response.metrics
 
             if isinstance(run_metrics, dict):
-                # Aggregate metrics lists from run_response.metrics
-                for metric_name, metric_values in run_metrics.items():
-                    if isinstance(metric_values, list) and metric_values:
-                        # Sum list values for token counts
-                        if metric_name.endswith("_tokens") or metric_name in [
-                            "time",
-                            "time_to_first_token",
-                        ]:
-                            metrics[metric_name] = (
-                                sum(metric_values)
-                                if all(
-                                    isinstance(v, int | float) for v in metric_values
-                                )
-                                else metric_values[-1]
-                            )
-                        else:
-                            # Use last value for non-summable metrics
-                            metrics[metric_name] = metric_values[-1]
-                    elif metric_values is not None:
-                        metrics[metric_name] = metric_values
+                metrics.update(self._coerce_metrics_payload(run_metrics))
 
         # Tertiary: Direct metrics access
         elif hasattr(response, "metrics") and isinstance(response.metrics, dict):
-            metrics.update(response.metrics)
+            metrics.update(self._coerce_metrics_payload(response.metrics))
 
         # Add model information if available
         if hasattr(response, "model"):
             metrics["model"] = str(response.model)
-        elif hasattr(response, "run_response") and hasattr(
-            response.run_response, "model"
-        ):
+        elif hasattr(response, "run_response") and hasattr(response.run_response, "model"):
             metrics["model"] = str(response.run_response.model)
 
         # Add response length if available
         if hasattr(response, "content") and response.content:
             metrics["response_length"] = len(str(response.content))
-        elif hasattr(response, "run_response") and hasattr(
-            response.run_response, "content"
-        ):
+        elif hasattr(response, "run_response") and hasattr(response.run_response, "content"):
             metrics["response_length"] = len(str(response.run_response.content))
+
+        return metrics
+
+    def _collect_session_metrics(self, session_metrics: Any) -> dict[str, Any]:
+        """Extract relevant session metrics while keeping v2-compatible keys."""
+
+        metrics: dict[str, Any] = {}
+
+        field_sources: dict[str, tuple[str, ...]] = {
+            "input_tokens": ("input_tokens", "prompt_tokens"),
+            "output_tokens": ("output_tokens", "completion_tokens"),
+            "total_tokens": ("total_tokens",),
+            "duration": ("duration", "time"),
+            "time_to_first_token": ("time_to_first_token",),
+            "audio_total_tokens": ("audio_total_tokens", "audio_tokens"),
+            "audio_input_tokens": ("audio_input_tokens", "input_audio_tokens"),
+            "audio_output_tokens": (
+                "audio_output_tokens",
+                "output_audio_tokens",
+            ),
+            "cache_read_tokens": ("cache_read_tokens", "cached_tokens"),
+            "cache_write_tokens": ("cache_write_tokens",),
+            "reasoning_tokens": ("reasoning_tokens",),
+        }
+
+        for new_key, source_names in field_sources.items():
+            value = self._first_present(session_metrics, source_names)
+            if value is not None:
+                metrics[new_key] = value
+
+        provider_metrics = getattr(session_metrics, "provider_metrics", None)
+        if provider_metrics:
+            metrics["provider_metrics"] = provider_metrics
+
+        if hasattr(session_metrics, "additional_metrics") and session_metrics.additional_metrics:
+            metrics["additional_metrics"] = deepcopy(session_metrics.additional_metrics)
+
+        detail_carriers = {
+            "prompt_tokens_details": getattr(session_metrics, "prompt_tokens_details", None),
+            "completion_tokens_details": getattr(session_metrics, "completion_tokens_details", None),
+        }
+        detail_payload = {key: value for key, value in detail_carriers.items() if value not in (None, {}, [])}
+        if detail_payload:
+            extra = metrics.setdefault("additional_metrics", {})
+            extra.update(detail_payload)
+
+        return metrics
+
+    @staticmethod
+    def _first_present(obj: Any, attribute_candidates: tuple[str, ...]) -> Any:
+        for candidate in attribute_candidates:
+            if hasattr(obj, candidate):
+                value = getattr(obj, candidate)
+                if value is not None:
+                    return value
+        return None
+
+    def _coerce_metrics_payload(self, raw_metrics: dict[str, Any]) -> dict[str, Any]:
+        """Normalize arbitrary metric payloads into a dict for downstream normalization."""
+
+        metrics: dict[str, Any] = {}
+        for metric_name, metric_values in raw_metrics.items():
+            if isinstance(metric_values, list) and metric_values:
+                if metric_name.endswith("_tokens") or metric_name in [
+                    "time",
+                    "duration",
+                    "time_to_first_token",
+                ]:
+                    numeric_values = [value for value in metric_values if isinstance(value, int | float)]
+                    metrics[metric_name] = sum(numeric_values) if numeric_values else metric_values[-1]
+                else:
+                    metrics[metric_name] = metric_values[-1]
+            elif metric_values is not None:
+                metrics[metric_name] = metric_values
 
         return metrics
 
@@ -251,12 +264,67 @@ class AgnoMetricsBridge:
             usage = response.usage
             if hasattr(usage, "input_tokens"):
                 metrics["input_tokens"] = usage.input_tokens
+            if hasattr(usage, "prompt_tokens") and "input_tokens" not in metrics:
+                metrics["input_tokens"] = usage.prompt_tokens
             if hasattr(usage, "output_tokens"):
                 metrics["output_tokens"] = usage.output_tokens
+            if hasattr(usage, "completion_tokens") and "output_tokens" not in metrics:
+                metrics["output_tokens"] = usage.completion_tokens
             if hasattr(usage, "total_tokens"):
                 metrics["total_tokens"] = usage.total_tokens
 
         return metrics
+
+    def _normalize_metrics_dict(self, metrics: dict[str, Any]) -> dict[str, Any]:
+        """Normalize metrics to the Agno v2 field names."""
+
+        if not metrics:
+            return {}
+
+        normalized: dict[str, Any] = {}
+        additional_payload: dict[str, Any] = {}
+
+        for key, value in metrics.items():
+            if key in DETAILED_FIELDS:
+                if value:
+                    additional_payload[key] = value
+                continue
+
+            if key == "provider_metrics" and isinstance(value, dict):
+                normalized["provider_metrics"] = self._normalize_provider_metrics(value)
+                continue
+
+            target_key = LEGACY_FIELD_MAPPING.get(key, key)
+            normalized[target_key] = value
+
+        # Merge any additional metrics payloads
+        if additional_payload:
+            existing = normalized.get("additional_metrics")
+            if isinstance(existing, dict):
+                merged = deepcopy(existing)
+                merged.update(additional_payload)
+                normalized["additional_metrics"] = merged
+            else:
+                normalized["additional_metrics"] = additional_payload
+
+        return normalized
+
+    def _normalize_provider_metrics(self, providers: dict[str, Any]) -> dict[str, Any]:
+        """Normalize provider metrics dictionaries recursively."""
+
+        normalized = {}
+        for provider, payload in providers.items():
+            if isinstance(payload, dict):
+                provider_metrics = {}
+                for key, value in payload.items():
+                    target_key = PROVIDER_FIELD_MAPPING.get(key, LEGACY_FIELD_MAPPING.get(key, key))
+                    if target_key in DETAILED_FIELDS:
+                        continue
+                    provider_metrics[target_key] = value
+                normalized[provider] = provider_metrics
+            else:
+                normalized[provider] = payload
+        return normalized
 
     def _filter_by_config(self, metrics: dict[str, Any]) -> dict[str, Any]:
         """
@@ -287,16 +355,12 @@ class AgnoMetricsBridge:
                 "input_tokens",
                 "output_tokens",
                 "total_tokens",
-                "prompt_tokens",
-                "completion_tokens",
-                "audio_tokens",
-                "input_audio_tokens",
-                "output_audio_tokens",
-                "cached_tokens",
+                "audio_total_tokens",
+                "audio_input_tokens",
+                "audio_output_tokens",
+                "cache_read_tokens",
                 "cache_write_tokens",
                 "reasoning_tokens",
-                "prompt_tokens_details",
-                "completion_tokens_details",
             ]
             for field in token_fields:
                 if field in metrics:
@@ -304,7 +368,7 @@ class AgnoMetricsBridge:
 
         # Time metrics filtering
         if self.config.collect_time:
-            time_fields = ["time", "time_to_first_token"]
+            time_fields = ["duration", "time_to_first_token"]
             for field in time_fields:
                 if field in metrics:
                     filtered_metrics[field] = metrics[field]
@@ -325,7 +389,12 @@ class AgnoMetricsBridge:
 
         # Content metrics filtering
         if self.config.collect_content:
-            content_fields = ["additional_metrics", "content_type", "content_size"]
+            content_fields = [
+                "additional_metrics",
+                "provider_metrics",
+                "content_type",
+                "content_size",
+            ]
             for field in content_fields:
                 if field in metrics:
                     filtered_metrics[field] = metrics[field]
@@ -347,20 +416,15 @@ class AgnoMetricsBridge:
                     "input_tokens",
                     "output_tokens",
                     "total_tokens",
-                    "prompt_tokens",
-                    "completion_tokens",
-                    "audio_tokens",
-                    "input_audio_tokens",
-                    "output_audio_tokens",
-                    "cached_tokens",
+                    "audio_total_tokens",
+                    "audio_input_tokens",
+                    "audio_output_tokens",
+                    "cache_read_tokens",
                     "cache_write_tokens",
                     "reasoning_tokens",
                 ],
-                "timing_metrics": ["time", "time_to_first_token"],
-                "detailed_metrics": [
-                    "prompt_tokens_details",
-                    "completion_tokens_details",
-                ],
+                "timing_metrics": ["duration", "time_to_first_token"],
+                "detailed_metrics": ["additional_metrics"],
                 "additional_metrics": [
                     "additional_metrics",
                     "model",

@@ -1,1 +1,1 @@
-"""Team test package."""
+"""Teams test package."""

@@ -1,1 +1,0 @@
-"""Mock objects test package."""

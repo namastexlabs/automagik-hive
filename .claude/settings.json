@@ -2,11 +2,23 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit",
+        "matcher": "Write|Edit|MultiEdit|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/tdd_hook.py"
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/pyproject_protection.py"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/tdd_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/test_boundary_enforcer.py"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 $CLAUDE_PROJECT_DIR/.claude/hooks/no_root_files_hook.py"
           }
         ]
       }

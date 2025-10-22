@@ -19,7 +19,7 @@ services:
     container_name: hive-postgres-genie
     restart: unless-stopped
     ports:
-      - "48532:5432"
+      - "45532:5432"
     environment:
       - POSTGRES_DB=hive_genie
       - POSTGRES_USER=genie

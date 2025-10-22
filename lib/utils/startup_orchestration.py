@@ -97,21 +97,17 @@ async def batch_component_discovery() -> ComponentRegistries:
         return registries
 
     except Exception as e:
-        logger.error(
-            "Component discovery failed", error=str(e), error_type=type(e).__name__
-        )
+        logger.error("Component discovery failed", error=str(e), error_type=type(e).__name__)
         # Return minimal registries to allow startup to continue
-        return ComponentRegistries(
-            workflows={}, teams={}, agents={}, summary="0 components (discovery failed)"
-        )
+        return ComponentRegistries(workflows={}, teams={}, agents={}, summary="0 components (discovery failed)")
 
 
 async def initialize_knowledge_base() -> Any | None:
     """
     Initialize CSV hot reload manager for knowledge base watching.
 
-    The shared knowledge base will be initialized lazily when first accessed by agents,
-    preventing duplicate loading and race conditions.
+    Creates the shared knowledge base instance first, then sets up hot reload
+    to watch and update THIS SAME INSTANCE that agents will use.
 
     Returns:
         CSV manager instance or None if initialization failed
@@ -121,7 +117,8 @@ async def initialize_knowledge_base() -> Any | None:
     try:
         from pathlib import Path
 
-        from lib.knowledge.csv_hot_reload import CSVHotReloadManager
+        from lib.knowledge.datasources.csv_hot_reload import CSVHotReloadManager
+        from lib.knowledge.factories.knowledge_factory import get_knowledge_base
         from lib.utils.version_factory import load_global_knowledge_config
 
         # Load centralized knowledge configuration
@@ -132,8 +129,34 @@ async def initialize_knowledge_base() -> Any | None:
         config_dir = Path(__file__).parent.parent.parent / "lib/knowledge"
         csv_path = config_dir / csv_filename
 
-        # Initialize CSV hot reload manager (this will handle knowledge base creation internally)
+        logger.debug(
+            "Creating shared knowledge base for hot reload",
+            csv_path=str(csv_path),
+        )
+
+        # Create the shared singleton knowledge base that agents will use
+        # This ensures there's only ONE instance across the entire system
+        shared_kb = get_knowledge_base(csv_path=str(csv_path))
+
+        logger.debug(
+            "Shared knowledge base created",
+            instance_id=id(shared_kb),
+        )
+
+        # Initialize CSV hot reload manager to watch THIS shared instance
         csv_manager = CSVHotReloadManager(str(csv_path))
+
+        # CRITICAL: Replace the manager's internal KB with the shared singleton
+        csv_manager.knowledge_base = shared_kb
+
+        logger.info(
+            "Hot reload manager linked to shared knowledge base",
+            kb_instance_id=id(shared_kb),
+            manager_kb_id=id(csv_manager.knowledge_base),
+            instances_match=id(shared_kb) == id(csv_manager.knowledge_base),
+        )
+
+        # Start watching for CSV changes
         csv_manager.start_watching()
 
         logger.info(
@@ -141,17 +164,28 @@ async def initialize_knowledge_base() -> Any | None:
             csv_path=str(csv_path),
             status="watching_for_changes",
             timing="early_initialization",
-            note="shared_kb_will_be_initialized_lazily",
+            note="hot_reload_updates_shared_singleton_instance",
         )
     except Exception as e:
-        logger.warning(
-            "Knowledge base CSV watching initialization failed", error=str(e)
-        )
-        logger.info(
-            "Knowledge base will use fallback initialization when first accessed"
-        )
+        logger.warning("Knowledge base CSV watching initialization failed", error=str(e))
+        logger.info("Knowledge base will use fallback initialization when first accessed")
 
     return csv_manager
+
+
+def _extract_dependency_profile(component: Any) -> tuple[str | None, list[str]]:
+    """Return the database label and dependency keys for a component."""
+    dependencies = getattr(component, "dependencies", None)
+    dependency_keys: list[str] = []
+    if isinstance(dependencies, dict):
+        dependency_keys = sorted(str(key) for key in dependencies.keys())
+
+    db_obj = getattr(component, "db", None)
+    if db_obj is None and isinstance(dependencies, dict):
+        db_obj = dependencies.get("db")
+
+    db_label = db_obj.__class__.__name__ if db_obj is not None else None
+    return db_label, dependency_keys
 
 
 async def initialize_other_services(
@@ -173,9 +207,7 @@ async def initialize_other_services(
     from lib.auth.dependencies import get_auth_service
 
     auth_service = get_auth_service()
-    logger.debug(
-        "Authentication service ready", auth_enabled=auth_service.is_auth_enabled()
-    )
+    logger.debug("Authentication service ready", auth_enabled=auth_service.is_auth_enabled())
 
     # Initialize MCP system
     mcp_system = None
@@ -187,14 +219,40 @@ async def initialize_other_services(
         mcp_system = catalog
         logger.debug("MCP system ready", server_count=len(servers))
     except Exception as e:
-        logger.warning("MCP system initialization failed", error=str(e))
+        # Provide more specific error guidance for common MCP issues
+        error_msg = str(e)
+        if "MCP configuration file not found" in error_msg:
+            logger.warning(
+                "MCP system initialization failed - configuration file missing",
+                error=error_msg,
+                suggestion="Ensure .mcp.json exists in working directory or set HIVE_MCP_CONFIG_PATH",
+            )
+        elif "Invalid JSON" in error_msg:
+            logger.warning(
+                "MCP system initialization failed - invalid configuration",
+                error=error_msg,
+                suggestion="Check .mcp.json file for valid JSON syntax",
+            )
+        else:
+            logger.warning("MCP system initialization failed", error=error_msg)
 
     # Initialize metrics service
     metrics_service = None
     try:
-        from lib.config.settings import settings
+        from lib.config.settings import get_settings
+
+        settings = get_settings()
 
         if settings.enable_metrics:
+            if getattr(settings, "hive_agno_v2_migration_enabled", False):
+                logger.info(
+                    "Agno v2 migration readiness enabled",
+                    dry_run_command="uv run python scripts/agno_db_migrate_v2.py --dry-run",
+                    v1_schema=settings.hive_agno_v1_schema,
+                    v2_sessions=settings.hive_agno_v2_sessions_table,
+                    v2_memories=settings.hive_agno_v2_memories_table,
+                )
+
             from lib.metrics import (
                 AgnoMetricsBridge,
                 initialize_dual_path_metrics,
@@ -257,13 +315,11 @@ async def initialize_other_services(
         metrics_service=metrics_service,
     )
 
-    logger.info("⚙️ Remaining services initialization completed")
+    logger.debug("⚙️ Remaining services initialization completed")
     return services
 
 
-async def run_version_synchronization(
-    registries: ComponentRegistries, db_url: str | None
-) -> dict[str, Any] | None:
+async def run_version_synchronization(registries: ComponentRegistries, db_url: str | None) -> dict[str, Any] | None:
     """
     Run component version synchronization with enhanced reporting and proper cleanup.
     Now uses actual registries data for more accurate synchronization.
@@ -288,15 +344,11 @@ async def run_version_synchronization(
         return None
 
     if not db_url:
-        logger.warning(
-            "Version synchronization skipped - HIVE_DATABASE_URL not configured"
-        )
+        logger.warning("Version synchronization skipped - HIVE_DATABASE_URL not configured")
         return None
 
     # Log actual component counts from registries
-    logger.info(
-        "🔄 Synchronizing component versions", discovered_components=registries.summary
-    )
+    logger.info("🔄 Synchronizing component versions", discovered_components=registries.summary)
 
     sync_service = None
     try:
@@ -372,7 +424,12 @@ async def run_version_synchronization(
                 logger.debug("Database cleanup attempted", error=str(cleanup_error))
 
 
-async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
+async def orchestrated_startup(
+    quiet_mode: bool = False,
+    *,
+    enable_knowledge_watch: bool = True,
+    initialize_services: bool = True,
+) -> StartupResults:
     """
     Performance-Optimized Sequential Startup Implementation
 
@@ -394,11 +451,9 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     """
     startup_start = datetime.now()
     if not quiet_mode:
-        logger.info("🚀 Starting Performance-Optimized Sequential Startup")
+        logger.debug("🚀 Starting Performance-Optimized Sequential Startup")
     else:
-        logger.debug(
-            "🚀 Starting Performance-Optimized Sequential Startup (quiet mode)"
-        )
+        logger.debug("🚀 Starting Performance-Optimized Sequential Startup (quiet mode)")
 
     services = None
     registries = None
@@ -407,7 +462,7 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
     try:
         # 1. Database Migration (User requirement - first priority)
         if not quiet_mode:
-            logger.info("🗄️ Database migration check")
+            logger.debug("🗄️ Database migration check")
         try:
             from lib.utils.db_migration import check_and_run_migrations
 
@@ -419,25 +474,25 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
         except Exception as e:
             logger.error("🚨 Database migration check failed", error=str(e))
             logger.error("⚠️ System will continue with limited functionality")
-            logger.error(
-                "💡 Some features requiring database access will be unavailable"
-            )
-            logger.warning(
-                "🔄 Fix database connection and restart for full functionality"
-            )
+            logger.error("💡 Some features requiring database access will be unavailable")
+            logger.warning("🔄 Fix database connection and restart for full functionality")
 
         # 2. Logging System Ready (implicit - already configured)
         if not quiet_mode:
-            logger.info("📝 Logging system ready")
+            logger.debug("📝 Logging system ready")
 
         # 3. Knowledge Base Init (CSV watching setup - shared KB initialized lazily)
-        if not quiet_mode:
-            logger.info("Initializing knowledge base CSV watching")
-        csv_manager = await initialize_knowledge_base()
+        csv_manager = None
+        if enable_knowledge_watch:
+            if not quiet_mode:
+                logger.debug("Initializing knowledge base CSV watching")
+            else:
+                logger.debug("Initializing knowledge base CSV watching (quiet mode)")
+            csv_manager = await initialize_knowledge_base()
 
         # 4. Component Discovery (Single batch operation - MOVED BEFORE version sync)
         if not quiet_mode:
-            logger.info("🔍 Discovering components")
+            logger.debug("🔍 Discovering components")
         registries = await batch_component_discovery()
 
         # 5. Version Synchronization (NOW uses actual discovered registries)
@@ -446,10 +501,18 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
 
         # 6. Configuration Resolution (implicit via registry lazy loading)
         if not quiet_mode:
-            logger.info("⚙️ Configuration resolution completed")
+            logger.debug("⚙️ Configuration resolution completed")
 
         # 7. Other Service Initialization (auth, MCP, metrics)
-        services = await initialize_other_services(csv_manager)
+        if initialize_services:
+            services = await initialize_other_services(csv_manager)
+        else:
+            services = StartupServices(
+                auth_service=None,
+                mcp_system=None,
+                csv_manager=csv_manager,
+                metrics_service=None,
+            )
 
         # 8. Startup Summary
         startup_time = (datetime.now() - startup_start).total_seconds()
@@ -467,20 +530,13 @@ async def orchestrated_startup(quiet_mode: bool = False) -> StartupResults:
                 startup_time_seconds=f"{startup_time:.2f}",
             )
 
-        return StartupResults(
-            registries=registries, services=services, sync_results=sync_results
-        )
+        return StartupResults(registries=registries, services=services, sync_results=sync_results)
 
     except Exception as e:
-        logger.error(
-            "Sequential startup failed", error=str(e), error_type=type(e).__name__
-        )
+        logger.error("Sequential startup failed", error=str(e), error_type=type(e).__name__)
         # Return minimal results to allow server to continue
         return StartupResults(
-            registries=registries
-            or ComponentRegistries(
-                workflows={}, teams={}, agents={}, summary="startup failed"
-            ),
+            registries=registries or ComponentRegistries(workflows={}, teams={}, agents={}, summary="startup failed"),
             services=services or StartupServices(auth_service=None),
             sync_results=sync_results,
         )
@@ -500,10 +556,17 @@ def get_startup_display_with_results(startup_results: StartupResults) -> Any:
 
     startup_display = create_startup_display()
 
-    # Add teams from registries
+    # Add teams from registries (dependency info requires instantiated teams; default to placeholder)
     for team_id in startup_results.registries.teams:
         team_name = team_id.replace("-", " ").title()
-        startup_display.add_team(team_id, team_name, 0, version=1, status="✅")
+        startup_display.add_team(
+            team_id,
+            team_name,
+            0,
+            version=1,
+            status="✅",
+            db_label="—",
+        )
 
     # Add agents from registries
     for agent_id, agent in startup_results.registries.agents.items():
@@ -511,14 +574,177 @@ def get_startup_display_with_results(startup_results: StartupResults) -> Any:
         version = getattr(agent, "version", None)
         if hasattr(agent, "metadata") and agent.metadata:
             version = agent.metadata.get("version", version)
-        startup_display.add_agent(agent_id, agent_name, version=version, status="✅")
+        db_label, dependency_keys = _extract_dependency_profile(agent)
+        startup_display.add_agent(
+            agent_id,
+            agent_name,
+            version=version,
+            status="✅",
+            db_label=db_label or "—",
+            dependencies=dependency_keys,
+        )
 
     # Add workflows from registries
     for workflow_id in startup_results.registries.workflows:
         workflow_name = workflow_id.replace("-", " ").title()
-        startup_display.add_workflow(workflow_id, workflow_name, version=1, status="✅")
+        startup_display.add_workflow(
+            workflow_id,
+            workflow_name,
+            version=1,
+            status="✅",
+            db_label="—",
+        )
 
     # Store sync results
     startup_display.set_sync_results(startup_results.sync_results)
 
+    _populate_surface_status(startup_display, startup_results)
+
+    startup_results.startup_display = startup_display
+
     return startup_display
+
+
+def _safe_class_name(obj: Any) -> str | None:
+    """Return a safe class name for logging/display."""
+    if obj is None:
+        return None
+    return obj.__class__.__name__
+
+
+def build_runtime_summary(startup_results: StartupResults) -> dict[str, Any]:
+    """Generate a lightweight runtime dependency summary for CLI surfaces."""
+
+    display = startup_results.startup_display or get_startup_display_with_results(startup_results)
+
+    agents_summary = {
+        agent_id: {
+            "status": info.get("status"),
+            "version": info.get("version"),
+            "db": info.get("db"),
+            "dependencies": info.get("dependency_keys", []),
+        }
+        for agent_id, info in display.agents.items()
+    }
+
+    teams_summary = {
+        team_id: {
+            "status": info.get("status"),
+            "version": info.get("version"),
+            "db": info.get("db"),
+        }
+        for team_id, info in display.teams.items()
+    }
+
+    workflows_summary = {
+        workflow_id: {
+            "status": info.get("status"),
+            "version": info.get("version"),
+            "db": info.get("db"),
+        }
+        for workflow_id, info in display.workflows.items()
+    }
+
+    services_summary = {
+        "auth_service": _safe_class_name(startup_results.services.auth_service),
+        "mcp_system": _safe_class_name(startup_results.services.mcp_system),
+        "csv_manager": _safe_class_name(startup_results.services.csv_manager),
+        "metrics_service": _safe_class_name(startup_results.services.metrics_service),
+    }
+
+    sync_status = "completed" if startup_results.sync_results else "skipped"
+
+    surfaces_summary = {
+        key: {
+            "status": info.get("status"),
+            "url": info.get("url"),
+            "note": info.get("note"),
+        }
+        for key, info in display.surfaces.items()
+    }
+
+    return {
+        "total_components": startup_results.registries.total_components,
+        "summary": startup_results.registries.summary,
+        "components": {
+            "agents": agents_summary,
+            "teams": teams_summary,
+            "workflows": workflows_summary,
+        },
+        "services": services_summary,
+        "sync_status": sync_status,
+        "surfaces": surfaces_summary,
+    }
+
+
+def _populate_surface_status(display: Any, startup_results: StartupResults) -> None:
+    """Enrich startup display with surface availability and URLs."""
+
+    from lib.config.server_config import get_server_config
+    from lib.config.settings import get_settings
+
+    settings = get_settings()
+    server_config = get_server_config()
+
+    auth_service = startup_results.services.auth_service
+    auth_enabled = False
+    if auth_service is not None and hasattr(auth_service, "is_auth_enabled"):
+        try:
+            auth_enabled = bool(auth_service.is_auth_enabled())
+        except Exception:
+            auth_enabled = False
+
+    playground_status = "⛔ Disabled via settings"
+    playground_note = "Set HIVE_EMBED_PLAYGROUND=true to enable"
+    playground_url = None
+    if getattr(settings, "hive_embed_playground", True):
+        url = server_config.get_playground_url()
+        playground_url = url
+        if url:
+            playground_status = "✅ Enabled"
+            playground_note = "Auth required" if auth_enabled else "Auth disabled"
+        else:
+            playground_status = "⚠️ Enabled (URL unavailable)"
+            playground_note = "Check HIVE_PLAYGROUND_MOUNT_PATH or PORT"
+
+    display.add_surface(
+        "playground",
+        "Agno Playground",
+        playground_status,
+        url=playground_url,
+        note=playground_note,
+    )
+
+    agentos_status: str
+    agentos_note: str
+
+    config_path = getattr(settings, "hive_agentos_config_path", None)
+    enable_defaults = getattr(settings, "hive_agentos_enable_defaults", True)
+
+    if config_path:
+        from pathlib import Path
+
+        config_file = Path(config_path)
+        if config_file.is_file():
+            agentos_status = "✅ Configured"
+            agentos_note = f"Config path: {config_file}"
+        else:
+            agentos_status = "⚠️ Missing config"
+            agentos_note = f"Expected at {config_file}"
+    elif enable_defaults:
+        agentos_status = "✅ Defaults"
+        agentos_note = "Using built-in AgentOS defaults"
+    else:
+        agentos_status = "⛔ Disabled"
+        agentos_note = "Provide HIVE_AGENTOS_CONFIG_PATH or enable defaults"
+
+    control_pane_base = server_config.get_control_pane_url()
+    agentos_endpoint = f"{server_config.get_base_url()}/api/v1/agentos/config"
+
+    display.add_surface(
+        "agentos_control_pane",
+        "AgentOS Control Pane",
+        agentos_status,
+        url=control_pane_base,
+        note=f"Config endpoint: {agentos_endpoint} — {agentos_note}",
+    )

@@ -47,10 +47,7 @@ def _get_caller_file_path() -> str | None:
             filename = frame.f_code.co_filename
 
             # Skip internal frames (loguru, logging, this module, etc.)
-            if not any(
-                skip_pattern in filename
-                for skip_pattern in ["loguru", "logging", "__init__.py", "config.py"]
-            ):
+            if not any(skip_pattern in filename for skip_pattern in ["loguru", "logging", "__init__.py", "config.py"]):
                 return filename
 
         return None
@@ -107,7 +104,7 @@ def setup_logging():
                     # These messages should get emojis but didn't - let's see why
                     pass  # Could add debug logging here if needed
 
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
         # For multiprocessing main modules, use simplified format
@@ -162,9 +159,9 @@ def setup_logging():
                             # Replace the message part with enhanced version
                             parts[-1] = enhanced_message
                             return " - ".join(parts)
-                        except Exception:
+                        except Exception:  # noqa: S110 - Silent exception handling is intentional
                             pass
-            except Exception:
+            except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 
             return original_msg
@@ -176,15 +173,14 @@ def setup_logging():
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
 
-    # Only add our handler if it's not already there
-    if not any(isinstance(h, EmojiLoggingHandler) for h in root_logger.handlers):
-        emoji_handler = EmojiLoggingHandler()
-        emoji_handler.setLevel(log_level)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        emoji_handler.setFormatter(formatter)
-        root_logger.addHandler(emoji_handler)
+    # Reset existing handlers before attaching our sink to avoid duplicate output
+    root_logger.handlers.clear()
+
+    emoji_handler = EmojiLoggingHandler()
+    emoji_handler.setLevel(log_level)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    emoji_handler.setFormatter(formatter)
+    root_logger.addHandler(emoji_handler)
 
     # Configure specific logger levels
     # Always suppress uvicorn access logs (too noisy)
@@ -193,8 +189,8 @@ def setup_logging():
     # Suppress other commonly noisy libraries only when not in DEBUG
     if level != "DEBUG":
         logging.getLogger("urllib3").setLevel(logging.WARNING)
-        logging.getLogger("requests").setLevel(logging.WARNING)
         logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     # Always suppress extremely noisy watchdog DEBUG logs (even in DEBUG mode)
     # Watchdog can generate hundreds of inotify_buffer DEBUG messages per second
@@ -213,6 +209,17 @@ def setup_logging():
     agno_log_level = getattr(logging, agno_level, logging.WARNING)
     logging.getLogger("agno").setLevel(agno_log_level)
 
+    # CRITICAL FIX: Agno internal loggers have propagate=False, so we must set their levels directly
+    try:
+        from agno.utils.log import agent_logger, team_logger, workflow_logger
+
+        agent_logger.setLevel(agno_log_level)
+        team_logger.setLevel(agno_log_level)
+        workflow_logger.setLevel(agno_log_level)
+    except ImportError:
+        # Agno not installed or not available
+        pass
+
     # Note: Agno logging emoji injection is handled via agno_emoji_patch.py
     # when knowledge base loading occurs
 
@@ -229,6 +236,31 @@ def ensure_logging_initialized():
         _logging_initialized = True
 
 
-# CRITICAL FIX: Remove auto-initialization on import to prevent race condition
+def initialize_logging(surface: str | None = None, *, force: bool = False) -> bool:
+    """Bootstrap logging and optionally tag the requesting surface.
+
+    Args:
+        surface: Identifier for the component requesting initialization.
+        force: When True, re-run setup even if initialization already occurred.
+
+    Returns:
+        bool: True when this call performed initialization, False when already active.
+    """
+
+    global _logging_initialized
+
+    if force:
+        _logging_initialized = False
+
+    already_initialized = _logging_initialized
+    ensure_logging_initialized()
+
+    if surface and not already_initialized:
+        logger.debug("Logging bootstrap complete", surface=surface)
+
+    return not already_initialized
+
+
+# Remove auto-initialization on import to prevent race condition
 # This was causing logging to be configured before .env files were loaded
 # Now logging is initialized explicitly in api/serve.py after environment setup

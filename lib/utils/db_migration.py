@@ -23,7 +23,7 @@ def _find_alembic_config() -> Path:
     """
     Find alembic.ini with UVX-aware path resolution.
 
-    CRITICAL FIX: In UVX environments, __file__ points to the installed package
+    In UVX environments, __file__ points to the installed package
     location, not the workspace directory. This function implements multiple
     strategies to locate alembic.ini in the correct location.
 
@@ -57,7 +57,7 @@ def _find_alembic_config() -> Path:
     # Strategy 4: Search common locations where workspace might be
     common_locations = [
         Path.home() / "workspace",
-        Path("/tmp"),
+        Path("/tmp"),  # noqa: S108
         Path("/workspace"),  # Docker context
     ]
 
@@ -65,9 +65,7 @@ def _find_alembic_config() -> Path:
         if base_path.exists():
             for potential_workspace in base_path.glob("*/alembic.ini"):
                 if potential_workspace.exists():
-                    logger.debug(
-                        f"Found alembic.ini in common location: {potential_workspace}"
-                    )
+                    logger.debug(f"Found alembic.ini in common location: {potential_workspace}")
                     return potential_workspace
 
     # If all strategies fail, provide helpful error message
@@ -85,7 +83,7 @@ def _ensure_environment_loaded():
     """
     Ensure environment variables are loaded consistently across all environments.
 
-    CRITICAL FIX: This function handles UVX environments where working directory
+    This function handles UVX environments where working directory
     differs from development, preventing .env file loading issues.
     """
     try:
@@ -98,15 +96,10 @@ def _ensure_environment_loaded():
         project_root = current_dir
         while project_root.parent != project_root:
             env_file = project_root / ".env"
-            env_agent_file = project_root / ".env.agent"
 
             if env_file.exists():
                 load_dotenv(dotenv_path=env_file)
                 logger.debug(f"Loaded environment from {env_file}")
-                return
-            if env_agent_file.exists():
-                load_dotenv(dotenv_path=env_agent_file)
-                logger.debug(f"Loaded environment from {env_agent_file}")
                 return
 
             # Look for pyproject.toml as project root indicator
@@ -129,13 +122,13 @@ async def check_and_run_migrations() -> bool:
     """
     Check if database migrations are needed and run them if necessary.
 
-    CRITICAL FIX: Ensures consistent environment loading across all environments.
+    Ensures consistent environment loading across all environments.
 
     Returns:
         bool: True if migrations were run, False if not needed
     """
     try:
-        # CRITICAL FIX: Ensure environment variables are loaded before migration check
+        # Ensure environment variables are loaded before migration check
         # This handles UVX environments where .env may not be auto-loaded
         _ensure_environment_loaded()
 
@@ -158,9 +151,7 @@ async def check_and_run_migrations() -> bool:
             with engine.connect() as conn:
                 # Check if hive schema exists
                 result = conn.execute(
-                    text(
-                        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'hive'"
-                    )
+                    text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'hive'")
                 )
                 schema_exists = result.fetchone() is not None
 
@@ -197,28 +188,19 @@ async def check_and_run_migrations() -> bool:
             # Provide specific guidance based on error type
             if "password authentication failed" in error_str:
                 logger.error("❌ CRITICAL: Database authentication failed!")
-                logger.error(
-                    "📝 ACTION REQUIRED: Check your database credentials in .env files"
-                )
+                logger.error("📝 ACTION REQUIRED: Check your database credentials in .env files")
                 logger.error("🔧 Steps to fix:")
-                logger.error("   1. Verify HIVE_DATABASE_URL in .env and .env.agent")
+                logger.error("   1. Verify HIVE_DATABASE_URL in .env file")
                 logger.error("   2. Ensure PostgreSQL is running on the specified port")
                 logger.error("   3. Confirm username/password are correct")
                 logger.error("   4. Test connection: psql 'your-database-url-here'")
-            elif (
-                "Connection refused" in error_str
-                or "could not connect to server" in error_str
-            ):
+            elif "Connection refused" in error_str or "could not connect to server" in error_str:
                 logger.error("❌ CRITICAL: Database server is not accessible!")
                 logger.error("📝 ACTION REQUIRED: Start your PostgreSQL database")
                 logger.error("🔧 Steps to fix:")
-                logger.error(
-                    "   1. Start PostgreSQL: 'make agent' should start postgres automatically"
-                )
+                logger.error("   1. Start PostgreSQL: 'make agent' should start postgres automatically")
                 logger.error("   2. Check if postgres is running: 'make agent-status'")
-                logger.error(
-                    "   3. Verify DATABASE_URL port matches your postgres instance"
-                )
+                logger.error("   3. Verify DATABASE_URL port matches your postgres instance")
             else:
                 logger.error("❌ CRITICAL: Database connection error!")
                 logger.error("📝 ACTION REQUIRED: Fix database configuration")
@@ -240,9 +222,7 @@ def _check_migration_status(conn) -> bool:
         alembic_cfg = Config(str(alembic_cfg_path))
 
         # Get current database revision (configure with hive schema)
-        context = MigrationContext.configure(
-            conn, opts={"version_table_schema": "hive"}
-        )
+        context = MigrationContext.configure(conn, opts={"version_table_schema": "hive"})
         current_rev = context.get_current_revision()
 
         # Get script directory and head revision

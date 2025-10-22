@@ -23,7 +23,7 @@ from .batch_logger import (
     set_runtime_mode,
     startup_logging,
 )
-from .config import setup_logging
+from .config import ensure_logging_initialized, initialize_logging, setup_logging
 from .progress import component_tracker, startup_progress
 from .session_logger import (
     log_run_continuation_attempt,
@@ -49,6 +49,8 @@ __all__ = [
     "log_storage_created",
     "log_team_member_loaded",
     "logger",
+    "initialize_logging",
+    "ensure_logging_initialized",
     "session_logger",
     "set_runtime_mode",
     "setup_logging",

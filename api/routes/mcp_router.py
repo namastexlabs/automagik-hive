@@ -1,17 +1,17 @@
-"""
-MCP Status API Routes
+"""MCP Status API Routes with runtime diagnostics helpers."""
 
-Simple REST endpoints for MCP server status information.
-"""
-
-from typing import Any
+import inspect
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException
 
 from lib.logging import logger
 from lib.mcp import MCPCatalog, get_mcp_tools
 
-router = APIRouter(prefix="/api/v1/mcp", tags=["MCP Status"])
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+
+router = APIRouter(prefix="/mcp", tags=["MCP Status"])
 
 
 @router.get("/status")
@@ -87,12 +87,17 @@ async def test_server_connection(server_name: str) -> dict[str, Any]:
     """
     try:
         # Test connection by creating MCP tools
-        async with get_mcp_tools(server_name) as tools:
+        tool_context = get_mcp_tools(server_name)
+        if inspect.isawaitable(tool_context):
+            tool_context = await tool_context
+
+        async with tool_context as tools:
             # Try to list tools to verify connection
             available_tools = []
             if hasattr(tools, "list_tools"):
                 try:
-                    available_tools = tools.list_tools()
+                    maybe_tools = tools.list_tools()
+                    available_tools = await maybe_tools if inspect.isawaitable(maybe_tools) else maybe_tools
                 except Exception as e:
                     logger.warning(f"🌐 Could not list tools for {server_name}: {e}")
 

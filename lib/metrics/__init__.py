@@ -14,10 +14,10 @@ Key Features:
 - Automatic integration with agent/team/workflow proxies
 
 Comprehensive Metrics Coverage:
-- Token metrics: input_tokens, output_tokens, total_tokens, prompt_tokens, completion_tokens
-- Advanced tokens: audio_tokens, cached_tokens, reasoning_tokens, cache_write_tokens
-- Timing metrics: time, time_to_first_token
-- Content metrics: prompt_tokens_details, completion_tokens_details
+- Token metrics: input_tokens, output_tokens, total_tokens
+- Advanced tokens: audio_total_tokens, audio_input_tokens, audio_output_tokens, cache_read_tokens, cache_write_tokens, reasoning_tokens
+- Timing metrics: duration, time_to_first_token
+- Content metrics: additional_metrics (prompt/completion breakdown, provider payloads)
 
 Usage:
     # Environment configuration
@@ -111,8 +111,10 @@ def _check_langwatch_availability() -> bool:
         True if LangWatch can be imported, False otherwise
     """
     try:
-        import langwatch
-        from openinference.instrumentation.agno import AgnoInstrumentor
+        import langwatch  # noqa: F401 - Availability test, import required
+        from openinference.instrumentation.agno import (
+            AgnoInstrumentor,  # noqa: F401 - Availability test, import required
+        )
 
         return True
     except ImportError:
@@ -134,7 +136,7 @@ def get_metrics_status() -> dict:
         try:
             service = get_metrics_service()
             metrics_service_available = service is not None
-        except Exception:
+        except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
 
     return {

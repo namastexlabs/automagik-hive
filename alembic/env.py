@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Load environment variables from .env file
-# CRITICAL FIX: Use explicit file path to ensure consistent loading across all environments
+# Use explicit file path to ensure consistent loading across all environments
 try:
     import os
     from pathlib import Path
@@ -20,16 +20,11 @@ try:
     # This makes loading independent of current working directory (fixes UVX issues)
     project_dir = Path(__file__).parent.parent
 
-    # Try to load .env first (development/production)
+    # Load .env file (unified configuration)
     dotenv_path = project_dir / ".env"
     if dotenv_path.exists():
         load_dotenv(dotenv_path=dotenv_path)
-    else:
-        # Fallback to .env.agent (agent workspace)
-        dotenv_agent_path = project_dir / ".env.agent"
-        if dotenv_agent_path.exists():
-            load_dotenv(dotenv_path=dotenv_agent_path)
-        # If neither exists, rely on system environment variables
+    # If .env doesn't exist, rely on system environment variables
 
 except ImportError:
     pass  # dotenv not available, use system env vars
@@ -44,16 +39,16 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import hive models for autogenerate support
-from lib.models import Base
+from lib.models import Base  # noqa: E402 - Database configuration must be set before importing models
 
 target_metadata = Base.metadata
 
 
-# Get database URL from environment with enhanced error handling
+# Get database URL from environment with comprehensive error handling
 def get_url():
     db_url = os.getenv("HIVE_DATABASE_URL")
     if not db_url:
-        # Enhanced error message for UVX debugging
+        # Comprehensive error message for UVX debugging
         raise ValueError(
             "HIVE_DATABASE_URL environment variable must be set. "
             "This error often occurs in UVX environments when .env files cannot be found. "

@@ -21,53 +21,82 @@ dist/
 downloads/
 eggs/
 .eggs/
+# lib/  # DISABLED - this ignores our project's lib/ directory
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-*.whl
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
 
 # Virtual environments
-.venv/
+.venv
+env/
 venv/
 ENV/
-env/
+env.bak/
+venv.bak/
 
-# Development tools cache
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-.tox/
-
-# Testing and coverage
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-coverage.json
-
-# IDEs and editors
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Databases  
-*.db
-*.sqlite
-*.sqlite3
-data/
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
 
 # Logs
 logs/
 *.log
 
-# Temporary files and directories
-tmp/
+# Database
+data/
+!lib/knowledge/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore
+
+# MacOS
+.DS_Store
+.coverage
+
+# Environment variables - CRITICAL SECURITY
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
+
+# MCP Configuration - CRITICAL SECURITY
+.mcp.json
+**/.mcp.json
+ai/.mcp.json
+*mcp.json
+agent.pid
+
+# Temporary files
+.tmp/
 temp/
 backup/
 backups/

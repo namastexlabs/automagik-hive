@@ -1,0 +1,160 @@
+# PyPI Publishing Workflow
+# Automatically publishes to PyPI when a version tag is pushed
+# Supports release candidates (rc), beta (b), and stable releases
+
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'        # Matches v1.0.0, v0.2.0rc1, v0.1.1b2, etc.
+  release:
+    types: [published]  # Triggers when Release Please merges
+  workflow_dispatch:    # Allow manual triggering
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Build and publish to PyPI
+  publish-pypi:
+    name: Build and Publish to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/automagik-hive/
+    permissions:
+      id-token: write      # Required for trusted publishing
+      contents: write      # Required for GitHub Release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Building version: $VERSION"
+
+          # Detect if this is a pre-release
+          if [[ "$VERSION" =~ (rc|b|a|alpha|beta) ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "🔖 Detected pre-release version"
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "🎉 Detected stable release version"
+          fi
+
+      - name: Verify pyproject.toml version matches tag
+        run: |
+          PYPROJECT_VERSION=$(grep '^version = ' pyproject.toml | cut -d'"' -f2)
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+
+          if [ "$PYPROJECT_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch!"
+            echo "   pyproject.toml: $PYPROJECT_VERSION"
+            echo "   Git tag: $TAG_VERSION"
+            exit 1
+          fi
+
+          echo "✅ Version match confirmed: $PYPROJECT_VERSION"
+
+      - name: Install build dependencies
+        run: uv sync --dev
+
+      - name: Build package
+        run: |
+          echo "🔨 Building package..."
+          uv build
+
+          echo "📦 Build artifacts:"
+          ls -lh dist/
+
+      - name: Verify build artifacts
+        run: |
+          # Python normalizes version strings (0.2.0.rc1 → 0.2.0rc1)
+          # So we just check if wheel and tar.gz exist
+          WHEEL_COUNT=$(ls dist/*.whl 2>/dev/null | wc -l)
+          TAR_COUNT=$(ls dist/*.tar.gz 2>/dev/null | wc -l)
+
+          if [ "$WHEEL_COUNT" -eq 0 ]; then
+            echo "❌ Wheel file not found!"
+            ls -la dist/
+            exit 1
+          fi
+
+          if [ "$TAR_COUNT" -eq 0 ]; then
+            echo "❌ Source distribution not found!"
+            ls -la dist/
+            exit 1
+          fi
+
+          echo "✅ Build artifacts present:"
+          ls -lh dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+          verbose: true
+
+      - name: Create summary
+        run: |
+          echo "## 🎉 Package Published to PyPI!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Pre-release:** ${{ steps.version.outputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Installation" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Install from PyPI" >> $GITHUB_STEP_SUMMARY
+          echo "pip install automagik-hive==${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Or run directly with uvx" >> $GITHUB_STEP_SUMMARY
+          echo "uvx automagik-hive@${{ steps.version.outputs.version }} --version" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [PyPI Package](https://pypi.org/project/automagik-hive/${{ steps.version.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⏰ Availability" >> $GITHUB_STEP_SUMMARY
+          echo "Package will be available on PyPI in ~5-10 minutes" >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          # Extract the markdown template from RELEASE_NOTES_TEMPLATE.md
+          sed -n '/^## Default Template$/,/^```$/p' .github/RELEASE_NOTES_TEMPLATE.md | \
+            sed '1d;$d' | \
+            sed 's/^```markdown$//' | \
+            sed 's/\\```/```/g' | \
+            sed "s/{{VERSION}}/${{ steps.version.outputs.version }}/g" | \
+            sed "s|{{REPOSITORY}}|${{ github.repository }}|g" \
+            > release-notes.md
+
+          echo "📝 Generated release notes:"
+          cat release-notes.md
+
+      - name: Update GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          generate_release_notes: true
+          append_body: true

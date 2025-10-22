@@ -31,9 +31,13 @@ class AgnoTeamProxy:
         """Initialize the proxy by introspecting the current Agno Team class."""
         self._supported_params = self._discover_team_parameters()
         self._custom_params = self._get_custom_parameter_handlers()
-        logger.debug(
-            f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters"
-        )
+        logger.debug(f"🤖 AgnoTeamProxy initialized with {len(self._supported_params)} Agno Team parameters")
+
+    _LEGACY_MEMORY_KEY_MAP = {
+        "add_history_to_messages": "add_history_to_context",
+        "add_memory_references": "add_memories_to_context",
+        "add_session_summary_references": "add_session_summary_to_context",
+    }
 
     def _discover_team_parameters(self) -> set[str]:
         """
@@ -47,15 +51,9 @@ class AgnoTeamProxy:
             sig = inspect.signature(Team.__init__)
 
             # Extract all parameter names except 'self'
-            params = {
-                param_name
-                for param_name, param in sig.parameters.items()
-                if param_name != "self"
-            }
+            params = {param_name for param_name, param in sig.parameters.items() if param_name != "self"}
 
-            logger.debug(
-                f"🤖 Discovered {len(params)} Agno Team parameters: {sorted(params)}"
-            )
+            logger.debug(f"🤖 Discovered {len(params)} Agno Team parameters: {sorted(params)}")
             return params
 
         except Exception as e:
@@ -131,15 +129,20 @@ class AgnoTeamProxy:
             "memory",
             "enable_agentic_memory",
             "enable_user_memories",
+            "memory_manager",
             "add_memory_references",
+            "add_memories_to_context",
             "enable_session_summaries",
             "add_session_summary_references",
+            "add_session_summary_to_context",
             "enable_team_history",
             "add_history_to_messages",
+            "add_history_to_context",
             "num_of_interactions_from_history",
             "num_history_runs",
-            # Storage
-            "storage",
+            # Database
+            "db",
+            "dependencies",
             "extra_data",
             # Reasoning
             "reasoning",
@@ -171,7 +174,9 @@ class AgnoTeamProxy:
         return {
             # Model configuration with thinking support
             "model": self._handle_model_config,
-            # Storage configuration (now uses shared utilities)
+            # Database configuration (now uses shared utilities)
+            "db": self._handle_db_config,
+            # Legacy storage support (deprecated)
             "storage": self._handle_storage_config,
             # Memory configuration
             "memory": self._handle_memory_config,
@@ -234,9 +239,7 @@ class AgnoTeamProxy:
 
         # Filter to only supported Agno parameters
         filtered_params = {
-            key: value
-            for key, value in team_params.items()
-            if key in self._supported_params and value is not None
+            key: value for key, value in team_params.items() if key in self._supported_params and value is not None
         }
 
         logger.debug(f"🤖 Creating team with {len(filtered_params)} parameters")
@@ -254,9 +257,7 @@ class AgnoTeamProxy:
 
             # Wrap team.run() method for metrics collection
             if metrics_service and hasattr(metrics_service, "collect_from_response"):
-                team = self._wrap_team_with_metrics(
-                    team, component_id, config, metrics_service
-                )
+                team = self._wrap_team_with_metrics(team, component_id, config, metrics_service)
 
             return team
 
@@ -272,30 +273,53 @@ class AgnoTeamProxy:
         processed = {}
 
         # Process each configuration section
-        for key, value in config.items():
+        for key, value in list(config.items()):
             if key in self._custom_params:
                 # Use custom handler
                 if key == "members":
                     # Special handling for async members handler
                     handler_result = await self._custom_params[key](
-                        value, config, component_id, db_url, **kwargs
+                        value,
+                        config,
+                        component_id,
+                        db_url,
+                        processed=processed,
+                        **kwargs,
                     )
                 else:
-                    handler_result = self._custom_params[key](
-                        value, config, component_id, db_url, **kwargs
-                    )
+                    handler = self._custom_params[key]
+                    try:
+                        handler_result = handler(
+                            value,
+                            config,
+                            component_id,
+                            db_url,
+                            processed=processed,
+                            **kwargs,
+                        )
+                    except TypeError as exc:
+                        if "processed" in str(exc):
+                            handler_result = handler(value, config, component_id, db_url, **kwargs)
+                        else:
+                            raise
                 if isinstance(handler_result, dict):
                     processed.update(handler_result)
                 else:
                     processed[key] = handler_result
             elif key in self._supported_params:
                 # Direct mapping for supported parameters
-                processed[key] = value
+                if (
+                    key == "dependencies"
+                    and isinstance(value, dict)
+                    and isinstance(processed.get("dependencies"), dict)
+                ):
+                    merged_dependencies = {**processed["dependencies"], **value}
+                    processed["dependencies"] = merged_dependencies
+                else:
+                    processed[key] = value
             else:
                 # Log unknown parameters for debugging
-                logger.debug(
-                    f"🤖 Unknown Team parameter '{key}' in config for {component_id}"
-                )
+                logger.debug(f"🤖 Unknown Team parameter '{key}' in config for {component_id}")
 
         return processed
 
@@ -307,22 +331,71 @@ class AgnoTeamProxy:
         db_url: str | None,
         **kwargs,
     ):
-        """Handle model configuration with dynamic provider support."""
-        from lib.config.models import resolve_model
+        """Handle model configuration with truly dynamic provider support.
 
-        # Use dynamic model resolution to support all providers
-        return resolve_model(
-            model_id=model_config.get("id"),
-            temperature=model_config.get(
-                "temperature", 1.0
-            ),  # Teams often use higher temp
-            max_tokens=model_config.get("max_tokens", 2000),
-            **{
-                k: v
-                for k, v in model_config.items()
-                if k not in ["id", "temperature", "max_tokens"]
-            },
+        Uses runtime introspection instead of hardcoded parameter lists.
+        """
+        from lib.config.models import resolve_model
+        from lib.config.provider_registry import get_provider_registry
+        from lib.utils.dynamic_model_resolver import filter_model_parameters
+
+        model_id = model_config.get("id")
+        if not model_id:
+            # Use default resolution
+            return resolve_model(model_id=None, **model_config)
+
+        # Detect provider and get model class
+        provider = get_provider_registry().detect_provider(model_id)
+        if not provider:
+            # Fallback to standard resolution
+            return resolve_model(model_id=model_id, **model_config)
+
+        # Get the actual model class
+        model_class = get_provider_registry().resolve_model_class(provider, model_id)
+        if not model_class:
+            # Fallback to standard resolution
+            return resolve_model(model_id=model_id, **model_config)
+
+        # Use dynamic filtering to only pass parameters the model class accepts
+        filtered_config = filter_model_parameters(model_class, model_config)
+
+        # Ensure teams default to higher temperature if not specified
+        if "temperature" not in filtered_config and "temperature" in inspect.signature(model_class.__init__).parameters:
+            filtered_config["temperature"] = 1.0  # Teams often use higher temp
+
+        # Return configuration for lazy instantiation by Agno Team instead of creating instances
+        return {"id": model_id, **filtered_config}
+
+    def _handle_db_config(
+        self,
+        db_config: dict[str, Any] | None,
+        config: dict[str, Any],
+        component_id: str,
+        db_url: str | None,
+        **kwargs,
+    ):
+        """Handle db configuration using shared utilities."""
+        if db_config is None:
+            logger.debug("🤖 No db configuration provided for team '%s'", component_id)
+            return {}
+
+        if not isinstance(db_config, dict):
+            logger.warning(
+                "🤖 Invalid db config for team %s: expected dict, got %s",
+                component_id,
+                type(db_config),
+            )
+            return {}
+
+        resources = create_dynamic_storage(
+            storage_config=db_config,
+            component_id=component_id,
+            component_mode="team",
+            db_url=db_url,
         )
+
+        config.setdefault("_computed", {})["db"] = resources["db"]
+        return resources
 
     def _handle_storage_config(
         self,
@@ -332,12 +405,17 @@ class AgnoTeamProxy:
         db_url: str | None,
         **kwargs,
     ):
-        """Handle storage configuration using shared utilities."""
-        return create_dynamic_storage(
-            storage_config=storage_config,
-            component_id=component_id,
-            component_mode="team",
-            db_url=db_url,
+        """Backwards-compatible storage handler delegating to db handler."""
+        logger.warning(
+            "🤖 'storage' configuration detected for team '%s'. Please migrate to 'db'.",
+            component_id,
+        )
+        return self._handle_db_config(
+            storage_config,
+            config,
+            component_id,
+            db_url,
+            **kwargs,
         )
 
     def _handle_memory_config(
@@ -349,14 +427,50 @@ class AgnoTeamProxy:
         **kwargs,
     ) -> object | None:
         """Handle memory configuration."""
-        if memory_config is not None and memory_config.get(
-            "enable_user_memories", False
-        ):
+        if not isinstance(memory_config, dict):
+            logger.warning(
+                "🤖 Invalid memory config for team %s: expected dict, got %s",
+                component_id,
+                type(memory_config),
+            )
+            return {}
+
+        enable_memories = memory_config.get("enable_user_memories") or memory_config.get("enable_agentic_memory")
+
+        result: dict[str, Any] = {}
+        if enable_memories:
             from lib.memory.memory_factory import create_team_memory
 
-            # Let MemoryFactoryError bubble up - no silent failures
-            return create_team_memory(component_id, db_url)
-        return None
+            processed = kwargs.get("processed", {}) if kwargs else {}
+            shared_db = processed.get("db")
+            memory_manager = create_team_memory(
+                component_id,
+                db_url,
+                db=shared_db,
+            )
+            result["memory_manager"] = memory_manager
+
+        if enable_memories:
+            for key, value in memory_config.items():
+                target_key = self._LEGACY_MEMORY_KEY_MAP.get(key, key)
+                if target_key in self._supported_params:
+                    result[target_key] = value
+                    if target_key != key:
+                        logger.debug(
+                            "🤖 Mapped legacy memory parameter '%s' -> '%s' for team %s",
+                            key,
+                            target_key,
+                            component_id,
+                        )
+                else:
+                    logger.debug(
+                        "🤖 Unknown memory parameter '%s' (mapped to '%s') for team %s",
+                        key,
+                        target_key,
+                        component_id,
+                    )
+
+        return result
 
     def _handle_team_metadata(
         self,
@@ -434,9 +548,7 @@ class AgnoTeamProxy:
             return []
 
         # Agno handles MCP integration natively - just pass server names
-        logger.info(
-            f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}"
-        )
+        logger.info(f"🌐 Configured MCP servers for team {component_id}: {', '.join(mcp_servers_config)}")
         return mcp_servers_config
 
     def _handle_tools_config(
@@ -491,9 +603,7 @@ class AgnoTeamProxy:
                 loaded_tool_names.append(str(tool_config))
 
         if loaded_tool_names:
-            logger.info(
-                f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}"
-            )
+            logger.info(f"🤖 Loaded native tools for team {component_id}: {', '.join(loaded_tool_names)}")
 
         return processed_tools
 
@@ -508,9 +618,7 @@ class AgnoTeamProxy:
         """Handle custom parameters that should be stored in metadata only."""
         return
 
-    def _create_metadata(
-        self, config: dict[str, Any], component_id: str
-    ) -> dict[str, Any]:
+    def _create_metadata(self, config: dict[str, Any], component_id: str) -> dict[str, Any]:
         """Create metadata dictionary for the team."""
         team_config = config.get("team", {})
 
@@ -573,15 +681,11 @@ class AgnoTeamProxy:
                                 yaml_overrides=yaml_overrides,
                             )
                             if not success:
-                                logger.debug(
-                                    f"🤖 Metrics collection returned false for team {component_id}"
-                                )
+                                logger.debug(f"🤖 Metrics collection returned false for team {component_id}")
 
                     except Exception as metrics_error:
                         # Don't let metrics collection failures break team execution
-                        logger.warning(
-                            f"🤖 Metrics collection error for team {component_id}: {metrics_error}"
-                        )
+                        logger.warning(f"🤖 Metrics collection error for team {component_id}: {metrics_error}")
                         # Continue execution - metrics failure should not affect team operation
 
                 return response

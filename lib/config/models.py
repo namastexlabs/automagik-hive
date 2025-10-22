@@ -69,12 +69,10 @@ class ModelResolver:
                 "Example: export HIVE_DEFAULT_MODEL=gpt-4o-mini"
             )
 
-        logger.debug(
-            "Default model resolved from HIVE_DEFAULT_MODEL", model_id=default_model
-        )
+        logger.debug("Default model resolved from HIVE_DEFAULT_MODEL", model_id=default_model)
         return default_model
 
-    @lru_cache(maxsize=128)
+    @lru_cache(maxsize=128)  # noqa: B019 - Intentional cache for singleton
     def _detect_provider(self, model_id: str) -> str:
         """
         Detect provider from model ID using dynamic registry.
@@ -90,9 +88,7 @@ class ModelResolver:
         """
         provider = get_provider_registry().detect_provider(model_id)
         if provider is None:
-            available_providers = sorted(
-                get_provider_registry().get_available_providers()
-            )
+            available_providers = sorted(get_provider_registry().get_available_providers())
             logger.error(
                 "Provider detection failed",
                 model_id=model_id,
@@ -102,12 +98,10 @@ class ModelResolver:
                 f"Cannot detect provider for model ID '{model_id}'. Available providers: {available_providers}"
             )
 
-        logger.debug(
-            "Provider detected via registry", model_id=model_id, provider=provider
-        )
+        logger.debug("Provider detected via registry", model_id=model_id, provider=provider)
         return provider
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=64)  # noqa: B019 - Intentional cache for singleton
     def _discover_model_class(self, provider: str, model_id: str):
         """
         Dynamically discover and import Agno model class using registry.
@@ -186,9 +180,7 @@ class ModelResolver:
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            raise ModelResolutionError(
-                f"Failed to resolve model '{resolved_model_id}': {e}"
-            )
+            raise ModelResolutionError(f"Failed to resolve model '{resolved_model_id}': {e}")
 
     def validate_model_availability(self, model_id: str) -> bool:
         """

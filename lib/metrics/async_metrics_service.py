@@ -125,9 +125,7 @@ class AsyncMetricsService:
             try:
                 # Try to get items from queue with timeout
                 try:
-                    entry = await asyncio.wait_for(
-                        self.metrics_queue.get(), timeout=0.1
-                    )
+                    entry = await asyncio.wait_for(self.metrics_queue.get(), timeout=0.1)
                     batch.append(entry)
                     self.metrics_queue.task_done()
 
@@ -149,9 +147,7 @@ class AsyncMetricsService:
                     logger.debug(
                         "Processing batch for storage",
                         batch_size=len(batch),
-                        reason="size_limit"
-                        if len(batch) >= self.batch_size
-                        else "time_limit",
+                        reason="size_limit" if len(batch) >= self.batch_size else "time_limit",
                     )
 
                     await self._store_batch(batch.copy())
@@ -192,9 +188,7 @@ class AsyncMetricsService:
 
             # Wait for all tasks to complete with timeout
             try:
-                results = await asyncio.wait_for(
-                    asyncio.gather(*tasks, return_exceptions=True), timeout=10.0
-                )
+                results = await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=10.0)
 
                 # Count successful stores
                 stored_count = 0
@@ -327,13 +321,9 @@ class AsyncMetricsService:
             try:
                 asyncio.get_running_loop()
                 # Create task for async collection
-                asyncio.create_task(
-                    self.collect_metrics(agent_name, execution_type, metrics)
-                )
+                asyncio.create_task(self.collect_metrics(agent_name, execution_type, metrics))
 
-                logger.debug(
-                    "Async task created for metrics collection", agent_name=agent_name
-                )
+                logger.debug("Async task created for metrics collection", agent_name=agent_name)
                 return True
             except RuntimeError as e:
                 # No running loop - this shouldn't happen in FastAPI context
@@ -362,10 +352,11 @@ class AsyncMetricsService:
 
         DROP-IN REPLACEMENT: Now uses AgnoMetricsBridge for superior metrics collection.
         Provides comprehensive coverage of AGNO native metrics including:
-        - Token metrics: input_tokens, output_tokens, total_tokens, prompt_tokens, completion_tokens
-        - Advanced tokens: audio_tokens, cached_tokens, reasoning_tokens, cache_write_tokens
-        - Timing metrics: time, time_to_first_token
-        - Content metrics: prompt_tokens_details, completion_tokens_details
+        - Token metrics: input_tokens, output_tokens, total_tokens
+        - Advanced tokens: audio_total_tokens, audio_input_tokens, audio_output_tokens,
+          cache_read_tokens, cache_write_tokens, reasoning_tokens
+        - Timing metrics: duration, time_to_first_token
+        - Content metrics: additional_metrics (provider breakdowns, prompt/completion details)
         - Additional metrics: model-specific metrics
 
         Args:
@@ -406,10 +397,7 @@ class AsyncMetricsService:
 
         # Wait for queue to empty
         start_time = asyncio.get_event_loop().time()
-        while (
-            self.metrics_queue.qsize() > 0
-            and asyncio.get_event_loop().time() - start_time < timeout
-        ):
+        while self.metrics_queue.qsize() > 0 and asyncio.get_event_loop().time() - start_time < timeout:
             await asyncio.sleep(0.1)
 
         return self.metrics_queue.qsize() == 0
@@ -423,10 +411,17 @@ class AsyncMetricsService:
 
         if self.processing_task:
             try:
-                await asyncio.wait_for(self.processing_task, timeout=5.0)
+                await asyncio.wait_for(self.processing_task, timeout=2.0)
             except TimeoutError:
                 logger.warning("Processing task did not shut down within timeout")
                 self.processing_task.cancel()
+                # Wait for cancellation to complete
+                try:
+                    await asyncio.wait_for(self.processing_task, timeout=1.0)
+                except (TimeoutError, asyncio.CancelledError):
+                    pass
+            except asyncio.CancelledError:
+                logger.debug("Processing task was cancelled during shutdown")
 
         self._initialized = False
         logger.info("AsyncMetricsService closed")

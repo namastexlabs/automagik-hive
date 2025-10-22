@@ -19,13 +19,23 @@ class DatabaseService:
     Uses psycopg3 with proper connection pooling and async support.
     """
 
-    def __init__(
-        self, db_url: str | None = None, min_size: int = 2, max_size: int = 10
-    ):
+    def __init__(self, db_url: str | None = None, min_size: int = 2, max_size: int = 10):
         """Initialize database service with connection pool."""
         raw_db_url = db_url or os.getenv("HIVE_DATABASE_URL")
         if not raw_db_url:
             raise ValueError("HIVE_DATABASE_URL environment variable must be set")
+
+        # Handle Docker environment by replacing host if override is provided
+        if os.getenv("HIVE_DATABASE_HOST"):
+            # Parse and replace host for Docker environments
+            from urllib.parse import urlparse, urlunparse
+
+            parsed = urlparse(raw_db_url)
+            docker_host = os.getenv("HIVE_DATABASE_HOST")
+            docker_port = os.getenv("HIVE_DATABASE_PORT", str(parsed.port or "5432"))
+            # Replace host and port while keeping credentials and database
+            parsed = parsed._replace(netloc=f"{parsed.username}:{parsed.password}@{docker_host}:{docker_port}")
+            raw_db_url = urlunparse(parsed)
 
         # Convert SQLAlchemy URL format to psycopg format by removing dialect identifier
         self.db_url = raw_db_url.replace("postgresql+psycopg://", "postgresql://")
@@ -37,9 +47,7 @@ class DatabaseService:
     async def initialize(self):
         """Initialize connection pool."""
         if self.pool is None:
-            self.pool = AsyncConnectionPool(
-                self.db_url, min_size=self.min_size, max_size=self.max_size, open=False
-            )
+            self.pool = AsyncConnectionPool(self.db_url, min_size=self.min_size, max_size=self.max_size, open=False)
             await self.pool.open()
 
     async def close(self):
@@ -62,18 +70,14 @@ class DatabaseService:
         async with self.get_connection() as conn:
             await conn.execute(query, params)
 
-    async def fetch_one(
-        self, query: str, params: dict[str, Any] | None = None
-    ) -> dict[str, Any] | None:
+    async def fetch_one(self, query: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """Fetch single row as dictionary."""
         async with self.get_connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(query, params)
                 return await cur.fetchone()
 
-    async def fetch_all(
-        self, query: str, params: dict[str, Any] | None = None
-    ) -> list[dict[str, Any]]:
+    async def fetch_all(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Fetch all rows as list of dictionaries."""
         async with self.get_connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:

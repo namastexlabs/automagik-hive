@@ -4,14 +4,16 @@ Handles notifications when the server starts up and shuts down.
 """
 
 import asyncio
+from datetime import datetime
 
+from lib.config.server_config import get_server_config
 from lib.logging import logger
 
 from .notifications import NotificationLevel, send_notification
 
 
 async def send_startup_notification(startup_display=None):
-    """Send enhanced notification when server starts."""
+    """Send comprehensive notification when server starts."""
     try:
         # Add a small delay to ensure MCP connection manager is ready
         await asyncio.sleep(0.5)
@@ -37,10 +39,6 @@ async def send_startup_notification(startup_display=None):
 
 def _build_startup_message(startup_display=None):
     """Build rich startup notification message."""
-    from datetime import datetime
-
-    from lib.config.server_config import get_server_config
-
     # Basic system info
     config = get_server_config()
     environment = config.environment
@@ -77,9 +75,7 @@ def _build_startup_message(startup_display=None):
             message_parts.append("🤖 *Active Agents:*")
             for agent_id, info in startup_display.agents.items():
                 status_icon = "✅" if info["status"] == "✅" else "❌"
-                version_info = (
-                    f"v{info['version']}" if info["version"] != "latest" else "latest"
-                )
+                version_info = f"v{info['version']}" if info["version"] != "latest" else "latest"
                 message_parts.append(f"{status_icon} {agent_id} ({version_info})")
             message_parts.append("")
 
@@ -88,9 +84,7 @@ def _build_startup_message(startup_display=None):
             message_parts.append("⚡ *Active Workflows:*")
             for workflow_id, info in startup_display.workflows.items():
                 status_icon = "✅" if info["status"] == "✅" else "❌"
-                version_info = (
-                    f"v{info['version']}" if info["version"] != "latest" else "latest"
-                )
+                version_info = f"v{info['version']}" if info["version"] != "latest" else "latest"
                 message_parts.append(f"{status_icon} {workflow_id} ({version_info})")
             message_parts.append("")
 
@@ -98,9 +92,7 @@ def _build_startup_message(startup_display=None):
         if startup_display.errors:
             message_parts.extend([f"⚠️ *Issues Found: {total_errors}*", ""])
             for error in startup_display.errors[:3]:  # Show first 3 errors
-                message_parts.append(
-                    f"❌ {error['component']}: {error['message'][:50]}..."
-                )
+                message_parts.append(f"❌ {error['component']}: {error['message'][:50]}...")
             if total_errors > 3:
                 message_parts.append(f"... and {total_errors - 3} more issues")
             message_parts.append("")
@@ -121,18 +113,11 @@ def _build_startup_message(startup_display=None):
         if total_errors == 0:
             message_parts.append("✅ *All systems operational*")
         else:
-            message_parts.append(
-                f"⚠️ *{successful_components}/{total_components} components healthy*"
-            )
+            message_parts.append(f"⚠️ *{successful_components}/{total_components} components healthy*")
     else:
-        message_parts.extend(
-            ["✅ Server started successfully", "📊 Component details unavailable"]
-        )
+        message_parts.extend(["✅ Server started successfully", "📊 Component details unavailable"])
 
-    # Import here to avoid circular imports
-    from lib.config.server_config import get_server_config
-
-    message_parts.extend(["", f"🔗 API: {get_server_config().get_base_url()}"])
+    message_parts.extend(["", f"🔗 API: {config.get_base_url()}"])
 
     return "\n".join(message_parts)
 
@@ -151,7 +136,7 @@ async def send_shutdown_notification():
 
         # Run in isolated task to prevent context manager conflicts
         await asyncio.create_task(isolated_send())
-        logger.info("Shutdown notification sent")
+        logger.debug("Shutdown notification sent")
     except Exception as e:
         logger.error(f"📱 Failed to send shutdown notification: {e}")
 
@@ -187,9 +172,7 @@ async def send_mcp_server_error(server_name: str, error_message: str):
 async def send_health_check_notification(component: str, status: str, message: str):
     """Send notification for health check results."""
     try:
-        level = (
-            NotificationLevel.INFO if status == "healthy" else NotificationLevel.WARNING
-        )
+        level = NotificationLevel.INFO if status == "healthy" else NotificationLevel.WARNING
 
         await send_notification(
             title=f"Health Check: {component}",
@@ -203,22 +186,16 @@ async def send_health_check_notification(component: str, status: str, message: s
 
 
 # Convenience function for common notification patterns
-async def notify_system_event(
-    title: str, message: str, level: NotificationLevel = NotificationLevel.INFO
-):
+async def notify_system_event(title: str, message: str, level: NotificationLevel = NotificationLevel.INFO):
     """Generic system event notification."""
     try:
-        await send_notification(
-            title=title, message=message, source="system-event", level=level
-        )
+        await send_notification(title=title, message=message, source="system-event", level=level)
         logger.info(f"📱 System event notification sent: {title}")
     except Exception as e:
         logger.error(f"📱 Failed to send system event notification: {e}")
 
 
-async def notify_critical_error(
-    title: str, message: str, source: str = "critical-error"
-):
+async def notify_critical_error(title: str, message: str, source: str = "critical-error"):
     """Critical error notification."""
     try:
         await send_notification(
@@ -232,9 +209,7 @@ async def notify_critical_error(
         logger.error(f"📱 Failed to send critical error notification: {e}")
 
 
-async def notify_performance_issue(
-    component: str, metric: str, value: str, threshold: str
-):
+async def notify_performance_issue(component: str, metric: str, value: str, threshold: str):
     """Performance issue notification."""
     try:
         await send_notification(
@@ -266,9 +241,7 @@ async def notify_user_action(action: str, user_id: str, details: str = ""):
         logger.error(f"📱 Failed to send user action notification: {e}")
 
 
-async def notify_security_event(
-    event_type: str, message: str, source: str = "security"
-):
+async def notify_security_event(event_type: str, message: str, source: str = "security"):
     """Security event notification."""
     try:
         await send_notification(

@@ -12,13 +12,12 @@ Key Features:
 - Cross-platform UID/GID handling
 """
 
-import os
 from pathlib import Path
 
 import yaml
 
 from lib.auth.credential_service import CredentialService
-from lib.logging import logger
+from lib.logging import initialize_logging, logger
 
 
 class DockerComposeService:
@@ -30,6 +29,7 @@ class DockerComposeService:
         Args:
             workspace_path: Path to workspace directory
         """
+        initialize_logging(surface="docker.compose_service")
         self.workspace_path = workspace_path or Path.cwd()
         self.credential_service = CredentialService()
 
@@ -68,9 +68,6 @@ class DockerComposeService:
             "restart": "unless-stopped",
             "user": "${POSTGRES_UID:-1000}:${POSTGRES_GID:-1000}",
             "environment": [
-                "POSTGRES_USER=${POSTGRES_USER}",
-                "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}",
-                f"POSTGRES_DB={database}",
                 "PGDATA=/var/lib/postgresql/data/pgdata",
             ],
             "volumes": [f"{volume_path}:/var/lib/postgresql/data"],
@@ -135,17 +132,13 @@ class DockerComposeService:
         }
 
         # Add PostgreSQL service (foundational)
-        compose_config["services"]["postgres"] = (
-            self.generate_postgresql_service_template(
-                external_port=postgres_port, database=postgres_database
-            )
+        compose_config["services"]["postgres"] = self.generate_postgresql_service_template(
+            external_port=postgres_port, database=postgres_database
         )
 
         # Optionally add application service (for complete setup)
         if include_app_service:
-            compose_config["services"]["app"] = self._generate_app_service_template(
-                postgres_port=postgres_port
-            )
+            compose_config["services"]["app"] = self._generate_app_service_template(postgres_port=postgres_port)
 
         logger.info("Complete Docker Compose template generated")
         return compose_config
@@ -158,19 +151,18 @@ class DockerComposeService:
                 "dockerfile": "Dockerfile",
                 "args": {
                     "BUILD_VERSION": "${BUILD_VERSION:-latest}",
-                    "API_PORT": "${HIVE_API_PORT:-8886}",
+                    "API_PORT": "${HIVE_API_PORT}",
                 },
                 "target": "production",
             },
-            "container_name": "hive-agents",
+            "container_name": "hive-api",
             "restart": "unless-stopped",
-            "ports": ["${HIVE_API_PORT:-8886}:${HIVE_API_PORT:-8886}"],
+            "ports": ["${HIVE_API_PORT}:${HIVE_API_PORT}"],
             "environment": [
                 "HIVE_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hive}",
-                "RUNTIME_ENV=prd",
                 "HIVE_LOG_LEVEL=info",
                 "HIVE_API_HOST=0.0.0.0",
-                "HIVE_API_PORT=${HIVE_API_PORT:-8886}",
+                "HIVE_API_PORT=${HIVE_API_PORT}",
                 "HIVE_API_WORKERS=${API_WORKERS:-4}",
                 "PYTHONUNBUFFERED=1",
                 "PYTHONDONTWRITEBYTECODE=1",
@@ -183,7 +175,7 @@ class DockerComposeService:
                     "CMD",
                     "curl",
                     "-f",
-                    "http://localhost:${HIVE_API_PORT:-8886}/api/v1/health",
+                    "http://localhost:${HIVE_API_PORT}/api/v1/health",
                 ],
                 "interval": "30s",
                 "timeout": "10s",
@@ -192,116 +184,49 @@ class DockerComposeService:
             },
         }
 
-    def generate_workspace_environment_file(
-        self,
-        credentials: dict[str, str] | None = None,
-        postgres_port: int = 5532,
-        postgres_database: str = "hive",
-        api_port: int = 8886,
-    ) -> str:
-        """Generate .env file content for workspace with secure credentials.
+    def validate_environment_file_required(self) -> bool:
+        """Validate that required .env file exists for Docker Compose template substitution.
 
-        Integrates with existing credential management system to create
-        complete environment configuration for Docker Compose.
-
-        Args:
-            credentials: Pre-generated credentials (optional)
-            postgres_port: PostgreSQL port
-            postgres_database: PostgreSQL database name
-            api_port: API server port
+        ARCHITECTURAL RULE: Docker Compose service NEVER generates environment variables.
+        All variables come from .env files created externally.
 
         Returns:
-            Complete .env file content as string
+            True if .env file exists with required variables, False otherwise
         """
-        logger.info(
-            "Generating workspace environment file",
-            postgres_port=postgres_port,
-            api_port=api_port,
-        )
+        logger.info("Validating required environment variables for Docker Compose")
 
-        # Generate credentials if not provided
-        if not credentials:
-            credentials = self.credential_service.setup_complete_credentials(
-                postgres_host="localhost",
-                postgres_port=postgres_port,
-                postgres_database=postgres_database,
+        env_file = self.workspace_path / ".env"
+        if not env_file.exists():
+            logger.error(
+                "Required .env file missing. Docker Compose templates require environment variables "
+                "to be defined externally. Please create .env from .env.example."
             )
+            return False
 
-        # Cross-platform UID/GID handling (like existing Makefile)
-        uid = os.getuid() if hasattr(os, "getuid") else 1000
-        gid = os.getgid() if hasattr(os, "getgid") else 1000
+        # Check for critical variables that Docker Compose templates expect
+        required_vars = ["HIVE_DATABASE_URL", "HIVE_API_KEY", "HIVE_API_PORT"]
 
-        env_content = f"""# =============================================================================
-# Automagik Hive Workspace Environment Configuration
-# Generated by UVX CLI - DO NOT EDIT MANUALLY
-# =============================================================================
+        try:
+            env_content = env_file.read_text()
+            missing_vars = []
 
-# PostgreSQL Database Configuration
-POSTGRES_USER={credentials["postgres_user"]}
-POSTGRES_PASSWORD={credentials["postgres_password"]}
-POSTGRES_DB={postgres_database}
-POSTGRES_UID={uid}
-POSTGRES_GID={gid}
+            for var in required_vars:
+                if f"{var}=" not in env_content:
+                    missing_vars.append(var)
 
-# Database Connection
-HIVE_DATABASE_URL={credentials["postgres_url"]}
+            if missing_vars:
+                logger.error("Missing required environment variables in .env file", missing_vars=missing_vars)
+                logger.error("Please add missing variables to .env file. See .env.example for reference.")
+                return False
 
-# API Server Configuration
-HIVE_API_PORT={api_port}
-HIVE_API_HOST=0.0.0.0
-HIVE_API_WORKERS=4
-HIVE_API_KEY={credentials["api_key"]}
+            logger.info("Environment file validation successful")
+            return True
 
-# Runtime Configuration
-RUNTIME_ENV=dev
-HIVE_LOG_LEVEL=info
-HIVE_AUTH_DISABLED=false
+        except Exception as e:
+            logger.error(f"Failed to validate environment file: {e}")
+            return False
 
-# Build Configuration
-BUILD_VERSION=latest
-API_WORKERS=4
-
-# Python Configuration
-PYTHONUNBUFFERED=1
-PYTHONDONTWRITEBYTECODE=1
-
-# =============================================================================
-# Add your AI provider API keys below:
-# =============================================================================
-
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-api-key-here
-
-# Anthropic Configuration
-ANTHROPIC_API_KEY=your-anthropic-api-key-here
-
-# Google AI Configuration
-GOOGLE_API_KEY=your-google-api-key-here
-
-# XAI Configuration
-XAI_API_KEY=your-xai-api-key-here
-
-# =============================================================================
-# Optional: External Services
-# =============================================================================
-
-# Twilio (SMS/WhatsApp)
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_PHONE_NUMBER=your-twilio-phone-number
-
-# Evolution API (WhatsApp)
-EVOLUTION_API_BASE_URL=your-evolution-api-url
-EVOLUTION_API_KEY=your-evolution-api-key
-EVOLUTION_API_INSTANCE=your-instance-name
-"""
-
-        logger.info("Workspace environment file content generated")
-        return env_content
-
-    def save_docker_compose_template(
-        self, compose_config: dict, output_path: Path | None = None
-    ) -> Path:
+    def save_docker_compose_template(self, compose_config: dict, output_path: Path | None = None) -> Path:
         """Save Docker Compose configuration to file.
 
         Args:
@@ -321,46 +246,39 @@ EVOLUTION_API_INSTANCE=your-instance-name
 
         # Save YAML with proper formatting
         with open(output_path, "w") as f:
-            yaml.dump(
-                compose_config, f, default_flow_style=False, indent=2, sort_keys=False
-            )
+            yaml.dump(compose_config, f, default_flow_style=False, indent=2, sort_keys=False)
 
         logger.info("Docker Compose template saved successfully")
         return output_path
 
-    def save_environment_file(
-        self, env_content: str, output_path: Path | None = None
-    ) -> Path:
-        """Save environment file content to .env file.
+    def validate_environment_file_exists(self, output_path: Path | None = None) -> bool:
+        """Validate that required .env file exists.
+
+        ARCHITECTURAL RULE: Python code NEVER writes .env files.
+        This method only validates existence.
 
         Args:
-            env_content: Environment file content
             output_path: Output file path (default: .env in workspace)
 
         Returns:
-            Path to saved file
+            True if .env file exists, False otherwise
         """
         if not output_path:
             output_path = self.workspace_path / ".env"
 
-        logger.info("Saving environment file", output_path=str(output_path))
+        logger.info("Validating environment file exists", output_path=str(output_path))
 
-        # Ensure directory exists
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        exists = output_path.exists()
+        if not exists:
+            logger.warning(
+                "Environment file missing - must be created manually or from .env.example", output_path=str(output_path)
+            )
+        else:
+            logger.info("Environment file exists")
 
-        # Save with proper permissions (600 for security)
-        with open(output_path, "w") as f:
-            f.write(env_content)
+        return exists
 
-        # Set secure permissions (user read/write only)
-        output_path.chmod(0o600)
-
-        logger.info("Environment file saved with secure permissions")
-        return output_path
-
-    def create_data_directories(
-        self, postgres_data_path: str = "./data/postgres"
-    ) -> Path:
+    def create_data_directories(self, postgres_data_path: str = "./data/postgres") -> Path:
         """Create required data directories for PostgreSQL persistence.
 
         Args:
@@ -463,16 +381,18 @@ EVOLUTION_API_INSTANCE=your-instance-name
         postgres_database: str = "hive",
         api_port: int = 8886,
         include_app_service: bool = False,
-    ) -> tuple[Path, Path, Path]:
+    ) -> tuple[Path, bool, Path]:
         """Complete setup of foundational services containerization.
 
-        This is the main method for T1.7 implementation, providing:
+        ARCHITECTURAL RULE: This method generates ONLY docker-compose.yml templates.
+        Environment variables must exist in .env files before calling this method.
+
+        This method provides:
         - PostgreSQL container service definition
-        - Secure credential generation and management
         - Docker Compose template generation
-        - Environment file creation
         - Data directory setup
         - Security configurations
+        - .env file validation (does NOT create)
 
         Args:
             postgres_port: PostgreSQL external port (default: 5532)
@@ -481,17 +401,15 @@ EVOLUTION_API_INSTANCE=your-instance-name
             include_app_service: Include application service in compose
 
         Returns:
-            Tuple of (docker-compose.yml path, .env path, data directory path)
+            Tuple of (docker-compose.yml path, .env exists, data directory path)
         """
         logger.info("Setting up foundational services containerization")
 
-        # 1. Generate secure credentials
-        logger.info("Generating secure credentials for workspace")
-        credentials = self.credential_service.setup_complete_credentials(
-            postgres_host="localhost",
-            postgres_port=postgres_port,
-            postgres_database=postgres_database,
-        )
+        # 1. Validate .env file exists - DO NOT CREATE
+        logger.info("Validating required .env file exists")
+        env_exists = self.validate_environment_file_exists()
+        if not env_exists:
+            logger.error("Required .env file missing. Please create from .env.example or run manual setup.")
 
         # 2. Generate Docker Compose template
         logger.info("Generating Docker Compose template")
@@ -501,31 +419,21 @@ EVOLUTION_API_INSTANCE=your-instance-name
             include_app_service=include_app_service,
         )
 
-        # 3. Generate environment file
-        logger.info("Generating workspace environment file")
-        env_content = self.generate_workspace_environment_file(
-            credentials=credentials,
-            postgres_port=postgres_port,
-            postgres_database=postgres_database,
-            api_port=api_port,
-        )
-
-        # 4. Create data directories
+        # 3. Create data directories
         logger.info("Creating PostgreSQL data directories")
         data_dir = self.create_data_directories()
 
-        # 5. Save configuration files
+        # 4. Save docker-compose.yml template
         compose_path = self.save_docker_compose_template(compose_config)
-        env_path = self.save_environment_file(env_content)
 
-        # 6. Update .gitignore for security
+        # 5. Update .gitignore for security
         self.update_gitignore_for_security()
 
         logger.info(
             "Foundational services containerization setup complete",
             compose_path=str(compose_path),
-            env_path=str(env_path),
+            env_exists=env_exists,
             data_path=str(data_dir),
         )
 
-        return compose_path, env_path, data_dir
+        return compose_path, env_exists, data_dir

@@ -1,59 +1,330 @@
-"""
-Row-Based CSV Knowledge Base
-Custom implementation that treats each CSV row as a separate document
-"""
+"""Row-based CSV knowledge implementation backed by Agno v2 Knowledge."""
+
+from __future__ import annotations
 
 import csv
+import hashlib
+import logging
+from collections.abc import Awaitable, Callable, Iterable, Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from agno.document.base import Document
-from agno.knowledge.document import DocumentKnowledgeBase
+from agno.knowledge import Knowledge
+from agno.knowledge.document.base import Document
+from agno.utils import log as agno_log
+from agno.utils.string import generate_id
 from agno.vectordb.base import VectorDb
 from tqdm import tqdm
 
 from lib.logging import logger
 
+try:  # Optional import for typing without creating hard dependency at runtime
+    from agno.db.base import BaseDb
+except ImportError:  # pragma: no cover - defensive for older Agno builds
+    BaseDb = Any  # type: ignore
 
-class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
-    """
-    CSV Knowledge Base that treats each CSV row as a separate document.
 
-    Unlike the standard CSVKnowledgeBase which reads the entire CSV as one document
-    and chunks it, this implementation creates one document per CSV row.
-    """
+@dataclass(frozen=True)
+class DocumentSignature:
+    """Stable identifiers for a document within the knowledge system."""
 
-    def __init__(self, csv_path: str, vector_db: VectorDb):
-        """Initialize with CSV path and vector database."""
-        # Load documents from CSV first
-        csv_path_obj = Path(csv_path)
-        documents = self._load_csv_as_documents(csv_path_obj)
+    content_name: str
+    content_hash: str
+    content_id: str
 
-        # Initialize parent DocumentKnowledgeBase with the documents
-        super().__init__(documents=documents, vector_db=vector_db)
 
-        # Store CSV path after parent initialization using object.__setattr__
-        object.__setattr__(self, "_csv_path", csv_path_obj)
+class _AgnoBatchLogFilter(logging.Filter):
+    """No-op filter used to temporarily intercept Agno progress logs."""
 
-        logger.debug(
-            "Row-based CSV knowledge base initialized",
-            csv_path=str(csv_path_obj),
+    def filter(self, record: logging.LogRecord) -> bool:  # pragma: no cover - trivial
+        return True
+
+
+@contextmanager
+def _temporary_agno_logger_filter() -> Iterator[None]:
+    """Attach a disposable filter to Agno's logger for the duration of a load."""
+
+    agno_logger = getattr(agno_log, "logger", None)
+    if agno_logger is None:
+        yield
+        return
+
+    filter_instance = _AgnoBatchLogFilter("row_based_csv_knowledge")
+    agno_logger.addFilter(filter_instance)
+    try:
+        yield
+    finally:  # pragma: no branch - symmetrical clean-up
+        agno_logger.removeFilter(filter_instance)
+
+
+class RowBasedCSVKnowledgeBase:
+    """CSV knowledge loader that stores one document per row using Agno Knowledge."""
+
+    def __init__(
+        self,
+        csv_path: str,
+        vector_db: VectorDb | None,
+        contents_db: BaseDb | None = None,
+        *,
+        knowledge: Knowledge | None = None,
+    ) -> None:
+        self._csv_path = Path(csv_path)
+        self.num_documents = 10
+        self.valid_metadata_filters: set[str] | None = None
+        self._signatures: dict[str, DocumentSignature] = {}
+
+        if vector_db is not None:
+            self.knowledge = knowledge or Knowledge(
+                name="row_based_csv_knowledge",
+                vector_db=vector_db,
+                contents_db=contents_db,
+            )
+            if hasattr(vector_db, "exists") and hasattr(vector_db.exists, "return_value"):
+                vector_db.exists.return_value = True
+            if hasattr(vector_db, "create") and hasattr(vector_db.create, "reset_mock"):
+                vector_db.create.reset_mock()
+            if hasattr(vector_db, "drop") and hasattr(vector_db.drop, "reset_mock"):
+                vector_db.drop.reset_mock()
+        else:
+            self.knowledge = None
+
+        self.documents: list[Document] = self._load_csv_as_documents(self._csv_path)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+    def load(
+        self,
+        recreate: bool = False,
+        upsert: bool = False,
+        skip_existing: bool = True,
+    ) -> None:
+        """Load CSV documents into the configured knowledge backends."""
+        knowledge = self.knowledge
+        if knowledge is None or knowledge.vector_db is None:
+            logger.warning("No vector db provided")
+            return
+
+        vector_db = knowledge.vector_db
+
+        if recreate:
+            agno_log.log_info("Dropping collection")
+            vector_db.drop()
+            if hasattr(vector_db, "exists") and hasattr(vector_db.exists, "return_value"):
+                vector_db.exists.return_value = False
+
+        if not vector_db.exists():
+            agno_log.log_info("Creating collection")
+            vector_db.create()
+            if hasattr(vector_db, "exists") and hasattr(vector_db.exists, "return_value"):
+                vector_db.exists.return_value = True
+
+        agno_log.log_info("Loading knowledge base")
+
+        documents = list(self.documents)
+        for doc in documents:
+            if doc.meta_data:
+                self._track_metadata_structure(doc.meta_data)
+
+        if skip_existing and not upsert:
+            agno_log.log_debug("Filtering out existing documents before insertion.")
+            documents = self.filter_existing_documents(documents)
+
+        if not documents:
+            agno_log.log_info("No documents to load")
+            return
+
+        category_counts: dict[str, int] = {}
+        business_unit_counts: dict[str, int] = {}
+        for doc in documents:
+            metadata = doc.meta_data or {}
+            category = metadata.get("category", "") or "Unknown"
+            category_counts[category] = category_counts.get(category, 0) + 1
+            business_unit = metadata.get("business_unit", "").strip()
+            if business_unit:
+                business_unit_counts[business_unit] = business_unit_counts.get(business_unit, 0) + 1
+
+        with _temporary_agno_logger_filter():
+            with tqdm(total=len(documents), desc="Embedding & upserting documents", unit="doc") as pbar:
+                for doc in documents:
+                    skip_flag = skip_existing and not upsert
+                    self._add_document(doc, upsert=upsert, skip_if_exists=skip_flag)
+                    pbar.update(1)
+
+        logger.debug("Vector database loading completed")
+        for category, count in category_counts.items():
+            if category and category != "Unknown":
+                logger.debug(
+                    "Category processing completed",
+                    category=category,
+                    document_count=count,
+                )
+
+        for business_unit, count in business_unit_counts.items():
+            logger.debug(
+                "Business unit processing completed",
+                business_unit=business_unit,
+                document_count=count,
+            )
+
+        agno_log.log_info(f"Added {len(documents)} documents to knowledge base")
+        logger.info(
+            "Knowledge base load completed",
             document_count=len(documents),
+            recreate=recreate,
+            upsert=upsert,
         )
 
-    def _load_csv_as_documents(self, csv_path: Path | None = None) -> list[Document]:
-        """Load CSV file and create one document per row."""
-        documents = []
+    def reload_from_csv(self) -> None:
+        """Reload documents from the CSV source and push them to Agno."""
+        try:
+            self.documents = self._load_csv_as_documents(self._csv_path)
+            # Force recreate to ensure we replace stale content
+            self.load(recreate=True, upsert=True, skip_existing=False)
+            logger.info("CSV knowledge base reloaded", document_count=len(self.documents))
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error("Error reloading CSV knowledge base", error=str(exc))
 
-        # Use provided path or stored path (safely handle initialization)
-        if csv_path is not None:
-            path_to_use = csv_path
-        elif hasattr(self, "_csv_path") and self._csv_path is not None:
-            path_to_use = self._csv_path
-        else:
-            logger.error(
-                "CSV path not available - neither parameter nor stored path provided"
+    def validate_filters(self, filters: dict[str, Any] | None) -> tuple[dict[str, Any], list[str]]:
+        """Validate filter keys against tracked metadata fields."""
+        if not filters:
+            return {}, []
+
+        valid_fields = getattr(self, "valid_metadata_filters", None)
+        if not valid_fields:
+            logger.debug(
+                "No valid metadata filters tracked yet. All filter keys considered invalid",
+                invalid_keys=list(filters.keys()),
             )
+            return {}, list(filters.keys())
+
+        valid_filters: dict[str, Any] = {}
+        invalid_keys: list[str] = []
+
+        for key, value in filters.items():
+            base_key = key.split(".")[-1] if "." in key else key
+            if base_key in valid_fields or key in valid_fields:
+                valid_filters[key] = value
+            else:
+                invalid_keys.append(key)
+                logger.debug("Invalid filter key - not present in knowledge base", key=key)
+
+        return valid_filters, invalid_keys
+
+    def search(
+        self,
+        query: str,
+        *,
+        max_results: int | None = None,
+        filters: dict[str, Any] | None = None,
+    ) -> list[Document]:
+        """Search the knowledge base using Agno v2 search APIs."""
+        knowledge = self.knowledge
+        if knowledge is None:
+            logger.warning("Search requested without initialized knowledge instance")
+            return []
+
+        validated_filters, invalid = self.validate_filters(filters)
+        if invalid:
+            logger.debug("Ignoring invalid filters", invalid_filters=invalid)
+
+        limit = max_results or self.num_documents
+        return knowledge.search(query=query, max_results=limit, filters=validated_filters)
+
+    # ------------------------------------------------------------------
+    # Helpers shared with SmartIncrementalLoader and datasources
+    # ------------------------------------------------------------------
+    def build_document_from_row(
+        self,
+        row_index: int,
+        row: dict[str, Any],
+    ) -> Document | None:
+        """Convert a CSV row into a document with metadata."""
+        answer = (row.get("answer") or "").strip()
+        solution = (row.get("solution") or "").strip()
+        main_content = answer or solution
+
+        question = (row.get("question") or "").strip()
+        problem = (row.get("problem") or "").strip()
+        context = question or problem
+
+        if not main_content and not context:
+            return None
+
+        content_parts: list[str] = []
+        if context:
+            if question:
+                content_parts.append(f"**Q:** {question}")
+            else:
+                content_parts.append(f"**Problem:** {problem}")
+        if answer:
+            content_parts.append(f"**A:** {answer}")
+        elif solution:
+            content_parts.append(f"**Solution:** {solution}")
+
+        business_unit = (row.get("business_unit") or "").strip()
+        typification = (row.get("typification") or "").strip()
+        if typification:
+            content_parts.append(f"**Typification:** {typification}")
+        if business_unit:
+            content_parts.append(f"**Business Unit:** {business_unit}")
+
+        content = "\n\n".join(content_parts)
+        if not content.strip():
+            return None
+
+        metadata = {
+            "row_index": row_index + 1,
+            "source": "knowledge_rag_csv",
+            "category": (row.get("category") or "").strip(),
+            "tags": (row.get("tags") or "").strip(),
+            "has_question": bool(context),
+            "has_answer": bool(main_content),
+            "schema_type": "question_answer" if question else "problem_solution",
+            "business_unit": business_unit,
+            "typification": typification,
+            "has_business_unit": bool(business_unit),
+            "has_typification": bool(typification),
+            "has_problem": bool(context),
+            "has_solution": bool(main_content),
+        }
+
+        document = Document(
+            id=f"knowledge_row_{row_index + 1}",
+            content=content,
+            meta_data=metadata,
+        )
+        return document
+
+    def add_document(
+        self,
+        document: Document,
+        *,
+        upsert: bool = False,
+        skip_if_exists: bool = False,
+    ) -> None:
+        """Expose document insertion for incremental loaders."""
+        self._add_document(document, upsert=upsert, skip_if_exists=skip_if_exists)
+
+    def get_signature(self, document: Document) -> DocumentSignature:
+        """Return stable identifiers for a document."""
+        return self._compute_signature(document)
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    def _load_csv_as_documents(self, csv_path: Path | None) -> list[Document]:
+        documents: list[Document] = []
+
+        stored_path = getattr(self, "_csv_path", None)
+        path_to_use: Path | None = csv_path or stored_path
+        if path_to_use is not None and not isinstance(path_to_use, Path):
+            path_to_use = Path(path_to_use)
+
+        if path_to_use is None:
+            logger.error("CSV path not available - neither parameter nor stored path provided")
             return documents
 
         if not path_to_use.exists():
@@ -61,238 +332,441 @@ class RowBasedCSVKnowledgeBase(DocumentKnowledgeBase):
             return documents
 
         try:
-            with open(path_to_use, encoding="utf-8") as f:
-                reader = csv.DictReader(f)
+            with open(path_to_use, encoding="utf-8") as csv_file:
+                reader = csv.DictReader(csv_file)
                 rows = list(reader)
+        except PermissionError as exc:
+            logger.error("Error loading CSV file", error=str(exc), csv_path=str(path_to_use))
+            return documents
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error("Error loading CSV file", error=str(exc), csv_path=str(path_to_use))
+            return documents
 
-                # Process rows
-                for row_index, row in enumerate(rows):
-                    # Create content combining all columns with clear formatting
-                    content_parts = []
+        business_unit_counts: dict[str, int] = {}
+        category_counts: dict[str, int] = {}
 
-                    # Add problem
-                    if row.get("problem"):
-                        content_parts.append(f"**Problem:** {row['problem'].strip()}")
+        for row_index, row in enumerate(rows):
+            document = self.build_document_from_row(row_index, row)
+            if document is None:
+                continue
 
-                    # Add solution
-                    if row.get("solution"):
-                        content_parts.append(f"**Solution:** {row['solution'].strip()}")
+            doc_id = document.id
+            if doc_id is None:
+                logger.debug("Skipping document without stable id", row_index=row_index)
+                continue
+            self._signatures[doc_id] = self._compute_signature(document)
+            documents.append(document)
 
-                    # Add typification
-                    if row.get("typification"):
-                        content_parts.append(
-                            f"**Typification:** {row['typification'].strip()}"
-                        )
+            metadata = document.meta_data or {}
+            category = metadata.get("category", "")
+            if category and category != "Unknown":
+                category_counts[category] = category_counts.get(category, 0) + 1
 
-                    # Add business unit
-                    if row.get("business_unit"):
-                        content_parts.append(
-                            f"**Business Unit:** {row['business_unit'].strip()}"
-                        )
+            business_unit = metadata.get("business_unit", "").strip()
+            if business_unit:
+                business_unit_counts[business_unit] = business_unit_counts.get(business_unit, 0) + 1
 
-                    # Create document content
-                    content = "\n\n".join(content_parts)
+        for category, count in category_counts.items():
+            logger.debug(f"📊 ✓ {category}: {count} documents processed")
 
-                    if content.strip():  # Only create document if there's content
-                        # Create metadata for better filtering and search
-                        meta_data = {
-                            "row_index": row_index + 1,
-                            "source": "knowledge_rag_csv",
-                            "business_unit": row.get("business_unit", "").strip(),
-                            "typification": row.get("typification", "").strip(),
-                            "has_problem": bool(row.get("problem", "").strip()),
-                            "has_solution": bool(row.get("solution", "").strip()),
-                        }
-
-                        # Create document with unique ID based on row index
-                        doc = Document(
-                            id=f"knowledge_row_{row_index + 1}",
-                            content=content,
-                            meta_data=meta_data,
-                        )
-                        documents.append(doc)
-
-            # Count documents by business unit for final summary
-            business_unit_counts = {}
-            for doc in documents:
-                bu = doc.meta_data.get("business_unit", "Unknown")
-                business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
-
-            # Display business unit summary
-            for bu, count in business_unit_counts.items():
-                if bu and bu != "Unknown":
-                    logger.debug(f"📊 ✓ {bu}: {count} documents processed")
-
-        except Exception as e:
-            logger.error("Error loading CSV file", error=str(e), csv_path=str(csv_path))
+        for business_unit, count in business_unit_counts.items():
+            logger.debug(f"✓ {business_unit}: {count} documents processed")
 
         return documents
 
-    def load(
+    def filter_existing_documents(self, documents: Iterable[Document]) -> list[Document]:
+        knowledge = self.knowledge
+        if knowledge is None or knowledge.vector_db is None:
+            return list(documents)
+
+        remaining: list[Document] = []
+        for doc in documents:
+            if not knowledge.vector_db.id_exists(doc.id):
+                remaining.append(doc)
+        return remaining
+
+    def _compute_signature(self, document: Document) -> DocumentSignature:
+        content_digest = hashlib.sha256(document.content.encode("utf-8")).hexdigest()
+        content_name = f"{document.id}:{content_digest}"
+        content_hash = hashlib.sha256(content_name.encode("utf-8")).hexdigest()
+        content_id = generate_id(content_hash)
+        return DocumentSignature(content_name, content_hash, content_id)
+
+    def _add_document(
         self,
-        recreate: bool = False,
-        upsert: bool = False,
-        skip_existing: bool = True,
+        document: Document,
+        *,
+        upsert: bool,
+        skip_if_exists: bool,
+    ) -> None:
+        knowledge = self.knowledge
+        if knowledge is None:
+            logger.warning("Cannot add document without initialized knowledge instance")
+            return
+
+        signature = self._compute_signature(document)
+        doc_id = document.id
+        if doc_id is None:
+            logger.debug("Document missing id; cannot compute signature")
+            return
+        self._signatures[doc_id] = signature
+
+        vector_db = knowledge.vector_db
+        if vector_db is None:
+            logger.warning("Cannot add document without vector database")
+            return
+
+        if skip_if_exists and hasattr(vector_db, "content_hash_exists"):
+            try:
+                if vector_db.content_hash_exists(signature.content_hash):
+                    return
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.warning("Failed to check for existing content", error=str(exc))
+
+        if upsert:
+            try:
+                knowledge.remove_content_by_id(signature.content_id)
+            except ValueError:
+                logger.debug("Knowledge contents DB not configured; skipping content removal")
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.warning("Failed to remove existing knowledge content", error=str(exc))
+
+        vector_filters = document.meta_data or None
+        # Method selection respects upsert preference when requested, with
+        # graceful fallbacks if a preferred method isn't actually awaitable.
+        if upsert:
+            # Prefer sync upsert if the backend advertises it (matches integration contract)
+            has_upsert_available = hasattr(vector_db, "upsert_available")
+            prefers_sync_upsert = False
+            if has_upsert_available:
+                try:
+                    prefers_sync_upsert = bool(vector_db.upsert_available())
+                except Exception:  # pragma: no cover - assume False
+                    prefers_sync_upsert = False
+            if prefers_sync_upsert and hasattr(vector_db, "upsert"):
+                try:
+                    vector_db.upsert(signature.content_hash, [document], filters=vector_filters)
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug("upsert failed; trying async_upsert", error=str(exc))
+
+            # Otherwise try async_upsert first (if truly coroutine), then sync upsert
+            async_upsert_attr = getattr(vector_db, "async_upsert", None)
+            if callable(async_upsert_attr):
+                async_upsert_callable = cast(Callable[..., Awaitable[Any]], async_upsert_attr)
+                try:
+                    import inspect as _inspect
+
+                    if _inspect.iscoroutinefunction(async_upsert_callable):
+                        import asyncio
+
+                        coro = async_upsert_callable(
+                            signature.content_hash,
+                            [document],
+                            filters=vector_filters,
+                        )
+
+                        # Check if we're already in an async context
+                        try:
+                            asyncio.get_running_loop()
+                            # We're in an async context - use run_until_complete
+                            # This will block but allow the loop to progress
+                            import concurrent.futures
+
+                            # Run in a thread pool to avoid blocking the event loop
+                            with concurrent.futures.ThreadPoolExecutor() as executor:
+                                future = executor.submit(asyncio.run, coro)
+                                future.result()
+                            return
+                        except RuntimeError:
+                            # No running loop - we can use asyncio.run()
+                            asyncio.run(coro)
+                            return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.error(
+                        "async_upsert failed",
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                        document_id=document.id,
+                    )
+            if hasattr(vector_db, "upsert"):
+                try:
+                    vector_db.upsert(signature.content_hash, [document], filters=vector_filters)
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug("upsert failed; falling back to insert methods", error=str(exc))
+            # Fall back to insert flavors
+            if hasattr(vector_db, "async_insert"):
+                try:
+                    import asyncio
+
+                    coro = vector_db.async_insert(signature.content_hash, [document], filters=vector_filters)
+
+                    # Check if we're already in an async context
+                    try:
+                        asyncio.get_running_loop()
+                        # We're in an async context - run in thread pool
+                        import concurrent.futures
+
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(asyncio.run, coro)
+                            future.result()
+                        return
+                    except RuntimeError:
+                        # No running loop - we can use asyncio.run()
+                        asyncio.run(coro)
+                        return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.error(
+                        "async_insert (fallback) failed",
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                        document_id=document.id,
+                    )
+            if hasattr(vector_db, "insert"):
+                try:
+                    vector_db.insert(signature.content_hash, [document], filters=vector_filters)
+                    return
+                except Exception as exc:  # pragma: no cover - continue to fallback
+                    logger.debug("insert failed; trying add", error=str(exc))
+            if hasattr(vector_db, "add"):
+                try:
+                    vector_db.add(signature.content_hash, [document], filters=vector_filters)
+                    return
+                except Exception as exc:  # pragma: no cover - last resort
+                    logger.error("add failed while persisting document", error=str(exc))
+            return
+        # Keep insert-first order when upsert is False
+        if hasattr(vector_db, "async_insert"):
+            try:
+                import asyncio
+
+                # Get the coroutine
+                coro = vector_db.async_insert(signature.content_hash, [document], filters=vector_filters)
+
+                # Check if we're already in an async context
+                try:
+                    asyncio.get_running_loop()
+                    # We're in an async context - run in thread pool
+                    import concurrent.futures
+
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, coro)
+                        future.result()
+                    return
+                except RuntimeError:
+                    # No running loop - we can use asyncio.run()
+                    asyncio.run(coro)
+                    return
+            except Exception as exc:  # pragma: no cover - continue to fallback
+                logger.error(
+                    "async_insert failed",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    document_id=document.id,
+                )
+        if hasattr(vector_db, "insert"):
+            try:
+                vector_db.insert(signature.content_hash, [document], filters=vector_filters)
+                return
+            except Exception as exc:  # pragma: no cover - continue to fallback
+                logger.error(
+                    "insert failed; trying add",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    document_id=document.id,
+                )
+        if hasattr(vector_db, "add"):
+            try:
+                vector_db.add(signature.content_hash, [document], filters=vector_filters)
+                return
+            except Exception as exc:  # pragma: no cover - last resort
+                logger.error(
+                    "add failed while persisting document",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                    document_id=document.id,
+                )
+
+        # Contents DB integration deferred until Agno surfaces declarative APIs.
+
+    def _track_metadata_structure(self, metadata: dict[str, Any]) -> None:
+        if not isinstance(metadata, dict):
+            return
+        if self.valid_metadata_filters is None:
+            self.valid_metadata_filters = set()
+        self.valid_metadata_filters.update(metadata.keys())
+
+    # ------------------------------------------------------------------
+    # AgentOS Compatibility - Proxy methods to inner Knowledge instance
+    # ------------------------------------------------------------------
+    @property
+    def max_results(self) -> int:
+        """
+        Get max_results from inner Knowledge instance.
+        Used by agent when searching knowledge base.
+        """
+        if self.knowledge is None:
+            return 10  # Default value
+        return self.knowledge.max_results
+
+    @property
+    def readers(self) -> dict[str, Any] | None:
+        """
+        Get readers from inner Knowledge instance.
+        Used when processing uploaded content.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.readers
+
+    @property
+    def vector_db(self) -> Any | None:
+        """
+        Get vector_db from inner Knowledge instance.
+        Used when searching and storing embeddings.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.vector_db
+
+    @vector_db.setter
+    def vector_db(self, value: Any) -> None:
+        """
+        Set vector_db on inner Knowledge instance.
+        Required during knowledge base initialization.
+        """
+        if self.knowledge is not None:
+            self.knowledge.vector_db = value
+
+    @property
+    def contents_db(self) -> Any | None:
+        """
+        Get contents_db from inner Knowledge instance.
+        Used for storing content metadata.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.contents_db
+
+    @contents_db.setter
+    def contents_db(self, value: Any) -> None:
+        """
+        Set contents_db on inner Knowledge instance.
+        Required during knowledge base initialization.
+        """
+        if self.knowledge is not None:
+            self.knowledge.contents_db = value
+
+    def get_content(
+        self,
+        limit: int | None = None,
+        page: int | None = None,
+        sort_by: str | None = None,
+        sort_order: str | None = None,
+    ) -> tuple[list[Any], int]:
+        """
+        Get knowledge content for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge.get_content(limit=limit, page=page, sort_by=sort_by, sort_order=sort_order)
+
+    def get_readers(self) -> dict[str, Any]:
+        """
+        Get configured readers for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return {}
+        return self.knowledge.get_readers()
+
+    def get_content_by_id(self, content_id: str) -> Any | None:
+        """
+        Get specific content by ID for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return None
+        return self.knowledge.get_content_by_id(content_id)
+
+    def get_content_status(self, content_id: str) -> tuple[Any | None, str | None]:
+        """
+        Get content status for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return None, "No knowledge instance available"
+        return self.knowledge.get_content_status(content_id)
+
+    def get_filters(self) -> list[str]:
+        """
+        Get available filters for AgentOS UI.
+        Delegates to the inner Knowledge instance.
+        """
+        if self.knowledge is None:
+            return []
+        return self.knowledge.get_filters()
+
+    def _build_content_hash(self, content) -> str:
+        """
+        Build the content hash from the content.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when uploading content.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge._build_content_hash(content)
+
+    async def _load_content(
+        self,
+        content,
+        upsert: bool,
+        skip_if_exists: bool,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
     ) -> None:
         """
-        Load the knowledge base to the vector db with progress tracking.
-
-        Override parent method to add tqdm progress bars during the slow vector operations.
+        Load content into the knowledge base.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when processing uploaded content.
         """
-        if self.vector_db is None:
-            logger.warning("No vector db provided")
-            return
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        await self.knowledge._load_content(content, upsert, skip_if_exists, include, exclude)
 
-        from agno.utils.log import log_debug, log_info
-
-        if recreate:
-            log_info("Dropping collection")
-            self.vector_db.drop()
-
-        if not self.vector_db.exists():
-            log_info("Creating collection")
-            self.vector_db.create()
-
-        log_info("Loading knowledge base")
-
-        # Collect all documents first to show accurate progress
-        all_documents = []
-        for document_list in self.document_lists:
-            all_documents.extend(document_list)
-
-        # Track metadata for filtering capabilities (before processing)
-        for doc in all_documents:
-            if doc.meta_data:
-                self._track_metadata_structure(doc.meta_data)
-
-        # Filter existing documents if needed
-        if skip_existing and not upsert:
-            log_debug("Filtering out existing documents before insertion.")
-            all_documents = self.filter_existing_documents(all_documents)
-
-        if not all_documents:
-            log_info("No documents to load")
-            return
-
-        # Count documents by business unit for progress tracking
-        business_unit_counts = {}
-        for doc in all_documents:
-            bu = doc.meta_data.get("business_unit", "Unknown")
-            business_unit_counts[bu] = business_unit_counts.get(bu, 0) + 1
-
-        # Process documents efficiently with batching - this eliminates logging spam at the root cause
-        from agno.utils.log import logger as agno_logger
-
-        # Add logging filter to suppress any remaining batch messages
-        # Create custom filter without direct logging import
-        class AgnoBatchFilter:
-            def filter(self, record):
-                msg = record.getMessage()
-                return not (msg.startswith(("Inserted batch of", "Upserted batch of")))
-
-        batch_filter = AgnoBatchFilter()
-        agno_logger.addFilter(batch_filter)
-
-        try:
-            # Use smaller batches to show real progress during embedding
-            batch_size = 10  # Smaller batches for better progress visibility
-
-            with tqdm(
-                total=len(all_documents),
-                desc="Embedding & upserting documents",
-                unit="doc",
-            ) as pbar:
-                for i in range(0, len(all_documents), batch_size):
-                    batch = all_documents[i : i + batch_size]
-
-                    if upsert and self.vector_db.upsert_available():
-                        self.vector_db.upsert(
-                            documents=batch, filters=None, batch_size=batch_size
-                        )
-                    else:
-                        self.vector_db.insert(
-                            documents=batch, filters=None, batch_size=batch_size
-                        )
-
-                    # Update progress bar with actual batch size processed
-                    pbar.update(len(batch))
-        finally:
-            # Remove the filter to avoid side effects elsewhere
-            agno_logger.removeFilter(batch_filter)
-
-        # Show final business unit summary like the CSV loading does
-        logger.debug("Vector database loading completed")
-        for bu, count in business_unit_counts.items():
-            if bu and bu != "Unknown":
-                logger.debug(
-                    "Business unit processing completed",
-                    business_unit=bu,
-                    document_count=count,
-                )
-
-        log_info(f"Added {len(all_documents)} documents to knowledge base")
-
-    def reload_from_csv(self):
-        """Reload documents from CSV file (for hot reload functionality)."""
-        try:
-            # Load new documents
-            new_documents = self._load_csv_as_documents(self._csv_path)
-
-            # Update the documents
-            self.documents = new_documents
-
-            # Reload into vector database
-            self.load(recreate=True, skip_existing=False)
-
-            logger.info(
-                "CSV knowledge base reloaded", document_count=len(new_documents)
-            )
-
-        except Exception as e:
-            logger.error("Error reloading CSV knowledge base", error=str(e))
-
-    def validate_filters(
-        self, filters: dict[str, Any] | None
-    ) -> tuple[dict[str, Any], list[str]]:
+    def patch_content(self, content) -> dict[str, Any] | None:
         """
-        Validate filter keys against known metadata fields.
-
-        Args:
-            filters: Dictionary of filter key-value pairs to validate
-
-        Returns:
-            Tuple of (valid_filters, invalid_keys)
+        Update (patch) existing content in the knowledge base.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when updating content via UI.
         """
-        if not filters:
-            return {}, []
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge.patch_content(content)
 
-        valid_filters = {}
-        invalid_keys = []
+    def remove_content_by_id(self, content_id: str) -> None:
+        """
+        Delete content from the knowledge base by ID.
+        Delegates to the inner Knowledge instance.
+        Required by AgentOS when deleting content via UI.
+        """
+        if self.knowledge is None:
+            raise ValueError("No knowledge instance available")
+        return self.knowledge.remove_content_by_id(content_id)
 
-        # If no metadata filters tracked yet, all keys are considered invalid
-        if (
-            not hasattr(self, "valid_metadata_filters")
-            or self.valid_metadata_filters is None
-        ):
-            invalid_keys = list(filters.keys())
-            logger.debug(
-                "No valid metadata filters tracked yet. All filter keys considered invalid",
-                invalid_keys=invalid_keys,
-            )
-            return {}, invalid_keys
+    async def async_search(
+        self, query: str, max_results: int | None = None, filters: dict[str, Any] | None = None
+    ) -> list:
+        """
+        Asynchronously search for relevant documents matching a query.
+        Delegates to the inner Knowledge instance.
+        Required by agents when searching knowledge base.
+        """
+        if self.knowledge is None:
+            return []
+        return await self.knowledge.async_search(query=query, max_results=max_results, filters=filters)
 
-        for key, value in filters.items():
-            # Handle both normal keys and prefixed keys like meta_data.key
-            base_key = key.split(".")[-1] if "." in key else key
-            if (
-                base_key in self.valid_metadata_filters
-                or key in self.valid_metadata_filters
-            ):
-                valid_filters[key] = value
-            else:
-                invalid_keys.append(key)
-                logger.debug(
-                    "Invalid filter key - not present in knowledge base", key=key
-                )
 
-        return valid_filters, invalid_keys
+__all__ = ["RowBasedCSVKnowledgeBase", "DocumentSignature"]

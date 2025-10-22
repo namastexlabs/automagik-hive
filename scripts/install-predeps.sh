@@ -50,12 +50,12 @@ show_progress() {
     local i=0
     
     printf "${CYAN}%s " "$message"
-    while kill -0 $pid 2>/dev/null; do
-        printf "\b${chars:$i:1}"
+    while kill -0 "$pid" 2>/dev/null; do
+        printf '\b%s' "${chars:$i:1}"
         i=$(((i + 1) % ${#chars}))
         sleep 0.1
     done
-    printf "\b✅${RESET}\n"
+    printf '\b✅%s\n' "$RESET"
 }
 
 # Confirmation prompt
@@ -100,6 +100,7 @@ detect_platform() {
     # Detect Linux distribution
     if [[ "$os" == "linux" ]]; then
         if [[ -f /etc/os-release ]]; then
+            # shellcheck source=/dev/null  # /etc/os-release is a system file
             source /etc/os-release
             distro=${ID,,}
         elif command -v lsb_release >/dev/null 2>&1; then
@@ -167,7 +168,7 @@ install_uv() {
     # Create temporary directory for download
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
+    trap 'rm -rf "$temp_dir"' EXIT
     
     # Download and install UV using official installer
     print_status "Downloading UV installer..."
@@ -201,8 +202,9 @@ install_uv() {
             local uv_version
             uv_version=$(uv --version)
             print_success "UV installed successfully: $uv_version"
-            
+
             # Add to shell profile for persistence
+            # shellcheck disable=SC2016  # Intentional: literal string for shell profile
             add_to_shell_profile 'export PATH="$HOME/.local/bin:$PATH"' "UV"
         else
             print_error "UV installation completed but command not found"

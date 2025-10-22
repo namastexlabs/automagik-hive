@@ -43,13 +43,13 @@ class AuthInitService:
             return temp_key
 
         # Generate new key and save
-        new_key = self._generate_secure_key()
-        self._save_key_to_env(new_key)
-        self._display_key_to_user(new_key)
+        api_key = self._generate_secure_key()
+        self._save_key_to_env(api_key)
+        self._display_key_to_user(api_key)
 
         # Set in environment for current session
-        os.environ[self.api_key_var] = new_key
-        return new_key
+        os.environ[self.api_key_var] = api_key
+        return api_key
 
     def _generate_secure_key(self) -> str:
         """Generate a cryptographically secure API key."""
@@ -58,7 +58,7 @@ class AuthInitService:
     def _save_key_to_env(self, api_key: str) -> None:
         """Add or replace API key in .env file."""
         env_content = []
-        api_key_updated = False
+        api_key_found = False
 
         # Read existing .env content
         if self.env_file.exists():
@@ -68,17 +68,15 @@ class AuthInitService:
         for i, line in enumerate(env_content):
             if line.startswith(f"{self.api_key_var}="):
                 env_content[i] = f"{self.api_key_var}={api_key}"
-                api_key_updated = True
+                api_key_found = True
                 break
 
         # Add API key if it wasn't found
-        if not api_key_updated:
+        if not api_key_found:
             env_content.append(f"{self.api_key_var}={api_key}")
 
         # Ensure AUTH_DISABLED is set to false if not present
-        has_auth_disabled = any(
-            line.startswith(f"{self.auth_disabled_var}=") for line in env_content
-        )
+        has_auth_disabled = any(line.startswith(f"{self.auth_disabled_var}=") for line in env_content)
         if not has_auth_disabled:
             env_content.append(f"{self.auth_disabled_var}=false")
 
@@ -104,19 +102,20 @@ class AuthInitService:
         logger.info(f"🔐 \nAPI Key: {api_key}")
         logger.info("🔐 \nUse this key in your API requests:")
         logger.info(f'🔐 curl -H "x-api-key: {api_key}" \\\\')
-        port = os.getenv("HIVE_API_PORT", "8886")
-        logger.info(f"🔐      http://localhost:{port}/api/v1/health")
+        from lib.config.settings import settings
+
+        logger.info(f"🔐      http://localhost:{settings().hive_api_port}/api/v1/health")
         logger.info("🔐 \n" + "=" * 60 + "\n")
 
     def regenerate_key(self) -> str:
         """Generate and save a new API key."""
-        new_key = self._generate_secure_key()
-        self._save_key_to_env(new_key)
-        self._display_key_to_user(new_key)
+        api_key = self._generate_secure_key()
+        self._save_key_to_env(api_key)
+        self._display_key_to_user(api_key)
 
         # Update environment for current session
-        os.environ[self.api_key_var] = new_key
-        return new_key
+        os.environ[self.api_key_var] = api_key
+        return api_key
 
     def get_current_key(self) -> str | None:
         """Get the current API key without generating a new one."""
