@@ -47,12 +47,10 @@ class TestBackendDetection:
         detected = detect_backend_from_url(db_url)
         assert detected == expected_backend
 
-    def test_detect_backend_unknown_scheme_fallback(self):
-        """Test unknown URL scheme falls back to PostgreSQL."""
-        with patch("lib.database.backend_factory.logger") as mock_logger:
-            detected = detect_backend_from_url("unknown://localhost/db")
-            assert detected == DatabaseBackendType.POSTGRESQL
-            mock_logger.warning.assert_called_once()
+    def test_detect_backend_unknown_scheme_raises_error(self):
+        """Test unknown URL scheme raises ValueError."""
+        with pytest.raises(ValueError, match="Unsupported database URL scheme 'unknown'"):
+            detect_backend_from_url("unknown://localhost/db")
 
     def test_detect_backend_case_insensitive(self):
         """Test scheme detection is case-insensitive."""

@@ -137,12 +137,14 @@ class TestBackendFactoryCreation:
             create_backend(backend_type="invalid", db_url="test://test")
 
     def test_create_backend_without_url_raises_error(self):
-        """Test that missing URL raises error."""
+        """Test that missing URL raises error when no environment variable is set."""
         from lib.database import DatabaseBackendType
         from lib.database.backend_factory import create_backend
 
-        with pytest.raises((ValueError, TypeError)):
-            create_backend(backend_type=DatabaseBackendType.SQLITE, db_url=None)
+        # Ensure HIVE_DATABASE_URL is not in environment
+        with patch.dict(os.environ, {}, clear=True):
+            with pytest.raises(ValueError, match="HIVE_DATABASE_URL environment variable must be set"):
+                create_backend(backend_type=DatabaseBackendType.SQLITE, db_url=None)
 
 
 class TestGetDatabaseBackend:
@@ -352,33 +354,35 @@ class TestBackendFactoryIntegration:
     @pytest.mark.asyncio
     async def test_created_backend_lifecycle(self, mock_env_vars):
         """Test full lifecycle of created backend."""
-        from lib.database import get_database_backend
+        from lib.database import DatabaseBackendType, get_database_backend
 
-        backend = get_database_backend()
+        # Use in-memory SQLite to avoid filesystem operations
+        backend = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///:memory:")
 
         # Should be able to initialize
         await backend.initialize()
-        assert backend.pool is not None
+        assert backend._initialized is True
 
         # Should be able to close
         await backend.close()
-        assert backend.pool is None
+        assert backend._initialized is False
 
     @pytest.mark.asyncio
     async def test_backend_switching(self, mock_env_vars):
         """Test switching between different backend types."""
         from lib.database import DatabaseBackendType, get_database_backend
 
-        # Create SQLite backend
-        sqlite_backend = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test1.db")
+        # Create SQLite backend with in-memory database
+        sqlite_backend = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///:memory:")
         await sqlite_backend.initialize()
-        assert sqlite_backend.pool is not None
+        # SQLite doesn't have a pool attribute, check _initialized instead
+        assert sqlite_backend._initialized is True
         await sqlite_backend.close()
 
         # Create another backend (simulating switch)
-        sqlite_backend2 = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test2.db")
+        sqlite_backend2 = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///:memory:")
         await sqlite_backend2.initialize()
-        assert sqlite_backend2.pool is not None
+        assert sqlite_backend2._initialized is True
         await sqlite_backend2.close()
 
     def test_multiple_backend_instances(self, mock_env_vars):
@@ -422,10 +426,10 @@ class TestBackendFactoryIntegration:
                 "HIVE_CORS_ORIGINS": "http://localhost:3000",
             },
         ):
-            # Force settings reload
-            from lib.config.settings import _settings_instance
+            # Force settings reload by calling get_settings with reload=True
+            from lib.config.settings import get_settings
 
-            _settings_instance.cache_clear()
+            get_settings(reload=True)
 
             from lib.database import get_database_backend
 
