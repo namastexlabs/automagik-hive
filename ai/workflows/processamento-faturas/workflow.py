@@ -4400,8 +4400,8 @@ async def execute_minuta_cnpj_processing_step(step_input: StepInput) -> StepOutp
 
     set_session_state(step_input, "minuta_processing_results", processing_results)
     logger.info(
-        f"✅ MINUTA processing completed: {execution_summary['po_completed']} POs concluídos, "
-        f"{execution_summary['po_failed']} POs com falha"
+        f"✅ MINUTA processing completed: {execution_summary['minutas_concluidas']} POs concluídos, "
+        f"{execution_summary['minutas_falharam']} POs com falha"
     )
 
     return StepOutput(content=json.dumps(processing_results))

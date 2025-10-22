@@ -27,9 +27,9 @@ class CTEProcessor:
     def __init__(self, database_url: str):
         """
         Initialize CTE processor.
-        
+
         Args:
-            database_url: PostgreSQL connection URL
+            database_url: PostgreSQL connection URL (psycopg format: postgresql://)
         """
         self.database_url = database_url
     
