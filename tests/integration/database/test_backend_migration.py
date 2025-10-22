@@ -67,9 +67,7 @@ class TestCrossPlatformSchemaCompatibility:
                     await backend.execute(statement.strip())
 
             # Verify tables exist
-            tables = await backend.fetch_all(
-                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-            )
+            tables = await backend.fetch_all("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
 
             table_names = [t["name"] for t in tables]
             assert "users" in table_names
@@ -86,9 +84,10 @@ class TestCrossPlatformSchemaCompatibility:
         backend = create_backend(backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db")
 
         # Mock HTTP client
-        with patch.object(backend, "bridge_process", Mock()), patch(
-            "lib.database.providers.pglite.httpx.AsyncClient"
-        ) as mock_client_class:
+        with (
+            patch.object(backend, "bridge_process", Mock()),
+            patch("lib.database.providers.pglite.httpx.AsyncClient") as mock_client_class,
+        ):
             mock_client = AsyncMock()
             mock_client_class.return_value = mock_client
 
@@ -158,9 +157,7 @@ class TestDataMigrationPatterns:
         ]
 
         for record in test_records:
-            await backend.execute(
-                "INSERT INTO test_data (id, name, value) VALUES (?, ?, ?)", record
-            )
+            await backend.execute("INSERT INTO test_data (id, name, value) VALUES (?, ?, ?)", record)
 
         yield backend, db_path
 
@@ -211,9 +208,7 @@ class TestDataMigrationPatterns:
 
             # Import data
             for record in source_records:
-                await target_backend.execute(
-                    "INSERT INTO test_data (id, name, value) VALUES (?, ?, ?)", record
-                )
+                await target_backend.execute("INSERT INTO test_data (id, name, value) VALUES (?, ?, ?)", record)
 
             # Verify import
             target_records = await target_backend.fetch_all("SELECT * FROM test_data ORDER BY id")

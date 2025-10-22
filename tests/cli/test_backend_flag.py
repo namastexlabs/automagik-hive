@@ -28,9 +28,7 @@ class TestBackendFlag:
         # Mock environment
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": "sqlite:///test.db"}, clear=False):
             # Mock sys.argv
-            monkeypatch.setattr(
-                sys, "argv", ["automagik-hive", "install", ".", "--backend", "postgresql"]
-            )
+            monkeypatch.setattr(sys, "argv", ["automagik-hive", "install", ".", "--backend", "postgresql"])
 
             # Mock ServiceManager to prevent actual installation
             with patch("cli.main.ServiceManager") as mock_service:
@@ -42,17 +40,13 @@ class TestBackendFlag:
                 result = main()
 
                 # Verify installation was called with backend override
-                mock_manager.install_full_environment.assert_called_once_with(
-                    ".", backend_override="postgresql"
-                )
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="postgresql")
                 assert result == 0
 
     def test_valid_backend_pglite(self, monkeypatch):
         """Test --backend flag with valid pglite value."""
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": "sqlite:///test.db"}, clear=False):
-            monkeypatch.setattr(
-                sys, "argv", ["automagik-hive", "install", ".", "--backend", "pglite"]
-            )
+            monkeypatch.setattr(sys, "argv", ["automagik-hive", "install", ".", "--backend", "pglite"])
 
             with patch("cli.main.ServiceManager") as mock_service:
                 mock_manager = MagicMock()
@@ -61,17 +55,13 @@ class TestBackendFlag:
 
                 result = main()
 
-                mock_manager.install_full_environment.assert_called_once_with(
-                    ".", backend_override="pglite"
-                )
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="pglite")
                 assert result == 0
 
     def test_valid_backend_sqlite(self, monkeypatch):
         """Test --backend flag with valid sqlite value."""
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": "sqlite:///test.db"}, clear=False):
-            monkeypatch.setattr(
-                sys, "argv", ["automagik-hive", "install", ".", "--backend", "sqlite"]
-            )
+            monkeypatch.setattr(sys, "argv", ["automagik-hive", "install", ".", "--backend", "sqlite"])
 
             with patch("cli.main.ServiceManager") as mock_service:
                 mock_manager = MagicMock()
@@ -80,16 +70,12 @@ class TestBackendFlag:
 
                 result = main()
 
-                mock_manager.install_full_environment.assert_called_once_with(
-                    ".", backend_override="sqlite"
-                )
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="sqlite")
                 assert result == 0
 
     def test_invalid_backend_rejected(self, monkeypatch, capsys):
         """Test --backend flag rejects invalid backend values."""
-        monkeypatch.setattr(
-            sys, "argv", ["automagik-hive", "install", ".", "--backend", "mysql"]
-        )
+        monkeypatch.setattr(sys, "argv", ["automagik-hive", "install", ".", "--backend", "mysql"])
 
         # argparse should raise SystemExit for invalid choice
         with pytest.raises(SystemExit) as exc_info:
@@ -114,9 +100,7 @@ class TestBackendFlag:
             clear=False,
         ):
             # But use flag to specify pglite
-            monkeypatch.setattr(
-                sys, "argv", ["automagik-hive", "install", ".", "--backend", "pglite"]
-            )
+            monkeypatch.setattr(sys, "argv", ["automagik-hive", "install", ".", "--backend", "pglite"])
 
             with patch("cli.main.ServiceManager") as mock_service:
                 mock_manager = MagicMock()
@@ -126,17 +110,13 @@ class TestBackendFlag:
                 result = main()
 
                 # Flag should override environment
-                mock_manager.install_full_environment.assert_called_once_with(
-                    ".", backend_override="pglite"
-                )
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override="pglite")
                 assert result == 0
 
     def test_backend_flag_overrides_interactive_prompt(self, monkeypatch):
         """Test --backend flag skips interactive prompt."""
         with patch.dict(os.environ, {"HIVE_DATABASE_URL": "sqlite:///test.db"}, clear=False):
-            monkeypatch.setattr(
-                sys, "argv", ["automagik-hive", "install", ".", "--backend", "sqlite"]
-            )
+            monkeypatch.setattr(sys, "argv", ["automagik-hive", "install", ".", "--backend", "sqlite"])
 
             with patch("cli.main.ServiceManager") as mock_service:
                 mock_manager = MagicMock()
@@ -151,9 +131,7 @@ class TestBackendFlag:
                     mock_prompt.assert_not_called()
 
                     # But installation should proceed with flag value
-                    mock_manager.install_full_environment.assert_called_once_with(
-                        ".", backend_override="sqlite"
-                    )
+                    mock_manager.install_full_environment.assert_called_once_with(".", backend_override="sqlite")
                     assert result == 0
 
     def test_case_insensitive_backend_values(self, monkeypatch):
@@ -170,9 +148,7 @@ class TestBackendFlag:
         for input_value, expected_normalized in test_cases:
             # Note: argparse choices are case-sensitive by default
             # This test verifies the choices are defined in lowercase
-            monkeypatch.setattr(
-                sys, "argv", ["automagik-hive", "install", ".", "--backend", input_value.lower()]
-            )
+            monkeypatch.setattr(sys, "argv", ["automagik-hive", "install", ".", "--backend", input_value.lower()])
 
             with patch("cli.main.ServiceManager") as mock_service:
                 mock_manager = MagicMock()
@@ -181,9 +157,7 @@ class TestBackendFlag:
 
                 result = main()
 
-                mock_manager.install_full_environment.assert_called_once_with(
-                    ".", backend_override=expected_normalized
-                )
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override=expected_normalized)
                 assert result == 0
 
     def test_backend_flag_without_install_command(self, monkeypatch, capsys):
@@ -204,8 +178,8 @@ class TestBackendFlag:
         # Get install subparser - use _subparsers attribute directly
         subparsers_action = None
         for action in parser._actions:
-            if hasattr(action, 'choices') and isinstance(action.choices, dict):
-                if 'install' in action.choices:
+            if hasattr(action, "choices") and isinstance(action.choices, dict):
+                if "install" in action.choices:
                     subparsers_action = action
                     break
 
@@ -217,7 +191,7 @@ class TestBackendFlag:
         # Find --backend argument
         backend_action = None
         for action in install_parser._actions:
-            if hasattr(action, 'option_strings') and "--backend" in action.option_strings:
+            if hasattr(action, "option_strings") and "--backend" in action.option_strings:
                 backend_action = action
                 break
 
@@ -237,7 +211,5 @@ class TestBackendFlag:
                 result = main()
 
                 # Should be called with None backend_override (triggers prompt)
-                mock_manager.install_full_environment.assert_called_once_with(
-                    ".", backend_override=None
-                )
+                mock_manager.install_full_environment.assert_called_once_with(".", backend_override=None)
                 assert result == 0

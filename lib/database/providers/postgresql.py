@@ -66,9 +66,7 @@ class PostgreSQLBackend(BaseDatabaseBackend):
         if self.pool is None:
             try:
                 logger.info("Initializing PostgreSQL connection pool", min_size=self.min_size, max_size=self.max_size)
-                self.pool = AsyncConnectionPool(
-                    self.db_url, min_size=self.min_size, max_size=self.max_size, open=False
-                )
+                self.pool = AsyncConnectionPool(self.db_url, min_size=self.min_size, max_size=self.max_size, open=False)
                 await self.pool.open()
                 logger.info("PostgreSQL connection pool initialized successfully")
             except Exception as e:

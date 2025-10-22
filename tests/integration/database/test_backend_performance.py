@@ -53,9 +53,10 @@ class TestConnectionPerformance:
         backend = create_backend(db_url="pglite://./test.db")
 
         # Mock subprocess and HTTP client for fast initialization
-        with patch.object(backend, "bridge_process", Mock()), patch(
-            "lib.database.providers.pglite.httpx.AsyncClient"
-        ) as mock_client_class:
+        with (
+            patch.object(backend, "bridge_process", Mock()),
+            patch("lib.database.providers.pglite.httpx.AsyncClient") as mock_client_class,
+        ):
             mock_client = AsyncMock()
             mock_client_class.return_value = mock_client
 
@@ -158,7 +159,9 @@ class TestQueryExecutionPerformance:
 
         # Bulk insert should be efficient
         avg_time_per_record = bulk_time / num_records
-        assert avg_time_per_record < 0.05, f"Average insert time {avg_time_per_record:.4f}s per record (expected < 0.05s)"
+        assert avg_time_per_record < 0.05, (
+            f"Average insert time {avg_time_per_record:.4f}s per record (expected < 0.05s)"
+        )
 
         # Verify all records inserted
         count = await sqlite_backend.fetch_one("SELECT COUNT(*) as count FROM perf_test")
@@ -186,8 +189,7 @@ class TestQueryExecutionPerformance:
         """Test fetch_all performance with moderate dataset."""
         # Insert 50 records
         operations = [
-            ("INSERT INTO perf_test (id, value) VALUES (?, ?)", {"id": i, "value": f"record_{i}"})
-            for i in range(1, 51)
+            ("INSERT INTO perf_test (id, value) VALUES (?, ?)", {"id": i, "value": f"record_{i}"}) for i in range(1, 51)
         ]
         await sqlite_backend.execute_transaction(operations)
 
@@ -224,13 +226,13 @@ class TestConcurrentConnectionHandling:
 
             # Insert test data
             for i in range(10):
-                await backend.execute("INSERT INTO concurrent_test (id, value) VALUES (?, ?)", {"id": i, "value": f"val_{i}"})
+                await backend.execute(
+                    "INSERT INTO concurrent_test (id, value) VALUES (?, ?)", {"id": i, "value": f"val_{i}"}
+                )
 
             # Run concurrent queries
             async def query_task(query_id):
-                result = await backend.fetch_one(
-                    "SELECT * FROM concurrent_test WHERE id = ?", {"id": query_id}
-                )
+                result = await backend.fetch_one("SELECT * FROM concurrent_test WHERE id = ?", {"id": query_id})
                 return result
 
             start_time = time.time()
@@ -268,7 +270,9 @@ class TestConcurrentConnectionHandling:
 
             # Concurrent writes (will be serialized by SQLite)
             async def write_task(write_id):
-                await backend.execute("INSERT INTO write_test (id, value) VALUES (?, ?)", {"id": write_id, "value": write_id * 10})
+                await backend.execute(
+                    "INSERT INTO write_test (id, value) VALUES (?, ?)", {"id": write_id, "value": write_id * 10}
+                )
 
             start_time = time.time()
 
@@ -358,9 +362,10 @@ class TestResourceCleanup:
         mock_process = Mock()
         mock_client = AsyncMock()
 
-        with patch.object(backend, "bridge_process", mock_process), patch(
-            "lib.database.providers.pglite.httpx.AsyncClient"
-        ) as mock_client_class:
+        with (
+            patch.object(backend, "bridge_process", mock_process),
+            patch("lib.database.providers.pglite.httpx.AsyncClient") as mock_client_class,
+        ):
             mock_client_class.return_value = mock_client
 
             health_response = Mock()

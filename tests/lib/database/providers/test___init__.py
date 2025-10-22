@@ -1,7 +1,6 @@
 """Tests for lib/database/providers/__init__.py - Provider exports."""
 
 
-
 class TestProviderModuleExports:
     """Test that providers module exports backend implementations."""
 
@@ -62,9 +61,7 @@ class TestProviderBackendInstantiation:
         from lib.database.providers import PostgreSQLBackend
 
         # Should accept database URL
-        backend = PostgreSQLBackend(
-            db_url="postgresql://user:pass@localhost:5432/test"
-        )
+        backend = PostgreSQLBackend(db_url="postgresql://user:pass@localhost:5432/test")
         assert backend is not None
 
     def test_sqlite_backend_instantiation(self, mock_env_vars):
@@ -88,9 +85,7 @@ class TestProviderBackendInstantiation:
         assert pglite is not None
 
         # PostgreSQL
-        postgres = PostgreSQLBackend(
-            db_url="postgresql://user:pass@localhost/test", min_size=2, max_size=10
-        )
+        postgres = PostgreSQLBackend(db_url="postgresql://user:pass@localhost/test", min_size=2, max_size=10)
         assert postgres is not None
 
         # SQLite
@@ -141,9 +136,7 @@ class TestProviderBackendEnvironmentDetection:
         assert pglite.db_url is not None
 
         # PostgreSQL should strip +psycopg if present
-        postgres = PostgreSQLBackend(
-            db_url="postgresql+psycopg://user:pass@localhost/test"
-        )
+        postgres = PostgreSQLBackend(db_url="postgresql+psycopg://user:pass@localhost/test")
         assert "+psycopg" not in postgres.db_url or "postgresql://" in postgres.db_url
 
         # SQLite should handle file paths

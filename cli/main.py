@@ -304,7 +304,13 @@ def main() -> int:
             workspace = getattr(args, "workspace", ".") or "."
             backend_override = getattr(args, "backend", None)
             verbose = getattr(args, "verbose", False)
-            return 0 if service_manager.install_full_environment(workspace, backend_override=backend_override, verbose=verbose) else 1
+            return (
+                0
+                if service_manager.install_full_environment(
+                    workspace, backend_override=backend_override, verbose=verbose
+                )
+                else 1
+            )
 
         # Uninstall subcommand
         if args.command == "uninstall":

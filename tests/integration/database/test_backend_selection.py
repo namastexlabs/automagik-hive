@@ -136,9 +136,7 @@ class TestBackendTypeValidation:
     def test_explicit_backend_type_overrides_url(self):
         """Test explicit backend type parameter overrides URL detection."""
         # Create SQLite backend even though URL says PostgreSQL
-        backend = create_backend(
-            backend_type=DatabaseBackendType.SQLITE, db_url="postgresql://user:pass@localhost/db"
-        )
+        backend = create_backend(backend_type=DatabaseBackendType.SQLITE, db_url="postgresql://user:pass@localhost/db")
         assert backend.__class__.__name__ == "SQLiteBackend"
 
     def test_invalid_backend_type_raises_error(self):

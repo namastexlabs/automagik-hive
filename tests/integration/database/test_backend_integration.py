@@ -489,10 +489,9 @@ class TestPostgreSQLBackendIntegration:
         mock_conn = AsyncMock()
 
         # Mock pool.connection() to return async context manager
-        mock_pool.connection = MagicMock(return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_conn),
-            __aexit__=AsyncMock()
-        ))
+        mock_pool.connection = MagicMock(
+            return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_conn), __aexit__=AsyncMock())
+        )
 
         await backend.execute("INSERT INTO test (name) VALUES (%(name)s)", {"name": "testuser"})
 
@@ -509,16 +508,14 @@ class TestPostgreSQLBackendIntegration:
 
         # Mock connection
         mock_conn = AsyncMock()
-        mock_conn.cursor = MagicMock(return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_cursor),
-            __aexit__=AsyncMock()
-        ))
+        mock_conn.cursor = MagicMock(
+            return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_cursor), __aexit__=AsyncMock())
+        )
 
         # Mock pool.connection() to return async context manager
-        mock_pool.connection = MagicMock(return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_conn),
-            __aexit__=AsyncMock()
-        ))
+        mock_pool.connection = MagicMock(
+            return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_conn), __aexit__=AsyncMock())
+        )
 
         result = await backend.fetch_one("SELECT * FROM test WHERE id = %(id)s", {"id": 1})
 
@@ -536,16 +533,14 @@ class TestPostgreSQLBackendIntegration:
 
         # Mock connection
         mock_conn = AsyncMock()
-        mock_conn.cursor = MagicMock(return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_cursor),
-            __aexit__=AsyncMock()
-        ))
+        mock_conn.cursor = MagicMock(
+            return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_cursor), __aexit__=AsyncMock())
+        )
 
         # Mock pool.connection() to return async context manager
-        mock_pool.connection = MagicMock(return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_conn),
-            __aexit__=AsyncMock()
-        ))
+        mock_pool.connection = MagicMock(
+            return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_conn), __aexit__=AsyncMock())
+        )
 
         results = await backend.fetch_all("SELECT * FROM test")
 
@@ -561,16 +556,14 @@ class TestPostgreSQLBackendIntegration:
 
         # Mock connection
         mock_conn = AsyncMock()
-        mock_conn.transaction = MagicMock(return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_transaction),
-            __aexit__=AsyncMock()
-        ))
+        mock_conn.transaction = MagicMock(
+            return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_transaction), __aexit__=AsyncMock())
+        )
 
         # Mock pool.connection() to return async context manager
-        mock_pool.connection = MagicMock(return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_conn),
-            __aexit__=AsyncMock()
-        ))
+        mock_pool.connection = MagicMock(
+            return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_conn), __aexit__=AsyncMock())
+        )
 
         operations = [
             ("INSERT INTO test (name) VALUES (%(name)s)", {"name": "user1"}),

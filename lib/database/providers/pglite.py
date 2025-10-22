@@ -61,9 +61,7 @@ class PGliteBackend(BaseDatabaseBackend):
         logger.info("Starting PGlite bridge", port=self.port, data_dir=self.data_dir)
 
         # Start bridge subprocess
-        bridge_script = os.path.join(
-            os.path.dirname(__file__), "../../../tools/pglite-bridge/server.js"
-        )
+        bridge_script = os.path.join(os.path.dirname(__file__), "../../../tools/pglite-bridge/server.js")
 
         try:
             self.bridge_process = subprocess.Popen(

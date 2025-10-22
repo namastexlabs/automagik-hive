@@ -548,7 +548,9 @@ class ServiceManager:
         with open(metadata_file, "w") as f:
             yaml.dump(metadata, f, default_flow_style=False)
 
-    def install_full_environment(self, workspace: str = ".", backend_override: str | None = None, verbose: bool = False) -> bool:
+    def install_full_environment(
+        self, workspace: str = ".", backend_override: str | None = None, verbose: bool = False
+    ) -> bool:
         """Complete environment setup with deployment choice - ENHANCED METHOD.
 
         Args:
@@ -858,13 +860,15 @@ class ServiceManager:
 
         # Add backend if not found
         if not backend_found:
-            env_lines.append(f"\n# Database backend type (auto-generated during install)\nHIVE_DATABASE_BACKEND={backend_type}\n")
+            env_lines.append(
+                f"\n# Database backend type (auto-generated during install)\nHIVE_DATABASE_BACKEND={backend_type}\n"
+            )
 
         # Update database URL based on backend
         url_map = {
             "pglite": "pglite://./data/automagik_hive.db",
             "postgresql": "postgresql+psycopg://hive_user:${HIVE_POSTGRES_PASSWORD}@localhost:${HIVE_POSTGRES_PORT}/automagik_hive",
-            "sqlite": "sqlite:///./data/automagik_hive.db"
+            "sqlite": "sqlite:///./data/automagik_hive.db",
         }
 
         # Update URL if it's a placeholder
@@ -872,7 +876,9 @@ class ServiceManager:
         for line in env_lines:
             if line.startswith("HIVE_DATABASE_URL="):
                 # Only update if it's the default placeholder
-                if "your_database_url_here" in line or not line.strip().endswith(("pglite://", "postgresql://", "sqlite://")):
+                if "your_database_url_here" in line or not line.strip().endswith(
+                    ("pglite://", "postgresql://", "sqlite://")
+                ):
                     updated_lines.append(f"HIVE_DATABASE_URL={url_map[backend_type]}\n")
                 else:
                     updated_lines.append(line)

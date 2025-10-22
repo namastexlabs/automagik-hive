@@ -83,9 +83,7 @@ class TestBackendFactoryCreation:
         from lib.database import DatabaseBackendType
         from lib.database.backend_factory import create_backend
 
-        backend = create_backend(
-            backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db"
-        )
+        backend = create_backend(backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db")
 
         from lib.database.providers import PgLiteBackend
 
@@ -110,9 +108,7 @@ class TestBackendFactoryCreation:
         from lib.database import DatabaseBackendType
         from lib.database.backend_factory import create_backend
 
-        backend = create_backend(
-            backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test.db"
-        )
+        backend = create_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test.db")
 
         from lib.database.providers import SQLiteBackend
 
@@ -222,9 +218,7 @@ class TestGetDatabaseBackend:
             from lib.database.providers import SQLiteBackend
 
             # Override to SQLite despite settings having PostgreSQL
-            backend = get_database_backend(
-                backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test.db"
-            )
+            backend = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test.db")
             assert isinstance(backend, SQLiteBackend)
 
     def test_get_backend_with_custom_pool_params(self):
@@ -376,17 +370,13 @@ class TestBackendFactoryIntegration:
         from lib.database import DatabaseBackendType, get_database_backend
 
         # Create SQLite backend
-        sqlite_backend = get_database_backend(
-            backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test1.db"
-        )
+        sqlite_backend = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test1.db")
         await sqlite_backend.initialize()
         assert sqlite_backend.pool is not None
         await sqlite_backend.close()
 
         # Create another backend (simulating switch)
-        sqlite_backend2 = get_database_backend(
-            backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test2.db"
-        )
+        sqlite_backend2 = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test2.db")
         await sqlite_backend2.initialize()
         assert sqlite_backend2.pool is not None
         await sqlite_backend2.close()
@@ -396,12 +386,8 @@ class TestBackendFactoryIntegration:
         from lib.database import DatabaseBackendType, get_database_backend
 
         # Create multiple backends
-        backend1 = get_database_backend(
-            backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test1.db"
-        )
-        backend2 = get_database_backend(
-            backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test2.db"
-        )
+        backend1 = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test1.db")
+        backend2 = get_database_backend(backend_type=DatabaseBackendType.SQLITE, db_url="sqlite:///./test2.db")
 
         # Should be different instances
         assert backend1 is not backend2
