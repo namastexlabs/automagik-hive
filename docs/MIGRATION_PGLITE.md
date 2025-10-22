@@ -59,20 +59,33 @@ HIVE_DATABASE_BACKEND=pglite
 HIVE_DATABASE_URL=pglite://./data/automagik_hive.db
 ```
 
-### 2. SQLite (Fallback)
+### 2. SQLite (Development/Testing Only)
 
-**Best For:** Minimal dependencies, embedded use cases, testing
+⚠️ **CRITICAL LIMITATION**: SQLite backend **CANNOT persist agent sessions or user memory** due to Agno Framework's PostgreSQL-specific storage requirements. Use only for development/testing without memory needs.
 
-**Advantages:**
-- Smallest footprint
-- No external dependencies
-- Proven reliability
-- Simple file-based storage
+**Best For:** Development testing, CI/CD pipelines (stateless agents only)
+
+**What Works:**
+- ✅ Database CRUD operations
+- ✅ Knowledge base queries (without PgVector embeddings)
+- ✅ Agent responses (stateless mode)
+- ✅ Tool execution
+- ✅ API endpoints
+
+**What DOESN'T Work:**
+- ❌ **Agent memory** (user context forgotten between requests)
+- ❌ **Session persistence** (conversation history not saved)
+- ❌ **Multi-turn conversations** (no context retention)
+- ❌ **User preferences** (settings not persisted)
+- ❌ **PgVector embeddings** (vector search unavailable)
 
 **Limitations:**
+- No agent session/memory support (Agno Framework incompatibility - Issue #77)
 - No concurrent write support
 - Limited vector search performance vs PostgreSQL
 - No advanced PostgreSQL features
+
+**Recommendation:** **Use PGlite instead** for development with full agent memory support.
 
 **Installation:**
 ```bash

@@ -318,26 +318,34 @@ HIVE_DATABASE_BACKEND=pglite
 HIVE_DATABASE_URL=pglite://./data/automagik_hive.db
 ```
 
-### SQLite (Fallback)
+### SQLite (Development/Testing Only)
 
-**Simple file-based database** - Minimal dependencies, maximum simplicity.
+⚠️ **CRITICAL LIMITATION**: SQLite **CANNOT persist agent sessions or user memory**. Agents will forget user context between requests. **Use PGlite instead for development with full agent memory support.**
+
+**Simple file-based database** - Use ONLY for stateless testing or CI/CD pipelines.
 
 **Best For:**
-- Embedded use cases
-- Testing environments
-- Minimal dependency requirements
-- Single-user scenarios
+- CI/CD integration tests (stateless agents)
+- Quick prototyping (no memory requirements)
+- Minimal dependency environments
 
-**Advantages:**
-- ✅ Zero configuration
-- ✅ Smallest footprint
-- ✅ No external dependencies
-- ✅ Proven reliability
+**What Works:**
+- ✅ Database CRUD operations
+- ✅ Stateless agent responses
+- ✅ Tool execution
+- ✅ API endpoints
 
-**Limitations:**
+**What DOESN'T Work (Critical):**
+- ❌ **Agent memory** - Users forgotten between requests
+- ❌ **Session persistence** - No conversation history
+- ❌ **Multi-turn conversations** - No context retention
+- ❌ **PgVector embeddings** - No vector search
+
+**Additional Limitations:**
 - ❌ Limited concurrent write support
-- ❌ Basic vector search performance
 - ❌ No advanced PostgreSQL features
+
+**⚠️ NOT RECOMMENDED**: Use PGlite for development instead.
 
 **Installation:**
 ```bash
@@ -389,13 +397,15 @@ HIVE_DATABASE_URL=postgresql+psycopg://user:password@localhost:5532/hive
 
 | Feature | PGlite | SQLite | PostgreSQL |
 |---------|--------|--------|------------|
+| **Agent Memory/Sessions** | ✅ **Full Support** | ❌ **NOT SUPPORTED** | ✅ **Full Support** |
 | Docker Required | ❌ No | ❌ No | ✅ Yes |
 | Setup Time | <1 min | <1 min | 2-3 min |
 | Concurrent Writes | ✅ Good | ⚠️ Limited | ✅ Excellent |
-| Vector Search | ✅ Good | ⚠️ Basic | ✅ Excellent |
-| Production Ready | ✅ Yes* | ⚠️ Limited | ✅ Yes |
+| Vector Search | ✅ Good | ❌ None | ✅ Excellent |
+| Production Ready | ✅ Yes* | ❌ **No** | ✅ Yes |
 | Browser Compatible | ✅ Yes | ❌ No | ❌ No |
 | Memory Footprint | ~50MB | ~10MB | ~100MB |
+| **Recommended For** | **Development & Production** | **CI/CD Testing Only** | **Large Production** |
 
 \* PGlite is production-ready for small-to-medium deployments
 

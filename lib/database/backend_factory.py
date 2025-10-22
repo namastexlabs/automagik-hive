@@ -111,6 +111,24 @@ def create_backend(
     elif backend_type == DatabaseBackendType.SQLITE:
         from .providers.sqlite import SQLiteBackend
 
+        # ⚠️ CRITICAL WARNING: SQLite cannot persist agent sessions/memory
+        logger.warning(
+            "⚠️  SQLITE BACKEND SELECTED - CRITICAL LIMITATIONS:\n"
+            "   • Agents CANNOT save sessions or remember users between requests\n"
+            "   • User memories will NOT persist across conversations\n"
+            "   • Multi-turn conversations will NOT retain context\n"
+            "   • PgVector embeddings NOT supported\n"
+            "\n"
+            "   📌 SQLite is ONLY suitable for:\n"
+            "      - CI/CD integration tests (stateless agents)\n"
+            "      - Quick prototyping without memory requirements\n"
+            "\n"
+            "   ✅ RECOMMENDATION: Use PGlite for development with full agent memory support\n"
+            "      Set HIVE_DATABASE_BACKEND=pglite in your .env file\n"
+            "\n"
+            "   See Issue #77: https://github.com/namastexlabs/automagik-hive/issues/77"
+        )
+
         return SQLiteBackend(db_url=db_url, min_size=min_size, max_size=max_size)
 
     else:
