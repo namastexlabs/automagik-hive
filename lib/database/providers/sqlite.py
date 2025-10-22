@@ -22,6 +22,25 @@ class SQLiteBackend(BaseDatabaseBackend):
 
     Provides async SQLite operations with file-based storage.
     Compatible with BaseDatabaseBackend interface.
+
+    ⚠️ **CRITICAL LIMITATIONS**:
+
+    1. **NO AGENT MEMORY SUPPORT** (Issue #77)
+       - SQLite CANNOT persist agent sessions or user memory
+       - Agents forget user context between requests
+       - Multi-turn conversations fail
+       - User preferences not saved
+       - Cause: Agno Framework requires PostgreSQL-specific storage
+       - **Use PGlite or PostgreSQL for development/production**
+
+    2. **Close() Finality** (Issue #75 - FIXED)
+       - close() now permanently prevents reconnection
+       - get_connection() raises RuntimeError after close()
+       - Backend instances are single-use after close()
+       - Create new instance if needed after close()
+
+    **RECOMMENDED USE**: CI/CD testing or stateless scenarios ONLY.
+    **NOT RECOMMENDED**: Development with agent memory or production use.
     """
 
     def __init__(self, db_url: str | None = None, min_size: int = 2, max_size: int = 10):
@@ -50,6 +69,7 @@ class SQLiteBackend(BaseDatabaseBackend):
 
         self.connection: aiosqlite.Connection | None = None
         self._initialized = False
+        self._closed = False  # Track if backend has been explicitly closed
 
         # Connection pool size (unused but stored for interface compatibility)
         self.min_size = min_size
@@ -82,14 +102,20 @@ class SQLiteBackend(BaseDatabaseBackend):
             raise RuntimeError(f"SQLite initialization failed: {e}") from e
 
     async def close(self) -> None:
-        """Close SQLite connection."""
+        """
+        Close SQLite connection permanently.
+
+        After calling close(), the backend cannot be used again.
+        Any attempt to get a connection will raise RuntimeError.
+        """
         if self.connection:
             logger.info("Closing SQLite connection")
             await self.connection.close()
             self.connection = None
 
         self._initialized = False
-        logger.info("SQLite connection closed")
+        self._closed = True  # Mark as permanently closed
+        logger.info("SQLite connection closed permanently")
 
     @asynccontextmanager
     async def get_connection(self):
@@ -98,7 +124,15 @@ class SQLiteBackend(BaseDatabaseBackend):
 
         Yields:
             Connection: aiosqlite connection object
+
+        Raises:
+            RuntimeError: If backend has been closed
         """
+        if self._closed:
+            raise RuntimeError(
+                "SQLite backend has been closed and cannot be reused. Create a new backend instance instead."
+            )
+
         if not self._initialized:
             await self.initialize()
 

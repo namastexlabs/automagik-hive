@@ -264,8 +264,9 @@ class TestSQLiteBackend:
         # Verify connection closed
         mock_aiosqlite.close.assert_called_once()
 
-        # Verify initialized flag reset
+        # Verify flags reset
         assert not backend._initialized
+        assert backend._closed is True
 
     @pytest.mark.asyncio
     async def test_parameter_binding(self, mock_aiosqlite, mock_os_makedirs):
@@ -324,3 +325,24 @@ class TestSQLiteBackend:
         assert backend._initialized
 
         await backend.close()
+
+    @pytest.mark.asyncio
+    async def test_close_prevents_reconnection(self, mock_aiosqlite, mock_os_makedirs):
+        """Test that close() permanently prevents reconnection (Issue #75 fix)."""
+        backend = SQLiteBackend()
+        await backend.initialize()
+
+        # Use connection successfully
+        async with backend.get_connection():
+            pass
+
+        # Close backend
+        await backend.close()
+
+        # Verify closed flag set
+        assert backend._closed is True
+
+        # Try to use connection after close - should raise RuntimeError
+        with pytest.raises(RuntimeError, match="SQLite backend has been closed"):
+            async with backend.get_connection():
+                pass
