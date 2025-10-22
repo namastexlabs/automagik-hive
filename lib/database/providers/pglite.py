@@ -36,7 +36,9 @@ class PGliteBackend(BaseDatabaseBackend):
             min_size: Unused (PGlite doesn't support pooling)
             max_size: Unused (PGlite doesn't support pooling)
         """
-        self.data_dir = db_url or os.getenv("PGLITE_DATA_DIR", "./pglite-data")
+        # Store original URL for interface compatibility
+        self.db_url = db_url or os.getenv("PGLITE_DATA_DIR", "./pglite-data")
+        self.data_dir = self.db_url
         self.port = int(os.getenv("PGLITE_PORT", "5532"))
         self.base_url = f"http://127.0.0.1:{self.port}"
 

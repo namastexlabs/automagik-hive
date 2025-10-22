@@ -32,9 +32,23 @@ class TestPostgreSQLBackend:
     @pytest.fixture
     def mock_pool(self):
         """Mock AsyncConnectionPool."""
+        from unittest.mock import MagicMock
+
         with patch("lib.database.providers.postgresql.AsyncConnectionPool") as mock_pool_class:
             mock_pool = AsyncMock()
             mock_pool_class.return_value = mock_pool
+
+            # Create a mock connection
+            mock_connection = AsyncMock()
+
+            # Create async context manager for connection
+            async_cm = AsyncMock()
+            async_cm.__aenter__ = AsyncMock(return_value=mock_connection)
+            async_cm.__aexit__ = AsyncMock(return_value=None)
+
+            # Make connection a regular Mock (not AsyncMock) that returns the async context manager
+            mock_pool.connection = MagicMock(return_value=async_cm)
+
             yield mock_pool
 
     @pytest.mark.asyncio
@@ -70,9 +84,9 @@ class TestPostgreSQLBackend:
         backend = PostgreSQLBackend()
         await backend.initialize()
 
-        # Mock connection
-        mock_conn = AsyncMock()
-        mock_pool.connection.return_value.__aenter__.return_value = mock_conn
+        # The mock_pool fixture already configured connection properly
+        # Just get the configured mock connection and set expectations
+        mock_conn = mock_pool.connection.return_value.__aenter__.return_value
 
         await backend.execute("CREATE TABLE test (id INTEGER);")
 
@@ -84,15 +98,25 @@ class TestPostgreSQLBackend:
     @pytest.mark.asyncio
     async def test_fetch_one_query(self, mock_env_vars, mock_pool):
         """Test fetching single row."""
+        from unittest.mock import MagicMock
+
         backend = PostgreSQLBackend()
         await backend.initialize()
 
-        # Mock connection and cursor
-        mock_conn = AsyncMock()
+        # Get the configured mock connection from fixture
+        mock_conn = mock_pool.connection.return_value.__aenter__.return_value
+
+        # Configure cursor behavior
         mock_cursor = AsyncMock()
         mock_cursor.fetchone.return_value = {"id": 1, "name": "test"}
-        mock_conn.cursor.return_value.__aenter__.return_value = mock_cursor
-        mock_pool.connection.return_value.__aenter__.return_value = mock_conn
+
+        # Create async context manager for cursor
+        cursor_cm = AsyncMock()
+        cursor_cm.__aenter__ = AsyncMock(return_value=mock_cursor)
+        cursor_cm.__aexit__ = AsyncMock(return_value=None)
+
+        # Make cursor a regular Mock that returns the async context manager
+        mock_conn.cursor = MagicMock(return_value=cursor_cm)
 
         result = await backend.fetch_one("SELECT * FROM test WHERE id = 1;")
 
@@ -105,15 +129,25 @@ class TestPostgreSQLBackend:
     @pytest.mark.asyncio
     async def test_fetch_all_query(self, mock_env_vars, mock_pool):
         """Test fetching multiple rows."""
+        from unittest.mock import MagicMock
+
         backend = PostgreSQLBackend()
         await backend.initialize()
 
-        # Mock connection and cursor
-        mock_conn = AsyncMock()
+        # Get the configured mock connection from fixture
+        mock_conn = mock_pool.connection.return_value.__aenter__.return_value
+
+        # Configure cursor behavior
         mock_cursor = AsyncMock()
         mock_cursor.fetchall.return_value = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
-        mock_conn.cursor.return_value.__aenter__.return_value = mock_cursor
-        mock_pool.connection.return_value.__aenter__.return_value = mock_conn
+
+        # Create async context manager for cursor
+        cursor_cm = AsyncMock()
+        cursor_cm.__aenter__ = AsyncMock(return_value=mock_cursor)
+        cursor_cm.__aexit__ = AsyncMock(return_value=None)
+
+        # Make cursor a regular Mock that returns the async context manager
+        mock_conn.cursor = MagicMock(return_value=cursor_cm)
 
         results = await backend.fetch_all("SELECT * FROM test;")
 
@@ -126,14 +160,21 @@ class TestPostgreSQLBackend:
     @pytest.mark.asyncio
     async def test_execute_transaction(self, mock_env_vars, mock_pool):
         """Test transaction execution."""
+        from unittest.mock import MagicMock
+
         backend = PostgreSQLBackend()
         await backend.initialize()
 
-        # Mock connection and transaction
-        mock_conn = AsyncMock()
-        mock_transaction = AsyncMock()
-        mock_conn.transaction.return_value = mock_transaction
-        mock_pool.connection.return_value.__aenter__.return_value = mock_conn
+        # Get the configured mock connection from fixture
+        mock_conn = mock_pool.connection.return_value.__aenter__.return_value
+
+        # Create async context manager for transaction
+        transaction_cm = AsyncMock()
+        transaction_cm.__aenter__ = AsyncMock(return_value=None)
+        transaction_cm.__aexit__ = AsyncMock(return_value=None)
+
+        # Make transaction a regular Mock that returns the async context manager
+        mock_conn.transaction = MagicMock(return_value=transaction_cm)
 
         operations = [
             ("INSERT INTO test (id, name) VALUES (%(id)s, %(name)s);", {"id": 1, "name": "test1"}),
@@ -156,9 +197,8 @@ class TestPostgreSQLBackend:
         backend = PostgreSQLBackend()
         await backend.initialize()
 
-        # Mock connection
-        mock_conn = AsyncMock()
-        mock_pool.connection.return_value.__aenter__.return_value = mock_conn
+        # Get the configured mock connection from fixture
+        mock_conn = mock_pool.connection.return_value.__aenter__.return_value
 
         async with backend.get_connection() as conn:
             assert conn == mock_conn
@@ -227,10 +267,7 @@ class TestPostgreSQLBackend:
         # Pool should be None initially
         assert backend.pool is None
 
-        # Mock connection
-        mock_conn = AsyncMock()
-        mock_pool.connection.return_value.__aenter__.return_value = mock_conn
-
+        # The mock_pool fixture already configured connection properly
         # Getting connection should auto-initialize
         async with backend.get_connection():
             pass  # Context manager verifies connection works

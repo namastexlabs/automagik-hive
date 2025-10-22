@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -18,15 +18,36 @@ class TestSQLiteBackend:
     """Test suite for SQLite database backend."""
 
     @pytest.fixture
+    def mock_os_makedirs(self):
+        """Mock os.makedirs to avoid directory creation."""
+        with patch("lib.database.providers.sqlite.os.makedirs") as mock_makedirs:
+            yield mock_makedirs
+
+    @pytest.fixture
     def mock_aiosqlite(self):
-        """Mock aiosqlite module."""
-        with patch("aiosqlite.connect") as mock_connect:
+        """Mock aiosqlite module with proper async operations."""
+        with patch("lib.database.providers.sqlite.aiosqlite") as mock_module:
+            # Create async mock connection
             mock_connection = AsyncMock()
-            mock_connect.return_value.__aenter__.return_value = mock_connection
+
+            # Mock connect to return async context manager
+            mock_module.connect = AsyncMock(return_value=mock_connection)
+
+            # Mock all async connection methods
+            mock_connection.execute = AsyncMock()
+            mock_connection.commit = AsyncMock()
+            mock_connection.rollback = AsyncMock()
+            mock_connection.close = AsyncMock()
+            mock_connection.cursor = AsyncMock()
+
+            # Mock __aenter__ and __aexit__ for async context manager
+            mock_connection.__aenter__ = AsyncMock(return_value=mock_connection)
+            mock_connection.__aexit__ = AsyncMock(return_value=None)
+
             yield mock_connection
 
     @pytest.mark.asyncio
-    async def test_backend_initialization(self, mock_aiosqlite):
+    async def test_backend_initialization(self, mock_aiosqlite, mock_os_makedirs):
         """Test SQLite backend initialization."""
         backend = SQLiteBackend(db_url="sqlite:///test.db")
         await backend.initialize()
@@ -44,7 +65,7 @@ class TestSQLiteBackend:
         assert backend.db_path == ":memory:"
 
     @pytest.mark.asyncio
-    async def test_default_db_path(self, mock_aiosqlite):
+    async def test_default_db_path(self, mock_aiosqlite, mock_os_makedirs):
         """Test default database path."""
         backend = SQLiteBackend()
 
@@ -52,7 +73,7 @@ class TestSQLiteBackend:
         assert "automagik-hive.db" in backend.db_path
 
     @pytest.mark.asyncio
-    async def test_execute_query(self, mock_aiosqlite):
+    async def test_execute_query(self, mock_aiosqlite, mock_os_makedirs):
         """Test query execution without results."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -64,14 +85,16 @@ class TestSQLiteBackend:
 
         await backend.execute("CREATE TABLE test (id INTEGER PRIMARY KEY);")
 
-        # Verify execute called
-        mock_aiosqlite.execute.assert_called_once()
-        mock_aiosqlite.commit.assert_called_once()
+        # Verify execute called (includes PRAGMA + query)
+        assert mock_aiosqlite.execute.call_count >= 2  # PRAGMA + query
+
+        # Verify commit called
+        mock_aiosqlite.commit.assert_called()
 
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_fetch_one_query(self, mock_aiosqlite):
+    async def test_fetch_one_query(self, mock_aiosqlite, mock_os_makedirs):
         """Test fetching single row."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -91,7 +114,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_fetch_one_no_results(self, mock_aiosqlite):
+    async def test_fetch_one_no_results(self, mock_aiosqlite, mock_os_makedirs):
         """Test fetch_one returns None when no results."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -108,7 +131,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_fetch_all_query(self, mock_aiosqlite):
+    async def test_fetch_all_query(self, mock_aiosqlite, mock_os_makedirs):
         """Test fetching multiple rows."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -128,7 +151,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_fetch_all_empty_results(self, mock_aiosqlite):
+    async def test_fetch_all_empty_results(self, mock_aiosqlite, mock_os_makedirs):
         """Test fetch_all returns empty list when no results."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -145,7 +168,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_execute_transaction(self, mock_aiosqlite):
+    async def test_execute_transaction(self, mock_aiosqlite, mock_os_makedirs):
         """Test transaction execution."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -161,18 +184,18 @@ class TestSQLiteBackend:
 
         await backend.execute_transaction(operations)
 
-        # Verify BEGIN called
+        # Verify BEGIN and COMMIT called
         execute_calls = [call[0][0] for call in mock_aiosqlite.execute.call_args_list]
-        assert "BEGIN" in execute_calls
-        assert "COMMIT" in execute_calls
+        assert "BEGIN;" in execute_calls
+        assert "COMMIT;" in execute_calls
 
-        # Verify all operations executed
-        assert mock_aiosqlite.execute.call_count >= 4  # BEGIN + 2 operations + COMMIT
+        # Verify all operations executed (PRAGMA + BEGIN + 2 operations + COMMIT)
+        assert mock_aiosqlite.execute.call_count >= 5
 
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_transaction_rollback_on_error(self, mock_aiosqlite):
+    async def test_transaction_rollback_on_error(self, mock_aiosqlite, mock_os_makedirs):
         """Test transaction rollback on error."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -199,7 +222,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_get_connection_context(self, mock_aiosqlite):
+    async def test_get_connection_context(self, mock_aiosqlite, mock_os_makedirs):
         """Test connection context manager."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -210,7 +233,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_auto_initialize_on_connection(self, mock_aiosqlite):
+    async def test_auto_initialize_on_connection(self, mock_aiosqlite, mock_os_makedirs):
         """Test auto-initialization when getting connection."""
         backend = SQLiteBackend()
 
@@ -227,10 +250,14 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_close_cleanup(self, mock_aiosqlite):
+    async def test_close_cleanup(self, mock_aiosqlite, mock_os_makedirs):
         """Test proper cleanup on close."""
         backend = SQLiteBackend()
         await backend.initialize()
+
+        # Create a connection (which sets self.connection)
+        async with backend.get_connection():
+            pass
 
         await backend.close()
 
@@ -241,7 +268,7 @@ class TestSQLiteBackend:
         assert not backend._initialized
 
     @pytest.mark.asyncio
-    async def test_parameter_binding(self, mock_aiosqlite):
+    async def test_parameter_binding(self, mock_aiosqlite, mock_os_makedirs):
         """Test parameter binding for queries."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -262,7 +289,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_row_to_dict_conversion(self, mock_aiosqlite):
+    async def test_row_to_dict_conversion(self, mock_aiosqlite, mock_os_makedirs):
         """Test conversion of SQLite rows to dictionaries."""
         backend = SQLiteBackend()
         await backend.initialize()
@@ -284,7 +311,7 @@ class TestSQLiteBackend:
         await backend.close()
 
     @pytest.mark.asyncio
-    async def test_connection_pooling_not_supported(self):
+    async def test_connection_pooling_not_supported(self, mock_aiosqlite, mock_os_makedirs):
         """Test that connection pool size parameters are ignored."""
         backend = SQLiteBackend(min_size=5, max_size=20)
 
