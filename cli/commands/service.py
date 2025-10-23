@@ -918,17 +918,13 @@ class ServiceManager:
             "sqlite": "sqlite:///./data/automagik_hive.db",
         }
 
-        # Update URL if it's a placeholder
+        # Update URL based on backend type
         updated_lines = []
         for line in env_lines:
             if line.startswith("HIVE_DATABASE_URL="):
-                # Only update if it's the default placeholder
-                if "your_database_url_here" in line or not line.strip().endswith(
-                    ("pglite://", "postgresql://", "sqlite://")
-                ):
-                    updated_lines.append(f"HIVE_DATABASE_URL={url_map[backend_type]}\n")
-                else:
-                    updated_lines.append(line)
+                # Always update to match backend choice
+                # This ensures PGlite/SQLite get correct URLs even if .env was seeded with PostgreSQL
+                updated_lines.append(f"HIVE_DATABASE_URL={url_map[backend_type]}\n")
             else:
                 updated_lines.append(line)
 
