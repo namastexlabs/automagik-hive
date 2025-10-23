@@ -8,7 +8,7 @@ Automated workflow for processing CTE invoices through a 4-stage pipeline:
 3. JSON structure generation with proper state management
 4. Browser API orchestration for invoice lifecycle
 
-Based on existing Python system but leveraging Agno Workflows 2.0 architecture.
+Based on existing Python system but leveraging Agno Workflows architecture.
 """
 
 import asyncio
@@ -27,8 +27,8 @@ from typing import Any, Dict, List, Optional, Union
 import aiohttp
 from agno.agent import Agent
 from agno.storage.postgres import PostgresStorage
-from agno.workflow.v2 import Condition, Parallel, Step, Workflow
-from agno.workflow.v2.types import StepInput, StepOutput
+from agno.workflow import Condition, Parallel, Step, Workflow
+from agno.workflow.types import StepInput, StepOutput
 from dateutil import relativedelta
 
 # Import CTEProcessor for database synchronization
