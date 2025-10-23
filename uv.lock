@@ -200,7 +200,7 @@ wheels = [
 
 [[package]]
 name = "automagik-hive"
-version = "0.2.0rc16"
+version = "0.2.0rc24"
 source = { editable = "." }
 dependencies = [
     { name = "ag-ui-protocol" },

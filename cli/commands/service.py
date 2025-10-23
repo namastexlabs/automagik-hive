@@ -924,7 +924,7 @@ HIVE_LOG_LEVEL=INFO
 
         # Update database URL based on backend
         url_map = {
-            "pglite": "pglite://./data/automagik_hive.db",
+            "pglite": "postgresql://localhost:5532/main",  # PGlite HTTP bridge PostgreSQL-compatible URL
             "postgresql": "postgresql+psycopg://hive_user:${HIVE_POSTGRES_PASSWORD}@localhost:${HIVE_POSTGRES_PORT}/automagik_hive",
             "sqlite": "sqlite:///./data/automagik_hive.db",
         }
