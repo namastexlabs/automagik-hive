@@ -26,9 +26,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
 from agno.agent import Agent
-from agno.storage.postgres import PostgresStorage
-from agno.workflow import Condition, Parallel, Step, Workflow
-from agno.workflow.types import StepInput, StepOutput
+from agno.db.postgres import PostgresDb
+from agno.workflow import Condition, Parallel, Step, StepInput, StepOutput, Workflow
 from dateutil import relativedelta
 
 # Import CTEProcessor for database synchronization
@@ -111,13 +110,12 @@ def create_workflow_model():
     )
 
 
-def create_postgres_storage(table_name: str) -> PostgresStorage | None: #Avaliar alternativas
-    """Create PostgreSQL storage for agent state persistence"""
+def create_postgres_storage(table_name: str) -> PostgresDb | None: #Avaliar alternativas
+    """Create PostgreSQL database for agent state persistence"""
     try:
-        return PostgresStorage(
-            table_name=table_name,
+        return PostgresDb(
+            session_table=table_name,
             db_url=os.getenv("HIVE_DATABASE_URL", "postgresql://localhost:5532/hive"), # Trocar pro .env
-            auto_upgrade_schema=True
         )
     except Exception as e:
         logger.warning(f"⚠️ PostgreSQL storage unavailable: {e}.")
@@ -362,7 +360,7 @@ def create_file_manager_agent() -> Agent:
 class StateManager:
     """Centralized state management for ProcessamentoFaturas workflow"""
 
-    def __init__(self, storage: PostgresStorage):
+    def __init__(self, storage: PostgresDb):
         self.storage = storage
 
     async def create_processing_state(self, email_id: str, excel_filename: str, batch_id: str) -> str:
