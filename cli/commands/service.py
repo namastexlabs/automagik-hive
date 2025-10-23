@@ -588,9 +588,6 @@ class ServiceManager:
                 deployment_mode = "local_hybrid"  # PGlite/SQLite are always local
                 print(f"\n✅ Using local deployment (no Docker needed for {backend_type.upper()})")
 
-            # Store backend choice in environment for later use
-            self._store_backend_choice(resolved_workspace, backend_type)
-
             # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
             print("\n📝 Step 1/2: Generating Credentials")
             print("-" * 50)
@@ -604,6 +601,10 @@ class ServiceManager:
             print("\n✅ Credentials generated successfully")
             print(f"   📄 Configuration: {resolved_workspace}/.env")
             print(f"   🔐 Backup: {resolved_workspace}/.env.master")
+
+            # Store backend choice in environment AFTER credentials are generated
+            # This ensures .env exists and can be updated with correct database URL
+            self._store_backend_choice(resolved_workspace, backend_type)
 
             # 3. DEPLOYMENT-SPECIFIC SETUP (NEW)
             print(f"\n🚀 Step 2/2: Setting up {deployment_mode.replace('_', ' ').title()} Mode")
@@ -882,8 +883,18 @@ class ServiceManager:
     def _store_backend_choice(self, workspace: Path, backend_type: str) -> None:
         """Store backend choice and required env vars in .env file."""
         env_file = workspace / ".env"
+
         if not env_file.exists():
-            return
+            # Create minimal .env with essential variables
+            # This is a defensive fallback - normally .env should already exist from credential service
+            minimal_env = f"""# Minimal environment configuration
+HIVE_DATABASE_BACKEND={backend_type}
+HIVE_API_PORT=8886
+HIVE_ENVIRONMENT=development
+HIVE_LOG_LEVEL=INFO
+"""
+            env_file.write_text(minimal_env)
+            print(f"  ⚠️  Created minimal .env file (this shouldn't normally happen)")
 
         # Read existing .env
         env_lines = []

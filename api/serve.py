@@ -27,8 +27,17 @@ from starlette.middleware.cors import CORSMiddleware
 # This ensures AGNO_LOG_LEVEL is available when logging system initializes
 try:
     from dotenv import load_dotenv
+    from pathlib import Path as DotenvPath
 
-    load_dotenv()
+    # EXPLICIT: Load from workspace .env (current working directory)
+    # This ensures external workspaces (uvx usage) load their local .env
+    # and prevents race conditions from multiple load_dotenv() calls
+    workspace_env = DotenvPath.cwd() / ".env"
+    if workspace_env.exists():
+        load_dotenv(dotenv_path=workspace_env, override=False)
+    else:
+        # Fallback: Search upward from CWD
+        load_dotenv(override=False)
 except ImportError:
     pass  # Silently continue - dotenv is optional for development
 
