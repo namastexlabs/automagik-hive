@@ -451,17 +451,13 @@ class ServiceManager:
 
             # Navigate to the shared-data templates directory
             # In a wheel with shared-data, the structure is:
-            # {venv_root}/lib/python3.X/site-packages/cli  <- cli package
-            # {venv_root}/automagik_hive/templates/        <- shared-data
-            # So we need to go up 4 levels from cli package
+            # site-packages/cli/                    <- cli package
+            # site-packages/automagik_hive/templates/  <- shared-data (sibling to cli)
             cli_path = Path(str(cli_root))
-            # cli_path                = .../site-packages/cli
-            # cli_path.parent         = .../site-packages
-            # .parent.parent          = .../python3.X
-            # .parent.parent.parent   = .../lib
-            # .parent.parent.parent.parent = {venv_root}
-            venv_root = cli_path.parent.parent.parent.parent
-            template_path = venv_root / "automagik_hive" / "templates"
+            # cli_path        = .../site-packages/cli
+            # cli_path.parent = .../site-packages
+            site_packages = cli_path.parent
+            template_path = site_packages / "automagik_hive" / "templates"
 
             if template_path.exists() and (template_path / "agents" / "template-agent").exists():
                 return template_path
@@ -491,9 +487,10 @@ class ServiceManager:
             cli_path = Path(str(cli_root))
 
             # Navigate to shared-data docker/main directory
-            # {venv_root}/automagik_hive/docker/main/
-            venv_root = cli_path.parent.parent.parent.parent
-            docker_main_path = venv_root / "automagik_hive" / "docker" / "main"
+            # site-packages/cli/                    <- cli package
+            # site-packages/automagik_hive/docker/main/  <- shared-data (sibling to cli)
+            site_packages = cli_path.parent
+            docker_main_path = site_packages / "automagik_hive" / "docker" / "main"
 
             if docker_main_path.exists() and (docker_main_path / "docker-compose.yml").exists():
                 return docker_main_path
