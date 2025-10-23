@@ -105,14 +105,21 @@ class ToolRegistry:
                         tools.append(tool)
                         successfully_loaded_names.append(tool_name)
                 else:
-                    # Try to load as native Agno tool via auto-discovery
-                    agno_tool = ToolRegistry._load_native_agno_tool(tool_name, tool_options)
-                    if agno_tool:
-                        tools.append(agno_tool)
+                    # Try to load as custom @tool decorated function from ai/tools/
+                    custom_tool = ToolRegistry._load_custom_tool(tool_name)
+                    if custom_tool:
+                        tools.append(custom_tool)
                         successfully_loaded_names.append(tool_name)
-                        logger.debug(f"🔧 Loaded native Agno tool: {tool_name}")
+                        logger.debug(f"🔧 Loaded custom @tool: {tool_name}")
                     else:
-                        logger.warning(f"Unknown tool type for: {tool_name}")
+                        # Try to load as native Agno tool via auto-discovery
+                        agno_tool = ToolRegistry._load_native_agno_tool(tool_name, tool_options)
+                        if agno_tool:
+                            tools.append(agno_tool)
+                            successfully_loaded_names.append(tool_name)
+                            logger.debug(f"🔧 Loaded native Agno tool: {tool_name}")
+                        else:
+                            logger.warning(f"Unknown tool type for: {tool_name}")
 
             except Exception as e:
                 logger.error(f"Failed to load tool {tool_name}: {e}")
@@ -367,6 +374,33 @@ class ToolRegistry:
         ToolRegistry._agno_tools_cache = discovered_tools
         logger.debug(f"🔧 Discovered {len(discovered_tools)} Agno Tools: {sorted(discovered_tools.keys())}")
         return discovered_tools
+
+    @staticmethod
+    def _load_custom_tool(tool_name: str) -> Callable:
+        """Load repo-defined Agno @tool functions exposed under ai.tools.* packages."""
+        try:
+            import ai.tools  # Ensure package is importable
+        except ImportError as e:
+            logger.debug(f"ai.tools package unavailable for custom tool loading: {e}")
+            return None
+
+        for finder, module_name, _ in pkgutil.walk_packages(ai.tools.__path__, "ai.tools."):
+            try:
+                module = importlib.import_module(module_name)
+            except Exception as e:
+                logger.debug(f"Error importing {module_name}: {e}")
+                continue
+
+            if not hasattr(module, tool_name):
+                continue
+
+            func = getattr(module, tool_name)
+            type_name = type(func).__name__
+            if type_name == "Function" or callable(func):
+                logger.debug(f"🔧 Found custom @tool '{tool_name}' in {module_name}")
+                return func
+
+        return None
 
     @staticmethod
     def _load_shared_tool(tool_name: str) -> Callable:
