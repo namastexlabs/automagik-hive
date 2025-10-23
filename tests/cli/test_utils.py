@@ -5,6 +5,7 @@ command execution, Docker validation, status formatting, and user interaction.
 All tests are designed with RED phase compliance for TDD workflow.
 """
 
+import os
 import subprocess
 from unittest.mock import Mock, call, patch
 
@@ -132,66 +133,94 @@ class TestCheckDockerAvailable:
 
     def test_check_docker_available_success(self):
         """Test Docker availability check when Docker is available and running."""
-        with patch("cli.utils.run_command") as mock_run:
-            mock_run.side_effect = ["Docker version 20.10.0", "CONTAINER ID"]
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run:
+                mock_run.side_effect = ["Docker version 20.10.0", "CONTAINER ID"]
 
-            result = check_docker_available()
+                result = check_docker_available()
 
-            assert result is True
-            assert mock_run.call_count == 2
-            mock_run.assert_has_calls(
-                [call(["docker", "--version"], capture_output=True), call(["docker", "ps"], capture_output=True)]
-            )
+                assert result is True
+                assert mock_run.call_count == 2
+                mock_run.assert_has_calls(
+                    [call(["docker", "--version"], capture_output=True), call(["docker", "ps"], capture_output=True)]
+                )
 
     def test_check_docker_not_installed(self):
         """Test Docker availability check when Docker is not installed."""
-        with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
-            mock_run.side_effect = [None, None]  # First call fails
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
+                mock_run.side_effect = [None, None]  # First call fails
 
-            result = check_docker_available()
+                result = check_docker_available()
 
-            assert result is False
-            mock_print.assert_called_once_with("❌ Docker not found. Please install Docker first.")
+                assert result is False
+                # Updated assertion to match new message with backend suggestion
+                assert any("Docker not found" in str(call) for call in mock_print.call_args_list)
 
     def test_check_docker_daemon_not_running(self):
         """Test Docker availability check when Docker is installed but daemon not running."""
-        with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
-            mock_run.side_effect = ["Docker version 20.10.0", None]  # Second call fails
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
+                mock_run.side_effect = ["Docker version 20.10.0", None]  # Second call fails
 
-            result = check_docker_available()
+                result = check_docker_available()
 
-            assert result is False
-            mock_print.assert_called_once_with("❌ Docker daemon not running. Please start Docker.")
+                assert result is False
+                # Updated assertion to match new message with backend suggestion
+                assert any("Docker daemon not running" in str(call) for call in mock_print.call_args_list)
 
     def test_check_docker_permission_error(self):
         """Test Docker availability check handles permission errors."""
-        with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
-            mock_run.side_effect = ["Docker version 20.10.0", None]  # ps fails due to permission
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
+                mock_run.side_effect = ["Docker version 20.10.0", None]  # ps fails due to permission
 
-            result = check_docker_available()
+                result = check_docker_available()
 
-            assert result is False
-            mock_print.assert_called_once_with("❌ Docker daemon not running. Please start Docker.")
+                assert result is False
+                assert any("Docker daemon not running" in str(call) for call in mock_print.call_args_list)
 
     def test_check_docker_version_command_timeout(self):
         """Test Docker availability check handles command timeouts."""
-        with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
-            mock_run.side_effect = [None, None]  # Timeout on version check
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
+                mock_run.side_effect = [None, None]  # Timeout on version check
 
-            result = check_docker_available()
+                result = check_docker_available()
 
-            assert result is False
-            mock_print.assert_called_once_with("❌ Docker not found. Please install Docker first.")
+                assert result is False
+                assert any("Docker not found" in str(call) for call in mock_print.call_args_list)
 
     def test_check_docker_ps_command_failure(self):
         """Test Docker availability check when ps command fails with specific error."""
-        with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
-            mock_run.side_effect = ["Docker version 20.10.0", None]
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run, patch("builtins.print") as mock_print:
+                mock_run.side_effect = ["Docker version 20.10.0", None]
 
-            result = check_docker_available()
+                result = check_docker_available()
 
-            assert result is False
-            mock_print.assert_called_once_with("❌ Docker daemon not running. Please start Docker.")
+                assert result is False
+                assert any("Docker daemon not running" in str(call) for call in mock_print.call_args_list)
+
+    def test_check_docker_not_required_for_pglite(self):
+        """Test Docker not required when using PGlite backend."""
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "pglite"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run:
+                result = check_docker_available()
+
+                # Docker checks should be skipped entirely
+                assert result is True
+                mock_run.assert_not_called()
+
+    def test_check_docker_not_required_for_sqlite(self):
+        """Test Docker not required when using SQLite backend."""
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "sqlite"}, clear=False):
+            with patch("cli.utils.run_command") as mock_run:
+                result = check_docker_available()
+
+                # Docker checks should be skipped entirely
+                assert result is True
+                mock_run.assert_not_called()
 
 
 class TestFormatStatus:
@@ -381,17 +410,18 @@ class TestUtilsIntegration:
     def test_docker_check_integration_with_command_execution(self):
         """Test Docker availability check integrates properly with command execution."""
         # This test verifies the integration between check_docker_available and run_command
-        with patch("subprocess.run") as mock_run:
-            # Mock successful Docker installation and running daemon
-            mock_run.side_effect = [
-                Mock(stdout="Docker version 20.10.0\n", returncode=0),
-                Mock(stdout="CONTAINER ID   IMAGE\n", returncode=0),
-            ]
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("subprocess.run") as mock_run:
+                # Mock successful Docker installation and running daemon
+                mock_run.side_effect = [
+                    Mock(stdout="Docker version 20.10.0\n", returncode=0),
+                    Mock(stdout="CONTAINER ID   IMAGE\n", returncode=0),
+                ]
 
-            result = check_docker_available()
+                result = check_docker_available()
 
-            assert result is True
-            assert mock_run.call_count == 2
+                assert result is True
+                assert mock_run.call_count == 2
 
     def test_status_formatting_with_docker_status(self):
         """Test status formatting integrates with Docker status information."""
@@ -423,22 +453,23 @@ class TestUtilsIntegration:
 
     def test_error_handling_chain_across_functions(self):
         """Test error handling propagates correctly across utility functions."""
-        with patch("subprocess.run", side_effect=FileNotFoundError), patch("builtins.print") as mock_print:
-            # Docker check should fail gracefully
-            docker_available = check_docker_available()
+        with patch.dict(os.environ, {"HIVE_DATABASE_BACKEND": "postgresql"}, clear=False):
+            with patch("subprocess.run", side_effect=FileNotFoundError), patch("builtins.print") as mock_print:
+                # Docker check should fail gracefully
+                docker_available = check_docker_available()
 
-            # Status formatting should still work
-            status = format_status("Docker", "missing")
+                # Status formatting should still work
+                status = format_status("Docker", "missing")
 
-            # Confirmation should still work
-            with patch("builtins.input", return_value="no"):
-                confirmed = confirm_action("Continue without Docker?")
+                # Confirmation should still work
+                with patch("builtins.input", return_value="no"):
+                    confirmed = confirm_action("Continue without Docker?")
 
-            assert docker_available is False
-            assert "❌ Missing" in status
-            assert confirmed is False
-            # Should have printed Docker not found message
-            mock_print.assert_called_with("❌ Docker not found. Please install Docker first.")
+                assert docker_available is False
+                assert "❌ Missing" in status
+                assert confirmed is False
+                # Should have printed Docker not found message
+                assert any("Docker not found" in str(call) for call in mock_print.call_args_list)
 
 
 class TestUtilsEdgeCases:

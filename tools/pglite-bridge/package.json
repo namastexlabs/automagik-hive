@@ -1,0 +1,28 @@
+{
+  "name": "@automagik-hive/pglite-bridge",
+  "version": "0.1.0",
+  "description": "PostgreSQL wire protocol bridge for PGlite WebAssembly database",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node server.js --test",
+    "install-deps": "npm install"
+  },
+  "keywords": [
+    "pglite",
+    "postgresql",
+    "wasm",
+    "database",
+    "bridge"
+  ],
+  "author": "Namastex Labs",
+  "license": "MIT",
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.0",
+    "pg": "^8.13.1",
+    "pg-protocol": "^1.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

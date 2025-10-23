@@ -50,6 +50,7 @@ class HiveSettings(BaseSettings):
     # DATABASE CONFIGURATION (Required)
     # =========================================================================
     hive_database_url: str = Field(..., description="Database connection URL")
+    hive_database_backend: str | None = Field(None, description="Database backend (pglite|postgresql|sqlite)")
 
     # =========================================================================
     # SECURITY & AUTHENTICATION (Required)
