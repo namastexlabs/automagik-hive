@@ -126,10 +126,9 @@ def create_email_processor_agent() -> Agent:
     """Create agent for email monitoring and Excel extraction"""
     return Agent(
         name="📧 Email Processor",
-        agent_id="email-processor",
         model=create_workflow_model(),
         description="Specialized agent for monitoring Gmail inbox, detecting Excel attachments, and initiating the CTE processing pipeline. Handles OAuth2 authentication, email filtering, and file download operations.",
-        storage=create_postgres_storage("email_processor_state"),
+        db=create_postgres_storage("email_processor_state"),
         instructions=[
             "You are **EMAIL PROCESSOR**, a specialized agent for automated Gmail monitoring and Excel file processing.",
             "",
@@ -174,10 +173,9 @@ def create_data_extractor_agent() -> Agent:
     """Create agent for CTE data extraction from Excel files"""
     return Agent(
         name="📊 Data Extractor",
-        agent_id="data-extractor",
         model=create_workflow_model(),
         description="Specialized agent for parsing Excel files, extracting CTE data, filtering MINUTAS, and transforming data into structured JSON format for downstream processing.",
-        storage=create_postgres_storage("data_extractor_state"),
+        db=create_postgres_storage("data_extractor_state"),
         instructions=[
             "You are **DATA EXTRACTOR**, a specialized agent for precise Excel data processing and CTE extraction.",
             "",
@@ -226,10 +224,9 @@ def create_api_orchestrator_agent() -> Agent:
     """Create agent for browser API orchestration"""
     return Agent(
         name="🔗 API Orchestrator",
-        agent_id="api-orchestrator",
         model=create_workflow_model(),
         description="Specialized agent for coordinating sequential Browser API calls, managing state transitions between API operations, and handling the complete invoice lifecycle from generation to upload.",
-        storage=create_postgres_storage("api_orchestrator_state"),
+        db=create_postgres_storage("api_orchestrator_state"),
         instructions=[
             "You are **API ORCHESTRATOR**, a specialized agent for coordinating complex Browser API workflows.",
             "",
@@ -293,10 +290,9 @@ def create_file_manager_agent() -> Agent:
     """Create agent for comprehensive file lifecycle management"""
     return Agent(
         name="📁 File Manager",
-        agent_id="file-manager",
         model=create_workflow_model(),
         description="Specialized agent for comprehensive file lifecycle management, temporary storage coordination, cleanup operations, and file integrity verification throughout the processing pipeline.",
-        storage=create_postgres_storage("file_manager_state"),
+        db=create_postgres_storage("file_manager_state"),
         instructions=[
             "You are **FILE MANAGER**, a specialized agent for comprehensive file lifecycle management.",
             "",
