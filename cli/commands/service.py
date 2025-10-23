@@ -401,14 +401,26 @@ class ServiceManager:
             if is_valid:
                 print("✅ All critical files verified")
 
+            # Ask if user wants to run install immediately
             print("\n📂 Next steps:")
-            print(f"   cd {workspace_name}")
-            print("   cp .env.example .env")
-            print("   # Edit .env with your API keys and settings")
-            print("   automagik-hive install")
-            print("   automagik-hive dev")
-
-            return True
+            try:
+                run_install = input("\n🔧 Run installation now? This will set up your environment (Y/n): ").strip().lower()
+                if run_install in ["", "y", "yes"]:
+                    print("\n" + "=" * 50)
+                    print("🔧 Running installation...")
+                    print("=" * 50)
+                    # Run installation
+                    return self.install_full_environment(str(workspace_path), verbose=False)
+                else:
+                    print(f"\n💡 When ready, run these commands:")
+                    print(f"   cd {workspace_name}")
+                    print("   automagik-hive install")
+                    return True
+            except (EOFError, KeyboardInterrupt):
+                print(f"\n💡 When ready, run these commands:")
+                print(f"   cd {workspace_name}")
+                print("   automagik-hive install")
+                return True
 
         except Exception as e:
             print(f"❌ Failed to initialize workspace: {e}")
@@ -607,14 +619,32 @@ class ServiceManager:
                 print("      - ANTHROPIC_API_KEY (for Claude)")
                 print("      - OPENAI_API_KEY (optional)")
                 print("      - Other provider keys as needed")
-                print("\n   2. Start the development server:")
+                print("\n   2. The API server can be started with:")
                 print(f"      cd {resolved_workspace}")
                 print("      automagik-hive dev")
-                print("\n   3. Access the API:")
+                print("\n   3. Access the API at:")
                 print("      http://localhost:8886/docs")
                 print("\n💡 Tip: Check .env.example for all available configuration options")
                 print("=" * 50 + "\n")
-                return True
+
+                # Ask if user wants to start the API now
+                try:
+                    start_now = input("🚀 Start the development server now? (Y/n): ").strip().lower()
+                    if start_now in ["", "y", "yes"]:
+                        print("\n🚀 Starting development server...")
+                        print("   Press Ctrl+C to stop the server\n")
+                        # Change to workspace directory
+                        import os
+
+                        os.chdir(resolved_workspace)
+                        # Start the development server
+                        return self.serve_local(reload=True)
+                    else:
+                        print("\n✅ Installation complete! Start the server when ready with: automagik-hive dev")
+                        return True
+                except (EOFError, KeyboardInterrupt):
+                    print("\n✅ Installation complete! Start the server when ready with: automagik-hive dev")
+                    return True
             else:
                 print("\n❌ Installation failed")
                 return False
@@ -814,25 +844,27 @@ class ServiceManager:
         print("📊 DATABASE BACKEND SELECTION")
         print("=" * 70)
         print("\nChoose your database backend:\n")
-        print("  A) PostgreSQL (Docker) - Production-ready, full features")
+        print("  A) PGlite (WebAssembly) - RECOMMENDED ⭐")
+        print("     • Runs PostgreSQL via WebAssembly bridge")
+        print("     • No Docker required - works everywhere!")
+        print("     • Perfect for development and testing")
+        print("     • Production-ready for most use cases\n")
+        print("  B) PostgreSQL (Docker) - Advanced")
         print("     • Requires Docker installed and running")
         print("     • Full PostgreSQL compatibility")
-        print("     • Recommended for production\n")
-        print("  B) PGlite (WebAssembly) - Lightweight, no Docker needed")
-        print("     • Runs PostgreSQL via WebAssembly bridge")
-        print("     • No Docker required")
-        print("     • Great for development and testing\n")
-        print("  C) SQLite - Simple file-based database")
+        print("     • For advanced production scenarios")
+        print("     • See docs for setup: https://docs.automagik.ai/database/postgresql\n")
+        print("  C) SQLite - Simple file-based")
         print("     • Minimal dependencies")
         print("     • Single file storage")
         print("     • Best for simple use cases\n")
 
         while True:
             try:
-                choice = input("Enter your choice (A/B/C) [default: B]: ").strip().upper()
-                if choice == "" or choice == "B":
+                choice = input("Enter your choice (A/B/C) [default: A]: ").strip().upper()
+                if choice == "" or choice == "A":
                     return "pglite"
-                elif choice == "A":
+                elif choice == "B":
                     return "postgresql"
                 elif choice == "C":
                     return "sqlite"

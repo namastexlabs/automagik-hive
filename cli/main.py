@@ -63,9 +63,15 @@ SUBCOMMANDS:
   genie                       Launch claude with AGENTS.md as system prompt
   dev                         Start development server (alternative syntax)
 
-WORKFLOW:
-  1. automagik-hive init my-project     # Copy AI templates
-  2. cd my-project && cp .env.example .env
+QUICK START (New Streamlined Workflow):
+  1. automagik-hive init my-project     # Initialize workspace (prompts for install)
+  2. Answer 'Y' to install              # Auto-configures with PGlite (recommended)
+  3. Answer 'Y' to start server         # Launches development server
+  4. Access API at http://localhost:8886/docs
+
+MANUAL WORKFLOW (Traditional):
+  1. automagik-hive init my-project     # Copy AI templates only
+  2. cd my-project && edit .env         # Configure manually
   3. automagik-hive install             # Setup environment
   4. automagik-hive dev                 # Start developing
 
