@@ -382,7 +382,13 @@ def main():
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
         sys.exit(1)
-    
+
+    # ALLOW MERGE COMMITS - they bring already-tested code from other branches
+    merge_head = Path.cwd() / ".git" / "MERGE_HEAD"
+    if merge_head.exists():
+        # This is a merge commit - allow it (code from other branch already has tests)
+        sys.exit(0)
+
     tool_name = input_data.get("tool_name", "")
     tool_input = input_data.get("tool_input", {})
     

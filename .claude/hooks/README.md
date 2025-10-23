@@ -58,6 +58,31 @@ unset PYPROJECT_EDIT_APPROVED
 - `/tests/` → Test files
 - `/docs/` → User documentation
 
+### 6. **auto_format_hook.py** 🎨
+**Purpose**: Automatically formats Python files with ruff before commits.
+
+**Features**:
+- Auto-formats Python files using `uv run ruff format`
+- Only formats files being modified in current operation
+- Prevents CI formatting failures
+- Provides clear feedback on formatting actions
+- Never blocks operations (fails gracefully)
+
+**Environment Variables**:
+```bash
+# Disable auto-formatting (use sparingly)
+export AUTO_FORMAT_DISABLED=true
+
+# Check formatting without applying changes
+export RUFF_FORMAT_CHECK_ONLY=true
+```
+
+**Benefits**:
+- Ensures consistent code style
+- Prevents CI failures due to formatting
+- No manual `ruff format` needed
+- Transparent operation with clear feedback
+
 ## Hook Configuration
 
 Hooks are registered in `.claude/settings.json`:

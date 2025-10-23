@@ -1,0 +1,17 @@
+# Node.js dependencies
+node_modules/
+package-lock.json
+
+# PGlite database data
+pglite-data/
+
+# Runtime files
+pglite-bridge.log
+pglite-bridge.pid
+
+# npm debug logs
+npm-debug.log*
+
+# Generic log and PID files
+*.log
+*.pid

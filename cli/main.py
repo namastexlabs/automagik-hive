@@ -63,9 +63,15 @@ SUBCOMMANDS:
   genie                       Launch claude with AGENTS.md as system prompt
   dev                         Start development server (alternative syntax)
 
-WORKFLOW:
-  1. automagik-hive init my-project     # Copy AI templates
-  2. cd my-project && cp .env.example .env
+QUICK START (New Streamlined Workflow):
+  1. automagik-hive init my-project     # Initialize workspace (prompts for install)
+  2. Answer 'Y' to install              # Auto-configures with PGlite (recommended)
+  3. Answer 'Y' to start server         # Launches development server
+  4. Access API at http://localhost:8886/docs
+
+MANUAL WORKFLOW (Traditional):
+  1. automagik-hive init my-project     # Copy AI templates only
+  2. cd my-project && edit .env         # Configure manually
   3. automagik-hive install             # Setup environment
   4. automagik-hive dev                 # Start developing
 
@@ -125,9 +131,14 @@ Use --help for detailed options or see documentation.
 
     # Install subcommand
     install_parser = subparsers.add_parser(
-        "install", help="Complete environment setup with .env generation and PostgreSQL"
+        "install", help="Complete environment setup with .env generation and database backend selection"
     )
     install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    install_parser.add_argument(
+        "--backend",
+        choices=["postgresql", "pglite", "sqlite"],
+        help="Database backend to use (overrides interactive prompt)",
+    )
     install_parser.add_argument("-v", "--verbose", action="store_true", help="Enable detailed diagnostic output")
 
     # Uninstall subcommand
@@ -297,8 +308,15 @@ def main() -> int:
         if args.command == "install":
             service_manager = ServiceManager()
             workspace = getattr(args, "workspace", ".") or "."
+            backend_override = getattr(args, "backend", None)
             verbose = getattr(args, "verbose", False)
-            return 0 if service_manager.install_full_environment(workspace, verbose=verbose) else 1
+            return (
+                0
+                if service_manager.install_full_environment(
+                    workspace, backend_override=backend_override, verbose=verbose
+                )
+                else 1
+            )
 
         # Uninstall subcommand
         if args.command == "uninstall":

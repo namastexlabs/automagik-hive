@@ -92,17 +92,49 @@ class DockerManager:
             return None
 
     def _check_docker(self) -> bool:
-        """Check if Docker is available."""
+        """Check if Docker is available.
+
+        Group D: Only required for PostgreSQL backend. SQLite/PGlite skip this check.
+        """
+        # Detect backend type from environment
+        backend_type = self._detect_backend_from_env()
+
+        # Skip Docker check for non-PostgreSQL backends
+        if backend_type in ("pglite", "sqlite"):
+            return True
+
+        # PostgreSQL requires Docker
         if not self._run_command(["docker", "--version"], capture_output=True):
             print("❌ Docker not found. Please install Docker first.")
+            print("💡 Tip: Use PGlite or SQLite backends to run without Docker")
             return False
 
         # Check if Docker daemon is running
         if not self._run_command(["docker", "ps"], capture_output=True):
             print("❌ Docker daemon not running. Please start Docker.")
+            print("💡 Tip: Use PGlite or SQLite backends to run without Docker")
             return False
 
         return True
+
+    def _detect_backend_from_env(self) -> str:
+        """Detect database backend type from environment - Group D helper."""
+        # Try explicit backend setting first
+        backend_env = os.getenv("HIVE_DATABASE_BACKEND")
+        if backend_env:
+            return backend_env.lower()
+
+        # Fall back to URL detection
+        db_url = os.getenv("HIVE_DATABASE_URL", "")
+        if db_url.startswith("pglite://"):
+            return "pglite"
+        elif db_url.startswith("sqlite://"):
+            return "sqlite"
+        elif db_url.startswith(("postgresql://", "postgresql+psycopg://", "postgres://")):
+            return "postgresql"
+
+        # Default to PostgreSQL for backward compatibility
+        return "postgresql"
 
     def _get_containers(self, component: str) -> list[str]:
         """Return container names for a supported component."""
