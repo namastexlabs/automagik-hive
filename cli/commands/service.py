@@ -404,7 +404,9 @@ class ServiceManager:
             # Ask if user wants to run install immediately
             print("\n📂 Next steps:")
             try:
-                run_install = input("\n🔧 Run installation now? This will set up your environment (Y/n): ").strip().lower()
+                run_install = (
+                    input("\n🔧 Run installation now? This will set up your environment (Y/n): ").strip().lower()
+                )
                 if run_install in ["", "y", "yes"]:
                     print("\n" + "=" * 50)
                     print("🔧 Running installation...")
@@ -578,11 +580,16 @@ class ServiceManager:
             print("\n🔧 Automagik Hive Installation")
             print("=" * 50)
 
-            # 1. DEPLOYMENT CHOICE SELECTION (NEW)
-            deployment_mode = self._prompt_deployment_choice()
-
-            # 1a. BACKEND SELECTION (NEW - Group D)
+            # 1. BACKEND SELECTION FIRST (determines deployment needs)
             backend_type = backend_override or self._prompt_backend_selection()
+
+            # 2. DEPLOYMENT MODE ONLY FOR POSTGRESQL
+            # PGlite and SQLite don't need deployment choice - always local
+            if backend_type == "postgresql":
+                deployment_mode = self._prompt_deployment_choice()
+            else:
+                deployment_mode = "local_hybrid"  # PGlite/SQLite are always local
+                print(f"\n✅ Using local deployment (no Docker needed for {backend_type.upper()})")
 
             # Store backend choice in environment for later use
             self._store_backend_choice(resolved_workspace, backend_type)
@@ -606,7 +613,9 @@ class ServiceManager:
             print("-" * 50)
 
             if deployment_mode == "local_hybrid":
-                success = self._setup_local_hybrid_deployment(str(resolved_workspace), verbose=verbose)
+                success = self._setup_local_hybrid_deployment(
+                    str(resolved_workspace), backend_type=backend_type, verbose=verbose
+                )
             else:  # full_docker
                 success = self.main_service.install_main_environment(str(resolved_workspace))
 
@@ -874,7 +883,7 @@ class ServiceManager:
                 return "pglite"  # Default for automated scenarios
 
     def _store_backend_choice(self, workspace: Path, backend_type: str) -> None:
-        """Store backend choice in .env file for runtime detection."""
+        """Store backend choice and required env vars in .env file."""
         env_file = workspace / ".env"
         if not env_file.exists():
             return
@@ -882,11 +891,16 @@ class ServiceManager:
         # Read existing .env
         env_lines = []
         backend_found = False
+        api_port_found = False
+
         with open(env_file) as f:
             for line in f:
                 if line.startswith("HIVE_DATABASE_BACKEND="):
                     env_lines.append(f"HIVE_DATABASE_BACKEND={backend_type}\n")
                     backend_found = True
+                elif line.startswith("HIVE_API_PORT="):
+                    env_lines.append(line)  # Keep existing port
+                    api_port_found = True
                 else:
                     env_lines.append(line)
 
@@ -895,6 +909,10 @@ class ServiceManager:
             env_lines.append(
                 f"\n# Database backend type (auto-generated during install)\nHIVE_DATABASE_BACKEND={backend_type}\n"
             )
+
+        # Add API port if not found
+        if not api_port_found:
+            env_lines.append("HIVE_API_PORT=8886\n")
 
         # Update database URL based on backend
         url_map = {
@@ -942,34 +960,43 @@ class ServiceManager:
         # Default to PostgreSQL for backward compatibility
         return "postgresql"
 
-    def _setup_local_hybrid_deployment(self, workspace: str, verbose: bool = False) -> bool:
-        """Setup local main + PostgreSQL docker only - NEW METHOD.
+    def _setup_local_hybrid_deployment(
+        self, workspace: str, backend_type: str = "postgresql", verbose: bool = False
+    ) -> bool:
+        """Setup local main + database backend - NEW METHOD.
 
         Args:
             workspace: Path to workspace directory
+            backend_type: Database backend type (postgresql, pglite, sqlite)
             verbose: Enable detailed diagnostic output for troubleshooting
         """
         try:
-            if verbose:
-                print("   🔍 Validating Docker installation...")
-
-            print("   🐘 Starting PostgreSQL container...")
-            success = self.main_service.start_postgres_only(workspace, verbose=verbose)
-
-            if success:
-                print("   ✅ PostgreSQL started successfully")
-                print("   🔌 Database: localhost:5532")
+            # Only start PostgreSQL Docker for postgresql backend
+            if backend_type == "postgresql":
                 if verbose:
-                    print("   📊 Verify with: docker ps | grep hive-postgres")
+                    print("   🔍 Validating Docker installation...")
+
+                print("   🐘 Starting PostgreSQL container...")
+                success = self.main_service.start_postgres_only(workspace, verbose=verbose)
+
+                if success:
+                    print("   ✅ PostgreSQL started successfully")
+                    print("   🔌 Database: localhost:5532")
+                    if verbose:
+                        print("   📊 Verify with: docker ps | grep hive-postgres")
+                else:
+                    print("   ❌ PostgreSQL failed to start")
+                    print("\n💡 Diagnostic steps:")
+                    print("   1. Check Docker is running: docker ps")
+                    print("   2. Verify compose file exists: ls docker/main/docker-compose.yml")
+                    print("   3. Check logs: docker logs hive-postgres")
+                    print("   4. Run install with --verbose flag for details")
+                    if not verbose:
+                        print("   5. Retry with: automagik-hive install --verbose")
             else:
-                print("   ❌ PostgreSQL failed to start")
-                print("\n💡 Diagnostic steps:")
-                print("   1. Check Docker is running: docker ps")
-                print("   2. Verify compose file exists: ls docker/main/docker-compose.yml")
-                print("   3. Check logs: docker logs hive-postgres")
-                print("   4. Run install with --verbose flag for details")
-                if not verbose:
-                    print("   5. Retry with: automagik-hive install --verbose")
+                # PGlite or SQLite - no Docker needed
+                print(f"   ✅ {backend_type.upper()} backend configured")
+                print("   📁 Database file will be created on first run")
 
             return True  # Don't fail installation if PostgreSQL setup has issues
         except Exception as e:
