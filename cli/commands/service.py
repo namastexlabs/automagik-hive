@@ -1053,9 +1053,14 @@ HIVE_LOG_LEVEL=INFO
                 return False
 
             # Add automagik-hive as dependency
+            # Use same python-preference flag to ignore parent .python-version
             print("   📦 Adding automagik-hive dependency...")
             result = subprocess.run(
-                ["uv", "add", "automagik-hive"], cwd=workspace_path, capture_output=True, text=True, timeout=120
+                ["uv", "add", "automagik-hive", "--python-preference", "only-managed"],
+                cwd=workspace_path,
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
 
             if result.returncode != 0:
