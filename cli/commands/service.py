@@ -6,6 +6,7 @@ Supports both local development (uvicorn) and production Docker modes.
 
 import asyncio
 import os
+import re
 import subprocess
 from datetime import UTC
 from pathlib import Path
@@ -423,6 +424,9 @@ class ServiceManager:
             if is_valid:
                 print("✅ All critical files verified")
 
+            # Collect API key before installation
+            api_key_config = self._collect_api_key_interactive()
+
             # Ask if user wants to run install immediately
             print("\n📂 Next steps:")
             try:
@@ -433,8 +437,10 @@ class ServiceManager:
                     print("\n" + "=" * 50)
                     print("🔧 Running installation...")
                     print("=" * 50)
-                    # Run installation
-                    return self.install_full_environment(str(workspace_path), verbose=False)
+                    # Run installation with API key configuration
+                    return self.install_full_environment(
+                        str(workspace_path), verbose=False, api_key_config=api_key_config
+                    )
                 else:
                     print(f"\n💡 When ready, run these commands:")
                     print(f"   cd {workspace_name}")
@@ -487,6 +493,123 @@ class ServiceManager:
             pass
 
         return None
+
+    def _collect_api_key_interactive(self) -> dict[str, str] | None:
+        """Interactively collect API key from user during init.
+
+        Returns:
+            dict with 'provider' and 'api_key', or None if skipped
+        """
+        print("\n" + "=" * 70)
+        print("🔑 API KEY CONFIGURATION")
+        print("=" * 70)
+        print("\nTo use AI agents, you need an API key from OpenAI or Anthropic.")
+        print("\n📋 Choose your provider:")
+        print("  1) OpenAI (GPT-4, GPT-4 Turbo, GPT-3.5)")
+        print("  2) Anthropic Claude (Claude 3.5 Sonnet, Claude 3 Opus)")
+        print("  3) Skip (configure manually later)")
+        print()
+
+        try:
+            choice = input("Enter your choice (1/2/3) [default: 3]: ").strip()
+
+            if choice == "1":
+                # OpenAI
+                print("\n📝 Enter your OpenAI API key:")
+                print("   Get your key from: https://platform.openai.com/api-keys")
+                api_key = input("   API Key (starts with 'sk-'): ").strip()
+
+                if api_key and api_key.startswith("sk-"):
+                    print("   ✅ OpenAI API key collected")
+                    return {"provider": "openai", "api_key": api_key}
+                else:
+                    print("   ⚠️  Invalid OpenAI key format - skipping configuration")
+                    return None
+
+            elif choice == "2":
+                # Anthropic Claude
+                print("\n📝 Enter your Anthropic API key:")
+                print("   Get your key from: https://console.anthropic.com/settings/keys")
+                api_key = input("   API Key (starts with 'sk-ant-'): ").strip()
+
+                if api_key and api_key.startswith("sk-ant-"):
+                    print("   ✅ Anthropic API key collected")
+                    return {"provider": "anthropic", "api_key": api_key}
+                else:
+                    print("   ⚠️  Invalid Anthropic key format - skipping configuration")
+                    return None
+
+            else:
+                # Skip
+                print("   ⏭️  Skipping API key configuration")
+                print("   💡 You can add keys manually to .env file later")
+                return None
+
+        except (EOFError, KeyboardInterrupt):
+            print("\n   ⏭️  API key configuration skipped")
+            return None
+
+    def _configure_api_keys_and_agent(self, workspace_path: Path, api_key_config: dict[str, str]) -> None:
+        """Configure API keys in .env and update template agent config.
+
+        Args:
+            workspace_path: Path to workspace directory
+            api_key_config: Dict with 'provider' and 'api_key'
+        """
+        try:
+            provider = api_key_config["provider"]
+            api_key = api_key_config["api_key"]
+
+            # Update .env file with API key
+            env_file = workspace_path / ".env"
+            if env_file.exists():
+                env_content = env_file.read_text()
+
+                if provider == "openai":
+                    # Set OpenAI key
+                    if "OPENAI_API_KEY=" in env_content:
+                        env_content = re.sub(
+                            r"OPENAI_API_KEY=.*", f'OPENAI_API_KEY="{api_key}"', env_content, flags=re.MULTILINE
+                        )
+                    else:
+                        env_content += f'\nOPENAI_API_KEY="{api_key}"\n'
+
+                elif provider == "anthropic":
+                    # Set Anthropic key
+                    if "ANTHROPIC_API_KEY=" in env_content:
+                        env_content = re.sub(
+                            r"ANTHROPIC_API_KEY=.*", f'ANTHROPIC_API_KEY="{api_key}"', env_content, flags=re.MULTILINE
+                        )
+                    else:
+                        env_content += f'\nANTHROPIC_API_KEY="{api_key}"\n'
+
+                env_file.write_text(env_content)
+                print(f"   ✅ {provider.upper()} API key configured in .env")
+
+            # Update template agent config.yaml
+            agent_config = workspace_path / "ai" / "agents" / "template-agent" / "config.yaml"
+            if agent_config.exists():
+                import yaml
+
+                with open(agent_config) as f:
+                    config = yaml.safe_load(f)
+
+                # Update model configuration based on provider
+                if provider == "openai":
+                    config["model"]["provider"] = "openai"
+                    config["model"]["id"] = "gpt-4.1-mini"  # Default to GPT-4.1 Mini
+                    print("   ✅ Template agent configured for OpenAI (gpt-4.1-mini)")
+
+                elif provider == "anthropic":
+                    config["model"]["provider"] = "anthropic"
+                    config["model"]["id"] = "claude-sonnet-4-20250514"  # Default to Claude Sonnet
+                    print("   ✅ Template agent configured for Anthropic (claude-sonnet-4)")
+
+                with open(agent_config, "w") as f:
+                    yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+        except Exception as e:
+            print(f"   ⚠️  Could not configure API keys: {e}")
 
     def _locate_docker_templates(self) -> Path | None:
         """Locate docker/main templates from source or package.
@@ -582,7 +705,11 @@ class ServiceManager:
             yaml.dump(metadata, f, default_flow_style=False)
 
     def install_full_environment(
-        self, workspace: str = ".", backend_override: str | None = None, verbose: bool = False
+        self,
+        workspace: str = ".",
+        backend_override: str | None = None,
+        verbose: bool = False,
+        api_key_config: dict[str, str] | None = None,
     ) -> bool:
         """Complete environment setup with deployment choice - ENHANCED METHOD.
 
@@ -590,6 +717,7 @@ class ServiceManager:
             workspace: Path to workspace directory
             backend_override: Override database backend selection (postgresql, pglite, sqlite)
             verbose: Enable detailed diagnostic output for troubleshooting
+            api_key_config: Optional API key configuration from init (provider + api_key)
         """
         try:
             resolved_workspace = self._resolve_install_root(workspace)
@@ -627,6 +755,10 @@ class ServiceManager:
             # Store backend choice in environment AFTER credentials are generated
             # This ensures .env exists and can be updated with correct database URL
             self._store_backend_choice(resolved_workspace, backend_type)
+
+            # Configure API keys and template agent if provided during init
+            if api_key_config:
+                self._configure_api_keys_and_agent(resolved_workspace, api_key_config)
 
             # 2.5. SETUP LOCAL UV PROJECT (for standalone workspaces)
             print("\n📦 Step 1.5/2: Setting up Python environment")

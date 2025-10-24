@@ -104,6 +104,10 @@ class SmartIncrementalLoader:
         """Return a fresh SQLAlchemy engine bound to the knowledge database."""
         return create_engine(self.db_url)
 
+    def _is_sqlite(self) -> bool:
+        """Check if the database is SQLite (warnings about pgvector are expected)."""
+        return "sqlite" in self.db_url.lower()
+
     def _create_default_kb(self) -> RowBasedCSVKnowledgeBase | None:
         try:
             return RowBasedCSVKnowledgeBase(
@@ -349,7 +353,9 @@ class SmartIncrementalLoader:
                 )
                 return {cast(str, row[0]) for row in result.fetchall() if row[0] is not None}
         except Exception as exc:
-            app_log.logger.warning("Could not check existing hashes", error=str(exc))
+            # Expected for SQLite (no pgvector support) - use debug level
+            log_level = app_log.logger.debug if self._is_sqlite() else app_log.logger.warning
+            log_level("Could not check existing hashes", error=str(exc))
             return set()
 
     def _add_hash_column_to_table(self) -> bool:
@@ -367,7 +373,9 @@ class SmartIncrementalLoader:
                 conn.commit()
                 return True
         except Exception as exc:
-            app_log.logger.warning("Could not add hash column", error=str(exc))
+            # Expected for SQLite (no pgvector support) - use debug level
+            log_level = app_log.logger.debug if self._is_sqlite() else app_log.logger.warning
+            log_level("Could not add hash column", error=str(exc))
             return False
 
     def _process_single_row(self, row_data: dict[str, Any]) -> bool:
@@ -440,7 +448,9 @@ class SmartIncrementalLoader:
                 conn.commit()
                 return True
         except Exception as exc:
-            app_log.logger.warning("Could not update row hash", error=str(exc))
+            # Expected for SQLite (no pgvector support) - use debug level
+            log_level = app_log.logger.debug if self._is_sqlite() else app_log.logger.warning
+            log_level("Could not update row hash", error=str(exc))
             return False
 
     def _remove_rows_by_hash(self, removed_hashes: list[str]) -> int:
