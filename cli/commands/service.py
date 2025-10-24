@@ -1025,6 +1025,9 @@ HIVE_LOG_LEVEL=INFO
                         print("   5. Retry with: automagik-hive install --verbose")
             else:
                 # PGlite or SQLite - no Docker needed
+                # Ensure data directory exists with proper permissions
+                data_dir = resolved_workspace / "data"
+                data_dir.mkdir(parents=True, exist_ok=True)
                 print(f"   ✅ {backend_type.upper()} backend configured")
                 print("   📁 Database file will be created on first run")
 
