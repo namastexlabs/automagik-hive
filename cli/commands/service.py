@@ -1053,11 +1053,14 @@ HIVE_LOG_LEVEL=INFO
                 return False
 
             # Add automagik-hive as dependency
-            # Use same python-preference flag to ignore parent .python-version
+            # Use environment variable and explicit Python version to override parent .python-version
             print("   📦 Adding automagik-hive dependency...")
+            env = os.environ.copy()
+            env["UV_PYTHON_PREFERENCE"] = "only-managed"
             result = subprocess.run(
-                ["uv", "add", "automagik-hive", "--python-preference", "only-managed"],
+                ["uv", "add", "automagik-hive", "--python", "3.12"],
                 cwd=workspace_path,
+                env=env,
                 capture_output=True,
                 text=True,
                 timeout=120,
