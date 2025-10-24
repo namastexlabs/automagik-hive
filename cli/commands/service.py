@@ -299,11 +299,13 @@ class ServiceManager:
             if not env_example_found:
                 print("  ⚠️  .env.example not found (you'll need to create it manually)")
 
-            # Copy Docker configuration using dedicated locator
+            # Skip Docker configuration - only needed for PostgreSQL backend
+            # Users selecting PostgreSQL during install will be guided to set up Docker
+            # This prevents unnecessary Docker file copying for PGlite/SQLite users
             docker_copied = False
-            docker_source = self._locate_docker_templates()
+            docker_source = None  # Intentionally disabled
 
-            if docker_source is not None:
+            if False and docker_source is not None:  # Disabled: Skip Docker files during init
                 try:
                     # Create docker directory in workspace
                     (workspace_path / "docker" / "main").mkdir(parents=True, exist_ok=True)
@@ -376,6 +378,20 @@ class ServiceManager:
 
             # Create knowledge directory marker
             (workspace_path / "knowledge" / ".gitkeep").touch()
+
+            # Copy .mcp.json for MCP tools support
+            mcp_copied = False
+            mcp_source = project_root / ".mcp.json"
+            if mcp_source.exists():
+                try:
+                    shutil.copy(mcp_source, workspace_path / ".mcp.json")
+                    print("  ✅ MCP configuration (.mcp.json)")
+                    mcp_copied = True
+                except Exception as e:
+                    print(f"  ⚠️  Failed to copy .mcp.json: {e}")
+
+            if not mcp_copied:
+                print("  ⚠️  .mcp.json not found (MCP tools will be unavailable)")
 
             # Create workspace metadata file with version tracking
             self._create_workspace_metadata(workspace_path)
@@ -924,7 +940,7 @@ HIVE_LOG_LEVEL=INFO
 
         # Update database URL based on backend
         url_map = {
-            "pglite": "postgresql://localhost:5532/main",  # PGlite HTTP bridge PostgreSQL-compatible URL
+            "pglite": "postgresql://user:pass@localhost:5532/main",  # PGlite HTTP bridge (auth ignored but required by SQLAlchemy)
             "postgresql": "postgresql+psycopg://hive_user:${HIVE_POSTGRES_PASSWORD}@localhost:${HIVE_POSTGRES_PORT}/automagik_hive",
             "sqlite": "sqlite:///./data/automagik_hive.db",
         }
