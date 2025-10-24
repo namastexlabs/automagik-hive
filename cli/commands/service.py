@@ -1019,13 +1019,7 @@ HIVE_LOG_LEVEL=INFO
                 print("   ℹ️  Existing pyproject.toml found - skipping uv init")
                 # Run uv sync to ensure dependencies are installed
                 print("   📦 Running uv sync...")
-                result = subprocess.run(
-                    ["uv", "sync"],
-                    cwd=workspace_path,
-                    capture_output=True,
-                    text=True,
-                    timeout=60
-                )
+                result = subprocess.run(["uv", "sync"], cwd=workspace_path, capture_output=True, text=True, timeout=60)
                 if result.returncode == 0:
                     print("   ✅ Dependencies synchronized")
                     return True
@@ -1033,14 +1027,14 @@ HIVE_LOG_LEVEL=INFO
                     print(f"   ⚠️  uv sync warning: {result.stderr}")
                     return True  # Non-fatal, proceed anyway
 
-            # Initialize new uv project in workspace
+            # Initialize new uv project in workspace with Python 3.12+
             print("   🔧 Initializing uv project...")
             result = subprocess.run(
-                ["uv", "init", "--no-readme", "--name", workspace_path.name],
+                ["uv", "init", "--no-readme", "--name", workspace_path.name, "--python", "3.12"],
                 cwd=workspace_path,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode != 0:
@@ -1050,11 +1044,7 @@ HIVE_LOG_LEVEL=INFO
             # Add automagik-hive as dependency
             print("   📦 Adding automagik-hive dependency...")
             result = subprocess.run(
-                ["uv", "add", "automagik-hive"],
-                cwd=workspace_path,
-                capture_output=True,
-                text=True,
-                timeout=120
+                ["uv", "add", "automagik-hive"], cwd=workspace_path, capture_output=True, text=True, timeout=120
             )
 
             if result.returncode != 0:
@@ -1111,7 +1101,8 @@ HIVE_LOG_LEVEL=INFO
             else:
                 # PGlite or SQLite - no Docker needed
                 # Ensure data directory exists with proper permissions
-                data_dir = resolved_workspace / "data"
+                workspace_path = Path(workspace)
+                data_dir = workspace_path / "data"
                 data_dir.mkdir(parents=True, exist_ok=True)
                 print(f"   ✅ {backend_type.upper()} backend configured")
                 print("   📁 Database file will be created on first run")
