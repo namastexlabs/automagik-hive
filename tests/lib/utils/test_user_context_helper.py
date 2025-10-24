@@ -151,7 +151,6 @@ class TestGetUserContextFromAgent(unittest.TestCase):
         result = user_context_helper.get_user_context_from_agent(agent)
         
         self.assertEqual(result, {})
-
     def test_returns_empty_when_session_state_empty(self):
         """Should return empty dict when session_state is empty dict."""
         agent = Mock()
@@ -159,7 +158,7 @@ class TestGetUserContextFromAgent(unittest.TestCase):
         
         result = user_context_helper.get_user_context_from_agent(agent)
         
-        self.assertEqual(result, {})
+        self.assertEqual(result,  {})
 
     def test_handles_agent_without_session_state_attr(self):
         """Handle agents that don't have session_state attribute at all."""
@@ -170,7 +169,7 @@ class TestGetUserContextFromAgent(unittest.TestCase):
         agent = DummyAgent()
         result = user_context_helper.get_user_context_from_agent(agent)
         
-        self.assertEqual(result, {})
+        self.assertEqual(result,  {})
 
     def test_returns_empty_when_no_user_context_key(self):
         """Return empty dict when session_state exists but has no user_context key."""
@@ -179,8 +178,9 @@ class TestGetUserContextFromAgent(unittest.TestCase):
         
         result = user_context_helper.get_user_context_from_agent(agent)
         
-        self.assertEqual(result, {})
+        self.assertEqual(result,  {})
 
 
 if __name__ == "__main__":
     unittest.main()
+
