@@ -1028,9 +1028,20 @@ HIVE_LOG_LEVEL=INFO
                     return True  # Non-fatal, proceed anyway
 
             # Initialize new uv project in workspace with Python 3.12+
+            # Use --python-preference only-managed to ignore parent .python-version files
             print("   🔧 Initializing uv project...")
             result = subprocess.run(
-                ["uv", "init", "--no-readme", "--name", workspace_path.name, "--python", "3.12"],
+                [
+                    "uv",
+                    "init",
+                    "--no-readme",
+                    "--name",
+                    workspace_path.name,
+                    "--python",
+                    "3.12",
+                    "--python-preference",
+                    "only-managed",
+                ],
                 cwd=workspace_path,
                 capture_output=True,
                 text=True,
