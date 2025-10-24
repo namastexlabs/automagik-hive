@@ -656,12 +656,16 @@ class ServiceManager:
                 print("      - ANTHROPIC_API_KEY (for Claude)")
                 print("      - OPENAI_API_KEY (optional)")
                 print("      - Other provider keys as needed")
-                print("\n   2. The API server can be started with:")
+                print("\n   2. Start the API server:")
                 print(f"      cd {resolved_workspace}")
-                print("      automagik-hive dev")
+                print("      ./dev              # Recommended: uses local launcher")
+                print("      # OR")
+                print("      automagik-hive dev # Alternative: direct command")
                 print("\n   3. Access the API at:")
                 print("      http://localhost:8886/docs")
-                print("\n💡 Tip: Check .env.example for all available configuration options")
+                print("\n💡 Tips:")
+                print("   - The ./dev script isolates the workspace from parent directories")
+                print("   - Check .env.example for all available configuration options")
                 print("=" * 50 + "\n")
 
                 # Ask if user wants to start the API now
@@ -1078,6 +1082,10 @@ HIVE_LOG_LEVEL=INFO
 
             print("   ✅ Python environment configured")
             print(f"   📂 Virtual environment: {workspace_path}/.venv")
+
+            # Generate dev script wrapper to isolate from parent .python-version
+            self._generate_dev_script(workspace_path)
+
             return True
 
         except subprocess.TimeoutExpired:
@@ -1089,6 +1097,57 @@ HIVE_LOG_LEVEL=INFO
         except Exception as e:
             print(f"   ⚠️  Setup failed: {e}")
             return False
+
+    def _generate_dev_script(self, workspace_path: Path) -> None:
+        """Generate dev script wrapper that isolates workspace from parent .python-version files.
+
+        This creates a 'dev' script (shell/batch) that explicitly changes to the workspace
+        directory and runs the dev server with proper Python version isolation.
+
+        Args:
+            workspace_path: Path to the workspace directory
+        """
+        try:
+            import platform
+            import stat
+
+            system = platform.system()
+
+            if system == "Windows":
+                # Generate Windows batch script
+                script_path = workspace_path / "dev.bat"
+                script_content = f"""@echo off
+REM Automagik Hive Development Server Launcher
+REM This script isolates the workspace from parent .python-version files
+
+cd /d "{workspace_path}"
+set UV_PYTHON_PREFERENCE=only-managed
+uv run --python 3.12 uvicorn api.serve:app --factory --host 0.0.0.0 --port 8886 --reload
+"""
+                script_path.write_text(script_content)
+                print(f"   📝 Generated dev.bat launcher")
+
+            else:
+                # Generate Unix shell script
+                script_path = workspace_path / "dev"
+                script_content = f"""#!/bin/bash
+# Automagik Hive Development Server Launcher
+# This script isolates the workspace from parent .python-version files
+
+cd "{workspace_path}" || exit 1
+export UV_PYTHON_PREFERENCE=only-managed
+exec uv run --python 3.12 uvicorn api.serve:app --factory --host 0.0.0.0 --port 8886 --reload
+"""
+                script_path.write_text(script_content)
+
+                # Make executable on Unix systems
+                current_permissions = script_path.stat().st_mode
+                script_path.chmod(current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                print(f"   📝 Generated dev launcher script")
+
+        except Exception as e:
+            # Non-fatal - just warn
+            print(f"   ⚠️  Could not generate dev script: {e}")
 
     def _setup_local_hybrid_deployment(
         self, workspace: str, backend_type: str = "postgresql", verbose: bool = False
