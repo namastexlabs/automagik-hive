@@ -184,11 +184,12 @@ async def check_and_run_migrations() -> bool:
         except OperationalError as e:
             error_str = str(e)
 
-            # Suppress expected errors for SQLite (file-based database without migrations)
+            # Suppress ALL errors for SQLite (file-based database created on first use by Agno)
+            # SQLite doesn't need migrations - Agno handles schema automatically
             is_sqlite = db_url and "sqlite" in db_url.lower()
-            if is_sqlite and ("unable to open database file" in error_str or "no such table" in error_str):
+            if is_sqlite:
                 # Expected behavior for SQLite - database/tables will be created on first use
-                logger.debug("SQLite database will be created on first use")
+                logger.debug("SQLite database will be created on first use", error=error_str)
                 return False
 
             logger.error("🚨 Database connection failed", error=error_str)
