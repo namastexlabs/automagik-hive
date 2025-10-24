@@ -1,6 +1,6 @@
 [project]
 name = "automagik-hive"
-version = "0.2.0rc33"
+version = "0.2.0rc34"
 description = "Automagik Hive"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -48,6 +48,11 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 package = true
+
+[tool.uv.workspace]
+members = [
+    "testonho",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["ai", "api", "lib", "cli", "common"]
