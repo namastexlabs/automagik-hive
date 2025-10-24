@@ -110,7 +110,7 @@ class PGliteBackend(BaseDatabaseBackend):
             await self._cleanup_bridge()
             raise RuntimeError(f"PGlite bridge initialization failed: {e}") from e
 
-    async def _wait_for_bridge_ready(self, max_attempts: int = 60, delay: float = 0.5) -> None:
+    async def _wait_for_bridge_ready(self, max_attempts: int = 20, delay: float = 0.5) -> None:
         """
         Wait for bridge to become ready via health check.
 
