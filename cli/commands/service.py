@@ -862,39 +862,49 @@ class ServiceManager:
                 return "local_hybrid"  # Default for automated scenarios
 
     def _prompt_backend_selection(self) -> str:
-        """Interactive database backend selection - Group D."""
+        """Interactive database backend selection - SQLite first for simplicity."""
         print("\n" + "=" * 70)
         print("📊 DATABASE BACKEND SELECTION")
         print("=" * 70)
         print("\nChoose your database backend:\n")
-        print("  A) PGlite (WebAssembly) - RECOMMENDED ⭐")
+        print("  A) SQLite - Quick Start (Default) ⭐")
+        print("     • Zero dependencies - works instantly!")
+        print("     • Single file storage (./data/automagik_hive.db)")
+        print("     • Perfect for testing and development")
+        print("     • Session persistence fully supported")
+        print("     ⚠️  RAG/Knowledge Base offline (no pgvector support)")
+        print("     💡 Upgrade to PostgreSQL later for full RAG capabilities\n")
+        print("  B) PGlite (WebAssembly) - Advanced")
         print("     • Runs PostgreSQL via WebAssembly bridge")
         print("     • No Docker required - works everywhere!")
         print("     • Perfect for development and testing")
-        print("     • Production-ready for most use cases\n")
-        print("  B) PostgreSQL (Docker) - Advanced")
+        print("     ⚠️  RAG/Knowledge Base offline (pgvector needs pg-gateway)")
+        print("     💡 See docs: https://docs.automagik.ai/database/pglite\n")
+        print("  C) PostgreSQL (Docker) - Full Features")
         print("     • Requires Docker installed and running")
-        print("     • Full PostgreSQL compatibility")
-        print("     • For advanced production scenarios")
-        print("     • See docs for setup: https://docs.automagik.ai/database/postgresql\n")
-        print("  C) SQLite - Simple file-based")
-        print("     • Minimal dependencies")
-        print("     • Single file storage")
-        print("     • Best for simple use cases\n")
+        print("     • Full PostgreSQL with pgvector extension")
+        print("     • Complete RAG/Knowledge Base support")
+        print("     • For production scenarios with semantic search")
+        print("     💡 See docs: https://docs.automagik.ai/database/postgresql\n")
 
         while True:
             try:
                 choice = input("Enter your choice (A/B/C) [default: A]: ").strip().upper()
                 if choice == "" or choice == "A":
-                    return "pglite"
-                elif choice == "B":
-                    return "postgresql"
-                elif choice == "C":
+                    print("\n✅ SQLite selected - Session persistence enabled, RAG offline")
+                    print("💡 Tip: Upgrade to PostgreSQL later for full RAG capabilities")
                     return "sqlite"
+                elif choice == "B":
+                    print("\n✅ PGlite selected - Session persistence enabled, RAG offline")
+                    print("💡 Tip: Use pg-gateway for pgvector support")
+                    return "pglite"
+                elif choice == "C":
+                    print("\n✅ PostgreSQL selected - Full features with pgvector support")
+                    return "postgresql"
                 else:
                     print("❌ Invalid choice. Please enter A, B, or C.")
             except (EOFError, KeyboardInterrupt):
-                return "pglite"  # Default for automated scenarios
+                return "sqlite"  # Default to SQLite for simplicity
 
     def _store_backend_choice(self, workspace: Path, backend_type: str) -> None:
         """Store backend choice and required env vars in .env file."""

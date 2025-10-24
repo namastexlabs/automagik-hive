@@ -65,9 +65,13 @@ SUBCOMMANDS:
 
 QUICK START (New Streamlined Workflow):
   1. automagik-hive init my-project     # Initialize workspace (prompts for install)
-  2. Answer 'Y' to install              # Auto-configures with PGlite (recommended)
+  2. Answer 'Y' to install              # Auto-configures with SQLite (default)
   3. Answer 'Y' to start server         # Launches development server
   4. Access API at http://localhost:8886/docs
+
+  Note: SQLite is recommended for quick starts (zero dependencies)
+        Session persistence works, RAG/Knowledge offline (no pgvector)
+        Upgrade to PostgreSQL later for full RAG capabilities
 
 MANUAL WORKFLOW (Traditional):
   1. automagik-hive init my-project     # Copy AI templates only
@@ -131,13 +135,13 @@ Use --help for detailed options or see documentation.
 
     # Install subcommand
     install_parser = subparsers.add_parser(
-        "install", help="Complete environment setup with .env generation and database backend selection"
+        "install", help="Complete environment setup (defaults to SQLite - zero dependencies, RAG offline)"
     )
     install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
     install_parser.add_argument(
         "--backend",
-        choices=["postgresql", "pglite", "sqlite"],
-        help="Database backend to use (overrides interactive prompt)",
+        choices=["sqlite", "pglite", "postgresql"],
+        help="Database backend (default: sqlite). Options: sqlite (quick start), pglite (WASM), postgresql (full RAG)",
     )
     install_parser.add_argument("-v", "--verbose", action="store_true", help="Enable detailed diagnostic output")
 
