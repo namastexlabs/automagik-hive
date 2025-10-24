@@ -88,10 +88,12 @@ class ServiceManager:
                 # Non-PostgreSQL backends don't need Docker PostgreSQL
                 pass
 
-            # Build uvicorn command
+            # Build uvicorn command with explicit Python version
             cmd = [
                 "uv",
                 "run",
+                "--python",
+                "3.12",
                 "uvicorn",
                 "api.serve:app",
                 "--factory",  # Explicitly declare app factory pattern
