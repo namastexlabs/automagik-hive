@@ -247,6 +247,14 @@ def create_lifespan(startup_display: Any = None) -> Any:
                 except Exception as e:
                     logger.warning("MCP cleanup error", error=str(e))
 
+                # PGlite bridge cleanup
+                try:
+                    from lib.utils.startup_orchestration import cleanup_pglite_backend
+
+                    await cleanup_pglite_backend()
+                except Exception as e:
+                    logger.debug("PGlite cleanup note", error=str(e))
+
             # Step 3: Clearing Temporary Files
             with shutdown_progress.step(3):
                 # Database connection cleanup would go here if needed

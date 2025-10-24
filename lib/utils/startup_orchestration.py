@@ -15,6 +15,9 @@ from agno.workflow import Workflow
 
 from lib.logging import logger
 
+# Global PGlite backend instance for cleanup
+_pglite_backend_instance = None
+
 
 @dataclass
 class ComponentRegistries:
@@ -460,6 +463,23 @@ async def orchestrated_startup(
     sync_results = None
 
     try:
+        # 0. PGlite Bridge Initialization (if using PGlite backend)
+        global _pglite_backend_instance
+        backend_type = os.getenv("HIVE_DATABASE_BACKEND", "").lower()
+        if backend_type == "pglite":
+            if not quiet_mode:
+                logger.info("🔧 Starting PGlite HTTP bridge")
+            try:
+                from lib.database.backend_factory import create_backend, DatabaseBackendType
+
+                _pglite_backend_instance = create_backend(DatabaseBackendType.PGLITE)
+                await _pglite_backend_instance.initialize()
+                logger.info("✅ PGlite bridge started successfully", port=_pglite_backend_instance.port)
+            except Exception as e:
+                logger.error("🚨 PGlite bridge failed to start", error=str(e))
+                logger.error("⚠️ System will continue but database features will be unavailable")
+                logger.error("💡 Install Node.js and run 'cd tools/pglite-bridge && npm install'")
+
         # 1. Database Migration (User requirement - first priority)
         if not quiet_mode:
             logger.debug("🗄️ Database migration check")
@@ -748,3 +768,19 @@ def _populate_surface_status(display: Any, startup_results: StartupResults) -> N
         url=control_pane_base,
         note=f"Config endpoint: {agentos_endpoint} — {agentos_note}",
     )
+
+
+
+async def cleanup_pglite_backend():
+    """Clean up PGlite backend if running"""
+    global _pglite_backend_instance
+    if _pglite_backend_instance is not None:
+        try:
+            logger.info("🛑 Stopping PGlite bridge")
+            await _pglite_backend_instance.close()
+            logger.info("✅ PGlite bridge stopped successfully")
+        except Exception as e:
+            logger.warning("PGlite cleanup error", error=str(e))
+        finally:
+            _pglite_backend_instance = None
+
