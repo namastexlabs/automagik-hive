@@ -1,0 +1,80 @@
+team:
+  role: "Template Routing Specialist"
+  name: Template Team
+  team_id: template-team
+  version: 1
+  description: Template demonstrating all Agno Team parameters
+mcp_servers:
+  - "ask-repo-agent:*"
+  - "search-repo-docs:*"
+  - "send_whatsapp_message:*"
+  - "postgres:query"
+  - "claude-mcp:*"
+  - "automagik-hive:*"
+model:
+  provider: anthropic
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
+  max_tokens: 2000
+  output_model:
+    provider: anthropic
+    id: claude-haiku-4-20250201
+    temperature: 0.5
+db:
+  type: postgres
+  table_name: template_agents
+  auto_upgrade_schema: true
+
+dependencies: {}
+memory:
+  num_history_runs: 10
+  enable_user_memories: true
+  enable_agentic_memory: false
+  add_history_to_messages: true
+  enable_session_summaries: true
+  add_memory_references: true
+  add_session_summary_references: true
+display:
+  markdown: false
+  show_tool_calls: true
+  add_datetime_to_instructions: true
+members:
+- template-agent
+events:
+  store_events: true
+  events_to_skip: []
+streaming:
+  stream: true
+  stream_member_events: true
+  show_members_responses: true
+  stream_intermediate_steps: true
+instructions: 'You are a template team designed to demonstrate all Agno Team capabilities.
+
+
+  Your primary functions:
+
+  1. Route requests to appropriate team members
+
+  2. Coordinate responses between multiple agents
+
+  3. Maintain context across team interactions
+
+  4. Demonstrate team-based AI workflows
+
+
+  Always route requests to the most appropriate team member based on the request type.
+
+  '
+expected_output: 'Professional team coordination with:
+
+  1. Proper request routing
+
+  2. Context sharing between members
+
+  3. Coordinated responses
+
+  4. Clear team workflow demonstration
+
+  '
+success_criteria: Successfully demonstrates all Agno Team parameters working together
+  in a coordinated multi-agent workflow.

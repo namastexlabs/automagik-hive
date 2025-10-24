@@ -103,6 +103,10 @@ class ServiceManager:
             if reload:
                 cmd.append("--reload")
 
+            # Set environment to ignore parent .python-version files
+            env = os.environ.copy()
+            env["UV_PYTHON_PREFERENCE"] = "only-managed"
+
             # Graceful shutdown path for dev server (prevents abrupt SIGINT cleanup in child)
             # Opt-in via environment to preserve existing test expectations that patch subprocess.run
             use_graceful = os.getenv("HIVE_DEV_GRACEFUL", "0").lower() not in ("0", "false", "no")
@@ -110,7 +114,7 @@ class ServiceManager:
             if not use_graceful:
                 # Backward-compatible path used by tests
                 try:
-                    subprocess.run([str(c) for c in cmd if c is not None], check=False)
+                    subprocess.run([str(c) for c in cmd if c is not None], check=False, env=env)
                 except KeyboardInterrupt:
                     return True
                 return True
@@ -122,10 +126,10 @@ class ServiceManager:
             if system == "Windows":
                 # Create separate process group on Windows
                 creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-                proc = subprocess.Popen(filtered_cmd, creationflags=creationflags)
+                proc = subprocess.Popen(filtered_cmd, env=env, creationflags=creationflags)
             else:
                 # POSIX: start child in its own process group/session
-                proc = subprocess.Popen(filtered_cmd, preexec_fn=os.setsid)
+                proc = subprocess.Popen(filtered_cmd, env=env, preexec_fn=os.setsid)
 
             try:
                 returncode = proc.wait()
