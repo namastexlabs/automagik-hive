@@ -32,13 +32,21 @@ class PGliteBackend(BaseDatabaseBackend):
         Initialize PGlite backend.
 
         Args:
-            db_url: PGlite data directory path (ignored for pool config)
+            db_url: PostgreSQL-compatible URL (database name extracted for PGlite data dir)
             min_size: Unused (PGlite doesn't support pooling)
             max_size: Unused (PGlite doesn't support pooling)
         """
         # Store original URL for interface compatibility
-        self.db_url = db_url or os.getenv("PGLITE_DATA_DIR", "./pglite-data")
-        self.data_dir = self.db_url
+        self.db_url = db_url or os.getenv("HIVE_DATABASE_URL", "")
+
+        # Extract database name from PostgreSQL URL or use default path
+        # postgresql://user:pass@localhost:5532/main → ./pglite-data/main
+        if self.db_url and "postgresql://" in self.db_url:
+            db_name = self.db_url.split("/")[-1] or "main"
+            self.data_dir = f"./pglite-data/{db_name}"
+        else:
+            self.data_dir = self.db_url or "./pglite-data"
+
         self.port = int(os.getenv("PGLITE_PORT", "5532"))
         self.base_url = f"http://127.0.0.1:{self.port}"
 
@@ -62,10 +70,17 @@ class PGliteBackend(BaseDatabaseBackend):
 
         logger.info("Starting PGlite bridge", port=self.port, data_dir=self.data_dir)
 
+        # Ensure data directory exists
+        os.makedirs(self.data_dir, exist_ok=True)
+
         # Start bridge subprocess
         bridge_script = os.path.join(os.path.dirname(__file__), "../../../tools/pglite-bridge/server.js")
+        bridge_script = os.path.abspath(bridge_script)
+
+        logger.info("PGlite bridge script path", path=bridge_script, exists=os.path.exists(bridge_script))
 
         try:
+            # Start bridge subprocess - let it inherit stdout/stderr for proper output
             self.bridge_process = subprocess.Popen(
                 ["node", bridge_script],
                 env={
@@ -73,12 +88,13 @@ class PGliteBackend(BaseDatabaseBackend):
                     "PGLITE_PORT": str(self.port),
                     "PGLITE_DATA_DIR": self.data_dir,
                 },
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
+                # Don't capture stdout/stderr - let bridge output show naturally
+                # This prevents buffering issues and allows proper initialization
+                stdout=None,
+                stderr=None,
             )
 
-            # Wait for bridge to be ready
+            # Wait for bridge to be ready via health checks
             await self._wait_for_bridge_ready()
 
             # Initialize HTTP client
@@ -94,7 +110,7 @@ class PGliteBackend(BaseDatabaseBackend):
             await self._cleanup_bridge()
             raise RuntimeError(f"PGlite bridge initialization failed: {e}") from e
 
-    async def _wait_for_bridge_ready(self, max_attempts: int = 30, delay: float = 0.5) -> None:
+    async def _wait_for_bridge_ready(self, max_attempts: int = 60, delay: float = 0.5) -> None:
         """
         Wait for bridge to become ready via health check.
 
@@ -106,6 +122,11 @@ class PGliteBackend(BaseDatabaseBackend):
             RuntimeError: If bridge doesn't become ready in time
         """
         for attempt in range(max_attempts):
+            # Check if process is still alive
+            if self.bridge_process and self.bridge_process.poll() is not None:
+                logger.error("PGlite bridge process died", return_code=self.bridge_process.returncode)
+                raise RuntimeError(f"PGlite bridge process exited with code {self.bridge_process.returncode}")
+
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.get(
@@ -117,8 +138,11 @@ class PGliteBackend(BaseDatabaseBackend):
                         if data.get("status") == "healthy":
                             logger.info("PGlite bridge health check passed", attempt=attempt + 1)
                             return
-            except (httpx.ConnectError, httpx.TimeoutException):
-                pass
+            except httpx.ConnectError as e:
+                if attempt % 10 == 0:  # Log every 10th attempt
+                    logger.debug("PGlite bridge not ready yet", attempt=attempt + 1, error=str(e))
+            except httpx.TimeoutException:
+                logger.debug("PGlite bridge health check timeout", attempt=attempt + 1)
 
             await asyncio.sleep(delay)
 
