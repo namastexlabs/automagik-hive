@@ -622,6 +622,14 @@ class ServiceManager:
             # This ensures .env exists and can be updated with correct database URL
             self._store_backend_choice(resolved_workspace, backend_type)
 
+            # 2.5. SETUP LOCAL UV PROJECT (for standalone workspaces)
+            print("\n📦 Step 1.5/2: Setting up Python environment")
+            print("-" * 50)
+            uv_setup_success = self._setup_uv_project(resolved_workspace)
+            if not uv_setup_success:
+                print("⚠️  Warning: Could not setup local Python environment")
+                print("   You may need to run 'uv sync' manually in the workspace")
+
             # 3. DEPLOYMENT-SPECIFIC SETUP (NEW)
             print(f"\n🚀 Step 2/2: Setting up {deployment_mode.replace('_', ' ').title()} Mode")
             print("-" * 50)
@@ -989,6 +997,83 @@ HIVE_LOG_LEVEL=INFO
 
         # Default to PostgreSQL for backward compatibility
         return "postgresql"
+
+    def _setup_uv_project(self, workspace_path: Path) -> bool:
+        """Setup local uv project with automagik-hive as dependency.
+
+        This enables standalone workspaces created via 'uvx automagik-hive init'
+        to have a local Python environment with automagik-hive installed.
+
+        Args:
+            workspace_path: Path to the workspace directory
+
+        Returns:
+            bool: True if setup successful, False otherwise
+        """
+        try:
+            import subprocess
+
+            # Check if pyproject.toml already exists (main repo workspace)
+            pyproject_file = workspace_path / "pyproject.toml"
+            if pyproject_file.exists():
+                print("   ℹ️  Existing pyproject.toml found - skipping uv init")
+                # Run uv sync to ensure dependencies are installed
+                print("   📦 Running uv sync...")
+                result = subprocess.run(
+                    ["uv", "sync"],
+                    cwd=workspace_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+                if result.returncode == 0:
+                    print("   ✅ Dependencies synchronized")
+                    return True
+                else:
+                    print(f"   ⚠️  uv sync warning: {result.stderr}")
+                    return True  # Non-fatal, proceed anyway
+
+            # Initialize new uv project in workspace
+            print("   🔧 Initializing uv project...")
+            result = subprocess.run(
+                ["uv", "init", "--no-readme", "--name", workspace_path.name],
+                cwd=workspace_path,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            if result.returncode != 0:
+                print(f"   ⚠️  uv init failed: {result.stderr}")
+                return False
+
+            # Add automagik-hive as dependency
+            print("   📦 Adding automagik-hive dependency...")
+            result = subprocess.run(
+                ["uv", "add", "automagik-hive"],
+                cwd=workspace_path,
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+
+            if result.returncode != 0:
+                print(f"   ⚠️  uv add failed: {result.stderr}")
+                return False
+
+            print("   ✅ Python environment configured")
+            print(f"   📂 Virtual environment: {workspace_path}/.venv")
+            return True
+
+        except subprocess.TimeoutExpired:
+            print("   ⚠️  Setup timed out")
+            return False
+        except FileNotFoundError:
+            print("   ⚠️  uv command not found - please install uv first")
+            return False
+        except Exception as e:
+            print(f"   ⚠️  Setup failed: {e}")
+            return False
 
     def _setup_local_hybrid_deployment(
         self, workspace: str, backend_type: str = "postgresql", verbose: bool = False
