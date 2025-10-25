@@ -770,7 +770,7 @@ def _populate_surface_status(display: Any, startup_results: StartupResults) -> N
     )
 
 
-async def cleanup_pglite_backend():
+async def cleanup_pglite_backend() -> None:
     """Clean up PGlite backend if running"""
     global _pglite_backend_instance
     if _pglite_backend_instance is not None:
