@@ -741,6 +741,28 @@ bump-rc: ## 🏷️ Add/bump RC suffix to current version
 	$(call print_success,Version bumped to $$NEW_VERSION); \
 	echo -e "$(FONT_CYAN)💡 Next: make release-rc (commit, tag, and publish)$(FONT_RESET)"
 
+.PHONY: promote-stable
+promote-stable: ## 🎉 Promote RC to stable release (remove RC suffix)
+	@$(call print_status,Promoting RC to stable release...)
+	@if [ ! -f "pyproject.toml" ]; then \
+		$(call print_error,pyproject.toml not found); \
+		exit 1; \
+	fi
+	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+	if ! echo "$$CURRENT_VERSION" | grep -q "rc[0-9]*$$"; then \
+		$(call print_error,Current version is not an RC: $$CURRENT_VERSION); \
+		echo -e "$(FONT_YELLOW)💡 This command only works for RC versions$(FONT_RESET)"; \
+		exit 1; \
+	fi; \
+	STABLE_VERSION=$$(echo "$$CURRENT_VERSION" | sed 's/rc[0-9]*$$//'); \
+	$(call print_status,Promoting: $$CURRENT_VERSION → $$STABLE_VERSION (STABLE)); \
+	sed -i "s/^version = \"$$CURRENT_VERSION\"/version = \"$$STABLE_VERSION\"/" pyproject.toml; \
+	$(call print_success,Version promoted to $$STABLE_VERSION (STABLE RELEASE)); \
+	echo ""; \
+	echo -e "$(FONT_PURPLE)🎉 Ready for Stable Release!$(FONT_RESET)"; \
+	echo -e "$(FONT_CYAN)💡 Next: make release-rc (commit, tag, and publish as stable)$(FONT_RESET)"
+
+
 .PHONY: release-rc
 release-rc: ## 🚀 Create release (commit, tag, push) - triggers GitHub Actions publishing
 	@$(call print_status,Creating release...)
@@ -788,6 +810,59 @@ release-rc: ## 🚀 Create release (commit, tag, push) - triggers GitHub Actions
 	echo -e "$(FONT_YELLOW)💡 Installation (after ~5-10 minutes):$(FONT_RESET)"; \
 	echo -e "  pip install automagik-hive==$$CURRENT_VERSION"; \
 	echo -e "  uvx automagik-hive@$$CURRENT_VERSION --version"
+
+.PHONY: release-stable
+release-stable: ## 🚀 Create stable release (commit, tag, push) - triggers GitHub Actions publishing
+	@$(call print_status,Creating stable release...)
+  	@if [ ! -f "pyproject.toml" ]; then \
+  		$(call print_error,pyproject.toml not found); \
+  		exit 1; \
+  	fi
+  	@CURRENT_VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2); \
+  	if echo "$$CURRENT_VERSION" | grep -qE "rc[0-9]+$$|b[0-9]+$$|a[0-9]+$$"; then \
+  		$(call print_error,Cannot release pre-release version as stable: $$CURRENT_VERSION); \
+  		echo -e "$(FONT_YELLOW)💡 Run 'make promote-stable' first to remove RC/beta suffix$(FONT_RESET)"; \
+  		exit 1; \
+  	fi; \
+  	if git status --porcelain | grep -q "pyproject.toml"; then \
+  		$(call print_status,Committing stable version v$$CURRENT_VERSION...); \
+  		git add pyproject.toml RELEASE_NOTES_v$$CURRENT_VERSION.md 2>/dev/null || git add pyproject.toml; \
+  		git commit -m "release: v$$CURRENT_VERSION" \
+  			-m "🎉 Stable Release v$$CURRENT_VERSION" \
+  			-m "" \
+  			-m "First stable release following 40 release candidates." \
+  			-m "This release will be published via GitHub Actions."; \
+  	else \
+  		$(call print_status,No changes to commit - pyproject.toml already committed); \
+  	fi; \
+  	$(call print_status,Creating git tag v$$CURRENT_VERSION...); \
+  	if git tag -l "v$$CURRENT_VERSION" | grep -q "v$$CURRENT_VERSION"; then \
+  		$(call print_warning,Tag v$$CURRENT_VERSION already exists - deleting and recreating...); \
+  		git tag -d "v$$CURRENT_VERSION"; \
+  	fi; \
+  	git tag "v$$CURRENT_VERSION" -m "Stable Release v$$CURRENT_VERSION"; \
+  	$(call print_status,Pushing to origin...); \
+  	git push origin main || git push origin dev; \
+  	git push origin "v$$CURRENT_VERSION"; \
+  	$(call print_success,Stable release v$$CURRENT_VERSION created and pushed!); \
+  	echo ""; \
+  	echo -e "$(FONT_PURPLE)🎉 GitHub Actions Publishing Pipeline Started$(FONT_RESET)"; \
+  	echo ""; \
+  	echo -e "$(FONT_CYAN)📋 Publishing Steps:$(FONT_RESET)"; \
+  	echo -e "  1. ✅ Build package"; \
+  	echo -e "  2. ✅ Verify version matches tag"; \
+  	echo -e "  3. 🧪 Publish to TestPyPI"; \
+  	echo -e "  4. 🧪 Test installation from TestPyPI"; \
+  	echo -e "  5. 📦 Publish to PyPI"; \
+  	echo -e "  6. 🎉 Update GitHub Release with RELEASE_NOTES"; \
+  	echo ""; \
+  	echo -e "$(FONT_CYAN)🔗 Monitor Progress:$(FONT_RESET)"; \
+  	echo -e "  $(FONT_PURPLE)https://github.com/namastexlabs/automagik-hive/actions$(FONT_RESET)"; \
+  	echo ""; \
+  	echo -e "$(FONT_YELLOW)💡 Installation (after ~5-10 minutes):$(FONT_RESET)"; \
+  	echo -e "  pip install automagik-hive==$$CURRENT_VERSION"; \
+  	echo -e "  uvx automagik-hive@$$CURRENT_VERSION --version"
+
 
 # ===========================================
 # 🧹 Phony Targets
