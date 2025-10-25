@@ -363,8 +363,9 @@ class RowBasedCSVKnowledgeBase:
         self.processor: DocumentProcessor | None = None
 
         if processing_config is not None and processing_config.enabled:
-            # Initialize DocumentProcessor with config dicts
+            # Initialize DocumentProcessor with config dicts (including content cleaning)
             self.processor = DocumentProcessor(
+                content_cleaning_config=processing_config.content_cleaning.model_dump(),
                 type_detection_config=processing_config.type_detection.model_dump(),
                 entity_extraction_config=processing_config.entity_extraction.model_dump(),
                 chunking_config=processing_config.chunking.model_dump(),
@@ -1423,6 +1424,18 @@ class RowBasedCSVKnowledgeBase:
                                         page_range=f"{page_range_start}-{page_range_end}"
                                     )
                                     continue
+
+                                # Apply content cleaning to page group content
+                                if self.processor and self.processor.content_cleaner:
+                                    original_length = len(group_content)
+                                    group_content = self.processor.content_cleaner.clean(group_content)
+                                    logger.info(
+                                        "Page group content cleaned",
+                                        group_index=group_idx,
+                                        original_length=original_length,
+                                        cleaned_length=len(group_content),
+                                        reduction_pct=round((1 - len(group_content) / original_length) * 100, 2) if original_length else 0
+                                    )
 
                                 # Get original metadata
                                 original_meta = {}

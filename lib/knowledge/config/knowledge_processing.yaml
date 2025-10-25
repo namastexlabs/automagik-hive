@@ -4,6 +4,16 @@
 # Enable/disable the entire processing pipeline
 enabled: true
 
+# Content cleaning configuration
+content_cleaning:
+  enabled: true                   # Enable content cleaning
+  remove_glyph: true              # Remove GLYPH artifacts
+  remove_html_comments: true      # Remove HTML comments
+  remove_markdown_tables: true    # Remove markdown tables
+  fix_ligatures: true             # Fix common ligatures (e.g., Beijing)
+  filter_english_only: false      # Filter non-English lines (strict mode)
+  min_vowel_tokens: 2             # Minimum vowel-bearing tokens per line
+
 # Document type detection configuration
 type_detection:
   use_filename: true              # Use filename patterns for detection
@@ -13,10 +23,10 @@ type_detection:
 # Entity extraction configuration
 entity_extraction:
   enabled: true                   # Enable entity extraction
-  extract_dates: true             # Extract dates (multiple formats)
-  extract_amounts: true           # Extract monetary amounts (R$)
-  extract_names: true             # Extract person names
-  extract_organizations: true     # Extract organization names
+  extract_lessons: true             # Extract dates (multiple formats)
+  extract_words: true           # Extract monetary amounts (R$)
+  extract_questions: true             # Extract person names
+  extract_answers: true     # Extract organization names
 
 # Semantic chunking configuration
 chunking:

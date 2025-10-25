@@ -72,6 +72,22 @@ class MetadataConfig(BaseModel):
     )
 
 
+class ContentCleaningConfig(BaseModel):
+    """Configuration for content cleaning."""
+
+    enabled: bool = Field(default=True, description="Enable content cleaning")
+    remove_glyph: bool = Field(default=True, description="Remove GLYPH artifacts")
+    remove_html_comments: bool = Field(default=True, description="Remove HTML comments")
+    remove_markdown_tables: bool = Field(default=True, description="Remove markdown tables")
+    fix_ligatures: bool = Field(default=True, description="Fix common ligatures (e.g., Beijing)")
+    filter_english_only: bool = Field(
+        default=False, description="Filter non-English lines (strict mode)"
+    )
+    min_vowel_tokens: int = Field(
+        default=2, ge=1, description="Minimum vowel-bearing tokens per line"
+    )
+
+
 class DocumentSplittingConfig(BaseModel):
     """Configuration for page-based document splitting."""
 
@@ -126,6 +142,9 @@ class ProcessingConfig(BaseModel):
 
     enabled: bool = Field(default=True, description="Enable enhanced document processing")
 
+    content_cleaning: ContentCleaningConfig = Field(
+        default_factory=ContentCleaningConfig, description="Content cleaning configuration"
+    )
     type_detection: TypeDetectionConfig = Field(
         default_factory=TypeDetectionConfig, description="Type detection configuration"
     )
@@ -148,6 +167,7 @@ __all__ = [
     "EntityExtractionConfig",
     "ChunkingConfig",
     "MetadataConfig",
+    "ContentCleaningConfig",
     "DocumentSplittingConfig",
     "ProcessingConfig",
 ]

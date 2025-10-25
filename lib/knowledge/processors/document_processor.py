@@ -11,6 +11,7 @@ from typing import Any
 
 from lib.knowledge.config.processing_config import (
     ChunkingConfig,
+    ContentCleaningConfig,
     EntityExtractionConfig,
     MetadataConfig,
     TypeDetectionConfig,
@@ -22,6 +23,7 @@ from lib.models.knowledge_metadata import (
     ProcessedDocument,
 )
 
+from .content_cleaner import ContentCleaner
 from .entity_extractor import EntityExtractor
 from .metadata_enricher import MetadataEnricher
 from .semantic_chunker import SemanticChunker
@@ -38,6 +40,7 @@ class DocumentProcessor:
 
     def __init__(
         self,
+        content_cleaning_config: dict[str, Any],
         type_detection_config: dict[str, Any],
         entity_extraction_config: dict[str, Any],
         chunking_config: dict[str, Any],
@@ -46,18 +49,21 @@ class DocumentProcessor:
         """Initialize document processor with configuration.
 
         Args:
+            content_cleaning_config: Configuration for ContentCleaner
             type_detection_config: Configuration for TypeDetector
             entity_extraction_config: Configuration for EntityExtractor
             chunking_config: Configuration for SemanticChunker
             metadata_config: Configuration for MetadataEnricher
         """
         # Convert dict configs to Pydantic models
+        content_cleaning = ContentCleaningConfig(**content_cleaning_config)
         type_detection = TypeDetectionConfig(**type_detection_config)
         entity_extraction = EntityExtractionConfig(**entity_extraction_config)
         chunking = ChunkingConfig(**chunking_config)
         metadata = MetadataConfig(**metadata_config)
 
-        # Initialize processors with Pydantic configs
+        # Initialize processors with Pydantic configs (cleaning first!)
+        self.content_cleaner = ContentCleaner(content_cleaning)
         self.type_detector = TypeDetector(type_detection)
         self.entity_extractor = EntityExtractor(entity_extraction)
         self.semantic_chunker = SemanticChunker(chunking)
@@ -69,6 +75,7 @@ class DocumentProcessor:
         """Process document through enhancement pipeline.
 
         Executes parallel processing where possible:
+        0. Content cleaning (removes artifacts, encoding issues)
         1. Type detection and entity extraction run in parallel
         2. Metadata enrichment combines results
         3. Semantic chunking produces final chunks
@@ -111,18 +118,30 @@ class DocumentProcessor:
         )
 
         try:
+            # Phase 0: Content cleaning (BEFORE all other processing)
+            cleaned_content = self.content_cleaner.clean(content)
+
+            logger.debug(
+                "Content cleaned",
+                document_id=doc_id,
+                original_length=len(content),
+                cleaned_length=len(cleaned_content),
+                reduction_pct=round((1 - len(cleaned_content) / len(content)) * 100, 2) if content else 0
+            )
+
             # Phase 1: Parallel execution of type detection + entity extraction
-            doc_type, entities = self._parallel_analyze(filename, content)
+            doc_type, entities = self._parallel_analyze(filename, cleaned_content)
 
             # Phase 2: Metadata enrichment (depends on both type + entities)
             enhanced_metadata = self._enrich_metadata(
                 document=document,
                 doc_type=doc_type,
                 entities=entities,
+                cleaned_content=cleaned_content,
             )
 
-            # Phase 3: Semantic chunking with enhanced metadata
-            chunks = self._create_chunks(content, enhanced_metadata)
+            # Phase 3: Semantic chunking with enhanced metadata (use cleaned content)
+            chunks = self._create_chunks(cleaned_content, enhanced_metadata)
 
             # Update metadata with chunk count
             enhanced_metadata.chunk_count = len(chunks)
@@ -206,6 +225,7 @@ class DocumentProcessor:
         document: dict[str, Any],
         doc_type: Any,
         entities: ExtractedEntities,
+        cleaned_content: str,
     ) -> EnhancedMetadata:
         """Enrich metadata using detected type and extracted entities.
 
@@ -213,21 +233,20 @@ class DocumentProcessor:
             document: Original document dictionary
             doc_type: Detected document type
             entities: Extracted entities
+            cleaned_content: Cleaned document content
 
         Returns:
             EnhancedMetadata with all enrichments
         """
-        content = document["content"]
-
-        # Get enriched metadata
+        # Get enriched metadata using cleaned content
         metadata = self.metadata_enricher.enrich(
             doc_type=doc_type,
             entities=entities,
-            content=content,
+            content=cleaned_content,
         )
 
-        # Add content characteristics
-        metadata.content_length = len(content)
+        # Add content characteristics (use cleaned content length)
+        metadata.content_length = len(cleaned_content)
 
         return metadata
 
