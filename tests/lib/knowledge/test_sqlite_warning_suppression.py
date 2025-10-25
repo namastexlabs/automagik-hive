@@ -75,7 +75,7 @@ class TestSQLiteWarningLevels:
                 # Simulate database error
                 mock_engine.return_value.connect.side_effect = Exception("Connection failed")
 
-                with patch("lib.knowledge.smart_incremental_loader.app_log.logger.debug") as mock_debug:
+                with patch("lib.knowledge.smart_incremental_loader.app_log.logger.debug"):
                     with patch("lib.knowledge.smart_incremental_loader.app_log.logger.warning") as mock_warning:
                         result = loader._check_existing_hashes()
 
@@ -144,7 +144,7 @@ class TestRowBasedCSVWarnings:
 
         kb = RowBasedCSVKnowledgeBase(csv_path="test.csv", vector_db=None)
 
-        with patch("lib.logging.logger.debug") as mock_debug:
+        with patch("lib.logging.logger.debug"):
             with patch("lib.logging.logger.warning") as mock_warning:
                 kb.load(recreate=False)
 

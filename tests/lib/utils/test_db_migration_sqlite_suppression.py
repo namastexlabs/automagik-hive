@@ -3,7 +3,7 @@
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -41,9 +41,7 @@ class TestSQLiteMigrationWarnings:
             mock_create_engine.return_value = mock_engine
 
             # Simulate SQLite database file not existing yet
-            mock_engine.connect.side_effect = OperationalError(
-                "unable to open database file", None, None
-            )
+            mock_engine.connect.side_effect = OperationalError("unable to open database file", None, None)
 
             with patch("lib.logging.logger.error") as mock_error:
                 with patch("lib.logging.logger.debug") as mock_debug:
@@ -90,7 +88,7 @@ class TestSQLiteMigrationWarnings:
             )
 
             with patch("lib.logging.logger.error") as mock_error:
-                with patch("lib.logging.logger.debug") as mock_debug:
+                with patch("lib.logging.logger.debug"):
                     result = await check_and_run_migrations()
 
                     # Should use error for PostgreSQL
@@ -107,9 +105,7 @@ class TestSQLiteMigrationWarnings:
             mock_create_engine.return_value = mock_engine
 
             # Simulate auth failure
-            mock_engine.connect.side_effect = OperationalError(
-                "password authentication failed for user", None, None
-            )
+            mock_engine.connect.side_effect = OperationalError("password authentication failed for user", None, None)
 
             with patch("lib.logging.logger.error") as mock_error:
                 result = await check_and_run_migrations()

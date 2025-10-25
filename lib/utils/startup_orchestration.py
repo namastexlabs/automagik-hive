@@ -470,7 +470,7 @@ async def orchestrated_startup(
             if not quiet_mode:
                 logger.info("🔧 Starting PGlite HTTP bridge")
             try:
-                from lib.database.backend_factory import create_backend, DatabaseBackendType
+                from lib.database.backend_factory import DatabaseBackendType, create_backend
 
                 _pglite_backend_instance = create_backend(DatabaseBackendType.PGLITE)
                 await _pglite_backend_instance.initialize()
@@ -770,7 +770,6 @@ def _populate_surface_status(display: Any, startup_results: StartupResults) -> N
     )
 
 
-
 async def cleanup_pglite_backend():
     """Clean up PGlite backend if running"""
     global _pglite_backend_instance
@@ -783,4 +782,3 @@ async def cleanup_pglite_backend():
             logger.warning("PGlite cleanup error", error=str(e))
         finally:
             _pglite_backend_instance = None
-

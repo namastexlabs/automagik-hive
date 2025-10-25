@@ -442,12 +442,12 @@ class ServiceManager:
                         str(workspace_path), verbose=False, api_key_config=api_key_config
                     )
                 else:
-                    print(f"\n💡 When ready, run these commands:")
+                    print("\n💡 When ready, run these commands:")
                     print(f"   cd {workspace_name}")
                     print("   automagik-hive install")
                     return True
             except (EOFError, KeyboardInterrupt):
-                print(f"\n💡 When ready, run these commands:")
+                print("\n💡 When ready, run these commands:")
                 print(f"   cd {workspace_name}")
                 print("   automagik-hive install")
                 return True
@@ -1070,7 +1070,7 @@ HIVE_ENVIRONMENT=development
 HIVE_LOG_LEVEL=INFO
 """
             env_file.write_text(minimal_env)
-            print(f"  ⚠️  Created minimal .env file (this shouldn't normally happen)")
+            print("  ⚠️  Created minimal .env file (this shouldn't normally happen)")
 
         # Read existing .env
         env_lines = []
@@ -1257,7 +1257,7 @@ set UV_PYTHON_PREFERENCE=only-managed
 uv run --python 3.12 uvicorn api.serve:app --factory --host 0.0.0.0 --port 8886 --reload
 """
                 script_path.write_text(script_content)
-                print(f"   📝 Generated dev.bat launcher")
+                print("   📝 Generated dev.bat launcher")
 
             else:
                 # Generate Unix shell script
@@ -1275,7 +1275,7 @@ exec uv run --python 3.12 uvicorn api.serve:app --factory --host 0.0.0.0 --port 
                 # Make executable on Unix systems
                 current_permissions = script_path.stat().st_mode
                 script_path.chmod(current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-                print(f"   📝 Generated dev launcher script")
+                print("   📝 Generated dev launcher script")
 
         except Exception as e:
             # Non-fatal - just warn
