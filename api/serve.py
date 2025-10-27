@@ -178,7 +178,7 @@ def create_lifespan(startup_display: Any = None) -> Any:
 
         yield
 
-        # Graceful Shutdown with Progress Display (following Langflow pattern)
+        # Graceful Shutdown with Progress Display
         try:
             # Import our new shutdown progress utility
             from lib.utils.shutdown_progress import create_automagik_shutdown_progress
