@@ -1,6 +1,6 @@
 """
 Welcome banner utility for Automagik Hive startup.
-Provides Langflow-style welcome message with actionable links.
+Provides an informative welcome message with actionable links.
 """
 
 from rich.box import HEAVY
