@@ -683,6 +683,15 @@ async def _async_create_automagik_api() -> FastAPI:
         try:
             startup_display.display_summary()
             logger.debug("Startup display completed successfully")
+
+            # Display welcome banner after component table
+            from lib.config.server_config import get_server_config
+            from lib.utils.welcome_banner import display_welcome_banner
+
+            base_url = get_server_config().get_base_url()
+            docs_url = f"{base_url}/docs"
+            display_welcome_banner(docs_url)
+
         except Exception as e:
             import traceback
 
@@ -719,28 +728,11 @@ async def _async_create_automagik_api() -> FastAPI:
         # Version router already included via v1_router above
 
         if is_development and not is_reloader_context:
-            # Add development URLs
-            from rich.console import Console
-            from rich.table import Table
-
-            console = Console()
-            table = Table(title="🌐 Development URLs", show_header=False, box=None)
-            table.add_column("", style="cyan", width=20)
-            table.add_column("", style="green")
-
-            # Import here to avoid circular imports
+            # Add MCP Integration Config
             from lib.config.server_config import get_server_config
 
             base_url = get_server_config().get_base_url()
 
-            table.add_row("📖 API Docs:", f"{base_url}/docs")
-            table.add_row("🚀 Main API:", f"{base_url}")
-            table.add_row("💗 Health:", f"{base_url}/api/v1/health")
-
-            console.print("\n")
-            console.print(table)
-
-            # Add MCP Integration Config
             logger.debug(
                 "MCP Integration Config for playground testing",
                 config={
