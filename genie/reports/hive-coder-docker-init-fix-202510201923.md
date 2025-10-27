@@ -314,7 +314,7 @@ $ uv run pytest tests/cli/commands/test_init_docker_discovery.py::TestDockerTemp
 
 ## Files Modified
 
-### `/home/cezar/automagik/automagik-hive/cli/commands/service.py`
+### `cli/commands/service.py`
 
 **Lines Modified**: 292-462
 
