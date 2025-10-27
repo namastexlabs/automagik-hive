@@ -263,6 +263,12 @@ class AgnoAgentProxy:
         }
 
         logger.debug(f"🤖 Creating agent with {len(filtered_params)} parameters")
+        if "tools" in filtered_params:
+            tools_value = filtered_params["tools"]
+            tool_count = len(tools_value) if isinstance(tools_value, list) else "non-list"
+            logger.info(f"🔧 Tools in filtered_params for {component_id}: {tool_count} tools")
+        else:
+            logger.warning(f"⚠️ NO TOOLS in filtered_params for {component_id}!")
 
         try:
             # Create the agent with dynamically mapped parameters
@@ -511,7 +517,33 @@ class AgnoAgentProxy:
 
         result: dict[str, Any] = {}
 
-        enable_memories = memory_config.get("enable_user_memories") or memory_config.get("enable_agentic_memory")
+        # Check for global kill switch first
+        if memory_config.get("memory_disabled") is True:
+            logger.info(f"🤖 Memory explicitly disabled via memory_disabled flag for {component_id}")
+            # Explicitly set memory flags to False to prevent Agno from enabling memory
+            result["enable_user_memories"] = False
+            result["enable_agentic_memory"] = False
+            result["memory_manager"] = None
+            return result
+
+        # Check if memory is explicitly enabled
+        # NOTE: We check for explicit True values, not just truthy, to distinguish
+        # between "not set" (None/missing) and "explicitly disabled" (False)
+        enable_user = memory_config.get("enable_user_memories")
+        enable_agentic = memory_config.get("enable_agentic_memory")
+
+        # Memory is enabled if EITHER flag is explicitly True
+        # If both are explicitly False or both are missing/None, memory is disabled
+        enable_memories = (enable_user is True) or (enable_agentic is True)
+
+        # If both flags are explicitly False, disable memory
+        if enable_user is False and enable_agentic is False:
+            logger.info(f"🤖 Memory explicitly disabled via enable flags for {component_id}")
+            result["enable_user_memories"] = False
+            result["enable_agentic_memory"] = False
+            result["memory_manager"] = None
+            return result
+
         if enable_memories:
             try:
                 from lib.memory.memory_factory import create_agent_memory
@@ -524,7 +556,7 @@ class AgnoAgentProxy:
                     db=shared_db,
                 )
                 result["memory_manager"] = memory_manager
-                logger.debug(f"🤖 Created MemoryManager for {component_id}")
+                logger.info(f"🤖 Created MemoryManager for {component_id}")
             except Exception as exc:
                 logger.error(f"🤖 Failed to create MemoryManager for {component_id}: {exc}")
 
@@ -548,6 +580,11 @@ class AgnoAgentProxy:
                         target_key,
                         component_id,
                     )
+        else:
+            # Memory not enabled - ensure flags are explicitly False
+            logger.info(f"🤖 Memory not enabled for {component_id}, setting flags to False")
+            result["enable_user_memories"] = False
+            result["enable_agentic_memory"] = False
 
         logger.debug(f"🤖 Processed {len(result)} memory parameters for {component_id}")
         return result

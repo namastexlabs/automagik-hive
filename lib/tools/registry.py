@@ -371,19 +371,38 @@ class ToolRegistry:
     @staticmethod
     def _load_shared_tool(tool_name: str) -> Callable:
         """Load a specific shared tool by name."""
+        import inspect
+
         shared_tools = ToolRegistry.discover_shared_tools()
+
+        tool_class = None
 
         # Try exact match first
         if tool_name in shared_tools:
-            return shared_tools[tool_name]
+            tool_class = shared_tools[tool_name]
+        else:
+            # Try pattern matching for toolkit methods
+            for full_name, tool in shared_tools.items():
+                if tool_name in full_name:
+                    tool_class = tool
+                    break
 
-        # Try pattern matching for toolkit methods
-        for full_name, tool in shared_tools.items():
-            if tool_name in full_name:
-                return tool
+        if tool_class is None:
+            logger.warning(f"Shared tool not found: {tool_name}")
+            return None
 
-        logger.warning(f"Shared tool not found: {tool_name}")
-        return None
+        # If it's a class (like Toolkit classes), instantiate it
+        if inspect.isclass(tool_class):
+            try:
+                tool_instance = tool_class()
+                logger.debug(f"🔧 Instantiated shared tool class: {tool_name}")
+                return tool_instance
+            except Exception as e:
+                logger.error(f"Failed to instantiate shared tool {tool_name}: {e}")
+                return None
+
+        # If it's already a function or instance, return as-is
+        return tool_class
 
     @staticmethod
     def _validate_tool_config(tool_config: Any) -> bool:
