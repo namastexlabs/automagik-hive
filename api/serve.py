@@ -26,9 +26,19 @@ from starlette.middleware.cors import CORSMiddleware
 # Load environment variables FIRST before any other imports
 # This ensures AGNO_LOG_LEVEL is available when logging system initializes
 try:
+    from pathlib import Path as DotenvPath
+
     from dotenv import load_dotenv
 
-    load_dotenv()
+    # EXPLICIT: Load from workspace .env (current working directory)
+    # This ensures external workspaces (uvx usage) load their local .env
+    # and prevents race conditions from multiple load_dotenv() calls
+    workspace_env = DotenvPath.cwd() / ".env"
+    if workspace_env.exists():
+        load_dotenv(dotenv_path=workspace_env, override=False)
+    else:
+        # Fallback: Search upward from CWD
+        load_dotenv(override=False)
 except ImportError:
     pass  # Silently continue - dotenv is optional for development
 
@@ -237,6 +247,14 @@ def create_lifespan(startup_display: Any = None) -> Any:
                     logger.debug("MCP system cleanup completed")
                 except Exception as e:
                     logger.warning("MCP cleanup error", error=str(e))
+
+                # PGlite bridge cleanup
+                try:
+                    from lib.utils.startup_orchestration import cleanup_pglite_backend
+
+                    await cleanup_pglite_backend()
+                except Exception as e:
+                    logger.debug("PGlite cleanup note", error=str(e))
 
             # Step 3: Clearing Temporary Files
             with shutdown_progress.step(3):

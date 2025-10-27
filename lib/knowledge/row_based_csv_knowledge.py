@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import logging
+import os
 from collections.abc import Awaitable, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -104,7 +105,11 @@ class RowBasedCSVKnowledgeBase:
         """Load CSV documents into the configured knowledge backends."""
         knowledge = self.knowledge
         if knowledge is None or knowledge.vector_db is None:
-            logger.warning("No vector db provided")
+            # Expected for SQLite (no pgvector support) - use debug level
+            db_url = os.getenv("HIVE_DATABASE_URL", "")
+            is_sqlite = "sqlite" in db_url.lower()
+            log_level = logger.debug if is_sqlite else logger.warning
+            log_level("No vector db provided")
             return
 
         vector_db = knowledge.vector_db

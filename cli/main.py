@@ -58,13 +58,24 @@ PRODUCTION ENVIRONMENT:
 SUBCOMMANDS:
   init [NAME]                 Initialize new workspace with AI templates (lightweight)
   install                     Setup environment (credentials, PostgreSQL, deployment)
+  diagnose [--verbose]        Diagnose installation and configuration issues
   uninstall                   COMPLETE SYSTEM WIPE - uninstall ALL environments
   genie                       Launch claude with AGENTS.md as system prompt
   dev                         Start development server (alternative syntax)
 
-WORKFLOW:
-  1. automagik-hive init my-project     # Copy AI templates
-  2. cd my-project && cp .env.example .env
+QUICK START (New Streamlined Workflow):
+  1. automagik-hive init my-project     # Initialize workspace (prompts for install)
+  2. Answer 'Y' to install              # Auto-configures with SQLite (default)
+  3. Answer 'Y' to start server         # Launches development server
+  4. Access API at http://localhost:8886/docs
+
+  Note: SQLite is recommended for quick starts (zero dependencies)
+        Session persistence works, RAG/Knowledge offline (no pgvector)
+        Upgrade to PostgreSQL later for full RAG capabilities
+
+MANUAL WORKFLOW (Traditional):
+  1. automagik-hive init my-project     # Copy AI templates only
+  2. cd my-project && edit .env         # Configure manually
   3. automagik-hive install             # Setup environment
   4. automagik-hive dev                 # Start developing
 
@@ -124,9 +135,15 @@ Use --help for detailed options or see documentation.
 
     # Install subcommand
     install_parser = subparsers.add_parser(
-        "install", help="Complete environment setup with .env generation and PostgreSQL"
+        "install", help="Complete environment setup (defaults to SQLite - zero dependencies, RAG offline)"
     )
     install_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    install_parser.add_argument(
+        "--backend",
+        choices=["sqlite", "pglite", "postgresql"],
+        help="Database backend (default: sqlite). Options: sqlite (quick start), pglite (WASM), postgresql (full RAG)",
+    )
+    install_parser.add_argument("-v", "--verbose", action="store_true", help="Enable detailed diagnostic output")
 
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser("uninstall", help="COMPLETE SYSTEM WIPE - uninstall ALL environments")
@@ -156,9 +173,31 @@ Use --help for detailed options or see documentation.
         help="Display raw AgentOS configuration as JSON",
     )
 
-    # Dev subcommand
-    dev_parser = subparsers.add_parser("dev", help="Start development server (local)")
+    # Dev subcommand (with auto-reload)
+    dev_parser = subparsers.add_parser("dev", help="Start development server with auto-reload")
     dev_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    # Start subcommand (production-like, no auto-reload)
+    start_parser = subparsers.add_parser("start", help="Start API server (production mode, no auto-reload)")
+    start_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    # PostgreSQL subcommands for better UX
+    postgres_parser = subparsers.add_parser("postgres-start", help="Start PostgreSQL container")
+    postgres_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    postgres_stop_parser = subparsers.add_parser("postgres-stop", help="Stop PostgreSQL container")
+    postgres_stop_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    postgres_status_parser = subparsers.add_parser("postgres-status", help="Check PostgreSQL container status")
+    postgres_status_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    postgres_logs_parser = subparsers.add_parser("postgres-logs", help="Show PostgreSQL container logs")
+    postgres_logs_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+
+    # Diagnose subcommand - troubleshooting installation issues
+    diagnose_parser = subparsers.add_parser("diagnose", help="Diagnose installation and configuration issues")
+    diagnose_parser.add_argument("workspace", nargs="?", default=".", help="Workspace directory path")
+    diagnose_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed diagnostic information")
 
     return parser
 
@@ -181,10 +220,16 @@ def main() -> int:
         args.postgres_health,
         args.command == "genie",
         args.command == "dev",
+        args.command == "start",
         args.command == "init",
         args.command == "install",
         args.command == "uninstall",
+        args.command == "diagnose",
         args.command == "agentos-config",
+        args.command == "postgres-start",
+        args.command == "postgres-stop",
+        args.command == "postgres-status",
+        args.command == "postgres-logs",
         args.stop,
         args.restart,
         args.status,
@@ -237,16 +282,23 @@ def main() -> int:
                     else 1
                 )
             elif hasattr(args, "genie_command") and args.genie_command == "claude":
-                return 0 if genie_cmd.launch_claude(getattr(args, "args", None)) else 1
+                claude_args = getattr(args, "args", None)
+                return 0 if genie_cmd.launch_claude(claude_args if isinstance(claude_args, list) else []) else 1
             else:
                 # Fallback for legacy "genie" without subcommand - show help
                 parser.parse_args(["genie", "--help"])
                 return 1
 
-        # Development server (subcommand)
+        # Development server (subcommand with auto-reload)
         if args.command == "dev":
             service_manager = ServiceManager()
             result = service_manager.serve_local(args.host, args.port, reload=True)
+            return 0 if result else 1
+
+        # Start server (production mode, no auto-reload)
+        if args.command == "start":
+            service_manager = ServiceManager()
+            result = service_manager.serve_local(args.host, args.port, reload=False)
             return 0 if result else 1
 
         # Init subcommand - lightweight template copying
@@ -260,13 +312,53 @@ def main() -> int:
         if args.command == "install":
             service_manager = ServiceManager()
             workspace = getattr(args, "workspace", ".") or "."
-            return 0 if service_manager.install_full_environment(workspace) else 1
+            backend_override = getattr(args, "backend", None)
+            verbose = getattr(args, "verbose", False)
+            return (
+                0
+                if service_manager.install_full_environment(
+                    workspace, backend_override=backend_override, verbose=verbose
+                )
+                else 1
+            )
 
         # Uninstall subcommand
         if args.command == "uninstall":
             service_manager = ServiceManager()
             workspace = getattr(args, "workspace", ".") or "."
             return 0 if service_manager.uninstall_environment(workspace) else 1
+
+        # PostgreSQL subcommands
+        if args.command == "postgres-start":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.start_postgres(workspace) else 1
+
+        if args.command == "postgres-stop":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.stop_postgres(workspace) else 1
+
+        if args.command == "postgres-status":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.postgres_status(workspace) else 1
+
+        if args.command == "postgres-logs":
+            service_manager = ServiceManager()
+            workspace = getattr(args, "workspace", ".") or "."
+            return 0 if service_manager.postgres_logs(workspace) else 1
+
+        # Diagnose subcommand
+        if args.command == "diagnose":
+            from pathlib import Path
+
+            from .commands.diagnose import DiagnoseCommands
+
+            workspace = getattr(args, "workspace", ".") or "."
+            verbose = getattr(args, "verbose", False)
+            diagnose_cmd = DiagnoseCommands(workspace_path=Path(workspace))
+            return 0 if diagnose_cmd.diagnose_installation(verbose=verbose) else 1
 
         if args.command == "agentos-config":
             if not _is_agentos_cli_enabled():
@@ -323,7 +415,7 @@ if __name__ == "__main__":
 
 
 # Functions expected by tests
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse arguments (stub for tests)."""
     return create_parser().parse_args()
 
@@ -331,16 +423,16 @@ def parse_args():
 class LazyCommandLoader:
     """Lazy command loader (stub for tests)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def load_command(self, command_name: str):
+    def load_command(self, command_name: str) -> object:
         """Load command stub."""
         return lambda: f"Command {command_name} loaded"
 
 
 # Expected by some tests
-def app():
+def app() -> int:
     """App function that calls main for compatibility."""
     return main()
 

@@ -1,7 +1,7 @@
 agent:
   name: "🔧 Template Agent"
   agent_id: "template-agent"
-  version: 2
+  version: 3
   description: >
     TEMPLATE AGENT - DEV MODE TEST - A foundational template for creating new specialized agents.
     This configuration serves as a starting point for building domain-specific
@@ -14,7 +14,7 @@ model:
   max_tokens: 4000
 
 db:
-  type: postgres
+  # type auto-detected from HIVE_DATABASE_URL (postgres/sqlite/mongodb/redis)
   table_name: template_agent
   auto_upgrade_schema: true
 

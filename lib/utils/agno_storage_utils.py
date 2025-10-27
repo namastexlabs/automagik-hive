@@ -51,6 +51,24 @@ def _default_table_name(component_mode: str, component_id: str, suffix: str) -> 
     return f"{component_mode}_{safe_component}_{suffix}"
 
 
+def _detect_storage_type_from_url(db_url: str | None) -> str:
+    """Auto-detect storage type from database URL."""
+    if not db_url:
+        return "postgres"  # Default fallback
+
+    url_lower = db_url.lower()
+    if url_lower.startswith("sqlite"):
+        return "sqlite"
+    elif url_lower.startswith("mongodb"):
+        return "mongodb"
+    elif url_lower.startswith("redis"):
+        return "redis"
+    elif url_lower.startswith("postgresql") or url_lower.startswith("postgres"):
+        return "postgres"
+    else:
+        return "postgres"  # Default fallback
+
+
 def create_dynamic_storage(
     storage_config: dict[str, Any],
     component_id: str,
@@ -60,7 +78,19 @@ def create_dynamic_storage(
     """Build an Agno Db instance and dependency bundle for a component."""
 
     storage_config = storage_config or {}
-    storage_type = storage_config.get("type", "postgres")
+
+    # Auto-detect storage type from URL if not explicitly configured
+    if "type" not in storage_config and db_url:
+        detected_type = _detect_storage_type_from_url(db_url)
+        logger.info(
+            "Auto-detected storage type '%s' from database URL for %s '%s'",
+            detected_type,
+            component_mode,
+            component_id,
+        )
+        storage_type = detected_type
+    else:
+        storage_type = storage_config.get("type", "postgres")
 
     storage_class = get_storage_class(storage_type)
 

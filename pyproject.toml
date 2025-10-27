@@ -1,12 +1,13 @@
 [project]
 name = "automagik-hive"
-version = "0.2.0rc2"
+version = "0.2.0"
 description = "Automagik Hive"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "ag-ui-protocol>=0.1.8",
     "agno==2.0.8",
+    "aiosqlite>=0.21.0",
     "alembic>=1.16.4",
     "anthropic>=0.64.0",
     "docker>=7.1.0",
@@ -48,6 +49,9 @@ build-backend = "hatchling.build"
 [tool.uv]
 package = true
 
+[tool.uv.workspace]
+members = []
+
 [tool.hatch.build.targets.wheel]
 packages = ["ai", "api", "lib", "cli", "common"]
 
@@ -87,7 +91,7 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "S", "B", "A", "C4", "T20"]
-ignore = ["E501", "S101", "S603", "S607", "T201", "B904", "S106", "B008"]
+ignore = ["E501", "S101", "S603", "S607", "T201", "B904", "S106", "B008", "E402"]
 
 
 [tool.mypy]

@@ -6,6 +6,7 @@ Supports both local development (uvicorn) and production Docker modes.
 
 import asyncio
 import os
+import re
 import subprocess
 from datetime import UTC
 from pathlib import Path
@@ -76,15 +77,24 @@ class ServiceManager:
             actual_host = host or os.getenv("HIVE_API_HOST", "0.0.0.0")  # noqa: S104
             actual_port = port or int(os.getenv("HIVE_API_PORT", "8886"))
 
-            # Check and auto-start PostgreSQL dependency if needed
-            postgres_running, postgres_started = self._ensure_postgres_dependency()
-            if not postgres_running:
+            # Detect backend type from environment (Group D)
+            backend_type = self._detect_backend_from_env()
+
+            # Check and auto-start PostgreSQL dependency ONLY if backend is PostgreSQL
+            if backend_type == "postgresql":
+                postgres_running, postgres_started = self._ensure_postgres_dependency()
+                if not postgres_running:
+                    pass
+            else:
+                # Non-PostgreSQL backends don't need Docker PostgreSQL
                 pass
 
-            # Build uvicorn command
+            # Build uvicorn command with explicit Python version
             cmd = [
                 "uv",
                 "run",
+                "--python",
+                "3.12",
                 "uvicorn",
                 "api.serve:app",
                 "--factory",  # Explicitly declare app factory pattern
@@ -96,6 +106,10 @@ class ServiceManager:
             if reload:
                 cmd.append("--reload")
 
+            # Set environment to ignore parent .python-version files
+            env = os.environ.copy()
+            env["UV_PYTHON_PREFERENCE"] = "only-managed"
+
             # Graceful shutdown path for dev server (prevents abrupt SIGINT cleanup in child)
             # Opt-in via environment to preserve existing test expectations that patch subprocess.run
             use_graceful = os.getenv("HIVE_DEV_GRACEFUL", "0").lower() not in ("0", "false", "no")
@@ -103,20 +117,22 @@ class ServiceManager:
             if not use_graceful:
                 # Backward-compatible path used by tests
                 try:
-                    subprocess.run(cmd, check=False)
+                    subprocess.run([str(c) for c in cmd if c is not None], check=False, env=env)
                 except KeyboardInterrupt:
                     return True
                 return True
 
             system = platform.system()
+            # Filter out None values and ensure all are strings
+            filtered_cmd = [str(c) for c in cmd if c is not None]
             proc: subprocess.Popen
             if system == "Windows":
                 # Create separate process group on Windows
                 creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-                proc = subprocess.Popen(cmd, creationflags=creationflags)
+                proc = subprocess.Popen(filtered_cmd, env=env, creationflags=creationflags)
             else:
                 # POSIX: start child in its own process group/session
-                proc = subprocess.Popen(cmd, preexec_fn=os.setsid)
+                proc = subprocess.Popen(filtered_cmd, env=env, preexec_fn=os.setsid)
 
             try:
                 returncode = proc.wait()
@@ -226,6 +242,7 @@ class ServiceManager:
                 print("💡 Templates may not be installed correctly")
                 print("   If using uvx, try: pip install automagik-hive")
                 print("   If developing, ensure you're in the project directory")
+                print("   Docker and PostgreSQL will need manual setup")
                 return False
 
             templates_copied = 0
@@ -252,13 +269,136 @@ class ServiceManager:
                 templates_copied += 1
 
             # Copy .env.example
-            env_example = template_root / ".env.example"
-            if env_example.exists():
-                shutil.copy(env_example, workspace_path / ".env.example")
+            env_example_found = False
+
+            # Try source directory first (for development)
+            project_root = Path(__file__).parent.parent.parent
+            env_example_source = project_root / ".env.example"
+
+            if env_example_source.exists():
+                shutil.copy(env_example_source, workspace_path / ".env.example")
                 print("  ✅ Environment template (.env.example)")
+                env_example_found = True
+            elif template_root is not None:
+                # Try package installation location
+                env_example_pkg = template_root / ".env.example"
+                if env_example_pkg.exists():
+                    shutil.copy(env_example_pkg, workspace_path / ".env.example")
+                    print("  ✅ Environment template (.env.example)")
+                    env_example_found = True
+
+            # Fallback: Download from GitHub if not found locally
+            if not env_example_found:
+                try:
+                    import urllib.request
+
+                    github_url = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/.env.example"
+                    env_target = workspace_path / ".env.example"
+
+                    print("  📥 Downloading .env.example from GitHub...")
+                    urllib.request.urlretrieve(github_url, env_target)  # noqa: S310
+                    print("  ✅ Environment template (.env.example)")
+                    env_example_found = True
+                except Exception as e:
+                    print(f"  ⚠️  Could not download .env.example: {e}")
+                    print("  💡 You'll need to create it manually")
+
+            if not env_example_found:
+                print("  ⚠️  .env.example not found (you'll need to create it manually)")
+
+            # Skip Docker configuration - only needed for PostgreSQL backend
+            # Users selecting PostgreSQL during install will be guided to set up Docker
+            # This prevents unnecessary Docker file copying for PGlite/SQLite users
+            docker_copied = False
+            docker_source = None  # Intentionally disabled
+
+            if False and docker_source is not None:  # Disabled: Skip Docker files during init
+                try:
+                    # Create docker directory in workspace
+                    (workspace_path / "docker" / "main").mkdir(parents=True, exist_ok=True)
+
+                    # Copy docker-compose.yml
+                    compose_src = docker_source / "docker-compose.yml"
+                    if compose_src.exists():
+                        shutil.copy(compose_src, workspace_path / "docker" / "main" / "docker-compose.yml")
+
+                    # Copy Dockerfile
+                    dockerfile_src = docker_source / "Dockerfile"
+                    if dockerfile_src.exists():
+                        shutil.copy(dockerfile_src, workspace_path / "docker" / "main" / "Dockerfile")
+
+                    # Copy .dockerignore
+                    dockerignore_src = docker_source / ".dockerignore"
+                    if dockerignore_src.exists():
+                        shutil.copy(dockerignore_src, workspace_path / "docker" / "main" / ".dockerignore")
+
+                    print("  ✅ Docker configuration (from local templates)")
+                    docker_copied = True
+                except Exception as e:
+                    print(f"  ⚠️  Failed to copy local Docker templates: {e}")
+
+            # Fallback: Download Docker files from GitHub
+            if not docker_copied:
+                try:
+                    import urllib.request
+
+                    (workspace_path / "docker" / "main").mkdir(parents=True, exist_ok=True)
+
+                    print("  📥 Downloading Docker configuration from GitHub...")
+
+                    # Download docker-compose.yml
+                    github_compose = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
+                    compose_target = workspace_path / "docker" / "main" / "docker-compose.yml"
+                    urllib.request.urlretrieve(github_compose, compose_target)  # noqa: S310
+
+                    # Download Dockerfile
+                    github_dockerfile = (
+                        "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/Dockerfile"
+                    )
+                    dockerfile_target = workspace_path / "docker" / "main" / "Dockerfile"
+                    urllib.request.urlretrieve(github_dockerfile, dockerfile_target)  # noqa: S310
+
+                    # Download .dockerignore
+                    github_dockerignore = (
+                        "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/.dockerignore"
+                    )
+                    dockerignore_target = workspace_path / "docker" / "main" / ".dockerignore"
+                    urllib.request.urlretrieve(github_dockerignore, dockerignore_target)  # noqa: S310
+
+                    # Verify files were actually downloaded
+                    compose_exists = compose_target.exists() and compose_target.stat().st_size > 0
+                    dockerfile_exists = dockerfile_target.exists() and dockerfile_target.stat().st_size > 0
+
+                    if compose_exists and dockerfile_exists:
+                        print("  ✅ Docker configuration (from GitHub)")
+                        docker_copied = True
+                    else:
+                        print("  ⚠️  Docker files downloaded but appear incomplete")
+                        docker_copied = False
+                except Exception as e:
+                    print(f"  ⚠️  Could not download Docker config: {e}")
+                    print("  💡 PostgreSQL will need manual setup")
+
+            # Warn if Docker setup failed completely
+            if not docker_copied:
+                print("  ⚠️  Docker configuration unavailable - manual setup required")
 
             # Create knowledge directory marker
             (workspace_path / "knowledge" / ".gitkeep").touch()
+
+            # Copy .mcp.json for MCP tools support
+            mcp_copied = False
+            mcp_source = project_root / ".mcp.json"
+            if mcp_source.exists():
+                try:
+                    shutil.copy(mcp_source, workspace_path / ".mcp.json")
+                    print("  ✅ MCP configuration (.mcp.json)")
+                    mcp_copied = True
+                except Exception as e:
+                    print(f"  ⚠️  Failed to copy .mcp.json: {e}")
+
+            if not mcp_copied:
+                print("  ⚠️  .mcp.json not found (MCP tools will be unavailable)")
 
             # Create workspace metadata file with version tracking
             self._create_workspace_metadata(workspace_path)
@@ -268,15 +408,49 @@ class ServiceManager:
                 print("⚠️  Warning: No templates were copied (not found)")
                 return False
 
-            print(f"\n✅ Workspace initialized: {workspace_name}")
-            print("\n📂 Next steps:")
-            print(f"   cd {workspace_name}")
-            print("   cp .env.example .env")
-            print("   # Edit .env with your API keys and settings")
-            print("   automagik-hive install")
-            print("   automagik-hive dev")
+            # Verify workspace structure after initialization
+            print("\n🔍 Verifying workspace structure...")
+            is_valid, issues = self._verify_workspace_structure(workspace_path)
 
-            return True
+            if not is_valid:
+                print("⚠️  Workspace verification found issues:")
+                for issue in issues:
+                    print(f"   ❌ {issue}")
+                print("\n💡 Some components may need manual setup")
+                print("   However, workspace can still be used with limitations")
+
+            print(f"\n✅ Workspace initialized: {workspace_name}")
+
+            if is_valid:
+                print("✅ All critical files verified")
+
+            # Collect API key before installation
+            api_key_config = self._collect_api_key_interactive()
+
+            # Ask if user wants to run install immediately
+            print("\n📂 Next steps:")
+            try:
+                run_install = (
+                    input("\n🔧 Run installation now? This will set up your environment (Y/n): ").strip().lower()
+                )
+                if run_install in ["", "y", "yes"]:
+                    print("\n" + "=" * 50)
+                    print("🔧 Running installation...")
+                    print("=" * 50)
+                    # Run installation with API key configuration
+                    return self.install_full_environment(
+                        str(workspace_path), verbose=False, api_key_config=api_key_config
+                    )
+                else:
+                    print("\n💡 When ready, run these commands:")
+                    print(f"   cd {workspace_name}")
+                    print("   automagik-hive install")
+                    return True
+            except (EOFError, KeyboardInterrupt):
+                print("\n💡 When ready, run these commands:")
+                print(f"   cd {workspace_name}")
+                print("   automagik-hive install")
+                return True
 
         except Exception as e:
             print(f"❌ Failed to initialize workspace: {e}")
@@ -296,17 +470,211 @@ class ServiceManager:
             return source_templates
 
         # Try package resources (for uvx/pip install)
+        # Use the 'cli' module (which IS a package) to navigate to shared-data directory
         try:
             from importlib.resources import files
 
-            template_path = files("automagik_hive") / "templates"
+            # Get the cli package location
+            cli_root = files("cli")
+
+            # Navigate to the shared-data templates directory
+            # In a wheel with shared-data, the structure is:
+            # site-packages/cli/                    <- cli package
+            # site-packages/automagik_hive/templates/  <- shared-data (sibling to cli)
+            cli_path = Path(str(cli_root))
+            # cli_path        = .../site-packages/cli
+            # cli_path.parent = .../site-packages
+            site_packages = cli_path.parent
+            template_path = site_packages / "automagik_hive" / "templates"
 
             if template_path.exists() and (template_path / "agents" / "template-agent").exists():
                 return template_path
-        except (ImportError, FileNotFoundError, TypeError):
+        except (ImportError, FileNotFoundError, TypeError, AttributeError):
             pass
 
         return None
+
+    def _collect_api_key_interactive(self) -> dict[str, str] | None:
+        """Interactively collect API key from user during init.
+
+        Returns:
+            dict with 'provider' and 'api_key', or None if skipped
+        """
+        print("\n" + "=" * 70)
+        print("🔑 API KEY CONFIGURATION")
+        print("=" * 70)
+        print("\nTo use AI agents, you need an API key from OpenAI or Anthropic.")
+        print("\n📋 Choose your provider:")
+        print("  1) OpenAI (GPT-4, GPT-4 Turbo, GPT-3.5)")
+        print("  2) Anthropic Claude (Claude 3.5 Sonnet, Claude 3 Opus)")
+        print("  3) Skip (configure manually later)")
+        print()
+
+        try:
+            choice = input("Enter your choice (1/2/3) [default: 3]: ").strip()
+
+            if choice == "1":
+                # OpenAI
+                print("\n📝 Enter your OpenAI API key:")
+                print("   Get your key from: https://platform.openai.com/api-keys")
+                api_key = input("   API Key (starts with 'sk-'): ").strip()
+
+                if api_key and api_key.startswith("sk-"):
+                    print("   ✅ OpenAI API key collected")
+                    return {"provider": "openai", "api_key": api_key}
+                else:
+                    print("   ⚠️  Invalid OpenAI key format - skipping configuration")
+                    return None
+
+            elif choice == "2":
+                # Anthropic Claude
+                print("\n📝 Enter your Anthropic API key:")
+                print("   Get your key from: https://console.anthropic.com/settings/keys")
+                api_key = input("   API Key (starts with 'sk-ant-'): ").strip()
+
+                if api_key and api_key.startswith("sk-ant-"):
+                    print("   ✅ Anthropic API key collected")
+                    return {"provider": "anthropic", "api_key": api_key}
+                else:
+                    print("   ⚠️  Invalid Anthropic key format - skipping configuration")
+                    return None
+
+            else:
+                # Skip
+                print("   ⏭️  Skipping API key configuration")
+                print("   💡 You can add keys manually to .env file later")
+                return None
+
+        except (EOFError, KeyboardInterrupt):
+            print("\n   ⏭️  API key configuration skipped")
+            return None
+
+    def _configure_api_keys_and_agent(self, workspace_path: Path, api_key_config: dict[str, str]) -> None:
+        """Configure API keys in .env and update template agent config.
+
+        Args:
+            workspace_path: Path to workspace directory
+            api_key_config: Dict with 'provider' and 'api_key'
+        """
+        try:
+            provider = api_key_config["provider"]
+            api_key = api_key_config["api_key"]
+
+            # Update .env file with API key
+            env_file = workspace_path / ".env"
+            if env_file.exists():
+                env_content = env_file.read_text()
+
+                if provider == "openai":
+                    # Set OpenAI key
+                    if "OPENAI_API_KEY=" in env_content:
+                        env_content = re.sub(
+                            r"OPENAI_API_KEY=.*", f'OPENAI_API_KEY="{api_key}"', env_content, flags=re.MULTILINE
+                        )
+                    else:
+                        env_content += f'\nOPENAI_API_KEY="{api_key}"\n'
+
+                elif provider == "anthropic":
+                    # Set Anthropic key
+                    if "ANTHROPIC_API_KEY=" in env_content:
+                        env_content = re.sub(
+                            r"ANTHROPIC_API_KEY=.*", f'ANTHROPIC_API_KEY="{api_key}"', env_content, flags=re.MULTILINE
+                        )
+                    else:
+                        env_content += f'\nANTHROPIC_API_KEY="{api_key}"\n'
+
+                env_file.write_text(env_content)
+                print(f"   ✅ {provider.upper()} API key configured in .env")
+
+            # Update template agent config.yaml
+            agent_config = workspace_path / "ai" / "agents" / "template-agent" / "config.yaml"
+            if agent_config.exists():
+                import yaml
+
+                with open(agent_config) as f:
+                    config = yaml.safe_load(f)
+
+                # Update model configuration based on provider
+                if provider == "openai":
+                    config["model"]["provider"] = "openai"
+                    config["model"]["id"] = "gpt-4.1-mini"  # Default to GPT-4.1 Mini
+                    print("   ✅ Template agent configured for OpenAI (gpt-4.1-mini)")
+
+                elif provider == "anthropic":
+                    config["model"]["provider"] = "anthropic"
+                    config["model"]["id"] = "claude-sonnet-4-20250514"  # Default to Claude Sonnet
+                    print("   ✅ Template agent configured for Anthropic (claude-sonnet-4)")
+
+                with open(agent_config, "w") as f:
+                    yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+        except Exception as e:
+            print(f"   ⚠️  Could not configure API keys: {e}")
+
+    def _locate_docker_templates(self) -> Path | None:
+        """Locate docker/main templates from source or package.
+
+        Returns:
+            Path to docker/main directory or None if not found
+        """
+        # Try source directory first (for development)
+        project_root = Path(__file__).parent.parent.parent
+        docker_main = project_root / "docker" / "main"
+        if docker_main.exists() and (docker_main / "docker-compose.yml").exists():
+            return docker_main
+
+        # Try package resources (for uvx/pip install)
+        try:
+            from importlib.resources import files
+
+            # Get the cli package location
+            cli_root = files("cli")
+            cli_path = Path(str(cli_root))
+
+            # Navigate to shared-data docker/main directory
+            # site-packages/cli/                    <- cli package
+            # site-packages/automagik_hive/docker/main/  <- shared-data (sibling to cli)
+            site_packages = cli_path.parent
+            docker_main_path = site_packages / "automagik_hive" / "docker" / "main"
+
+            if docker_main_path.exists() and (docker_main_path / "docker-compose.yml").exists():
+                return docker_main_path
+        except (ImportError, FileNotFoundError, TypeError, AttributeError):
+            pass
+
+        return None
+
+    def _verify_workspace_structure(self, workspace_path: Path) -> tuple[bool, list[str]]:
+        """Verify workspace has required files after init.
+
+        Args:
+            workspace_path: Path to workspace directory
+
+        Returns:
+            Tuple of (success, list of missing/broken items)
+        """
+        issues = []
+
+        # Check Docker configuration
+        compose_file = workspace_path / "docker" / "main" / "docker-compose.yml"
+        if not compose_file.exists():
+            issues.append("docker/main/docker-compose.yml missing")
+
+        dockerfile = workspace_path / "docker" / "main" / "Dockerfile"
+        if not dockerfile.exists():
+            issues.append("docker/main/Dockerfile missing")
+
+        # Check environment template
+        env_example = workspace_path / ".env.example"
+        if not env_example.exists():
+            issues.append(".env.example missing")
+
+        # Check AI templates
+        template_agent = workspace_path / "ai" / "agents" / "template-agent"
+        if not template_agent.exists():
+            issues.append("ai/agents/template-agent missing")
+
+        return len(issues) == 0, issues
 
     def _create_workspace_metadata(self, workspace_path: Path) -> None:
         """Create workspace metadata file for version tracking.
@@ -336,17 +704,43 @@ class ServiceManager:
         with open(metadata_file, "w") as f:
             yaml.dump(metadata, f, default_flow_style=False)
 
-    def install_full_environment(self, workspace: str = ".") -> bool:
-        """Complete environment setup with deployment choice - ENHANCED METHOD."""
+    def install_full_environment(
+        self,
+        workspace: str = ".",
+        backend_override: str | None = None,
+        verbose: bool = False,
+        api_key_config: dict[str, str] | None = None,
+    ) -> bool:
+        """Complete environment setup with deployment choice - ENHANCED METHOD.
+
+        Args:
+            workspace: Path to workspace directory
+            backend_override: Override database backend selection (postgresql, pglite, sqlite)
+            verbose: Enable detailed diagnostic output for troubleshooting
+            api_key_config: Optional API key configuration from init (provider + api_key)
+        """
         try:
             resolved_workspace = self._resolve_install_root(workspace)
             if Path(workspace).resolve() != resolved_workspace:
                 pass
 
-            # 1. DEPLOYMENT CHOICE SELECTION (NEW)
-            deployment_mode = self._prompt_deployment_choice()
+            print("\n🔧 Automagik Hive Installation")
+            print("=" * 50)
+
+            # 1. BACKEND SELECTION FIRST (determines deployment needs)
+            backend_type = backend_override or self._prompt_backend_selection()
+
+            # 2. DEPLOYMENT MODE ONLY FOR POSTGRESQL
+            # PGlite and SQLite don't need deployment choice - always local
+            if backend_type == "postgresql":
+                deployment_mode = self._prompt_deployment_choice()
+            else:
+                deployment_mode = "local_hybrid"  # PGlite/SQLite are always local
+                print(f"\n✅ Using local deployment (no Docker needed for {backend_type.upper()})")
 
             # 2. CREDENTIAL MANAGEMENT (ENHANCED - replaces dead code)
+            print("\n📝 Step 1/2: Generating Credentials")
+            print("-" * 50)
             from lib.auth.credential_service import CredentialService
 
             credential_service = CredentialService(project_root=resolved_workspace)
@@ -354,15 +748,85 @@ class ServiceManager:
             # Generate workspace credentials using existing comprehensive service
             credential_service.install_all_modes(modes=["workspace"])
 
+            print("\n✅ Credentials generated successfully")
+            print(f"   📄 Configuration: {resolved_workspace}/.env")
+            print(f"   🔐 Backup: {resolved_workspace}/.env.master")
+
+            # Store backend choice in environment AFTER credentials are generated
+            # This ensures .env exists and can be updated with correct database URL
+            self._store_backend_choice(resolved_workspace, backend_type)
+
+            # Configure API keys and template agent if provided during init
+            if api_key_config:
+                self._configure_api_keys_and_agent(resolved_workspace, api_key_config)
+
+            # 2.5. SETUP LOCAL UV PROJECT (for standalone workspaces)
+            print("\n📦 Step 1.5/2: Setting up Python environment")
+            print("-" * 50)
+            uv_setup_success = self._setup_uv_project(resolved_workspace)
+            if not uv_setup_success:
+                print("⚠️  Warning: Could not setup local Python environment")
+                print("   You may need to run 'uv sync' manually in the workspace")
+
             # 3. DEPLOYMENT-SPECIFIC SETUP (NEW)
+            print(f"\n🚀 Step 2/2: Setting up {deployment_mode.replace('_', ' ').title()} Mode")
+            print("-" * 50)
+
             if deployment_mode == "local_hybrid":
-                return self._setup_local_hybrid_deployment(str(resolved_workspace))
+                success = self._setup_local_hybrid_deployment(
+                    str(resolved_workspace), backend_type=backend_type, verbose=verbose
+                )
             else:  # full_docker
-                return self.main_service.install_main_environment(str(resolved_workspace))
+                success = self.main_service.install_main_environment(str(resolved_workspace))
+
+            if success:
+                print("\n" + "=" * 50)
+                print("✅ Installation Complete!")
+                print("=" * 50)
+                print("\n📋 Next Steps:")
+                print("   1. Edit .env with your API keys:")
+                print("      - ANTHROPIC_API_KEY (for Claude)")
+                print("      - OPENAI_API_KEY (optional)")
+                print("      - Other provider keys as needed")
+                print("\n   2. Start the API server:")
+                print(f"      cd {resolved_workspace}")
+                print("      ./dev              # Recommended: uses local launcher")
+                print("      # OR")
+                print("      automagik-hive dev # Alternative: direct command")
+                print("\n   3. Access the API at:")
+                print("      http://localhost:8886/docs")
+                print("\n💡 Tips:")
+                print("   - The ./dev script isolates the workspace from parent directories")
+                print("   - Check .env.example for all available configuration options")
+                print("=" * 50 + "\n")
+
+                # Ask if user wants to start the API now
+                try:
+                    start_now = input("🚀 Start the development server now? (Y/n): ").strip().lower()
+                    if start_now in ["", "y", "yes"]:
+                        print("\n🚀 Starting development server...")
+                        print("   Press Ctrl+C to stop the server\n")
+                        # Change to workspace directory
+                        import os
+
+                        os.chdir(resolved_workspace)
+                        # Start the development server
+                        return self.serve_local(reload=True)
+                    else:
+                        print("\n✅ Installation complete! Start the server when ready with: automagik-hive dev")
+                        return True
+                except (EOFError, KeyboardInterrupt):
+                    print("\n✅ Installation complete! Start the server when ready with: automagik-hive dev")
+                    return True
+            else:
+                print("\n❌ Installation failed")
+                return False
 
         except KeyboardInterrupt:
+            print("\n\n❌ Installation cancelled by user")
             return False
-        except Exception:
+        except Exception as e:
+            print(f"\n❌ Installation failed: {e}")
             return False
 
     def _resolve_install_root(self, workspace: str) -> Path:
@@ -522,6 +986,19 @@ class ServiceManager:
     def _prompt_deployment_choice(self) -> str:
         """Interactive deployment choice selection - NEW METHOD."""
 
+        print("\n🚀 Deployment Mode Selection")
+        print("=" * 50)
+        print("\nA) Local Hybrid (Recommended)")
+        print("   - API runs locally with hot reload")
+        print("   - PostgreSQL in Docker")
+        print("   - Fast development cycle")
+        print("   - Lower resource usage")
+        print("\nB) Full Docker")
+        print("   - Everything in containers")
+        print("   - Production-like environment")
+        print("   - Isolated and reproducible")
+        print("=" * 50)
+
         while True:
             try:
                 choice = input("\nEnter your choice (A/B) [default: A]: ").strip().upper()
@@ -534,12 +1011,328 @@ class ServiceManager:
             except (EOFError, KeyboardInterrupt):
                 return "local_hybrid"  # Default for automated scenarios
 
-    def _setup_local_hybrid_deployment(self, workspace: str) -> bool:
-        """Setup local main + PostgreSQL docker only - NEW METHOD."""
+    def _prompt_backend_selection(self) -> str:
+        """Interactive database backend selection - SQLite first for simplicity."""
+        print("\n" + "=" * 70)
+        print("📊 DATABASE BACKEND SELECTION")
+        print("=" * 70)
+        print("\nChoose your database backend:\n")
+        print("  A) SQLite - Quick Start (Default) ⭐")
+        print("     • Zero dependencies - works instantly!")
+        print("     • Single file storage (./data/automagik_hive.db)")
+        print("     • Perfect for testing and development")
+        print("     • Session persistence fully supported")
+        print("     ⚠️  RAG/Knowledge Base offline (no pgvector support)")
+        print("     💡 Upgrade to PostgreSQL later for full RAG capabilities\n")
+        print("  B) PGlite (WebAssembly) - Advanced")
+        print("     • Runs PostgreSQL via WebAssembly bridge")
+        print("     • No Docker required - works everywhere!")
+        print("     • Perfect for development and testing")
+        print("     ⚠️  RAG/Knowledge Base offline (pgvector needs pg-gateway)")
+        print("     💡 See docs: https://docs.automagik.ai/database/pglite\n")
+        print("  C) PostgreSQL (Docker) - Full Features")
+        print("     • Requires Docker installed and running")
+        print("     • Full PostgreSQL with pgvector extension")
+        print("     • Complete RAG/Knowledge Base support")
+        print("     • For production scenarios with semantic search")
+        print("     💡 See docs: https://docs.automagik.ai/database/postgresql\n")
+
+        while True:
+            try:
+                choice = input("Enter your choice (A/B/C) [default: A]: ").strip().upper()
+                if choice == "" or choice == "A":
+                    print("\n✅ SQLite selected - Session persistence enabled, RAG offline")
+                    print("💡 Tip: Upgrade to PostgreSQL later for full RAG capabilities")
+                    return "sqlite"
+                elif choice == "B":
+                    print("\n✅ PGlite selected - Session persistence enabled, RAG offline")
+                    print("💡 Tip: Use pg-gateway for pgvector support")
+                    return "pglite"
+                elif choice == "C":
+                    print("\n✅ PostgreSQL selected - Full features with pgvector support")
+                    return "postgresql"
+                else:
+                    print("❌ Invalid choice. Please enter A, B, or C.")
+            except (EOFError, KeyboardInterrupt):
+                return "sqlite"  # Default to SQLite for simplicity
+
+    def _store_backend_choice(self, workspace: Path, backend_type: str) -> None:
+        """Store backend choice and required env vars in .env file."""
+        env_file = workspace / ".env"
+
+        if not env_file.exists():
+            # Create minimal .env with essential variables
+            # This is a defensive fallback - normally .env should already exist from credential service
+            minimal_env = f"""# Minimal environment configuration
+HIVE_DATABASE_BACKEND={backend_type}
+HIVE_API_PORT=8886
+HIVE_ENVIRONMENT=development
+HIVE_LOG_LEVEL=INFO
+"""
+            env_file.write_text(minimal_env)
+            print("  ⚠️  Created minimal .env file (this shouldn't normally happen)")
+
+        # Read existing .env
+        env_lines = []
+        backend_found = False
+        api_port_found = False
+
+        with open(env_file) as f:
+            for line in f:
+                if line.startswith("HIVE_DATABASE_BACKEND="):
+                    env_lines.append(f"HIVE_DATABASE_BACKEND={backend_type}\n")
+                    backend_found = True
+                elif line.startswith("HIVE_API_PORT="):
+                    env_lines.append(line)  # Keep existing port
+                    api_port_found = True
+                else:
+                    env_lines.append(line)
+
+        # Add backend if not found
+        if not backend_found:
+            env_lines.append(
+                f"\n# Database backend type (auto-generated during install)\nHIVE_DATABASE_BACKEND={backend_type}\n"
+            )
+
+        # Add API port if not found
+        if not api_port_found:
+            env_lines.append("HIVE_API_PORT=8886\n")
+
+        # Update database URL based on backend
+        url_map = {
+            "pglite": "postgresql://user:pass@localhost:5532/main",  # PGlite HTTP bridge (auth ignored but required by SQLAlchemy)
+            "postgresql": "postgresql+psycopg://hive_user:${HIVE_POSTGRES_PASSWORD}@localhost:${HIVE_POSTGRES_PORT}/automagik_hive",
+            "sqlite": "sqlite:///./data/automagik_hive.db",
+        }
+
+        # Update URL based on backend type
+        updated_lines = []
+        for line in env_lines:
+            if line.startswith("HIVE_DATABASE_URL="):
+                # Always update to match backend choice
+                # This ensures PGlite/SQLite get correct URLs even if .env was seeded with PostgreSQL
+                updated_lines.append(f"HIVE_DATABASE_URL={url_map[backend_type]}\n")
+            else:
+                updated_lines.append(line)
+
+        # Write back
+        with open(env_file, "w") as f:
+            f.writelines(updated_lines)
+
+    def _detect_backend_from_env(self) -> str:
+        """Detect database backend type from environment - Group D integration."""
+        # Try explicit backend setting first
+        backend_env = os.getenv("HIVE_DATABASE_BACKEND")
+        if backend_env:
+            return backend_env.lower()
+
+        # Fall back to URL detection using backend factory
+        db_url = os.getenv("HIVE_DATABASE_URL")
+        if db_url:
+            try:
+                from lib.database.backend_factory import detect_backend_from_url
+
+                backend_type = detect_backend_from_url(db_url)
+                return backend_type.value  # Return string value of enum
+            except Exception:  # noqa: S110
+                pass  # Intentionally ignoring URL parsing errors - will fall back to PostgreSQL default
+
+        # Default to PostgreSQL for backward compatibility
+        return "postgresql"
+
+    def _setup_uv_project(self, workspace_path: Path) -> bool:
+        """Setup local uv project with automagik-hive as dependency.
+
+        This enables standalone workspaces created via 'uvx automagik-hive init'
+        to have a local Python environment with automagik-hive installed.
+
+        Args:
+            workspace_path: Path to the workspace directory
+
+        Returns:
+            bool: True if setup successful, False otherwise
+        """
         try:
-            return self.main_service.start_postgres_only(workspace)
-        except Exception:
+            import subprocess
+
+            # Check if pyproject.toml already exists (main repo workspace)
+            pyproject_file = workspace_path / "pyproject.toml"
+            if pyproject_file.exists():
+                print("   ℹ️  Existing pyproject.toml found - skipping uv init")
+                # Run uv sync to ensure dependencies are installed
+                print("   📦 Running uv sync...")
+                result = subprocess.run(["uv", "sync"], cwd=workspace_path, capture_output=True, text=True, timeout=60)
+                if result.returncode == 0:
+                    print("   ✅ Dependencies synchronized")
+                    return True
+                else:
+                    print(f"   ⚠️  uv sync warning: {result.stderr}")
+                    return True  # Non-fatal, proceed anyway
+
+            # Initialize new uv project in workspace with Python 3.12+
+            # Use --python-preference only-managed to ignore parent .python-version files
+            print("   🔧 Initializing uv project...")
+            result = subprocess.run(
+                [
+                    "uv",
+                    "init",
+                    "--no-readme",
+                    "--name",
+                    workspace_path.name,
+                    "--python",
+                    "3.12",
+                    "--python-preference",
+                    "only-managed",
+                ],
+                cwd=workspace_path,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+
+            if result.returncode != 0:
+                print(f"   ⚠️  uv init failed: {result.stderr}")
+                return False
+
+            # Add automagik-hive as dependency
+            # Use environment variable and explicit Python version to override parent .python-version
+            print("   📦 Adding automagik-hive dependency...")
+            env = os.environ.copy()
+            env["UV_PYTHON_PREFERENCE"] = "only-managed"
+            result = subprocess.run(
+                ["uv", "add", "automagik-hive", "--python", "3.12"],
+                cwd=workspace_path,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+
+            if result.returncode != 0:
+                print(f"   ⚠️  uv add failed: {result.stderr}")
+                return False
+
+            print("   ✅ Python environment configured")
+            print(f"   📂 Virtual environment: {workspace_path}/.venv")
+
+            # Generate dev script wrapper to isolate from parent .python-version
+            self._generate_dev_script(workspace_path)
+
+            return True
+
+        except subprocess.TimeoutExpired:
+            print("   ⚠️  Setup timed out")
             return False
+        except FileNotFoundError:
+            print("   ⚠️  uv command not found - please install uv first")
+            return False
+        except Exception as e:
+            print(f"   ⚠️  Setup failed: {e}")
+            return False
+
+    def _generate_dev_script(self, workspace_path: Path) -> None:
+        """Generate dev script wrapper that isolates workspace from parent .python-version files.
+
+        This creates a 'dev' script (shell/batch) that explicitly changes to the workspace
+        directory and runs the dev server with proper Python version isolation.
+
+        Args:
+            workspace_path: Path to the workspace directory
+        """
+        try:
+            import platform
+            import stat
+
+            system = platform.system()
+
+            if system == "Windows":
+                # Generate Windows batch script
+                script_path = workspace_path / "dev.bat"
+                script_content = f"""@echo off
+REM Automagik Hive Development Server Launcher
+REM This script isolates the workspace from parent .python-version files
+
+cd /d "{workspace_path}"
+set UV_PYTHON_PREFERENCE=only-managed
+uv run --python 3.12 uvicorn api.serve:app --factory --host 0.0.0.0 --port 8886 --reload
+"""
+                script_path.write_text(script_content)
+                print("   📝 Generated dev.bat launcher")
+
+            else:
+                # Generate Unix shell script
+                script_path = workspace_path / "dev"
+                script_content = f"""#!/bin/bash
+# Automagik Hive Development Server Launcher
+# This script isolates the workspace from parent .python-version files
+
+cd "{workspace_path}" || exit 1
+export UV_PYTHON_PREFERENCE=only-managed
+exec uv run --python 3.12 uvicorn api.serve:app --factory --host 0.0.0.0 --port 8886 --reload
+"""
+                script_path.write_text(script_content)
+
+                # Make executable on Unix systems
+                current_permissions = script_path.stat().st_mode
+                script_path.chmod(current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                print("   📝 Generated dev launcher script")
+
+        except Exception as e:
+            # Non-fatal - just warn
+            print(f"   ⚠️  Could not generate dev script: {e}")
+
+    def _setup_local_hybrid_deployment(
+        self, workspace: str, backend_type: str = "postgresql", verbose: bool = False
+    ) -> bool:
+        """Setup local main + database backend - NEW METHOD.
+
+        Args:
+            workspace: Path to workspace directory
+            backend_type: Database backend type (postgresql, pglite, sqlite)
+            verbose: Enable detailed diagnostic output for troubleshooting
+        """
+        try:
+            # Only start PostgreSQL Docker for postgresql backend
+            if backend_type == "postgresql":
+                if verbose:
+                    print("   🔍 Validating Docker installation...")
+
+                print("   🐘 Starting PostgreSQL container...")
+                success = self.main_service.start_postgres_only(workspace, verbose=verbose)
+
+                if success:
+                    print("   ✅ PostgreSQL started successfully")
+                    print("   🔌 Database: localhost:5532")
+                    if verbose:
+                        print("   📊 Verify with: docker ps | grep hive-postgres")
+                else:
+                    print("   ❌ PostgreSQL failed to start")
+                    print("\n💡 Diagnostic steps:")
+                    print("   1. Check Docker is running: docker ps")
+                    print("   2. Verify compose file exists: ls docker/main/docker-compose.yml")
+                    print("   3. Check logs: docker logs hive-postgres")
+                    print("   4. Run install with --verbose flag for details")
+                    if not verbose:
+                        print("   5. Retry with: automagik-hive install --verbose")
+            else:
+                # PGlite or SQLite - no Docker needed
+                # Ensure data directory exists with proper permissions
+                workspace_path = Path(workspace)
+                data_dir = workspace_path / "data"
+                data_dir.mkdir(parents=True, exist_ok=True)
+                print(f"   ✅ {backend_type.upper()} backend configured")
+                print("   📁 Database file will be created on first run")
+
+            return True  # Don't fail installation if PostgreSQL setup has issues
+        except Exception as e:
+            print(f"   ⚠️  PostgreSQL setup error: {e}")
+            print("   💡 You can start it later with: automagik-hive postgres-start")
+            if verbose:
+                import traceback
+
+                print("\n🔍 Full error trace:")
+                traceback.print_exc()
+            return True  # Don't fail installation if PostgreSQL setup has issues
 
     # Credential generation handled by CredentialService.install_all_modes()
 
@@ -569,6 +1362,96 @@ class ServiceManager:
         try:
             return self.main_service.show_main_logs(workspace, tail)
         except Exception:
+            return False
+
+    # PostgreSQL commands (delegated to MainService)
+    def start_postgres(self, workspace: str = ".") -> bool:
+        """Start PostgreSQL container."""
+        print("🐘 Starting PostgreSQL container...")
+        try:
+            success = self.main_service.start_postgres_only(workspace)
+            if success:
+                print("✅ PostgreSQL started successfully")
+                print("🔌 Database: localhost:5532")
+            else:
+                print("⚠️  PostgreSQL failed to start")
+            return success
+        except Exception as e:
+            print(f"❌ Error starting PostgreSQL: {e}")
+            return False
+
+    def stop_postgres(self, workspace: str = ".") -> bool:
+        """Stop PostgreSQL container."""
+        print("🛑 Stopping PostgreSQL container...")
+        try:
+            # Find compose file
+            workspace_path = Path(workspace).resolve()
+            compose_file = workspace_path / "docker" / "main" / "docker-compose.yml"
+            if not compose_file.exists():
+                compose_file = workspace_path / "docker-compose.yml"
+
+            if not compose_file.exists():
+                print("❌ No docker-compose.yml found")
+                return False
+
+            # Stop postgres container
+            result = subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "stop", "hive-postgres"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                print("✅ PostgreSQL stopped")
+                return True
+            else:
+                print("⚠️  PostgreSQL failed to stop")
+                return False
+        except Exception as e:
+            print(f"❌ Error stopping PostgreSQL: {e}")
+            return False
+
+    def postgres_status(self, workspace: str = ".") -> bool:
+        """Check PostgreSQL container status."""
+        try:
+            # Check if container is running
+            result = subprocess.run(
+                ["docker", "ps", "--filter", "name=hive-postgres", "--format", "{{.Status}}"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0 and result.stdout.strip():
+                status = result.stdout.strip()
+                print(f"📊 PostgreSQL Status: {status}")
+                return True
+            else:
+                print("🛑 PostgreSQL is not running")
+                return False
+        except Exception as e:
+            print(f"❌ Error checking PostgreSQL status: {e}")
+            return False
+
+    def postgres_logs(self, workspace: str = ".", tail: int = 50) -> bool:
+        """Show PostgreSQL container logs."""
+        print(f"📄 PostgreSQL Logs (last {tail} lines):")
+        try:
+            result = subprocess.run(
+                ["docker", "logs", "--tail", str(tail), "hive-postgres"], check=False, capture_output=True, text=True
+            )
+
+            if result.returncode == 0:
+                print(result.stdout)
+                if result.stderr:
+                    print(result.stderr)
+                return True
+            else:
+                print("❌ Failed to retrieve logs")
+                return False
+        except Exception as e:
+            print(f"❌ Error showing PostgreSQL logs: {e}")
             return False
 
     def uninstall_environment(self, workspace: str = ".") -> bool:
