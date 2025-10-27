@@ -76,7 +76,7 @@ def _discover_agents() -> list[str]:
 class AgentRegistry:
     """
     Generic registry for managing agent creation and versioning.
-    Supports any agent system, not just PagBank.
+    Supports any agent system with flexible configuration.
     Includes MCP (Model Context Protocol) integration.
     """
 
@@ -105,22 +105,22 @@ class AgentRegistry:
         memory: Any | None = None,
         user_id: str | None = None,  # Agno native parameter
         metrics_service: object | None = None,  # Metrics collection service
-        pb_phone_number: str | None = None,  # PagBank business parameter
-        pb_cpf: str | None = None,  # PagBank business parameter
+        pb_phone_number: str | None = None,  # Business parameter - phone number
+        pb_cpf: str | None = None,  # Business parameter - document ID
     ) -> Agent:
         """
         Get agent instance by ID - Generic factory pattern with versioning support.
 
         Args:
-            agent_id: Agent identifier (e.g., 'pagbank', 'adquirencia')
+            agent_id: Agent identifier (e.g., 'customer_service', 'sales')
             version: Specific version to load
             session_id: Session ID for conversation tracking
             debug_mode: Enable debug mode
             db_url: Database URL override
             user_id: Agno native user identifier for shared team context
             metrics_service: Optional metrics collection service
-            pb_phone_number: PagBank business parameter - phone number
-            pb_cpf: PagBank business parameter - CPF document
+            pb_phone_number: Business parameter - phone number
+            pb_cpf: Business parameter - document ID
 
         Returns:
             Configured Agent instance
@@ -207,14 +207,14 @@ async def get_agent(
     db_url: str | None = None,
     memory: Any | None = None,
     user_id: str | None = None,  # Agno native parameter
-    pb_phone_number: str | None = None,  # PagBank business parameter
-    pb_cpf: str | None = None,  # PagBank business parameter
+    pb_phone_number: str | None = None,  # Business parameter - phone number
+    pb_cpf: str | None = None,  # Business parameter - document ID
 ) -> Agent:
     """
     Generic agent factory - main entry point for any agent system.
 
     Args:
-        name: Agent name (e.g., 'pagbank', 'adquirencia')
+        name: Agent name (e.g., 'customer_service', 'sales')
         version: Specific version to load
         session_id: Session ID for conversation tracking
         debug_mode: Enable debug mode
@@ -244,8 +244,8 @@ async def get_team_agents(
     db_url: str | None = None,
     memory: Any | None = None,
     user_id: str | None = None,  # Agno native parameter
-    pb_phone_number: str | None = None,  # PagBank business parameter
-    pb_cpf: str | None = None,  # PagBank business parameter
+    pb_phone_number: str | None = None,  # Business parameter - phone number
+    pb_cpf: str | None = None,  # Business parameter - document ID
 ) -> list[Agent]:
     """
     Get multiple agents for team composition.

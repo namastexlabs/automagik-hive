@@ -57,8 +57,8 @@ from lib.logging import initialize_logging, logger
 initialize_logging(surface="api.serve")
 
 # Standard patterns - emojis added automatically based on context
-logger.info("Service initialized", service="api_server", port=8000) 
-logger.info("Agent created", agent_id="pagbank", version="2.1.0")
+logger.info("Service initialized", service="api_server", port=8000)
+logger.info("Agent created", agent_id="example_agent", version="2.1.0")
 logger.error("Authentication failed", user_id="user_123", reason="invalid_token")
 ```
 
@@ -110,10 +110,10 @@ initialize_logging(surface="cli.main")
 **Let the system handle emojis**:
 ```python
 # ✅ GOOD: Clean message, emoji added automatically
-logger.info("Agent completed", agent_id="pagbank", duration_ms=45.2, success=True)
+logger.info("Agent completed", agent_id="example_agent", duration_ms=45.2, success=True)
 
 # ❌ BAD: Manual emoji hardcoding
-logger.info("🤖 Agent completed", agent_id="pagbank", duration_ms=45.2, success=True)
+logger.info("🤖 Agent completed", agent_id="example_agent", duration_ms=45.2, success=True)
 ```
 
 **Structured fields for searchability**:
@@ -141,7 +141,7 @@ from lib.logging import batch_logger, startup_logging
 
 # Batch logging during startup for performance
 with startup_logging():
-    batch_logger.log_agent_created("pagbank", 45)
+    batch_logger.log_agent_created("example_agent", 45)
     batch_logger.log_model_resolved("claude-sonnet-4", "anthropic")
     batch_logger.log_csv_processing("knowledge_rag.csv", 1500)
 # Automatically flushes batched logs as summaries
