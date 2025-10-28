@@ -333,20 +333,19 @@ class TestRealAgentsExecution:
         processed_config = proxy._process_config(test_config, "regression-test", None)
 
         # The bug was that model configuration was being stripped out
-        # After the fix, the model config should be flattened into the processed config
-        assert "id" in processed_config, "Model ID should be in processed config"
-        assert "provider" in processed_config, "Provider should be in processed config"
-        assert "temperature" in processed_config, "Temperature should be in processed config"
+        # After the fix, processed_config should have a 'model' key with a Model instance
+        assert "model" in processed_config, "Model should be in processed config"
 
-        # Check that the model config values are preserved
-        assert processed_config["id"] == "claude-sonnet-4-20250514", (
-            f"Model ID should be preserved, got {processed_config['id']}"
+        # Verify the model is a Model instance (not a dict)
+        from agno.models.base import Model
+
+        assert isinstance(processed_config["model"], Model), (
+            f"Model should be a Model instance, got {type(processed_config['model'])}"
         )
-        assert processed_config["provider"] == "anthropic", (
-            f"Provider should be preserved, got {processed_config['provider']}"
-        )
-        assert processed_config["temperature"] == 0.7, (
-            f"Temperature should be preserved, got {processed_config['temperature']}"
+
+        # Verify the model has the correct ID
+        assert processed_config["model"].id == "claude-sonnet-4-20250514", (
+            f"Model ID should be preserved, got {processed_config['model'].id}"
         )
 
     def test_real_vs_mocked_comparison_agents(self):

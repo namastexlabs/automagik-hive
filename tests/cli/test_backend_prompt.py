@@ -39,17 +39,17 @@ class TestBackendPrompt:
         # Verify option descriptions
         assert "Docker" in captured.out
         assert "WebAssembly" in captured.out
-        assert "file-based" in captured.out
+        assert "Single file storage" in captured.out
 
-    def test_default_selection_pglite(self):
-        """Test default selection is PGlite when user presses Enter."""
+    def test_default_selection_sqlite(self):
+        """Test default selection is SQLite when user presses Enter."""
         service_manager = ServiceManager()
 
-        # Empty input = default = PGlite
+        # Empty input = default = SQLite
         with patch("builtins.input", return_value=""):
             backend = service_manager._prompt_backend_selection()
 
-        assert backend == "pglite"
+        assert backend == "sqlite"
 
     def test_explicit_selection_pglite(self):
         """Test explicit selection of PGlite (option B)."""
@@ -60,32 +60,32 @@ class TestBackendPrompt:
 
         assert backend == "pglite"
 
-    def test_explicit_selection_postgresql(self):
-        """Test explicit selection of PostgreSQL (option A)."""
+    def test_explicit_selection_sqlite(self):
+        """Test explicit selection of SQLite (option A)."""
         service_manager = ServiceManager()
 
         with patch("builtins.input", return_value="A"):
             backend = service_manager._prompt_backend_selection()
 
-        assert backend == "postgresql"
+        assert backend == "sqlite"
 
-    def test_explicit_selection_sqlite(self):
-        """Test explicit selection of SQLite (option C)."""
+    def test_explicit_selection_postgresql(self):
+        """Test explicit selection of PostgreSQL (option C)."""
         service_manager = ServiceManager()
 
         with patch("builtins.input", return_value="C"):
             backend = service_manager._prompt_backend_selection()
 
-        assert backend == "sqlite"
+        assert backend == "postgresql"
 
     def test_lowercase_input_accepted(self):
         """Test lowercase input is accepted."""
         service_manager = ServiceManager()
 
         test_cases = [
-            ("a", "postgresql"),
+            ("a", "sqlite"),
             ("b", "pglite"),
-            ("c", "sqlite"),
+            ("c", "postgresql"),
         ]
 
         for input_val, expected_backend in test_cases:
@@ -114,34 +114,34 @@ class TestBackendPrompt:
         """Test multiple invalid inputs before valid selection."""
         service_manager = ServiceManager()
 
-        # Multiple invalid inputs, then valid
+        # Multiple invalid inputs, then valid (A=SQLite now)
         inputs = ["D", "1", "yes", "A"]
         input_iter = iter(inputs)
 
         with patch("builtins.input", side_effect=lambda _: next(input_iter)):
             backend = service_manager._prompt_backend_selection()
 
-        assert backend == "postgresql"
+        assert backend == "sqlite"
 
     def test_keyboard_interrupt_returns_default(self):
-        """Test Ctrl+C during prompt returns default (PGlite)."""
+        """Test Ctrl+C during prompt returns default (SQLite)."""
         service_manager = ServiceManager()
 
         with patch("builtins.input", side_effect=KeyboardInterrupt):
             backend = service_manager._prompt_backend_selection()
 
         # Should return default for automated scenarios
-        assert backend == "pglite"
+        assert backend == "sqlite"
 
     def test_eof_error_returns_default(self):
-        """Test EOF during prompt returns default (PGlite)."""
+        """Test EOF during prompt returns default (SQLite)."""
         service_manager = ServiceManager()
 
         with patch("builtins.input", side_effect=EOFError):
             backend = service_manager._prompt_backend_selection()
 
         # Should return default for automated scenarios
-        assert backend == "pglite"
+        assert backend == "sqlite"
 
     def test_prompt_not_called_when_backend_flag_provided(self, monkeypatch):
         """Test prompt is skipped when --backend flag is present."""
@@ -196,8 +196,8 @@ class TestBackendPrompt:
         # Verify backend was added
         assert "HIVE_DATABASE_BACKEND=pglite" in env_content
 
-        # Verify URL was updated
-        assert "pglite://" in env_content
+        # Verify URL was updated (PGlite uses postgresql:// URL)
+        assert "postgresql://" in env_content
 
     def test_store_backend_choice_preserves_existing_content(self, tmp_path):
         """Test _store_backend_choice preserves other .env content."""
@@ -281,8 +281,9 @@ OTHER_VAR=value
         """Test all backend return values are lowercase."""
         service_manager = ServiceManager()
 
+        # Updated order: A=SQLite, B=PGlite, C=PostgreSQL, ""=SQLite (default)
         inputs = ["A", "B", "C", "a", "b", "c", ""]
-        expected = ["postgresql", "pglite", "sqlite", "postgresql", "pglite", "sqlite", "pglite"]
+        expected = ["sqlite", "pglite", "postgresql", "sqlite", "pglite", "postgresql", "sqlite"]
 
         for input_val, expected_backend in zip(inputs, expected, strict=False):
             with patch("builtins.input", return_value=input_val):

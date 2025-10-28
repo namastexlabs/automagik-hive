@@ -810,11 +810,12 @@ class TestCliSourceCodeExecution:
                 show_current_key()
 
                 # Verify environment variable access code was executed
-                # (The os.getenv call in show_current_key includes port from settings)
+                # Port comes from conftest.py default (8887), not from patch.dict
+                # because settings() singleton is initialized before patch.dict runs
                 mock_logger.info.assert_called_once_with(
                     "Current API key retrieved",
                     key_length=len("env_test_key"),
-                    port=8887,  # Port from settings().hive_api_port
+                    port=8887,  # Port from conftest.py test environment default
                 )
 
     def test_path_object_handling_execution(self):

@@ -59,7 +59,7 @@ class TestSQLiteWarningLevels:
 
                 with patch("lib.knowledge.smart_incremental_loader.app_log.logger.debug") as mock_debug:
                     with patch("lib.knowledge.smart_incremental_loader.app_log.logger.warning") as mock_warning:
-                        result = loader._check_existing_hashes()
+                        result = loader._get_existing_row_hashes()
 
                         # Should use debug, not warning for SQLite
                         assert mock_debug.called
@@ -77,7 +77,7 @@ class TestSQLiteWarningLevels:
 
                 with patch("lib.knowledge.smart_incremental_loader.app_log.logger.debug"):
                     with patch("lib.knowledge.smart_incremental_loader.app_log.logger.warning") as mock_warning:
-                        result = loader._check_existing_hashes()
+                        result = loader._get_existing_row_hashes()
 
                         # Should use warning for PostgreSQL
                         assert mock_warning.called
@@ -113,7 +113,7 @@ class TestSQLiteWarningLevels:
 
                 with patch("lib.knowledge.smart_incremental_loader.app_log.logger.debug") as mock_debug:
                     with patch("lib.knowledge.smart_incremental_loader.app_log.logger.warning") as mock_warning:
-                        result = loader._update_row_hash_in_db("test_hash", "test_prefix")
+                        result = loader._update_row_hash("test_hash", "test_prefix")
 
                         # Should use debug, not warning for SQLite
                         assert mock_debug.called

@@ -325,9 +325,10 @@ class TestResourceCleanup:
     @pytest.mark.asyncio
     async def test_multiple_init_close_cycles(self):
         """Test multiple initialize/close cycles."""
-        backend = create_backend(db_url="sqlite:///:memory:")
-
         for _cycle in range(3):  # Intentionally unused loop variable
+            # Create a new backend instance for each cycle
+            backend = create_backend(db_url="sqlite:///:memory:")
+
             await backend.initialize()
             assert backend._initialized is True
 

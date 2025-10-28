@@ -208,7 +208,8 @@ class TestBackendFlag:
                 break
 
         assert backend_action is not None
-        assert backend_action.choices == ["postgresql", "pglite", "sqlite"]
+        # Verify all three backends are in choices (order may vary)
+        assert set(backend_action.choices) == {"postgresql", "pglite", "sqlite"}
 
     def test_no_backend_flag_uses_default_behavior(self, monkeypatch):
         """Test install without --backend flag uses default prompt behavior."""

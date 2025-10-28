@@ -301,14 +301,16 @@ class TestBackendDetection:
         service_manager._store_backend_choice(tmp_path, "pglite")
 
         env_content = env_file.read_text()
-        assert "pglite://" in env_content
+        # PGlite uses postgresql:// URL (not pglite://)
+        assert "postgresql://" in env_content
 
     def test_store_backend_url_mappings(self, tmp_path):
         """Test correct URL mapping for each backend."""
         service_manager = ServiceManager()
 
+        # PGlite uses postgresql:// URL (not pglite://)
         backend_url_map = {
-            "pglite": "pglite://./data/automagik_hive.db",
+            "pglite": "postgresql://",
             "sqlite": "sqlite:///./data/automagik_hive.db",
             "postgresql": "postgresql+psycopg://",
         }

@@ -49,7 +49,10 @@ Result: Still not production-ready 😰
 
 **With Automagik Hive:**
 ```bash
+# Install
 curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
+
+# Start development server
 automagik-hive dev
 
 # 5 minutes later: Production-ready AI agents running ✨

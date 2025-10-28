@@ -9,7 +9,7 @@ agent:
 
 model:
   provider: openai
-  id: gpt-5
+  id: gpt-4o-mini
   temperature: 0.3
   max_tokens: 4000
 
