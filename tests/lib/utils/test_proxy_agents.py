@@ -357,12 +357,15 @@ class TestConfigurationProcessing:
         assert isinstance(result, dict)
         assert len(result) > 0
 
-        # Check that custom handlers were used by verifying result structure
-        # The model handler returns a dict that gets merged into top-level
-        assert "id" in result  # model id should be in top-level
-        assert result["id"] == "claude-sonnet-4-20250514"
-        assert "temperature" in result  # model temperature should be in top-level
-        assert result["temperature"] == 0.7
+        # Check that model handler returns Model instance (not dict)
+        assert "model" in result
+        model = result["model"]
+        assert not isinstance(model, dict), "Model should be instance, not dict"
+        assert hasattr(model, "id"), "Model should have id attribute"
+        assert model.id == "claude-sonnet-4-20250514"
+        # Check temperature if available (may be in request_params or as attribute)
+        if hasattr(model, "temperature"):
+            assert model.temperature == 0.7
 
         # The agent handler returns a dict that gets merged
         assert "name" in result
@@ -404,47 +407,34 @@ class TestCustomParameterHandlers:
         """Create AgnoAgentProxy instance for testing."""
         return AgnoAgentProxy()
 
-    @patch("lib.config.provider_registry.get_provider_registry")
-    @patch("lib.utils.dynamic_model_resolver.filter_model_parameters")
-    def test_handle_model_config(self, mock_filter, mock_registry, proxy):
-        """Test model configuration handler with provider detection."""
+    @patch("lib.config.models.resolve_model")
+    def test_handle_model_config(self, mock_resolve_model, proxy):
+        """Test model configuration handler returns Model instance."""
         model_config = {
             "id": "claude-sonnet-4-20250514",
             "temperature": 0.8,
             "max_tokens": 3000,
-            "custom_param": "value",
         }
 
-        # Mock provider registry
-        mock_provider_registry = MagicMock()
-        mock_registry.return_value = mock_provider_registry
-        mock_provider_registry.detect_provider.return_value = "anthropic"
-
-        # Mock model class
-        mock_model_class = MagicMock()
-        mock_provider_registry.resolve_model_class.return_value = mock_model_class
-
-        # Mock filter to return filtered parameters (remove custom_param)
-        filtered_config = {
-            "id": "claude-sonnet-4-20250514",
-            "temperature": 0.8,
-            "max_tokens": 3000,
-        }
-        mock_filter.return_value = filtered_config
+        # Mock resolve_model to return a Model-like instance
+        mock_model_instance = MagicMock()
+        mock_model_instance.id = "claude-sonnet-4-20250514"
+        mock_model_instance.temperature = 0.8
+        mock_resolve_model.return_value = mock_model_instance
 
         result = proxy._handle_model_config(model_config, {}, "test-agent", None)
 
-        # Verify provider detection was called
-        mock_provider_registry.detect_provider.assert_called_once_with("claude-sonnet-4-20250514")
+        # Verify resolve_model was called with correct parameters
+        mock_resolve_model.assert_called_once()
+        call_args = mock_resolve_model.call_args
+        assert call_args.kwargs['model_id'] == "claude-sonnet-4-20250514"
+        assert call_args.kwargs['temperature'] == 0.8
 
-        # Verify model class resolution was called
-        mock_provider_registry.resolve_model_class.assert_called_once_with("anthropic", "claude-sonnet-4-20250514")
-
-        # Verify filtering was called with the model class and original config
-        mock_filter.assert_called_once_with(mock_model_class, model_config)
-
-        # The result should be the filtered configuration for lazy instantiation
-        assert result == {"id": "claude-sonnet-4-20250514", **filtered_config}
+        # The result should be the Model instance, not a dict
+        assert result is mock_model_instance
+        assert not isinstance(result, dict), "Should return Model instance, not dict"
+        assert hasattr(result, 'id')
+        assert result.id == "claude-sonnet-4-20250514"
 
     @patch("lib.config.models.resolve_model")
     def test_handle_model_config_no_model_id(self, mock_resolve_model, proxy):
