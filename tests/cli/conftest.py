@@ -349,6 +349,24 @@ def mock_all_services(mock_docker_service, mock_postgres_service):
     return {"docker": mock_docker_service, "postgres": mock_postgres_service}
 
 
+@pytest.fixture(autouse=True)
+def mock_backend_prompt(request):
+    """Auto-mock backend and deployment prompts to prevent spam during tests.
+
+    This fixture is autouse=True to ensure ALL tests that create ServiceManager
+    instances won't trigger the interactive prompt loops. Tests that explicitly
+    need to test the prompt behavior can use @pytest.mark.no_auto_mock to skip this.
+    """
+    # Skip auto-mocking if test is marked with no_auto_mock
+    if "no_auto_mock" in request.keywords:
+        yield
+        return
+
+    with patch("cli.commands.service.ServiceManager._prompt_backend_selection", return_value="sqlite"):
+        with patch("cli.commands.service.ServiceManager._prompt_deployment_choice", return_value="local_hybrid"):
+            yield
+
+
 @pytest.fixture
 def mock_user_inputs():
     """Factory for creating mock user input sequences."""
@@ -762,6 +780,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "slow: Slow tests that take significant time")
     config.addinivalue_line("markers", "coverage: Coverage validation tests")
     config.addinivalue_line("markers", "cross_platform: Cross-platform compatibility tests")
+    config.addinivalue_line("markers", "no_auto_mock: Skip autouse mock_backend_prompt fixture for tests that need real prompts")
 
 
 # Configure test collection and execution

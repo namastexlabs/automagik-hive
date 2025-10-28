@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.absolute()
 if str(project_root) not in sys.path:
@@ -17,6 +19,8 @@ if str(project_root) not in sys.path:
 from cli.commands.service import ServiceManager  # noqa: E402
 
 
+# Mark all tests in this class to skip auto-mocking since we're testing the prompts
+@pytest.mark.no_auto_mock
 class TestBackendPrompt:
     """Test interactive backend selection prompt."""
 

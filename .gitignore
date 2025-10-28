@@ -71,11 +71,13 @@ data/
 
 # Environment variables - CRITICAL SECURITY
 .env
+.env.*
 .env.local
 .env.*.local
 .env.production
 .env.staging
 .env.development
+.env.master
 
 # MCP Configuration - CRITICAL SECURITY
 .mcp.json
