@@ -435,16 +435,10 @@ class AgnoAgentProxy:
             logger.warning(f"🔍 Dynamic filtering failed for {component_id}: {e}. Using original config.")
             filtered_model_config = model_config
 
-        # Fix: Return model configuration instead of creating instances during startup
-        # This prevents multiple Agno model instantiations during bulk component discovery
-        if model_id:
-            logger.debug(f"🚀 Configured model: {model_id} for {component_id}")
-            # Return configuration for lazy instantiation by Agno Agent
-            return {"id": model_id, **filtered_model_config}
-        else:
-            # Fallback to default resolution only when no model ID is specified
-            logger.warning(f"⚠️ No model ID specified for {component_id}, using default resolution")
-            return resolve_model(model_id=None, **filtered_model_config)
+        # Resolve model - returns proper Agno Model instance
+        # Works with explicit model_id OR None (for default resolution)
+        logger.debug(f"🚀 Resolving model: {model_id or 'default'} for {component_id}")
+        return resolve_model(model_id=model_id, **filtered_model_config)
 
     def _handle_db_config(
         self,
