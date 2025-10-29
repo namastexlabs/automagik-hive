@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from common.notifications import (
+from lib.services.notifications import (
     LogProvider,
     NotificationLevel,
     NotificationMessage,

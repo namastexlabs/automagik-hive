@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from common.notifications import NotificationLevel
-from common.startup_notifications import (
+from lib.services.notifications import NotificationLevel
+from lib.services.notifications import (
     _build_startup_message,
     notify_critical,
     notify_critical_error,

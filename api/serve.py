@@ -160,7 +160,7 @@ def create_lifespan(startup_display: Any = None) -> Any:
             async def _send_startup_notification() -> None:
                 try:
                     await asyncio.sleep(2)  # Give MCP manager time to fully initialize
-                    from common.startup_notifications import send_startup_notification
+                    from lib.services.notifications import send_startup_notification
 
                     # Pass startup_display for rich notification content
                     await send_startup_notification(startup_display)  # type: ignore[no-untyped-call]
@@ -234,7 +234,7 @@ def create_lifespan(startup_display: Any = None) -> Any:
 
                 # Send shutdown notification
                 try:
-                    from common.startup_notifications import send_shutdown_notification
+                    from lib.services.notifications import send_shutdown_notification
 
                     await send_shutdown_notification()  # type: ignore[no-untyped-call]
                     logger.debug("Shutdown notification sent successfully")
