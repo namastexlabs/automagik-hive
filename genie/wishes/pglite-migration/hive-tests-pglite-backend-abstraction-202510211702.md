@@ -14,7 +14,7 @@ Created complete test suite for Group A (Backend Abstraction) of the PgLite migr
 
 ## Files Created
 
-### 1. `/home/cezar/automagik/automagik-hive/tests/lib/database/test___init__.py`
+### 1. `tests/lib/database/test___init__.py`
 **Purpose:** Test backend factory exports and module interface
 **Test Classes:** 3
 **Test Methods:** 11
@@ -37,7 +37,7 @@ Created complete test suite for Group A (Backend Abstraction) of the PgLite migr
 
 ---
 
-### 2. `/home/cezar/automagik/automagik-hive/tests/lib/database/providers/test___init__.py`
+### 2. `tests/lib/database/providers/test___init__.py`
 **Purpose:** Test provider module exports and backend implementations
 **Test Classes:** 3
 **Test Methods:** 13
@@ -60,7 +60,7 @@ Created complete test suite for Group A (Backend Abstraction) of the PgLite migr
 
 ---
 
-### 3. `/home/cezar/automagik/automagik-hive/tests/lib/database/providers/test_base.py`
+### 3. `tests/lib/database/providers/test_base.py`
 **Purpose:** Test BaseDatabaseBackend abstract interface contract
 **Test Classes:** 4
 **Test Methods:** 30
@@ -95,7 +95,7 @@ Created complete test suite for Group A (Backend Abstraction) of the PgLite migr
 
 ---
 
-### 4. `/home/cezar/automagik/automagik-hive/tests/lib/database/test_backend_factory.py`
+### 4. `tests/lib/database/test_backend_factory.py`
 **Purpose:** Test backend factory logic and provider detection
 **Test Classes:** 4
 **Test Methods:** 28
@@ -486,11 +486,11 @@ FAILED tests/lib/database/test_backend_factory.py::TestBackendFactoryDetection::
 **Next Agent:** `hive-coder` (GREEN Phase - Implementation)
 
 **Evidence Files:**
-- `/home/cezar/automagik/automagik-hive/tests/lib/database/test___init__.py` (11 tests)
-- `/home/cezar/automagik/automagik-hive/tests/lib/database/providers/test___init__.py` (13 tests)
-- `/home/cezar/automagik/automagik-hive/tests/lib/database/providers/test_base.py` (30 tests)
-- `/home/cezar/automagik/automagik-hive/tests/lib/database/test_backend_factory.py` (28 tests)
-- `/home/cezar/automagik/automagik-hive/genie/reports/hive-tests-pglite-backend-abstraction-202510211702.md` (this report)
+- `tests/lib/database/test___init__.py` (11 tests)
+- `tests/lib/database/providers/test___init__.py` (13 tests)
+- `tests/lib/database/providers/test_base.py` (30 tests)
+- `tests/lib/database/test_backend_factory.py` (28 tests)
+- `genie/reports/hive-tests-pglite-backend-abstraction-202510211702.md` (this report)
 
 **Coverage:** Complete interface testing for backend abstraction layer
 **Remaining Work:** Implementation of 7 files to make tests pass (GREEN Phase)

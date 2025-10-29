@@ -1,6 +1,6 @@
 """
 FastAPI server for Automagik Hive Multi-Agent System
-Production-ready API endpoint using V2 Ana Team architecture
+Production-ready API endpoint with dynamic agent orchestration
 """
 
 # import logging - replaced with unified logging
@@ -103,7 +103,7 @@ except Exception as e:
     logger.info("Continuing startup - system may use fallback initialization")
 
 
-# Import teams via dynamic registry (removed hardcoded ana import)
+# Import teams via dynamic registry
 
 # Import workflow registry for dynamic loading
 from ai.workflows.registry import get_workflow  # noqa: E402 - Conditional import based on runtime configuration
@@ -178,7 +178,7 @@ def create_lifespan(startup_display: Any = None) -> Any:
 
         yield
 
-        # Graceful Shutdown with Progress Display (following Langflow pattern)
+        # Graceful Shutdown with Progress Display
         try:
             # Import our new shutdown progress utility
             from lib.utils.shutdown_progress import create_automagik_shutdown_progress

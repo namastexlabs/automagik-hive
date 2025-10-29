@@ -415,6 +415,6 @@ Group D implementation successfully integrates database backend abstraction into
 
 ---
 
-**Death Testament saved:** `/home/cezar/automagik/automagik-hive/genie/reports/hive-coder-cli-backend-integration-202510212119.md`
+**Death Testament saved:** `genie/reports/hive-coder-cli-backend-integration-202510212119.md`
 
 Co-authored-by: Automagik Genie <genie@namastex.ai>
