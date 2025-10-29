@@ -39,21 +39,25 @@ class TestShowCurrentKey:
 
     @patch("lib.auth.cli.AuthInitService")
     @patch("lib.auth.cli.logger")
-    @patch.dict(os.environ, {"HIVE_API_PORT": "9999"})
-    def test_show_current_key_with_existing_key(self, mock_logger, mock_auth_service):
+    @patch("lib.config.settings.settings")
+    def test_show_current_key_with_existing_key(self, mock_settings, mock_logger, mock_auth_service):
         """Test show_current_key when API key exists."""
         # Setup mock
         mock_service = Mock()
         mock_service.get_current_key.return_value = "test_api_key_12345"
         mock_auth_service.return_value = mock_service
 
+        # Mock settings() singleton to return controlled port value
+        mock_settings_instance = Mock()
+        mock_settings_instance.hive_api_port = 8887
+        mock_settings.return_value = mock_settings_instance
+
         show_current_key()
 
         # Should pass - function calls service and logs result
         mock_auth_service.assert_called_once()
         mock_service.get_current_key.assert_called_once()
-        # Port comes from tests/conftest.py (8887) at lines 209 & 774
-        # settings() loads this value from env before test execution
+        # Port comes from mocked settings() singleton
         mock_logger.info.assert_called_once_with(
             "Current API key retrieved", key_length=len("test_api_key_12345"), port=8887
         )

@@ -796,27 +796,31 @@ class TestCliSourceCodeExecution:
                         mock_cred_service_class.call_count >= 5
                     )  # All credential functions: generate_postgres_credentials, generate_agent_credentials, generate_complete_workspace_credentials, show_credential_status, sync_mcp_credentials
 
-    @patch.dict(os.environ, {"HIVE_API_PORT": "9999"})
     def test_environment_variable_access_execution(self):
         """Test execution of environment variable access code paths."""
         with patch("lib.auth.cli.AuthInitService") as mock_auth_service_class:
             with patch("lib.auth.cli.logger") as mock_logger:
-                # Setup mock
-                mock_auth_service = Mock()
-                mock_auth_service.get_current_key.return_value = "env_test_key"
-                mock_auth_service_class.return_value = mock_auth_service
+                with patch("lib.config.settings.settings") as mock_settings:
+                    # Setup mock
+                    mock_auth_service = Mock()
+                    mock_auth_service.get_current_key.return_value = "env_test_key"
+                    mock_auth_service_class.return_value = mock_auth_service
 
-                # Execute function that accesses environment variables
-                show_current_key()
+                    # Mock settings() singleton to return controlled port value
+                    mock_settings_instance = Mock()
+                    mock_settings_instance.hive_api_port = 8887
+                    mock_settings.return_value = mock_settings_instance
 
-                # Verify environment variable access code was executed
-                # Port comes from tests/conftest.py (8887) at lines 209 & 774
-                # settings() loads this value from env before test execution
-                mock_logger.info.assert_called_once_with(
-                    "Current API key retrieved",
-                    key_length=len("env_test_key"),
-                    port=8887,  # Port from conftest.py test environment
-                )
+                    # Execute function that accesses environment variables
+                    show_current_key()
+
+                    # Verify environment variable access code was executed
+                    # Port comes from mocked settings() singleton
+                    mock_logger.info.assert_called_once_with(
+                        "Current API key retrieved",
+                        key_length=len("env_test_key"),
+                        port=8887,  # Port from mocked settings
+                    )
 
     def test_path_object_handling_execution(self):
         """Test execution of Path object handling code."""
