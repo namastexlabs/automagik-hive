@@ -95,5 +95,4 @@ agent.pid
 .tmp/
 temp/
 env
-pglite-data/
 *.pid

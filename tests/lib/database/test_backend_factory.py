@@ -9,17 +9,6 @@ import pytest
 class TestBackendFactoryDetection:
     """Test automatic backend detection from database URLs."""
 
-    def test_detect_pglite_from_url(self):
-        """Test PgLite backend detection from URL scheme."""
-        from lib.database.backend_factory import detect_backend_from_url
-
-        url = "pglite://./data/test.db"
-        backend_type = detect_backend_from_url(url)
-
-        from lib.database import DatabaseBackendType
-
-        assert backend_type == DatabaseBackendType.PGLITE
-
     def test_detect_postgresql_from_url(self):
         """Test PostgreSQL backend detection from URL scheme."""
         from lib.database.backend_factory import detect_backend_from_url
@@ -77,17 +66,6 @@ class TestBackendFactoryDetection:
 
 class TestBackendFactoryCreation:
     """Test backend instance creation via factory."""
-
-    def test_create_pglite_backend(self, mock_env_vars):
-        """Test creating PgLite backend instance."""
-        from lib.database import DatabaseBackendType
-        from lib.database.backend_factory import create_backend
-
-        backend = create_backend(backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db")
-
-        from lib.database.providers import PGliteBackend
-
-        assert isinstance(backend, PGliteBackend)
 
     def test_create_postgresql_backend(self, mock_env_vars):
         """Test creating PostgreSQL backend instance."""
@@ -149,24 +127,6 @@ class TestBackendFactoryCreation:
 
 class TestGetDatabaseBackend:
     """Test get_database_backend main factory function."""
-
-    def test_get_backend_from_settings_pglite(self):
-        """Test getting PgLite backend from settings."""
-        with patch.dict(
-            os.environ,
-            {
-                "HIVE_DATABASE_URL": "pglite://./data/test.db",
-                "HIVE_ENVIRONMENT": "development",
-                "HIVE_API_PORT": "8888",
-                "HIVE_API_KEY": "hive_test_key_1234567890abcdef1234567890",
-                "HIVE_CORS_ORIGINS": "http://localhost:3000",
-            },
-        ):
-            from lib.database import get_database_backend
-            from lib.database.providers import PGliteBackend
-
-            backend = get_database_backend()
-            assert isinstance(backend, PGliteBackend)
 
     def test_get_backend_from_settings_postgresql(self):
         """Test getting PostgreSQL backend from settings."""
@@ -276,8 +236,6 @@ class TestBackendFactoryEdgeCases:
         from lib.database.backend_factory import detect_backend_from_url
 
         urls = [
-            "PGLITE://./test.db",
-            "PgLite://./test.db",
             "POSTGRESQL://localhost/test",
             "PostgreSQL://localhost/test",
             "SQLITE:///./test.db",
@@ -299,21 +257,6 @@ class TestBackendFactoryEdgeCases:
         from lib.database import DatabaseBackendType
 
         assert backend_type == DatabaseBackendType.POSTGRESQL
-
-    def test_pglite_url_variations(self):
-        """Test various PgLite URL formats."""
-        from lib.database import DatabaseBackendType
-        from lib.database.backend_factory import detect_backend_from_url
-
-        urls = [
-            "pglite://./test.db",
-            "pglite:///absolute/path/test.db",
-            "pglite://relative/path/test.db",
-        ]
-
-        for url in urls:
-            backend_type = detect_backend_from_url(url)
-            assert backend_type == DatabaseBackendType.PGLITE
 
     def test_postgresql_url_variations(self):
         """Test various PostgreSQL URL formats."""

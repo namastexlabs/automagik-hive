@@ -1,7 +1,7 @@
 """
 Integration tests for database backend abstraction layer.
 
-Tests all three backends (PGlite, PostgreSQL, SQLite) for:
+Tests both backends (PostgreSQL, SQLite) for:
 - Initialization and connection
 - Backend factory detection
 - Basic SQL query execution
@@ -33,8 +33,6 @@ class TestBackendDetection:
     @pytest.mark.parametrize(
         "db_url,expected_backend",
         [
-            ("pglite://localhost/main", DatabaseBackendType.PGLITE),
-            ("pglite://./test.db", DatabaseBackendType.PGLITE),
             ("postgresql://user:pass@localhost:5432/test", DatabaseBackendType.POSTGRESQL),
             ("postgresql+psycopg://user:pass@localhost:5432/test", DatabaseBackendType.POSTGRESQL),
             ("postgres://user:pass@localhost:5432/test", DatabaseBackendType.POSTGRESQL),
@@ -54,19 +52,12 @@ class TestBackendDetection:
 
     def test_detect_backend_case_insensitive(self):
         """Test scheme detection is case-insensitive."""
-        assert detect_backend_from_url("PGLITE://test") == DatabaseBackendType.PGLITE
         assert detect_backend_from_url("PostgreSQL://test") == DatabaseBackendType.POSTGRESQL
         assert detect_backend_from_url("SQLite:///test") == DatabaseBackendType.SQLITE
 
 
 class TestBackendFactory:
     """Test backend factory creation patterns."""
-
-    def test_create_backend_explicit_pglite(self):
-        """Test explicit PGlite backend creation."""
-        backend = create_backend(backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db")
-        assert backend is not None
-        assert backend.__class__.__name__ == "PGliteBackend"
 
     def test_create_backend_explicit_postgresql(self):
         """Test explicit PostgreSQL backend creation."""
@@ -84,10 +75,6 @@ class TestBackendFactory:
 
     def test_create_backend_auto_detect_from_url(self):
         """Test automatic backend detection from URL."""
-        # PGlite
-        backend = create_backend(db_url="pglite://./test.db")
-        assert backend.__class__.__name__ == "PGliteBackend"
-
         # PostgreSQL
         backend = create_backend(db_url="postgresql://user:pass@localhost/test")
         assert backend.__class__.__name__ == "PostgreSQLBackend"
@@ -130,12 +117,12 @@ class TestGetActiveBackend:
 
     def test_get_active_backend_fallback_to_url(self):
         """Test fallback to URL detection when HIVE_DATABASE_BACKEND not set."""
-        with patch.dict(os.environ, {"HIVE_DATABASE_URL": "pglite://./test.db"}, clear=False):
+        with patch.dict(os.environ, {"HIVE_DATABASE_URL": "sqlite:///test.db"}, clear=False):
             if "HIVE_DATABASE_BACKEND" in os.environ:
                 del os.environ["HIVE_DATABASE_BACKEND"]
 
             backend = get_active_backend()
-            assert backend.__class__.__name__ == "PGliteBackend"
+            assert backend.__class__.__name__ == "SQLiteBackend"
 
     def test_get_active_backend_invalid_explicit_backend_fallback(self):
         """Test invalid HIVE_DATABASE_BACKEND falls back to URL detection."""
@@ -314,144 +301,6 @@ class TestSQLiteBackendIntegration:
             assert row[0] == 1
 
 
-class TestPGliteBackendIntegration:
-    """Integration tests for PGlite backend (mocked HTTP bridge)."""
-
-    @pytest_asyncio.fixture
-    async def mock_pglite_backend(self):
-        """Create PGlite backend with mocked HTTP client."""
-        backend = create_backend(backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db")
-
-        # Mock subprocess and HTTP client
-        with (
-            patch.object(backend, "bridge_process", Mock()),
-            patch("lib.database.providers.pglite.httpx.AsyncClient") as mock_client_class,
-        ):
-            # Setup mock HTTP responses
-            mock_client = AsyncMock()
-            mock_client_class.return_value = mock_client
-
-            # Mock health check
-            health_response = Mock()
-            health_response.status_code = 200
-            health_response.json.return_value = {"status": "healthy"}
-
-            # Setup async context manager for temporary client
-            async def mock_health_client_context():
-                temp_client = AsyncMock()
-                temp_client.get.return_value = health_response
-                return temp_client
-
-            with patch("lib.database.providers.pglite.httpx.AsyncClient") as temp_mock:
-                temp_mock.return_value.__aenter__ = mock_health_client_context
-                temp_mock.return_value.__aexit__ = AsyncMock()
-
-                # Initialize backend
-                await backend.initialize()
-
-            backend.client = mock_client
-
-            yield backend, mock_client
-
-            # Cleanup
-            await backend.close()
-
-    @pytest.mark.asyncio
-    async def test_pglite_execute(self, mock_pglite_backend):
-        """Test PGlite execute operation."""
-        backend, mock_client = mock_pglite_backend
-
-        # Mock successful response
-        response = Mock()
-        response.status_code = 200
-        response.json.return_value = {"success": True}
-        mock_client.post.return_value = response
-
-        await backend.execute("CREATE TABLE test (id INT)", params=None)
-
-        # Verify HTTP call
-        mock_client.post.assert_called_once()
-        call_args = mock_client.post.call_args
-        assert call_args[0][0] == "/query"
-        assert "CREATE TABLE test" in call_args[1]["json"]["sql"]
-
-    @pytest.mark.asyncio
-    async def test_pglite_fetch_one(self, mock_pglite_backend):
-        """Test PGlite fetch_one operation."""
-        backend, mock_client = mock_pglite_backend
-
-        # Mock successful response with data
-        response = Mock()
-        response.status_code = 200
-        response.json.return_value = {"success": True, "rows": [{"id": 1, "name": "test"}]}
-        mock_client.post.return_value = response
-
-        result = await backend.fetch_one("SELECT * FROM test WHERE id = %(id)s", {"id": 1})
-
-        assert result is not None
-        assert result["id"] == 1
-        assert result["name"] == "test"
-
-    @pytest.mark.asyncio
-    async def test_pglite_fetch_all(self, mock_pglite_backend):
-        """Test PGlite fetch_all operation."""
-        backend, mock_client = mock_pglite_backend
-
-        # Mock successful response with multiple rows
-        response = Mock()
-        response.status_code = 200
-        response.json.return_value = {
-            "success": True,
-            "rows": [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}],
-        }
-        mock_client.post.return_value = response
-
-        results = await backend.fetch_all("SELECT * FROM test")
-
-        assert len(results) == 2
-        assert results[0]["id"] == 1
-        assert results[1]["name"] == "test2"
-
-    @pytest.mark.asyncio
-    async def test_pglite_error_handling(self, mock_pglite_backend):
-        """Test PGlite error handling."""
-        backend, mock_client = mock_pglite_backend
-
-        # Mock error response
-        response = Mock()
-        response.status_code = 200
-        response.json.return_value = {"success": False, "error": "SQL syntax error"}
-        mock_client.post.return_value = response
-
-        with pytest.raises(RuntimeError, match="SQL syntax error"):
-            await backend.execute("INVALID SQL")
-
-    @pytest.mark.asyncio
-    async def test_pglite_http_error(self, mock_pglite_backend):
-        """Test PGlite HTTP error handling."""
-        backend, mock_client = mock_pglite_backend
-
-        # Mock HTTP error
-        import httpx
-
-        response = Mock()
-        response.status_code = 500
-        mock_client.post.return_value = response
-        mock_client.post.side_effect = httpx.HTTPStatusError("Server error", request=Mock(), response=response)
-
-        with pytest.raises(RuntimeError, match="HTTP error"):
-            await backend.execute("SELECT 1")
-
-    @pytest.mark.asyncio
-    async def test_pglite_connection_context_manager(self, mock_pglite_backend):
-        """Test PGlite connection context manager (returns self)."""
-        backend, _ = mock_pglite_backend
-
-        async with backend.get_connection() as conn:
-            # For PGlite, connection returns self
-            assert conn is backend
-
-
 class TestPostgreSQLBackendIntegration:
     """Integration tests for PostgreSQL backend (mocked pool)."""
 
@@ -594,7 +443,7 @@ class TestBackendParameterCompatibility:
         "backend_type,db_url",
         [
             (DatabaseBackendType.SQLITE, "sqlite:///:memory:"),
-            # PostgreSQL and PGlite would require mocking or real connections
+            # PostgreSQL would require mocking or real connections
         ],
     )
     @pytest.mark.asyncio

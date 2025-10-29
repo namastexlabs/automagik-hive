@@ -4,9 +4,7 @@
 >
 > **Docker is only required for the PostgreSQL backend.**
 >
-> **PGlite (default) and SQLite backends work without Docker.**
->
-> See [PGlite Migration Guide](../docs/MIGRATION_PGLITE.md) for backend selection details.
+> **SQLite backend works without Docker.**
 
 This directory contains all Docker-related files for the Automagik Hive multi-agent system.
 
@@ -14,23 +12,21 @@ This directory contains all Docker-related files for the Automagik Hive multi-ag
 
 Docker is **only required** if you choose the **PostgreSQL backend**:
 
-- ✅ **PGlite Backend** (default) - No Docker needed
-- ✅ **SQLite Backend** - No Docker needed
+- ✅ **SQLite Backend** (default) - No Docker needed
 - ⚠️ **PostgreSQL Backend** - Docker required
 
-**For most users:** You can skip Docker entirely and use PGlite or SQLite.
+**For most users:** You can skip Docker entirely and use SQLite for development.
 
 **Backend Selection:**
 ```bash
 # No Docker required
-make install-pglite   # Default - WebAssembly PostgreSQL
-make install-sqlite   # Minimal dependencies
+make install-sqlite   # Default - Simple file-based database
 
 # Docker required
-make install-postgres # Full PostgreSQL with Docker
+make install-postgres # Full PostgreSQL with pgvector
 ```
 
-See [Backend Comparison](../docs/MIGRATION_PGLITE.md#backend-comparison) for detailed feature comparison.
+See [README.md](../README.md#-database-backend-selection) for detailed backend comparison.
 
 ## Directory Structure
 
@@ -108,25 +104,9 @@ Set `HIVE_EMBED_PLAYGROUND=false` to run the API without mounting the Playground
 
 > Compose deployments should now proxy the Hive API directly instead of exposing a separate `localhost:8000` Playground stack. The optional compose services remain available for local infrastructure, but the authoritative routes live inside the Hive server.
 
-## Migrating Away from Docker
+## Migrating to SQLite (No Docker)
 
-If you previously used PostgreSQL with Docker and want to simplify:
-
-### Option 1: Switch to PGlite (Recommended)
-
-```bash
-# Stop PostgreSQL
-make postgres-stop
-
-# Update .env
-HIVE_DATABASE_BACKEND=pglite
-HIVE_DATABASE_URL=pglite://./data/automagik_hive.db
-
-# Restart with PGlite
-make dev
-```
-
-### Option 2: Switch to SQLite
+If you previously used PostgreSQL with Docker and want to simplify for development:
 
 ```bash
 # Stop PostgreSQL
@@ -140,9 +120,7 @@ HIVE_DATABASE_URL=sqlite:///./data/automagik_hive.db
 make dev
 ```
 
-**Note:** Session history will reset. Agent configurations and knowledge base (CSV) remain unchanged.
-
-**Full migration guide:** [PGlite Migration Guide](../docs/MIGRATION_PGLITE.md)
+**Note:** Session history will reset when switching backends. Agent configurations and knowledge base (CSV) remain unchanged.
 
 ## Migration Notes
 
@@ -152,4 +130,4 @@ This structure was created by consolidating Docker files from the root directory
 - Templates consolidated from /templates/ directory
 - Docker libraries moved from /lib/docker/ to /docker/lib/
 - All references updated throughout the codebase
-- Docker is now **optional** (PGlite migration, v0.2.0+)
+- Docker is now **optional** (v0.2.0+)

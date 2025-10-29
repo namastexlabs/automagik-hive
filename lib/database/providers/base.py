@@ -14,7 +14,7 @@ class BaseDatabaseBackend(ABC):
     """
     Abstract base class for database backends.
 
-    All backend providers (PGlite, PostgreSQL, SQLite) must implement this interface.
+    All backend providers (PostgreSQL, SQLite) must implement this interface.
     Provides database operations compatible with psycopg3 patterns.
     """
 

@@ -2,7 +2,6 @@
 Backend Migration Integration Tests.
 
 Tests migration scenarios between backends:
-- PostgreSQL → PGlite migration path
 - PostgreSQL → SQLite migration path
 - Schema compatibility across backends
 - Data export/import patterns
@@ -78,52 +77,6 @@ class TestCrossPlatformSchemaCompatibility:
             if os.path.exists(db_path):
                 os.unlink(db_path)
 
-    @pytest.mark.asyncio
-    async def test_pglite_schema_creation_mocked(self, test_schema_sql):
-        """Test schema creation in PGlite backend (mocked)."""
-        backend = create_backend(backend_type=DatabaseBackendType.PGLITE, db_url="pglite://./test.db")
-
-        # Mock HTTP client
-        with (
-            patch.object(backend, "bridge_process", Mock()),
-            patch("lib.database.providers.pglite.httpx.AsyncClient") as mock_client_class,
-        ):
-            mock_client = AsyncMock()
-            mock_client_class.return_value = mock_client
-
-            # Mock health check
-            health_response = Mock()
-            health_response.status_code = 200
-            health_response.json.return_value = {"status": "healthy"}
-
-            # Mock schema creation response
-            schema_response = Mock()
-            schema_response.status_code = 200
-            schema_response.json.return_value = {"success": True}
-
-            # Setup async context manager
-            async def mock_health_context():
-                temp_client = AsyncMock()
-                temp_client.get.return_value = health_response
-                return temp_client
-
-            with patch("lib.database.providers.pglite.httpx.AsyncClient") as temp_mock:
-                temp_mock.return_value.__aenter__ = mock_health_context
-                temp_mock.return_value.__aexit__ = AsyncMock()
-                await backend.initialize()
-
-            backend.client = mock_client
-            mock_client.post.return_value = schema_response
-
-            # Execute schema
-            for statement in test_schema_sql.strip().split(";"):
-                if statement.strip():
-                    await backend.execute(statement.strip())
-
-            # Verify execute was called
-            assert mock_client.post.call_count > 0
-
-            await backend.close()
 
 
 class TestDataMigrationPatterns:
@@ -352,34 +305,6 @@ class TestMigrationErrorHandling:
         finally:
             await backend.close()
 
-
-class TestPostgreSQLToPGliteMigration:
-    """Test migration patterns from PostgreSQL to PGlite."""
-
-    def test_connection_string_conversion(self):
-        """Test converting PostgreSQL connection string to PGlite format."""
-        # PostgreSQL URL
-        pg_url = "postgresql://user:password@localhost:5432/mydb"
-
-        # PGlite equivalent (would store in local directory)
-        pglite_url = "pglite://./pglite-data"
-
-        # Create backends
-        pg_backend = create_backend(db_url=pg_url)
-        pglite_backend = create_backend(db_url=pglite_url)
-
-        assert "PostgreSQL" in pg_backend.__class__.__name__
-        assert "PGlite" in pglite_backend.__class__.__name__
-
-    @pytest.mark.asyncio
-    async def test_pglite_data_directory_setup(self):
-        """Test PGlite data directory setup for migration."""
-        pglite_url = "pglite://./test-migration-data"
-        backend = create_backend(db_url=pglite_url)
-
-        # Verify backend created
-        assert "PGlite" in backend.__class__.__name__
-        assert "./test-migration-data" in backend.data_dir or "test-migration-data" in backend.data_dir
 
 
 class TestPostgreSQLToSQLiteMigration:

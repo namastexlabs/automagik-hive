@@ -48,46 +48,6 @@ class TestConnectionPerformance:
             await backend.close()
 
     @pytest.mark.asyncio
-    async def test_pglite_connection_speed_mocked(self):
-        """Test PGlite connection initialization performance (mocked)."""
-        backend = create_backend(db_url="pglite://./test.db")
-
-        # Mock subprocess and HTTP client for fast initialization
-        with (
-            patch.object(backend, "bridge_process", Mock()),
-            patch("lib.database.providers.pglite.httpx.AsyncClient") as mock_client_class,
-        ):
-            mock_client = AsyncMock()
-            mock_client_class.return_value = mock_client
-
-            # Mock instant health check
-            health_response = Mock()
-            health_response.status_code = 200
-            health_response.json.return_value = {"status": "healthy"}
-
-            async def mock_health_context():
-                temp_client = AsyncMock()
-                temp_client.get.return_value = health_response
-                return temp_client
-
-            with patch("lib.database.providers.pglite.httpx.AsyncClient") as temp_mock:
-                temp_mock.return_value.__aenter__ = mock_health_context
-                temp_mock.return_value.__aexit__ = AsyncMock()
-
-                start_time = time.time()
-                await backend.initialize()
-                init_time = time.time() - start_time
-
-            backend.client = mock_client
-
-            try:
-                # Mocked initialization should be fast
-                assert init_time < 2.0, f"PGlite mock initialization took {init_time:.3f}s"
-
-            finally:
-                await backend.close()
-
-    @pytest.mark.asyncio
     async def test_postgresql_pool_creation_mocked(self):
         """Test PostgreSQL pool creation performance (mocked)."""
         backend = create_backend(db_url="postgresql://user:pass@localhost/db")
@@ -355,42 +315,6 @@ class TestResourceCleanup:
             mock_pool.close.assert_called_once()
             assert backend.pool is None
 
-    @pytest.mark.asyncio
-    async def test_pglite_bridge_cleanup_mocked(self):
-        """Test PGlite bridge process cleanup (mocked)."""
-        backend = create_backend(db_url="pglite://./test.db")
-
-        mock_process = Mock()
-        mock_client = AsyncMock()
-
-        with (
-            patch.object(backend, "bridge_process", mock_process),
-            patch("lib.database.providers.pglite.httpx.AsyncClient") as mock_client_class,
-        ):
-            mock_client_class.return_value = mock_client
-
-            health_response = Mock()
-            health_response.status_code = 200
-            health_response.json.return_value = {"status": "healthy"}
-
-            async def mock_health_context():
-                temp_client = AsyncMock()
-                temp_client.get.return_value = health_response
-                return temp_client
-
-            with patch("lib.database.providers.pglite.httpx.AsyncClient") as temp_mock:
-                temp_mock.return_value.__aenter__ = mock_health_context
-                temp_mock.return_value.__aexit__ = AsyncMock()
-                await backend.initialize()
-
-            backend.client = mock_client
-
-            await backend.close()
-
-            # Verify cleanup
-            mock_client.aclose.assert_called_once()
-            assert backend.client is None
-
 
 class TestMemoryUsage:
     """Test memory efficiency patterns."""
@@ -470,7 +394,7 @@ class TestConnectionPoolScaling:
     @pytest.mark.asyncio
     async def test_custom_pool_size(self):
         """Test custom pool size configuration."""
-        # Create backend with custom pool sizes (not used by SQLite/PGlite but stored)
+        # Create backend with custom pool sizes (not used by SQLite but stored)
         backend = create_backend(db_url="sqlite:///:memory:")
 
         # Even though SQLite doesn't use pooling, interface should accept parameters

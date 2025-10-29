@@ -2,7 +2,7 @@
 Database backend abstraction layer.
 
 Provides pluggable database backends for development and production environments.
-Supports PGlite (WebAssembly), PostgreSQL (native/Docker), and SQLite (fallback).
+Supports PostgreSQL (native/Docker) and SQLite (fallback).
 """
 
 from enum import Enum
@@ -13,7 +13,6 @@ from .providers.base import BaseDatabaseBackend
 class DatabaseBackendType(str, Enum):
     """Supported database backend types."""
 
-    PGLITE = "pglite"
     POSTGRESQL = "postgresql"
     SQLITE = "sqlite"
 

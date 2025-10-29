@@ -30,10 +30,8 @@ class TestBackendEnvironmentDetection:
     @pytest.mark.parametrize(
         "backend_env,expected_type",
         [
-            ("pglite", DatabaseBackendType.PGLITE),
             ("postgresql", DatabaseBackendType.POSTGRESQL),
             ("sqlite", DatabaseBackendType.SQLITE),
-            ("PGLITE", DatabaseBackendType.PGLITE),  # Case insensitive
             ("PostgreSQL", DatabaseBackendType.POSTGRESQL),
             ("SQLite", DatabaseBackendType.SQLITE),
         ],
@@ -50,7 +48,6 @@ class TestBackendEnvironmentDetection:
             # Check class name matches backend type
             # Map backend types to their expected class name patterns
             class_name_map = {
-                DatabaseBackendType.PGLITE: "PGliteBackend",
                 DatabaseBackendType.POSTGRESQL: "PostgreSQLBackend",
                 DatabaseBackendType.SQLITE: "SQLiteBackend",
             }
@@ -77,9 +74,9 @@ class TestBackendEnvironmentDetection:
             if "HIVE_DATABASE_BACKEND" in os.environ:
                 del os.environ["HIVE_DATABASE_BACKEND"]
 
-            with patch.dict(os.environ, {"HIVE_DATABASE_URL": "pglite://./test.db"}, clear=False):
+            with patch.dict(os.environ, {"HIVE_DATABASE_URL": "sqlite:///test.db"}, clear=False):
                 backend = get_active_backend()
-                assert backend.__class__.__name__ == "PGliteBackend"
+                assert backend.__class__.__name__ == "SQLiteBackend"
 
         finally:
             # Restore original
@@ -105,7 +102,6 @@ class TestBackendURLInference:
     @pytest.mark.parametrize(
         "db_url,expected_class",
         [
-            ("pglite://./data", "PGliteBackend"),
             ("postgresql://user:pass@localhost/db", "PostgreSQLBackend"),
             ("postgresql+psycopg://user:pass@localhost/db", "PostgreSQLBackend"),
             ("sqlite:///test.db", "SQLiteBackend"),
@@ -120,14 +116,12 @@ class TestBackendURLInference:
     def test_url_scheme_case_insensitive(self):
         """Test URL scheme detection is case-insensitive."""
         backends = [
-            create_backend(db_url="PGLITE://./test"),
             create_backend(db_url="PostgreSQL://user:pass@localhost/db"),
             create_backend(db_url="SQLite:///test.db"),
         ]
 
-        assert backends[0].__class__.__name__ == "PGliteBackend"
-        assert backends[1].__class__.__name__ == "PostgreSQLBackend"
-        assert backends[2].__class__.__name__ == "SQLiteBackend"
+        assert backends[0].__class__.__name__ == "PostgreSQLBackend"
+        assert backends[1].__class__.__name__ == "SQLiteBackend"
 
 
 class TestBackendTypeValidation:
@@ -151,37 +145,9 @@ class TestBackendTypeValidation:
             assert backend is not None
 
 
-class TestDockerSkipPatterns:
-    """Test patterns for determining when to skip Docker containers."""
-
-    def test_pglite_backend_skips_docker(self):
-        """Test PGlite backend should skip Docker (uses WebAssembly)."""
-        backend = create_backend(db_url="pglite://./test.db")
-        # PGlite runs in-process, no Docker needed
-        assert isinstance(backend, type(backend))  # Type check passes
-        assert "PGlite" in backend.__class__.__name__
-
-    def test_sqlite_backend_skips_docker(self):
-        """Test SQLite backend should skip Docker (file-based)."""
-        backend = create_backend(db_url="sqlite:///test.db")
-        # SQLite is file-based, no Docker needed
-        assert "SQLite" in backend.__class__.__name__
-
-    def test_postgresql_backend_may_use_docker(self):
-        """Test PostgreSQL backend may use Docker containers."""
-        backend = create_backend(db_url="postgresql://user:pass@localhost/db")
-        # PostgreSQL can use Docker or native installation
-        assert "PostgreSQL" in backend.__class__.__name__
-
 
 class TestBackendURLGeneration:
     """Test default URL generation patterns for each backend."""
-
-    def test_pglite_default_url_pattern(self):
-        """Test PGlite uses local directory path."""
-        url = "pglite://./pglite-data"
-        backend_type = detect_backend_from_url(url)
-        assert backend_type == DatabaseBackendType.PGLITE
 
     def test_postgresql_default_url_pattern(self):
         """Test PostgreSQL uses connection string format."""
@@ -198,21 +164,6 @@ class TestBackendURLGeneration:
 
 class TestBackendConfigPersistence:
     """Test backend configuration persistence patterns."""
-
-    def test_env_var_persists_across_calls(self):
-        """Test environment variable persists backend selection."""
-        env_vars = {
-            "HIVE_DATABASE_BACKEND": "pglite",
-            "HIVE_DATABASE_URL": "pglite://./test.db",
-        }
-
-        with patch.dict(os.environ, env_vars, clear=False):
-            # Multiple calls should use same backend
-            backend1 = get_active_backend()
-            backend2 = get_active_backend()
-
-            assert backend1.__class__.__name__ == backend2.__class__.__name__
-            assert "PGlite" in backend1.__class__.__name__
 
     def test_url_only_config_pattern(self):
         """Test configuration with only DATABASE_URL (no explicit backend)."""
@@ -234,19 +185,6 @@ class TestBackendConfigPersistence:
 
 class TestBackendMigrationScenarios:
     """Test scenarios related to backend migration."""
-
-    def test_switch_from_postgresql_to_pglite(self):
-        """Test switching from PostgreSQL to PGlite configuration."""
-        # Original PostgreSQL config
-        pg_backend = create_backend(db_url="postgresql://user:pass@localhost/db")
-        assert "PostgreSQL" in pg_backend.__class__.__name__
-
-        # Switch to PGlite
-        pglite_backend = create_backend(db_url="pglite://./pglite-data")
-        assert "PGlite" in pglite_backend.__class__.__name__
-
-        # Backends are different types
-        assert pg_backend.__class__ != pglite_backend.__class__
 
     def test_switch_from_postgresql_to_sqlite(self):
         """Test switching from PostgreSQL to SQLite configuration."""

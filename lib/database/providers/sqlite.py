@@ -31,7 +31,7 @@ class SQLiteBackend(BaseDatabaseBackend):
        - Multi-turn conversations fail
        - User preferences not saved
        - Cause: Agno Framework requires PostgreSQL-specific storage
-       - **Use PGlite or PostgreSQL for development/production**
+       - **Use PostgreSQL for development/production**
 
     2. **Close() Finality** (Issue #75 - FIXED)
        - close() now permanently prevents reconnection

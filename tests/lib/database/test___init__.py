@@ -26,7 +26,6 @@ class TestDatabaseModuleExports:
         """Test that DatabaseBackendType enum is exported."""
         from lib.database import DatabaseBackendType
 
-        assert hasattr(DatabaseBackendType, "PGLITE")
         assert hasattr(DatabaseBackendType, "POSTGRESQL")
         assert hasattr(DatabaseBackendType, "SQLITE")
 
@@ -66,12 +65,10 @@ class TestBackendFactoryImports:
         from lib.database import DatabaseBackendType
 
         # Test enum members exist
-        assert "PGLITE" in DatabaseBackendType.__members__
         assert "POSTGRESQL" in DatabaseBackendType.__members__
         assert "SQLITE" in DatabaseBackendType.__members__
 
         # Test enum values are strings
-        assert isinstance(DatabaseBackendType.PGLITE.value, str)
         assert isinstance(DatabaseBackendType.POSTGRESQL.value, str)
         assert isinstance(DatabaseBackendType.SQLITE.value, str)
 
