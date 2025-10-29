@@ -11,7 +11,15 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
-import click
+# ANSI escape codes for terminal styling
+GREEN = "\033[32m"
+RED = "\033[31m"
+BLUE = "\033[34m"
+BRIGHT_BLUE = "\033[94m"
+BRIGHT_BLACK = "\033[90m"
+YELLOW = "\033[33m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
 
 MIN_DURATION_THRESHOLD = 0.1  # Minimum duration to show in seconds (100ms)
 
@@ -123,26 +131,26 @@ class ShutdownProgress:
         sys.stdout.write("\r")
 
         if success:
-            icon = click.style(self._success_icon, fg="green", bold=True)
-            title = click.style(step["title"], fg="green")
+            icon = f"{GREEN}{BOLD}{self._success_icon}{RESET}"
+            title = f"{GREEN}{step['title']}{RESET}"
         else:
-            icon = click.style(self._failure_icon, fg="red", bold=True)
-            title = click.style(step["title"], fg="red")
+            icon = f"{RED}{BOLD}{self._failure_icon}{RESET}"
+            title = f"{RED}{step['title']}{RESET}"
 
         duration = ""
         if step["start_time"] and step["end_time"]:
             elapsed = step["end_time"] - step["start_time"]
             if self.verbose and elapsed > MIN_DURATION_THRESHOLD:  # Only show duration if verbose and > 100ms
-                duration = click.style(f" ({elapsed:.2f}s)", fg="bright_black")
+                duration = f"{BRIGHT_BLACK} ({elapsed:.2f}s){RESET}"
 
         line = f"{icon} {title}{duration}"
-        click.echo(line)
+        print(line)
 
     def fail_step(self, step_index: int, error_msg: str = "") -> None:
         """Mark a step as failed."""
         self.complete_step(step_index, success=False)
         if error_msg and self.verbose:
-            click.echo(click.style(f"   Error: {error_msg}", fg="red"))
+            print(f"{RED}   Error: {error_msg}{RESET}")
 
     @contextmanager
     def step(self, step_index: int) -> Generator[None, None, None]:
@@ -169,8 +177,8 @@ class ShutdownProgress:
             (s["end_time"] - s["start_time"]) for s in completed_steps if s["start_time"] and s["end_time"]
         )
 
-        click.echo()
-        click.echo(click.style(f"Total shutdown time: {total_time:.2f}s", fg="bright_black"))
+        print()
+        print(f"{BRIGHT_BLACK}Total shutdown time: {total_time:.2f}s{RESET}")
 
     def print_farewell_message(self) -> None:
         """Print a nice farewell message after shutdown is complete."""
@@ -179,9 +187,9 @@ class ShutdownProgress:
         sys.stdout.write(" " * 80)  # Clear the line with spaces
         sys.stdout.write("\r")  # Move cursor back to beginning
 
-        click.echo()
-        farewell = click.style(f"{self._farewell_emoji} Server stopped by user", fg="bright_blue", bold=True)
-        click.echo(farewell)
+        print()
+        farewell = f"{BRIGHT_BLUE}{BOLD}{self._farewell_emoji} Server stopped by user{RESET}"
+        print(farewell)
 
 
 def create_automagik_shutdown_progress(*, verbose: bool = False) -> ShutdownProgress:
