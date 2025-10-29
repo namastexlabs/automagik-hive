@@ -89,8 +89,8 @@ detected_unit = filter_instance.detect_business_unit_from_text(user_query)
 **CSV Format (knowledge_rag.csv)**:
 ```csv
 query,context,business_unit,product,conclusion
-"PIX issue","Solution...","pagbank","PIX","Technical"
-"Antecipação","Process...","adquirencia","Sales","Process"
+"Payment issue","Solution...","payments","Payment","Technical"
+"Advance request","Process...","acquiring","Sales","Process"
 ```
 
 ## Core Features
@@ -132,12 +132,12 @@ class SmartIncrementalLoader:
 ```yaml
 knowledge:
   business_units:
-    pagbank:
-      keywords: ["pix", "conta", "app", "transferencia"]
-    adquirencia:
-      keywords: ["antecipacao", "vendas", "maquina"]
-    emissao:
-      keywords: ["cartao", "limite", "credito"]
+    payments:
+      keywords: ["pix", "account", "app", "transfer"]
+    acquiring:
+      keywords: ["advance", "sales", "terminal"]
+    issuing:
+      keywords: ["card", "limit", "credit"]
 ```
 
 ## Vector Database Configuration

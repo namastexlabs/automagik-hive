@@ -18,11 +18,11 @@ Successfully created a comprehensive diagnostic tool that helps users self-servi
 ### 1. Core Implementation
 
 **Files Created:**
-- `/home/cezar/automagik/automagik-hive/cli/commands/diagnose.py` - DiagnoseCommands class with 6 diagnostic checks
-- `/home/cezar/automagik/automagik-hive/tests/cli/commands/test_diagnose.py` - Comprehensive test suite (26 tests, 92% coverage)
+- `cli/commands/diagnose.py` - DiagnoseCommands class with 6 diagnostic checks
+- `tests/cli/commands/test_diagnose.py` - Comprehensive test suite (26 tests, 92% coverage)
 
 **Files Modified:**
-- `/home/cezar/automagik/automagik-hive/cli/main.py` - Wired diagnose subcommand into CLI
+- `cli/main.py` - Wired diagnose subcommand into CLI
 
 ### 2. Diagnostic Checks Implemented
 
@@ -270,4 +270,4 @@ The implementation is production-ready and can be extended with additional check
 
 ---
 
-**Death Testament**: /home/cezar/automagik/automagik-hive/genie/reports/hive-coder-diagnose-command-202510201942.md
+**Death Testament**: genie/reports/hive-coder-diagnose-command-202510201942.md

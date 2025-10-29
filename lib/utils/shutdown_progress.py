@@ -1,6 +1,5 @@
 """
 Graceful shutdown progress display utility
-Adapted from Langflow's cli/progress.py with automagik-hive integration
 """
 
 import platform
