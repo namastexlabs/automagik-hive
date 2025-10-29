@@ -560,8 +560,10 @@ class MainService:
                 compose_file = docker_compose_root
 
             if not compose_file:
-                # Docker compose file not found
+                # Docker compose file not found - mention specific paths checked
                 print("❌ Docker Compose file not found")
+                print(f"   Checked: docker/main/docker-compose.yml")
+                print(f"   Checked: docker-compose.yml")
                 print("\n💡 Troubleshooting steps:")
                 print("   1. Verify workspace was initialized: automagik-hive init <name>")
                 print("   2. Check docker/main/ directory exists")

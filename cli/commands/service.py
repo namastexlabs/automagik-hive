@@ -306,13 +306,11 @@ class ServiceManager:
             if not env_example_found:
                 print("  ⚠️  .env.example not found (you'll need to create it manually)")
 
-            # Skip Docker configuration - only needed for PostgreSQL backend
-            # Users selecting PostgreSQL during install will be guided to set up Docker
-            # This prevents unnecessary Docker file copying for PGlite/SQLite users
+            # Copy Docker configuration (needed for PostgreSQL backend)
             docker_copied = False
-            docker_source = None  # Intentionally disabled
+            docker_source = self._locate_docker_templates()
 
-            if False and docker_source is not None:  # Disabled: Skip Docker files during init
+            if docker_source is not None:
                 try:
                     # Create docker directory in workspace
                     (workspace_path / "docker" / "main").mkdir(parents=True, exist_ok=True)

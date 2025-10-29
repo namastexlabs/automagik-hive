@@ -19,6 +19,42 @@ from lib.config.provider_registry import get_provider_registry
 from lib.utils.proxy_agents import AgnoAgentProxy
 
 
+# Fixture to ensure tests run from project root regardless of cwd pollution
+@pytest.fixture(autouse=True)
+def ensure_project_root():
+    """
+    Ensure tests run from project root directory.
+
+    This fixture addresses test pollution from other tests that change cwd
+    (e.g., tests using isolated_workspace fixture). Without this, agent
+    discovery fails because registry looks for ai/agents/ relative to cwd.
+
+    Applied automatically to all tests in this file via autouse=True.
+    """
+    # Find project root by looking for pyproject.toml
+    original_cwd = Path.cwd()
+    current = Path(__file__).resolve()
+
+    # Walk up until we find pyproject.toml
+    project_root = None
+    for parent in [current, *current.parents]:
+        if (parent / "pyproject.toml").exists():
+            project_root = parent
+            break
+
+    if project_root is None:
+        pytest.fail("Could not find project root (pyproject.toml)")
+
+    # Change to project root for test execution
+    os.chdir(project_root)
+
+    try:
+        yield project_root
+    finally:
+        # Restore original cwd (defensive cleanup)
+        os.chdir(original_cwd)
+
+
 class TestRealAgentsExecution:
     """Test agents registry with actual AI model connections."""
 

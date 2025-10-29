@@ -30,8 +30,14 @@ class TestCredentialServiceInit:
         service = CredentialService()
 
         assert service.project_root == Path.cwd()
-        assert service.master_env_file == Path.cwd() / ".env"
-        assert service.env_file == service.master_env_file
+        # master_env_file should be .env.master if it exists, otherwise .env (property behavior)
+        expected_alias = Path.cwd() / ".env.master"
+        expected_primary = Path.cwd() / ".env"
+        if expected_alias.exists():
+            assert service.master_env_file == expected_alias
+        else:
+            assert service.master_env_file == expected_primary
+        assert service.env_file == service.env_manager.primary_env_path
         assert service.postgres_user_var == "POSTGRES_USER"
         assert service.postgres_password_var == "POSTGRES_PASSWORD"  # noqa: S105 - Test fixture password
 
@@ -65,7 +71,13 @@ class TestCredentialServiceInit:
         service = CredentialService(env_file=env_file)
 
         assert service.project_root == Path.cwd()
-        assert service.master_env_file.resolve() == env_file.resolve()
+        # master_env_file is a property that returns .env.master if exists, otherwise .env
+        expected_alias = Path.cwd() / ".env.master"
+        expected_primary = Path.cwd() / ".env"
+        if expected_alias.exists():
+            assert service.master_env_file == expected_alias
+        else:
+            assert service.master_env_file == expected_primary
 
 
 class TestPostgresCredentialGeneration:

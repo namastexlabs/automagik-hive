@@ -52,7 +52,8 @@ class TestShowCurrentKey:
         # Should pass - function calls service and logs result
         mock_auth_service.assert_called_once()
         mock_service.get_current_key.assert_called_once()
-        # Port comes from conftest.py default (8887), not from patch.dict
+        # Port comes from tests/conftest.py (8887) at lines 209 & 774
+        # settings() loads this value from env before test execution
         mock_logger.info.assert_called_once_with(
             "Current API key retrieved", key_length=len("test_api_key_12345"), port=8887
         )

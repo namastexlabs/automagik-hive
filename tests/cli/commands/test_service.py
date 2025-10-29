@@ -391,7 +391,10 @@ class TestServiceManagerEnvironmentSetup:
                         with patch.object(manager, "main_service") as mock_main:
                             mock_main.install_main_environment.return_value = True
                             with patch.object(manager, "_resolve_install_root", return_value=resolved_path):
-                                result = manager.install_full_environment("./test")
+                                with patch.object(manager, "_setup_uv_project", return_value=True):
+                                    # Mock input to decline starting server
+                                    with patch("builtins.input", return_value="n"):
+                                        result = manager.install_full_environment("./test")
 
                             assert result is True
                             mock_main.install_main_environment.assert_called_once_with(str(resolved_path))
@@ -421,13 +424,16 @@ class TestServiceManagerEnvironmentSetup:
                             with patch.object(
                                 manager, "_setup_local_hybrid_deployment", return_value=True
                             ) as mock_local:
-                                result = manager.install_full_environment(str(ai_dir))
+                                with patch.object(manager, "_setup_uv_project", return_value=True):
+                                    # Mock input to decline starting server
+                                    with patch("builtins.input", return_value="n"):
+                                        result = manager.install_full_environment(str(ai_dir))
 
         assert result is True
         mock_credential_service_class.assert_called_once()
         called_kwargs = mock_credential_service_class.call_args.kwargs
         assert called_kwargs.get("project_root") == repo_root
-        mock_local.assert_called_once_with(str(repo_root), verbose=False)
+        mock_local.assert_called_once_with(str(repo_root), backend_type="postgresql", verbose=False)
 
     def test_install_full_environment_env_setup_fails(self):
         """Test environment installation when env setup fails."""
@@ -618,8 +624,9 @@ class TestServiceManagerInitWorkspace:
 
         manager = ServiceManager()
 
-        # Mock input to confirm overwrite
-        with patch("builtins.input", return_value="yes"), patch("shutil.copytree"), patch("shutil.copy"):
+        # Mock input to confirm overwrite, skip API key config, and decline install
+        # Sequence: confirm overwrite ("yes"), skip API key ("3"), decline install ("n")
+        with patch("builtins.input", side_effect=["yes", "3", "n"]):
             result = manager.init_workspace(str(workspace_path), force=True)
 
             assert result is True

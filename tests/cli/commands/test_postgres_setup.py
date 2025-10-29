@@ -225,7 +225,10 @@ class TestPostgresInstallErrorReporting:
             with patch("builtins.input", return_value="A"):  # A = local_hybrid deployment mode
                 with patch("lib.auth.credential_service.CredentialService"):
                     # Run install with verbose to see paths checked
-                    service_manager.install_full_environment(workspace_path, verbose=True)
+                    # Force PostgreSQL backend to trigger Docker compose file checking
+                    service_manager.install_full_environment(
+                        workspace_path, verbose=True, backend_override="postgresql"
+                    )
 
                     print_calls = [str(call) for call in mock_print.call_args_list]
                     output = " ".join(print_calls)

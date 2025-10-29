@@ -7,11 +7,48 @@ Tests actual MCP tool connections, database queries, and cross-service integrati
 
 import asyncio
 import os
+from pathlib import Path
 
 import pytest
 
 from lib.mcp import MCPCatalog
 from lib.tools.registry import ToolRegistry
+
+
+# Fixture to ensure tests run from project root regardless of cwd pollution
+@pytest.fixture(autouse=True)
+def ensure_project_root():
+    """
+    Ensure tests run from project root directory.
+
+    This fixture addresses test pollution from other tests that change cwd
+    (e.g., tests using isolated_workspace fixture). Without this, MCP catalog
+    fails because it looks for .mcp.json relative to cwd.
+
+    Applied automatically to all tests in this file via autouse=True.
+    """
+    # Find project root by looking for pyproject.toml
+    original_cwd = Path.cwd()
+    current = Path(__file__).resolve()
+
+    # Walk up until we find pyproject.toml
+    project_root = None
+    for parent in [current, *current.parents]:
+        if (parent / "pyproject.toml").exists():
+            project_root = parent
+            break
+
+    if project_root is None:
+        pytest.fail("Could not find project root (pyproject.toml)")
+
+    # Change to project root for test execution
+    os.chdir(project_root)
+
+    try:
+        yield project_root
+    finally:
+        # Restore original cwd (defensive cleanup)
+        os.chdir(original_cwd)
 
 
 class TestRealToolsExecution:

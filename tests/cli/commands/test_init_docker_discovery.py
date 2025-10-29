@@ -41,8 +41,10 @@ class TestDockerTemplateDiscovery:
         workspace_name = str(tmp_path / "test-workspace")
         service_manager = ServiceManager()
 
-        # Initialize workspace
-        service_manager.init_workspace(workspace_name, force=False)
+        # Mock stdin to skip interactive prompts
+        with patch("builtins.input", side_effect=["3", "n"]):  # '3' = skip API key, 'n' = don't run install
+            # Initialize workspace
+            service_manager.init_workspace(workspace_name, force=False)
 
         # Verify Docker directory structure created
         workspace_path = Path(workspace_name)
@@ -69,9 +71,11 @@ class TestDockerTemplateDiscovery:
         workspace_name = str(tmp_path / "test-workspace")
         service_manager = ServiceManager()
 
-        # Initialize workspace
-        success = service_manager.init_workspace(workspace_name, force=False)
-        assert success, "Init should succeed"
+        # Mock stdin to skip interactive prompts
+        with patch("builtins.input", side_effect=["3", "n"]):  # '3' = skip API key, 'n' = don't run install
+            # Initialize workspace
+            success = service_manager.init_workspace(workspace_name, force=False)
+            assert success, "Init should succeed"
 
         # Read docker-compose.yml
         compose_file = Path(workspace_name) / "docker" / "main" / "docker-compose.yml"
@@ -110,8 +114,10 @@ class TestDockerTemplateDiscovery:
                 with patch("urllib.request.urlretrieve") as mock_retrieve:
                     mock_retrieve.return_value = (None, None)
 
-                    # Initialize workspace
-                    service_manager.init_workspace(workspace_name, force=False)
+                    # Mock stdin to skip interactive prompts
+                    with patch("builtins.input", side_effect=["3", "n"]):  # '3' = skip API key, 'n' = don't run install
+                        # Initialize workspace
+                        service_manager.init_workspace(workspace_name, force=False)
 
                     # Verify GitHub download attempted for Docker files
                     docker_compose_url = "https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/docker/main/docker-compose.yml"
@@ -144,9 +150,11 @@ class TestDockerTemplateDiscovery:
         workspace_name = str(tmp_path / "test-workspace")
         service_manager = ServiceManager()
 
-        # Initialize workspace
-        success = service_manager.init_workspace(workspace_name, force=False)
-        assert success, "Init should succeed"
+        # Mock stdin to skip interactive prompts
+        with patch("builtins.input", side_effect=["3", "n"]):  # '3' = skip API key, 'n' = don't run install
+            # Initialize workspace
+            success = service_manager.init_workspace(workspace_name, force=False)
+            assert success, "Init should succeed"
 
         workspace_path = Path(workspace_name)
 
@@ -204,7 +212,9 @@ class TestDockerTemplateDiscovery:
         if docker_source.exists():
             # Mock GitHub download to track if it's called
             with patch("urllib.request.urlretrieve") as mock_retrieve:
-                service_manager.init_workspace(workspace_name, force=False)
+                # Mock stdin to skip interactive prompts
+                with patch("builtins.input", side_effect=["3", "n"]):  # '3' = skip API key, 'n' = don't run install
+                    service_manager.init_workspace(workspace_name, force=False)
 
                 # Verify local source used, GitHub NOT called for Docker files
                 docker_urls = ["docker/main/docker-compose.yml", "docker/main/Dockerfile", "docker/main/.dockerignore"]
@@ -226,9 +236,11 @@ class TestDockerTemplateDiscovery:
         workspace_name = str(tmp_path / "test-workspace")
         service_manager = ServiceManager()
 
-        # Initialize workspace
-        success = service_manager.init_workspace(workspace_name, force=False)
-        assert success, "Init should succeed"
+        # Mock stdin to skip interactive prompts
+        with patch("builtins.input", side_effect=["3", "n"]):  # '3' = skip API key, 'n' = don't run install
+            # Initialize workspace
+            success = service_manager.init_workspace(workspace_name, force=False)
+            assert success, "Init should succeed"
 
         # Try to validate the workspace using MainService validation logic
         from cli.core.main_service import MainService
