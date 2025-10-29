@@ -11,12 +11,13 @@ from rich.text import Text
 console = Console()
 
 
-def create_welcome_banner(docs_url: str) -> Panel:
+def create_welcome_banner(docs_url: str, show_debug_urls: bool = False) -> Panel:
     """
     Create welcome banner with AgentOS and contact links.
 
     Args:
         docs_url: Local API documentation URL (e.g., http://localhost:7777/docs)
+        show_debug_urls: If True, includes Main API and Health Check URLs (debug level info)
 
     Returns:
         Rich Panel ready to print
@@ -48,11 +49,15 @@ def create_welcome_banner(docs_url: str) -> Panel:
     content.append("📖 API Documentation → ", style="yellow")
     content.append(f"{docs_url}\n", style="blue")
 
-    content.append("🔌 Main API → ", style="yellow")
-    content.append(f"{base_url}\n", style="blue")
+    # Debug-level URLs (only shown when debug logging is enabled)
+    if show_debug_urls:
+        content.append("🔌 Main API → ", style="yellow")
+        content.append(f"{base_url}\n", style="blue")
 
-    content.append("💗 Health Check → ", style="yellow")
-    content.append(f"{base_url}/api/v1/health\n\n", style="blue")
+        content.append("💗 Health Check → ", style="yellow")
+        content.append(f"{base_url}/api/v1/health\n", style="blue")
+
+    content.append("\n", style="blue")
 
     # Create panel with content
     panel = Panel(
@@ -65,13 +70,14 @@ def create_welcome_banner(docs_url: str) -> Panel:
     return panel
 
 
-def display_welcome_banner(docs_url: str) -> None:
+def display_welcome_banner(docs_url: str, show_debug_urls: bool = False) -> None:
     """
     Display welcome banner to console.
 
     Args:
         docs_url: Local API documentation URL
+        show_debug_urls: If True, includes Main API and Health Check URLs (debug level info)
     """
-    banner = create_welcome_banner(docs_url)
+    banner = create_welcome_banner(docs_url, show_debug_urls=show_debug_urls)
     console.print("\n")
     console.print(banner)

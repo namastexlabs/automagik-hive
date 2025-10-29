@@ -690,7 +690,11 @@ async def _async_create_automagik_api() -> FastAPI:
 
             base_url = get_server_config().get_base_url()
             docs_url = f"{base_url}/docs"
-            display_welcome_banner(docs_url)
+
+            # Only show Main API and Health Check URLs when debug logging is enabled
+            log_level = os.getenv("HIVE_LOG_LEVEL", "INFO").upper()
+            show_debug_urls = log_level == "DEBUG"
+            display_welcome_banner(docs_url, show_debug_urls=show_debug_urls)
 
         except Exception as e:
             import traceback
