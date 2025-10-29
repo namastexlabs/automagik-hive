@@ -117,11 +117,11 @@ Guidance for Claude Code (claude.ai/code) when working with the Automagik Hive r
 ## Workspace & Wish System
 
 [CONTEXT]
-- `/genie/` is the autonomous planning space, centered on wishes.
+- `/.genie/` is the autonomous planning space, centered on wishes.
 - One wish equals one evolving document; DEATH TESTAMENT closes the lifecycle.
 
 [SUCCESS CRITERIA]
-✅ Active work lives under `genie/wishes/` with orchestration strategy + final report.
+✅ Active work lives under `.genie/wishes/` with orchestration strategy + final report.
 ✅ `/wish` command drives planning; updates happen in-place (no v2/v3 files).
 ✅ DEATH TESTAMENT entries capture evidence, outcomes, and remaining risks.
 
@@ -413,9 +413,9 @@ SELECT * FROM agno.knowledge_base WHERE meta_data->>'domain' = 'development';
   BRANCH: [dev|feature/wish-name]
 
   COMPLETE CONTEXT:
-  - PRD: @/genie/wishes/[wish-name]/prd.md
-  - Wish Plan: @/genie/wishes/[wish-name]/wish.md
-  - Architecture: @/genie/wishes/[wish-name]/context/architecture.md
+  - PRD: @/.genie/wishes/[wish-name]/prd.md
+  - Wish Plan: @/.genie/wishes/[wish-name]/wish.md
+  - Architecture: @/.genie/wishes/[wish-name]/context/architecture.md
   - Project Patterns: @/CLAUDE.md
 
   PRIMARY AGENT: @[hive-coder|hive-tests|hive-dev-fixer]
