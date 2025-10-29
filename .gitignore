@@ -43,6 +43,9 @@ venv.bak/
 
 # Testing
 .coverage
+.coverage.*
+coverage.json
+htmlcov/
 .pytest_cache/
 .tox/
 .nox/
@@ -50,6 +53,8 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
+.mypy_cache/
+.ruff_cache/
 
 # Logs
 logs/
@@ -59,6 +64,7 @@ logs/
 data/
 !lib/knowledge/data/
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
 
@@ -67,7 +73,6 @@ data/
 
 # MacOS
 .DS_Store
-.coverage
 
 # Environment variables - CRITICAL SECURITY
 .env
@@ -91,3 +96,4 @@ agent.pid
 temp/
 env
 pglite-data/
+*.pid
