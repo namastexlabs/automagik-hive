@@ -36,8 +36,12 @@ def dev_command(
 
     # Check if we're in a Hive project (unless --examples flag)
     if not examples and not _is_hive_project():
-        console.print(f"\n{CLI_EMOJIS['error']} Not a Hive project. Run [yellow]uvx automagik-hive init <project-name>[/yellow] first.")
-        console.print(f"\n{CLI_EMOJIS['info']} Or try: [yellow]uvx automagik-hive dev --examples[/yellow] to explore Hive's built-in agents\n")
+        console.print(
+            f"\n{CLI_EMOJIS['error']} Not a Hive project. Run [yellow]uvx automagik-hive init <project-name>[/yellow] first."
+        )
+        console.print(
+            f"\n{CLI_EMOJIS['info']} Or try: [yellow]uvx automagik-hive dev --examples[/yellow] to explore Hive's built-in agents\n"
+        )
         raise typer.Exit(1)
 
     # Force package mode for examples
@@ -67,7 +71,9 @@ def serve_command(
 
     # Check if we're in a Hive project
     if not _is_hive_project():
-        console.print(f"\n{CLI_EMOJIS['error']} Not a Hive project. Run [yellow]uvx automagik-hive init <project-name>[/yellow] first.")
+        console.print(
+            f"\n{CLI_EMOJIS['error']} Not a Hive project. Run [yellow]uvx automagik-hive init <project-name>[/yellow] first."
+        )
         raise typer.Exit(1)
 
     console.print(f"\n{CLI_EMOJIS['rocket']} Starting Hive V2 production server...\n")
@@ -96,6 +102,16 @@ def _start_server(host: str, port: int, reload: bool):
     except ImportError:
         console.print(f"\n{CLI_EMOJIS['error']} uvicorn not installed. Install with: uv pip install uvicorn")
         raise typer.Exit(1)
+    except OSError as e:
+        if "Address already in use" in str(e) or e.errno == 48 or e.errno == 98:
+            console.print(f"\n{CLI_EMOJIS['error']} Port {port} is already in use.")
+            console.print(f"\n{CLI_EMOJIS['info']} Try a different port: [yellow]hive dev --port <other-port>[/yellow]")
+            console.print(
+                f"{CLI_EMOJIS['info']} Or stop the process using port {port}: [yellow]lsof -ti:{port} | xargs kill -9[/yellow]\n"
+            )
+        else:
+            console.print(f"\n{CLI_EMOJIS['error']} Server error: {e}")
+        raise typer.Exit(1)
     except KeyboardInterrupt:
         console.print(f"\n\n{CLI_EMOJIS['success']} Server stopped.")
         sys.exit(0)
@@ -103,7 +119,9 @@ def _start_server(host: str, port: int, reload: bool):
 
 def _is_hive_project() -> bool:
     """Check if current directory is a Hive project."""
-    return (Path.cwd() / "hive.yaml").exists() or (Path.cwd() / "ai").exists()
+    cwd = Path.cwd()
+    # Require all three: hive.yaml + ai directory + pyproject.toml
+    return (cwd / "hive.yaml").exists() and (cwd / "ai").is_dir() and (cwd / "pyproject.toml").exists()
 
 
 def _show_startup_info(port: int, host: str, reload: bool, examples: bool):
@@ -129,7 +147,7 @@ def _show_startup_info(port: int, host: str, reload: bool, examples: bool):
   {CLI_EMOJIS["api"]} API: http://{host}:{port}
   {CLI_EMOJIS["file"]} Docs: http://localhost:{port}/docs
   {CLI_EMOJIS["workflow"]} Hot Reload: {reload_status}
-  {CLI_EMOJIS["agent"]} Mode: {mode}
+  {CLI_EMOJIS["robot"]} Mode: {mode}
 
 {commands_section}
 

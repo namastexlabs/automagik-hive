@@ -390,7 +390,7 @@ dev: ## 🛠️ Start development server (runs from repository root, uses builti
 		exit 1; \
 	fi
 	@echo -e "$(FONT_YELLOW)💡 This runs the dev server with builtin examples$(FONT_RESET)"
-	@echo -e "$(FONT_YELLOW)💡 For a user project: cd your-project && hive dev start$(FONT_RESET)"
+	@echo -e "$(FONT_YELLOW)💡 For a user project: cd your-project && hive dev$(FONT_RESET)"
 	@echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
 	@echo ""
 	@echo -e "$(FONT_CYAN)🌐 Access URLs:$(FONT_RESET)"
