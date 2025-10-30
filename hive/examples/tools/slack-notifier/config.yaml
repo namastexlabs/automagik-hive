@@ -1,0 +1,54 @@
+tool:
+  name: "Slack Notifier"
+  tool_id: "slack-notifier"
+  version: "1.0.0"
+  description: "Send notifications to Slack channels and users"
+  category: "integration"
+  tags: ["slack", "notifications", "messaging", "integration"]
+  enabled: true
+
+  parameters:
+    default_channel: "#notifications"
+    timeout_seconds: 30
+    retry_attempts: 3
+    include_timestamp: true
+
+  integration:
+    slack_config:
+      use_slack_tools: true
+      bot_token_env: "SLACK_BOT_TOKEN"
+      default_icon: ":robot_face:"
+      username: "Automagik Bot"
+
+metadata:
+  author: "Automagik Hive"
+  created_date: "2025-10-30"
+  license: "MIT"
+  documentation_url: "https://docs.agno.com/tools/slack"
+
+interface:
+  inputs:
+    - name: "message"
+      type: "str"
+      required: true
+      description: "Message content to send"
+
+    - name: "channel"
+      type: "str"
+      required: false
+      description: "Target channel (default: #notifications)"
+
+    - name: "thread_ts"
+      type: "str"
+      required: false
+      description: "Thread timestamp for replies"
+
+    - name: "urgent"
+      type: "bool"
+      required: false
+      description: "Mark as urgent notification"
+
+  outputs:
+    - name: "result"
+      type: "dict"
+      description: "Notification result with status and message ID"

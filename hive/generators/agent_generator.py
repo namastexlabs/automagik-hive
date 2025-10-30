@@ -91,7 +91,16 @@ class AgentGenerator:
 
         try:
             # Use meta-agent to analyze and generate optimal config
-            analysis = self.meta_agent.analyze_and_generate(description)
+            meta_analysis = self.meta_agent.analyze_requirements(description, agent_name=name)
+
+            # Convert MetaAnalysis to dict format for compatibility
+            analysis = {
+                "model": meta_analysis.model_recommendation,
+                "provider": self._infer_provider(meta_analysis.model_recommendation),
+                "tools": meta_analysis.tools_recommended,
+                "instructions": meta_analysis.instructions,
+                "reasoning": meta_analysis.instructions_reasoning,
+            }
 
             # Extract AI recommendations
             recommended_model = analysis.get("model", "gpt-4o-mini")
@@ -130,9 +139,7 @@ class AgentGenerator:
 
         except Exception as e:
             # Unexpected error - fail loudly
-            raise GenerationError(
-                f"Unexpected error during generation: {type(e).__name__}: {e}"
-            ) from e
+            raise GenerationError(f"Unexpected error during generation: {type(e).__name__}: {e}") from e
 
         # Build config
         config = AgentConfig(

@@ -1,0 +1,51 @@
+workflow:
+  name: "Parallel Processing Workflow"
+  workflow_id: "parallel-workflow"
+  version: "1.0.0"
+  description: "Multi-source data processing with parallel execution"
+
+model:
+  provider: "openai"
+  id: "gpt-4o-mini"
+  temperature: 0.7
+
+steps:
+  - name: "Preparation"
+    description: "Prepare data sources and processing parameters"
+    type: "function"
+
+  - name: "ParallelProcessing"
+    description: "Process multiple data sources concurrently"
+    type: "parallel"
+    substeps:
+      - name: "ProcessSource1"
+        description: "Process first data source"
+      - name: "ProcessSource2"
+        description: "Process second data source"
+      - name: "ProcessSource3"
+        description: "Process third data source"
+
+  - name: "Aggregation"
+    description: "Merge and analyze all results"
+    type: "function"
+
+  - name: "Report"
+    description: "Generate final report"
+    type: "agent"
+
+instructions: |
+  This workflow demonstrates parallel processing for efficiency:
+
+  1. PREPARATION - Set up data sources and parameters
+  2. PARALLEL PROCESSING - Process multiple sources simultaneously
+     - Source 1: Process independently
+     - Source 2: Process independently
+     - Source 3: Process independently
+  3. AGGREGATION - Merge all parallel results
+  4. REPORT - Generate comprehensive report
+
+  Parallel execution significantly reduces total processing time.
+
+storage:
+  table_name: "parallel_workflow_sessions"
+  auto_upgrade_schema: true

@@ -226,58 +226,465 @@ knowledge:
 
 
 def _create_readme(project_path: Path, project_name: str):
-    """Create project README."""
+    """Create project README and supporting documentation."""
+    # Main README
     readme_content = f"""# {project_name}
 
-Hive V2 AI agent project.
+A Hive V2 AI agent project powered by the Agno framework. Build, test, and deploy multi-agent systems with YAML configurations.
 
-## Getting Started
+## Quick Start (5 minutes)
 
-1. **Install dependencies**:
-   ```bash
-   uv pip install -e .
-   ```
+```bash
+# Install dependencies
+uv sync
 
-2. **Configure environment**:
-   - Copy `.env.example` to `.env`
-   - Add your API keys
+# Configure your environment
+cp .env.example .env
+# Edit .env and add your API keys
 
-3. **Start development server**:
-   ```bash
-   hive dev
-   ```
+# Start the development server
+hive dev
+
+# Visit http://localhost:8886/docs
+```
+
+**Want detailed setup?** See [QUICKSTART.md](QUICKSTART.md)
+
+## What is Hive V2?
+
+Hive V2 is a modern framework for building AI agents with:
+
+- **YAML-Driven Configuration**: Define agents, teams, and workflows as code
+- **Built on Agno**: Leverage the powerful Agno framework
+- **Python-Powered**: Use Python for custom logic and integrations
+- **Hot Reload**: Changes reflect instantly during development
+- **Knowledge Integration**: CSV-based RAG for domain-specific knowledge
+- **Team Coordination**: Route queries to specialized agents automatically
 
 ## Project Structure
 
 ```
 {project_name}/
-├── ai/                    # AI components
-│   ├── agents/           # Agent definitions
-│   ├── teams/            # Team definitions
-│   ├── workflows/        # Workflow definitions
-│   └── tools/            # Custom tools
-├── data/                 # Knowledge bases
-│   ├── csv/             # CSV knowledge
-│   └── documents/       # Document stores
-├── .env                 # Environment config
-└── hive.yaml           # Project config
+├── ai/
+│   ├── agents/              # 🤖 AI agent definitions
+│   │   └── examples/        # Example agents
+│   │       └── support-bot/ # Pre-built support agent
+│   ├── teams/               # 👥 Multi-agent teams
+│   ├── workflows/           # ⚡ Step-based processes
+│   └── tools/               # 🔧 Custom tools
+├── data/
+│   ├── csv/                 # 📊 CSV knowledge bases
+│   ├── documents/           # 📄 Document stores
+│   └── embeddings/          # 🧠 Vector embeddings
+├── .env                     # Environment secrets
+├── .env.example             # Environment template
+├── hive.yaml                # Project configuration
+└── README.md                # This file
 ```
 
-## Creating Components
+## Creating Your First Agent
 
-Create new agents, teams, or workflows:
+### 1. Directory Structure
+
 ```bash
-hive create agent my-agent --description "My custom agent"
-hive create team my-team --mode route
-hive create workflow my-workflow
+mkdir -p ai/agents/my-agent
+cd ai/agents/my-agent
 ```
 
-## Documentation
+### 2. Define config.yaml
 
-- [Hive V2 Docs](https://docs.automagik-hive.dev)
-- [Agno Framework](https://docs.agno.com)
+```yaml
+agent:
+  name: "My Agent"
+  agent_id: "my-agent"
+  description: "Description of what my agent does"
+
+model:
+  provider: "openai"
+  id: "gpt-4o-mini"
+  temperature: 0.7
+
+instructions: |
+  You are a helpful AI assistant.
+
+  Your responsibilities:
+  - Answer questions clearly
+  - Be respectful and professional
+```
+
+### 3. Create agent.py
+
+```python
+\"\"\"My agent factory.\"\"\"
+import yaml
+from pathlib import Path
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+def get_my_agent(**kwargs) -> Agent:
+    config_path = Path(__file__).parent / "config.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+
+    model = OpenAIChat(id=config["model"]["id"])
+    agent = Agent(
+        name=config["agent"]["name"],
+        model=model,
+        instructions=config["instructions"],
+        **kwargs
+    )
+    return agent
+```
+
+See [ai/agents/README.md](ai/agents/README.md) for complete guide.
+
+## Development Commands
+
+```bash
+# Start development server
+hive dev
+
+# Create new agent
+hive create agent my-agent
+
+# Create new team
+hive create team my-team --mode route
+
+# Create new workflow
+hive create workflow my-workflow
+
+# Run tests
+uv run pytest
+
+# Type checking
+uv run mypy .
+
+# Linting
+uv run ruff check .
+```
+
+## Next Steps
+
+1. **Complete Setup**: Follow [QUICKSTART.md](QUICKSTART.md)
+2. **Build Your First Agent**: See [ai/agents/README.md](ai/agents/README.md)
+3. **Create a Team**: See [ai/teams/README.md](ai/teams/README.md)
+4. **Add a Workflow**: See [ai/workflows/README.md](ai/workflows/README.md)
+5. **Integrate Tools**: See [ai/tools/README.md](ai/tools/README.md)
+
+## Resources
+
+- **Quick Start**: [QUICKSTART.md](QUICKSTART.md) (15 minutes)
+- **Hive V2 Docs**: https://docs.automagik-hive.dev
+- **Agno Framework**: https://docs.agno.com
+- **Examples**: See `ai/agents/examples/`
+
+## Support
+
+- 📚 Documentation: https://docs.automagik-hive.dev
+- 💬 Community: Join our discussions
+- 🐛 Issues: Report bugs on GitHub
+- 💡 Ideas: Share feature requests
+
+---
+
+Happy building! Your AI agents are just minutes away. 🚀
 """
     (project_path / "README.md").write_text(readme_content)
+
+    # QUICKSTART.md
+    quickstart_content = """# Quick Start Guide
+
+Get your Hive V2 project running in 15 minutes.
+
+## Prerequisites
+
+- **Python 3.11+** (check with `python --version`)
+- **uv** package manager ([install here](https://docs.astral.sh/uv/))
+- **API Keys** (Anthropic, OpenAI, or other AI provider)
+
+## Installation
+
+### 1. Install Dependencies
+
+```bash
+# Navigate to your project
+cd {project_name}
+
+# Install via uv
+uv sync
+```
+
+### 2. Configure Environment
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and add your API keys
+# Required: At least ONE of these
+#   - ANTHROPIC_API_KEY
+#   - OPENAI_API_KEY
+#   - GEMINI_API_KEY
+#   - GROQ_API_KEY
+
+nano .env  # or your favorite editor
+```
+
+### 3. Start Development Server
+
+```bash
+# Start the Hive development server
+hive dev
+
+# Server will start at http://localhost:8886
+# API docs available at http://localhost:8886/docs
+```
+
+## Make Your First API Call
+
+### 1. Test Health Endpoint
+
+```bash
+curl http://localhost:8886/api/v1/health
+```
+
+### 2. Run the Support Bot Agent
+
+```bash
+curl -X POST http://localhost:8886/agents/support-bot/run \\
+  -H "Content-Type: application/json" \\
+  -d '{{"message":"Hello! I need help"}}'
+```
+
+## Create Your First Agent
+
+### Step 1: Create Agent Directory
+
+```bash
+mkdir -p ai/agents/my-first-agent
+cd ai/agents/my-first-agent
+```
+
+### Step 2: Create config.yaml
+
+```yaml
+agent:
+  name: "My Custom Agent"
+  agent_id: "my-custom-agent"
+  description: "My first AI agent"
+
+model:
+  provider: "openai"
+  id: "gpt-4o-mini"
+  temperature: 0.7
+
+instructions: |
+  You are a helpful assistant.
+
+  Your role:
+  - Answer questions clearly
+  - Be friendly and professional
+  - Provide actionable advice
+```
+
+### Step 3: Create agent.py
+
+```python
+\"\"\"My custom agent factory.\"\"\"
+
+import yaml
+from pathlib import Path
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+
+def get_my_custom_agent(**kwargs) -> Agent:
+    \"\"\"Create custom agent.\"\"\"
+    config_path = Path(__file__).parent / "config.yaml"
+
+    with open(config_path, encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+
+    agent_config = config.get("agent", {{}})
+    model_config = config.get("model", {{}})
+
+    # Create model
+    model = OpenAIChat(
+        id=model_config.get("id", "gpt-4o-mini"),
+        temperature=model_config.get("temperature", 0.7),
+    )
+
+    # Create agent
+    agent = Agent(
+        name=agent_config.get("name"),
+        model=model,
+        instructions=config.get("instructions"),
+        **kwargs
+    )
+
+    if agent_config.get("agent_id"):
+        agent.agent_id = agent_config.get("agent_id")
+
+    return agent
+```
+
+## Next Steps
+
+- For teams: See [ai/teams/README.md](ai/teams/README.md)
+- For workflows: See [ai/workflows/README.md](ai/workflows/README.md)
+- For tools: See [ai/tools/README.md](ai/tools/README.md)
+- Full docs: See [README.md](README.md)
+
+Happy building! 🚀
+"""
+    (project_path / "QUICKSTART.md").write_text(quickstart_content)
+
+    # Agent README
+    agents_readme = """# Agents Guide
+
+Learn how to create and manage AI agents in your Hive V2 project.
+
+## What is an Agent?
+
+An agent is an autonomous AI worker with a specific role. See [ai/agents/README.md](../../ai/agents/README.md) for the complete guide.
+
+## Quick Start
+
+```bash
+mkdir -p ai/agents/my-agent
+cd ai/agents/my-agent
+```
+
+Create `config.yaml`:
+
+```yaml
+agent:
+  name: "My Agent"
+  agent_id: "my-agent"
+
+model:
+  provider: "openai"
+  id: "gpt-4o-mini"
+  temperature: 0.7
+
+instructions: |
+  You are helpful.
+```
+
+Create `agent.py`:
+
+```python
+import yaml
+from pathlib import Path
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+def get_my_agent(**kwargs) -> Agent:
+    config_path = Path(__file__).parent / "config.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+
+    model = OpenAIChat(id=config["model"]["id"])
+    agent = Agent(
+        name=config["agent"]["name"],
+        model=model,
+        instructions=config["instructions"],
+        **kwargs
+    )
+    return agent
+```
+
+See [README.md](../../README.md) for more examples and patterns.
+"""
+    (project_path / "ai" / "agents" / "README.md").write_text(agents_readme)
+
+    # Teams README
+    teams_readme = """# Teams Guide
+
+Build intelligent multi-agent teams with automatic routing. See [ai/teams/README.md](../../ai/teams/README.md) for the complete guide.
+
+## Quick Start
+
+```bash
+mkdir -p ai/teams/my-team
+```
+
+Create `config.yaml`:
+
+```yaml
+team:
+  name: "My Team"
+  team_id: "my-team"
+  mode: "route"
+
+members:
+  - "agent-1"
+  - "agent-2"
+
+instructions: |
+  Route appropriately to team members.
+```
+
+A team automatically routes queries to the best agent.
+"""
+    (project_path / "ai" / "teams" / "README.md").write_text(teams_readme)
+
+    # Workflows README
+    workflows_readme = """# Workflows Guide
+
+Build multi-step processes with sequential and parallel execution. See [ai/workflows/README.md](../../ai/workflows/README.md) for the complete guide.
+
+## Quick Start
+
+```bash
+mkdir -p ai/workflows/my-workflow
+```
+
+Create `config.yaml`:
+
+```yaml
+workflow:
+  name: "My Workflow"
+
+steps:
+  - name: "Step 1"
+    agent: "agent-1"
+
+  - name: "Step 2"
+    agent: "agent-2"
+```
+
+Workflows orchestrate multi-step processes with agents.
+"""
+    (project_path / "ai" / "workflows" / "README.md").write_text(workflows_readme)
+
+    # Tools README
+    tools_readme = """# Tools Guide
+
+Add custom capabilities to your agents with tools. See [ai/tools/README.md](../../ai/tools/README.md) for the complete guide.
+
+## Quick Start
+
+```bash
+mkdir -p ai/tools/my-tool
+```
+
+Create `tool.py`:
+
+```python
+from agno.tools import Tool
+
+class MyTool(Tool):
+    id: str = "my-tool"
+    description: str = "What this does"
+
+    def execute(self, input_data: str, **kwargs):
+        return f"Result: {input_data}"
+```
+
+Tools extend agent capabilities with external integrations.
+"""
+    (project_path / "ai" / "tools" / "README.md").write_text(tools_readme)
 
 
 def _show_success_message(name: str, project_path: Path):
