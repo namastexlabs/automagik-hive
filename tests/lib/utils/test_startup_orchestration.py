@@ -259,13 +259,14 @@ class TestInitializeOtherServices:
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
+        mock_settings = Mock()
+        mock_settings.enable_metrics = False
+
         with (
             patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
             patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP failed")),
-            patch("lib.config.settings.settings") as mock_settings,
+            patch("lib.config.settings.get_settings", return_value=mock_settings),
         ):
-            mock_settings.enable_metrics = False
-
             result = await initialize_other_services()
 
             assert isinstance(result, StartupServices)
@@ -281,13 +282,14 @@ class TestInitializeOtherServices:
         mock_mcp_catalog = Mock()
         mock_mcp_catalog.list_servers.return_value = ["server1", "server2"]
 
+        mock_settings = Mock()
+        mock_settings.enable_metrics = False
+
         with (
             patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
             patch("lib.mcp.MCPCatalog", return_value=mock_mcp_catalog),
-            patch("lib.config.settings.settings") as mock_settings,
+            patch("lib.config.settings.get_settings", return_value=mock_settings),
         ):
-            mock_settings.enable_metrics = False
-
             result = await initialize_other_services()
 
             assert result.auth_service == mock_auth_service
@@ -334,13 +336,14 @@ class TestInitializeOtherServices:
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
+        mock_settings = Mock()
+        mock_settings.enable_metrics = False
+
         with (
             patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
             patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP failed")),
-            patch("lib.config.settings.settings") as mock_settings,
+            patch("lib.config.settings.get_settings", return_value=mock_settings),
         ):
-            mock_settings.enable_metrics = False
-
             result = await initialize_other_services()
 
             assert result.metrics_service is None
@@ -379,15 +382,16 @@ class TestInitializeOtherServices:
         mock_auth_service = Mock()
         mock_auth_service.is_auth_enabled.return_value = True
 
+        mock_settings = Mock()
+        mock_settings.enable_metrics = True
+        # settings access will fail
+        del mock_settings.metrics_batch_size
+
         with (
             patch("lib.auth.dependencies.get_auth_service", return_value=mock_auth_service),
             patch("lib.mcp.MCPCatalog", side_effect=Exception("MCP failed")),
-            patch("lib.config.settings.settings") as mock_settings,
+            patch("lib.config.settings.get_settings", return_value=mock_settings),
         ):
-            mock_settings.enable_metrics = True
-            # settings access will fail
-            del mock_settings.metrics_batch_size
-
             result = await initialize_other_services()
 
             assert result.metrics_service is None

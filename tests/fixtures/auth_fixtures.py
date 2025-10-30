@@ -36,31 +36,114 @@ def clean_auth_environment():
 
 @pytest.fixture
 def mock_auth_service():
-    """Mock the global auth service instance."""
+    """
+    Mock the global auth service instance with assertion helpers.
+
+    Use mock.assert_* methods to verify calls:
+    - mock.assert_api_key_validated(expected_key): Verify validate_api_key was called
+    - mock.assert_auth_checked(): Verify is_auth_enabled was called
+    - mock.assert_key_retrieved(): Verify get_current_key was called
+    - mock.assert_no_validation(): Verify validate_api_key was never called
+    """
     with patch("lib.auth.dependencies.auth_service") as mock:
         mock.validate_api_key = AsyncMock(return_value=True)
         mock.is_auth_enabled.return_value = True
         mock.get_current_key.return_value = "test_api_key_12345"
+
+        # Add assertion helpers
+        def assert_api_key_validated(expected_key=None):
+            """Assert validate_api_key was called with expected key."""
+            mock.validate_api_key.assert_called()
+            if expected_key is not None:
+                mock.validate_api_key.assert_called_with(expected_key)
+
+        def assert_auth_checked():
+            """Assert is_auth_enabled was called."""
+            mock.is_auth_enabled.assert_called()
+
+        def assert_key_retrieved():
+            """Assert get_current_key was called."""
+            mock.get_current_key.assert_called()
+
+        def assert_no_validation():
+            """Assert validate_api_key was never called."""
+            mock.validate_api_key.assert_not_called()
+
+        def reset_assertions():
+            """Reset all call counts for re-testing."""
+            mock.validate_api_key.reset_mock()
+            mock.is_auth_enabled.reset_mock()
+            mock.get_current_key.reset_mock()
+
+        mock.assert_api_key_validated = assert_api_key_validated
+        mock.assert_auth_checked = assert_auth_checked
+        mock.assert_key_retrieved = assert_key_retrieved
+        mock.assert_no_validation = assert_no_validation
+        mock.reset_assertions = reset_assertions
+
         yield mock
 
 
 @pytest.fixture
 def mock_auth_service_disabled():
-    """Mock auth service with authentication disabled."""
+    """
+    Mock auth service with authentication disabled.
+
+    Use mock.assert_* methods to verify calls:
+    - mock.assert_auth_was_disabled(): Verify auth stayed disabled
+    - mock.assert_no_validation(): Verify no validation occurred
+    """
     with patch("lib.auth.dependencies.auth_service") as mock:
         mock.validate_api_key = AsyncMock(return_value=True)
         mock.is_auth_enabled.return_value = False
         mock.get_current_key.return_value = "test_api_key_12345"
+
+        # Add assertion helpers
+        def assert_auth_was_disabled():
+            """Assert is_auth_enabled was called and returned False."""
+            mock.is_auth_enabled.assert_called()
+            assert mock.is_auth_enabled.return_value is False
+
+        def assert_no_validation():
+            """Assert validate_api_key was never called."""
+            mock.validate_api_key.assert_not_called()
+
+        mock.assert_auth_was_disabled = assert_auth_was_disabled
+        mock.assert_no_validation = assert_no_validation
+
         yield mock
 
 
 @pytest.fixture
 def mock_auth_service_failing():
-    """Mock auth service that rejects all requests."""
+    """
+    Mock auth service that rejects all requests.
+
+    Use mock.assert_* methods to verify calls:
+    - mock.assert_validation_failed(expected_key): Verify validation was attempted and failed
+    - mock.assert_rejection_count(expected_count): Verify how many rejections occurred
+    """
     with patch("lib.auth.dependencies.auth_service") as mock:
         mock.validate_api_key = AsyncMock(return_value=False)
         mock.is_auth_enabled.return_value = True
         mock.get_current_key.return_value = "test_api_key_12345"
+
+        # Add assertion helpers
+        def assert_validation_failed(expected_key=None):
+            """Assert validate_api_key was called and returned False."""
+            mock.validate_api_key.assert_called()
+            if expected_key is not None:
+                mock.validate_api_key.assert_called_with(expected_key)
+            # Verify it returned False
+            assert mock.validate_api_key.return_value is False
+
+        def assert_rejection_count(expected_count):
+            """Assert validate_api_key was called exact number of times."""
+            assert mock.validate_api_key.call_count == expected_count
+
+        mock.assert_validation_failed = assert_validation_failed
+        mock.assert_rejection_count = assert_rejection_count
+
         yield mock
 
 
@@ -188,6 +271,51 @@ class AuthTestHelpers:
 def auth_helpers():
     """Provide authentication testing helper methods."""
     return AuthTestHelpers()
+
+
+@pytest.fixture(scope="function")
+def reset_auth_singleton():
+    """
+    Reset AuthService singleton and dependencies module state between tests.
+
+    This prevents pollution from earlier tests that may have instantiated
+    the auth_service global or modified its state.
+
+    Note: AuthService is NOT a singleton class, but the module-level
+    auth_service variable in lib.auth.dependencies acts as a singleton.
+    """
+    # Import here to avoid circular dependencies
+    import lib.auth.dependencies
+    import lib.auth.service
+
+    # Store original environment state
+    original_auth_disabled = os.environ.get("HIVE_AUTH_DISABLED")
+    original_environment = os.environ.get("HIVE_ENVIRONMENT")
+
+    # Force enable authentication for isolation tests
+    # (tests that verify auth behavior need it enabled)
+    os.environ["HIVE_AUTH_DISABLED"] = "false"
+    if not original_environment:
+        os.environ["HIVE_ENVIRONMENT"] = "development"
+
+    # Create a fresh auth_service instance with auth enabled
+    lib.auth.dependencies.auth_service = lib.auth.service.AuthService()
+
+    yield
+
+    # Restore original environment state
+    if original_auth_disabled is not None:
+        os.environ["HIVE_AUTH_DISABLED"] = original_auth_disabled
+    else:
+        os.environ.pop("HIVE_AUTH_DISABLED", None)
+
+    if original_environment is not None:
+        os.environ["HIVE_ENVIRONMENT"] = original_environment
+    else:
+        os.environ.pop("HIVE_ENVIRONMENT", None)
+
+    # Create fresh instance with restored environment
+    lib.auth.dependencies.auth_service = lib.auth.service.AuthService()
 
 
 # Security testing patterns fixture

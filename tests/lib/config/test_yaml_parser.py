@@ -503,9 +503,6 @@ class TestConfigValidation:
             yaml.dump(config, f)
             return f.name
 
-    @pytest.mark.skip(
-        reason="Blocked by task-8cd5f0e0-1211-4b95-822c-047102ce9dec - source code bug: yaml_parser.py accessing wrong agent attributes"
-    )
     def test_validate_config_file_success(self, parser, valid_config_file):
         """Test successful configuration validation."""
         result = parser.validate_config_file(valid_config_file)

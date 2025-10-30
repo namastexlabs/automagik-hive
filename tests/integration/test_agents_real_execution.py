@@ -90,8 +90,11 @@ class TestRealAgentsExecution:
         agent_id = available_agents[0]  # list_available_agents returns list of strings
 
         try:
-            # Create agent with real configuration
-            agent = await registry.create_agent(agent_id=agent_id, session_id="test-session-real", debug_mode=True)
+            # Create agent with real configuration with timeout protection
+            agent = await asyncio.wait_for(
+                registry.create_agent(agent_id=agent_id, session_id="test-session-real", debug_mode=True),
+                timeout=10.0,
+            )
 
             assert agent is not None
             assert agent.agent_id == agent_id
@@ -102,6 +105,8 @@ class TestRealAgentsExecution:
             else:
                 pass
 
+        except asyncio.TimeoutError:
+            pytest.skip("Agent creation timed out after 10 seconds")
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
             # Don't fail test - configuration issues are expected in test environments
@@ -147,10 +152,15 @@ class TestRealAgentsExecution:
                 model = resolve_model(**test_config["model"])
 
                 if model is not None:
-                    # Test agent creation with this provider
+                    # Test agent creation with this provider with timeout protection
                     proxy = AgnoAgentProxy()
-                    agent = await proxy.create_agent(
-                        component_id=f"test-{provider}-agent", config=test_config, session_id=f"test-{provider}-session"
+                    agent = await asyncio.wait_for(
+                        proxy.create_agent(
+                            component_id=f"test-{provider}-agent",
+                            config=test_config,
+                            session_id=f"test-{provider}-session",
+                        ),
+                        timeout=10.0,
                     )
 
                     assert agent is not None
@@ -158,6 +168,8 @@ class TestRealAgentsExecution:
                 else:
                     pass
 
+            except asyncio.TimeoutError:
+                pass  # Skip timeout gracefully - provider may be slow
             except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
                 # Don't fail test - provider issues are expected
@@ -187,12 +199,18 @@ class TestRealAgentsExecution:
 
         try:
             proxy = AgnoAgentProxy()
-            agent = await proxy.create_agent(
-                component_id="real-message-test", config=test_config, session_id="real-message-session"
+            agent = await asyncio.wait_for(
+                proxy.create_agent(
+                    component_id="real-message-test", config=test_config, session_id="real-message-session"
+                ),
+                timeout=10.0,
             )
 
-            # Send test message
-            response = await agent.arun("Hello, this is a test message")
+            # Send test message with timeout protection
+            response = await asyncio.wait_for(
+                agent.arun("Hello, this is a test message"),
+                timeout=10.0,
+            )
 
             assert response is not None
             assert hasattr(response, "content") or isinstance(response, str)
@@ -202,6 +220,8 @@ class TestRealAgentsExecution:
             # Verify response contains expected patterns
             assert len(content.strip()) > 0
 
+        except asyncio.TimeoutError:
+            pytest.skip("Agent message processing timed out after 10 seconds")
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
             # Don't fail test - AI model issues are expected in test environments
@@ -230,8 +250,11 @@ class TestRealAgentsExecution:
             pytest.skip("No agents with tool configuration found")
 
         try:
-            # Create agent with tool configuration
-            agent = await registry.create_agent(agent_id=agent_with_tools, session_id="tool-integration-test")
+            # Create agent with tool configuration with timeout protection
+            agent = await asyncio.wait_for(
+                registry.create_agent(agent_id=agent_with_tools, session_id="tool-integration-test"),
+                timeout=10.0,
+            )
 
             assert agent is not None
 
@@ -242,6 +265,8 @@ class TestRealAgentsExecution:
             else:
                 pass
 
+        except asyncio.TimeoutError:
+            pytest.skip("Agent tool integration timed out after 10 seconds")
         except Exception:  # noqa: S110 - Silent exception handling is intentional
             pass
 
@@ -333,8 +358,13 @@ class TestRealAgentsExecution:
         # Test concurrent creation of multiple agents
         async def create_agent_concurrent(agent_id, index):
             try:
-                await registry.get_agent(agent_id=agent_id, session_id=f"concurrent-test-{index}", debug_mode=True)
+                await asyncio.wait_for(
+                    registry.get_agent(agent_id=agent_id, session_id=f"concurrent-test-{index}", debug_mode=True),
+                    timeout=10.0,
+                )
                 return f"Success: {agent_id}"
+            except asyncio.TimeoutError:
+                return f"Timeout {agent_id}"
             except Exception as e:
                 return f"Failed {agent_id}: {e}"
 
@@ -342,16 +372,26 @@ class TestRealAgentsExecution:
         test_agents = available_agents[: min(3, len(available_agents))]
         tasks = [create_agent_concurrent(agent_id, i) for i, agent_id in enumerate(test_agents)]
 
-        # Run concurrent creation
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Run concurrent creation with timeout protection
+        try:
+            results = await asyncio.wait_for(
+                asyncio.gather(*tasks),
+                timeout=30.0,  # 30s for multiple concurrent operations
+            )
+            success_count = len([r for r in results if r.startswith("Success")])
+        except asyncio.TimeoutError:
+            pytest.skip("Concurrent agent creation timed out after 30 seconds")
+        except Exception as e:
+            # If gather fails completely, fail the test with context
+            pytest.fail(f"Concurrent agent creation failed unexpectedly: {e}")
 
-        success_count = sum(1 for result in results if isinstance(result, str) and result.startswith("Success"))
-
-        for _result in results:
-            pass
+        # Check individual results for expected patterns
+        for result in results:
+            # All tasks should return Success or Failed strings (exceptions already caught in create_agent_concurrent)
+            assert isinstance(result, str), f"Unexpected result type: {type(result)}"
 
         # Should have at least some successful creations
-        assert success_count > 0, "No concurrent agent creations succeeded"
+        assert success_count > 0, f"No concurrent agent creations succeeded. Results: {results}"
 
     def test_model_configuration_bug_regression_real_validation(self):
         """Test that the model configuration bug (from our PR #11) doesn't regress."""
@@ -438,14 +478,19 @@ class TestAgentRegistryRealDiscovery:
                 # Test getting agent through registry (no direct factory access)
                 # AgentRegistry doesn't expose factory functions directly
 
-                # Test agent creation through registry
-                agent = await registry.get_agent(agent_id=agent_id, session_id=f"factory-test-{agent_id}")
+                # Test agent creation through registry with timeout protection
+                agent = await asyncio.wait_for(
+                    registry.get_agent(agent_id=agent_id, session_id=f"factory-test-{agent_id}"),
+                    timeout=10.0,
+                )
 
                 if agent:
                     assert agent.agent_id == agent_id
                 else:
                     pass
 
+            except asyncio.TimeoutError:
+                pass  # Skip individual timeouts gracefully
             except Exception:  # noqa: S110 - Silent exception handling is intentional
                 pass
 

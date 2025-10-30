@@ -22,31 +22,8 @@ from lib.auth.dependencies import (
     require_api_key,
 )
 
-
-@pytest.fixture(autouse=True)
-def reset_auth_singleton():
-    """
-    Reset AuthService singleton and dependencies module state between tests.
-
-    This prevents pollution from earlier tests that may have instantiated
-    the auth_service global or modified its state.
-    """
-    # Import here to avoid circular dependencies
-    import lib.auth.dependencies
-    import lib.auth.service
-
-    # Force-reset the singleton by creating a fresh instance
-    # This is more aggressive than just storing/restoring
-    lib.auth.service.AuthService._instance = None
-
-    # Create a fresh auth_service in dependencies module
-    lib.auth.dependencies.auth_service = lib.auth.service.AuthService()
-
-    yield
-
-    # Force-reset again after test to prevent pollution to next test
-    lib.auth.service.AuthService._instance = None
-    lib.auth.dependencies.auth_service = lib.auth.service.AuthService()
+# Import reset fixture from shared fixtures
+pytest_plugins = ["tests.fixtures.auth_fixtures"]
 
 
 class TestRequireApiKeyDependency:
@@ -184,10 +161,7 @@ class TestOptionalApiKeyDependency:
 class TestGetAuthServiceDependency:
     """Test suite for get_auth_service dependency."""
 
-    @pytest.mark.skip(
-        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
-    )
-    def test_returns_auth_service_instance(self):
+    def test_returns_auth_service_instance(self, reset_auth_singleton):
         """Test that get_auth_service returns an AuthService instance."""
         result = get_auth_service()
 
@@ -199,10 +173,7 @@ class TestGetAuthServiceDependency:
         # Should be the same instance on multiple calls (within test scope)
         assert get_auth_service() is result
 
-    @pytest.mark.skip(
-        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
-    )
-    def test_auth_service_behaves_correctly(self):
+    def test_auth_service_behaves_correctly(self, reset_auth_singleton):
         """Test that auth_service behaves as expected."""
         # Multiple calls should return same instance (within test scope)
         service1 = get_auth_service()

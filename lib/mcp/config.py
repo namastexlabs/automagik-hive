@@ -4,18 +4,22 @@ MCP Configuration - Simple Implementation
 Basic configuration for MCP integration without overengineering.
 """
 
-from pydantic import ConfigDict, Field
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class MCPSettings(BaseSettings):
     """Simple MCP settings from environment variables"""
 
-    # Basic settings
-    mcp_enabled: bool = Field(True, env="MCP_ENABLED")
-    mcp_connection_timeout: float = Field(30.0, env="MCP_CONNECTION_TIMEOUT")
+    # Basic settings - env vars already have MCP_ prefix in their names
+    mcp_enabled: bool = Field(default=True)
+    mcp_connection_timeout: float = Field(default=30.0)
 
-    model_config = ConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 
 # Global settings instance

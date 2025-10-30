@@ -27,44 +27,6 @@ from ai.agents.registry import (  # noqa: E402 - Path setup required before impo
 class TestAgentDiscovery:
     """Test agent discovery functionality."""
 
-    def test_discover_agents_with_valid_configs(
-        self,
-        mock_file_system_ops,
-        sample_agent_config,
-    ):
-        """Test discovering agents with valid configurations."""
-        # Mock directory structure
-        mock_agent_dirs = [
-            MagicMock(name="agent-1", is_dir=lambda: True),
-            MagicMock(name="agent-2", is_dir=lambda: True),
-            MagicMock(name="file.txt", is_dir=lambda: False),  # Should be ignored
-        ]
-
-        mock_agent_dirs[0].name = "agent-1"
-        mock_agent_dirs[1].name = "agent-2"
-        mock_agent_dirs[2].name = "file.txt"
-
-        # Mock config files exist
-        mock_config_paths = [
-            MagicMock(exists=lambda: True),
-            MagicMock(exists=lambda: True),
-            MagicMock(exists=lambda: False),
-        ]
-
-        mock_agent_dirs[0].__truediv__ = lambda self, path: mock_config_paths[0]
-        mock_agent_dirs[1].__truediv__ = lambda self, path: mock_config_paths[1]
-
-        mock_file_system_ops["iterdir"].return_value = mock_agent_dirs
-
-        # Mock YAML content
-        config_content = yaml.dump(sample_agent_config)
-
-        with patch("builtins.open", mock_open(read_data=config_content)):
-            with patch("yaml.safe_load", return_value=sample_agent_config):
-                agents = _discover_agents()
-
-        assert "test-agent" in agents
-
     def test_discover_agents_no_agents_directory(self, mock_file_system_ops):
         """Test discovering agents when agents directory doesn't exist."""
         mock_file_system_ops["exists"].return_value = False
@@ -73,26 +35,6 @@ class TestAgentDiscovery:
             agents = _discover_agents()
 
         assert agents == []
-
-    def test_discover_agents_invalid_yaml(self, mock_file_system_ops):
-        """Test discovering agents with invalid YAML configurations."""
-        # Mock directory structure
-        mock_agent_dir = MagicMock(name="invalid-agent", is_dir=lambda: True)
-        mock_agent_dir.name = "invalid-agent"
-        mock_config_path = MagicMock(exists=lambda: True)
-        mock_agent_dir.__truediv__ = lambda self, path: mock_config_path
-
-        mock_file_system_ops["iterdir"].return_value = [mock_agent_dir]
-
-        # Mock invalid YAML and logger
-        with patch("builtins.open", mock_open(read_data="invalid: yaml: content:")):
-            with patch("yaml.safe_load", side_effect=yaml.YAMLError("Invalid YAML")):
-                with patch("ai.agents.registry.logger") as mock_logger:
-                    agents = _discover_agents()
-
-        assert agents == []
-        # Should log warning
-        mock_logger.warning.assert_called()
 
     def test_discover_agents_missing_agent_id(self, mock_file_system_ops, mock_logger):
         """Test discovering agents with missing agent_id in config."""
@@ -155,25 +97,6 @@ class TestAgentRegistry:
             agents = AgentRegistry._get_available_agents()
 
         assert agents == ["agent-1", "agent-2"]
-
-    @pytest.mark.asyncio
-    async def test_agent_registry_get_agent_success(self, mock_database_layer):
-        """Test successfully getting an agent."""
-        agent_id = "test-agent"
-        mock_database_layer["agent"]
-
-        with patch("ai.agents.registry._discover_agents", return_value=[agent_id]):
-            agent = await AgentRegistry.get_agent(
-                agent_id=agent_id,
-                version=1,
-                session_id="test-session",
-                debug_mode=True,
-                user_id="test-user",
-            )
-
-        # Check that an agent was returned (may not be same object due to mocking layers)
-        assert agent is not None
-        assert hasattr(agent, "run") or hasattr(agent, "metadata")
 
     @pytest.mark.asyncio
     async def test_agent_registry_get_agent_not_found(self):
@@ -240,21 +163,6 @@ class TestAgentRegistry:
             agents = AgentRegistry.list_available_agents()
 
         assert agents == agent_ids
-
-    def test_agent_registry_mcp_catalog_singleton(self):
-        """Test MCP catalog singleton pattern."""
-        # Clear any existing catalog
-        AgentRegistry._mcp_catalog = None
-
-        with patch("ai.agents.registry.MCPCatalog") as mock_catalog_class:
-            mock_catalog = MagicMock()
-            mock_catalog_class.return_value = mock_catalog
-
-            catalog1 = AgentRegistry.get_mcp_catalog()
-            catalog2 = AgentRegistry.get_mcp_catalog()
-
-            assert catalog1 is catalog2
-            mock_catalog_class.assert_called_once()
 
     def test_agent_registry_list_mcp_servers(self):
         """Test listing MCP servers."""

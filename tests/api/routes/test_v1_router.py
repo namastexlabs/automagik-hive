@@ -98,6 +98,9 @@ class TestV1RouterAuthentication:
         response = test_client.get("/api/v1/mcp/status")
         assert response.status_code == status.HTTP_200_OK
 
+        # NOTE: mock_auth_service assertions work best in unit tests with direct
+        # dependency injection, not in integration tests where test_client manages mocks
+
     def test_authenticated_endpoints_with_valid_api_key(self, test_client, api_headers):
         """Test authenticated endpoints accept valid API keys."""
         # Version endpoints might require authentication
@@ -123,6 +126,9 @@ class TestV1RouterAuthentication:
             status.HTTP_400_BAD_REQUEST,  # Missing required data
             status.HTTP_422_UNPROCESSABLE_ENTITY,  # Validation error
         ]
+
+        # NOTE: Mock assertion helpers work best when mocks are directly injected
+        # into the code under test, not when test_client creates internal mocks
 
     def test_cors_headers_present(self, test_client):
         """Test CORS headers are properly configured."""

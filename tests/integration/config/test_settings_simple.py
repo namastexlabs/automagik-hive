@@ -67,7 +67,9 @@ class TestSettingsBasic:
         ):
             test_settings = Settings()
             assert test_settings.hive_enable_langwatch is True
-            # Note: langwatch_config property doesn't exist in HiveSettings, only individual fields
+            # langwatch_config property exists and returns dict with api_key
+            assert hasattr(test_settings, "langwatch_config")
+            assert isinstance(test_settings.langwatch_config, dict)
 
     def test_settings_is_production(self, clean_singleton):
         """Test is_production method."""
@@ -205,13 +207,19 @@ class TestSettingsEdgeCases:
             # Fixed behavior: hive_enable_langwatch auto-disables when no valid API key provided
             assert test_settings.hive_enable_langwatch is False
 
-    @pytest.mark.skip(reason="langwatch_config property not implemented in HiveSettings class")
     def test_settings_langwatch_config_cleanup(self, clean_singleton):
         """Test LangWatch config removes None values."""
         with patch.dict(os.environ, {"LANGWATCH_API_KEY": "test-key"}):
             test_settings = Settings()
-            # Should only contain non-None values
-            assert all(v is not None for v in test_settings.langwatch_config.values())
+            # langwatch_config property returns dict with only non-None values
+            config = test_settings.langwatch_config
+            assert isinstance(config, dict)
+            # If api_key is set, it should be in the config
+            if test_settings.langwatch_api_key:
+                assert "api_key" in config
+                assert config["api_key"] == "test-key"
+            # All values in returned dict should be non-None
+            assert all(v is not None for v in config.values())
 
     def test_settings_metrics_clamping_warnings(self, mock_logger, clean_singleton):
         """Test that metrics values validation raises errors for invalid values."""

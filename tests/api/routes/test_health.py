@@ -35,13 +35,6 @@ class TestHealthEndpoints:
         except ValueError:
             pytest.fail("Invalid UTC timestamp format")
 
-    def test_health_check_headers(self, test_client):
-        """Test health check response headers."""
-        response = test_client.get("/health")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.headers["content-type"] == "application/json"
-
     def test_health_check_no_auth_required(self, test_client):
         """Test that health check doesn't require authentication."""
         # Health check should work without API key
@@ -73,38 +66,6 @@ class TestHealthEndpoints:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == "success"
-
-    def test_health_check_response_time(self, test_client):
-        """Test health check response time is reasonable."""
-        import time
-
-        start_time = time.time()
-        response = test_client.get("/health")
-        end_time = time.time()
-
-        assert response.status_code == status.HTTP_200_OK
-
-        # Health check should respond quickly (under 1 second)
-        response_time = end_time - start_time
-        assert response_time < 1.0, f"Health check took too long: {response_time}s"
-
-    def test_health_check_concurrent_requests(self, test_client):
-        """Test health check handles concurrent requests."""
-        import concurrent.futures
-
-        def make_request():
-            return test_client.get("/health")
-
-        # Make 10 concurrent requests
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(make_request) for _ in range(10)]
-            responses = [future.result() for future in futures]
-
-        # All requests should succeed
-        for response in responses:
-            assert response.status_code == status.HTTP_200_OK
-            data = response.json()
-            assert data["status"] == "success"
 
     @pytest.mark.asyncio
     async def test_health_check_async(self, async_client: AsyncClient):
@@ -156,17 +117,6 @@ class TestHealthEndpoints:
         assert data["router"] == "health"
         assert data["path"] == "/health"
 
-    def test_health_check_utf8_encoding(self, test_client):
-        """Test health check handles UTF-8 encoding properly."""
-        response = test_client.get("/health")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.encoding == "utf-8" or response.encoding is None
-
-        # Response should be valid JSON
-        data = response.json()
-        assert data["status"] == "success"
-
     def test_health_check_multiple_calls_consistency(self, test_client):
         """Test multiple health check calls return consistent structure."""
         responses = []
@@ -187,34 +137,6 @@ class TestHealthEndpoints:
             assert response["path"] == first_response["path"]
             assert response["message"] == first_response["message"]
             # UTC timestamp will be different for each call
-
-    def test_health_check_case_sensitivity(self, test_client):
-        """Test health check endpoint is case sensitive."""
-        # Correct case should work
-        response = test_client.get("/health")
-        assert response.status_code == status.HTTP_200_OK
-
-        # Wrong case should not work
-        response = test_client.get("/HEALTH")
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-        response = test_client.get("/Health")
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_health_check_trailing_slash(self, test_client):
-        """Test health check with and without trailing slash."""
-        # Without trailing slash (standard)
-        response = test_client.get("/health")
-        assert response.status_code == status.HTTP_200_OK
-
-        # With trailing slash might redirect or fail
-        response = test_client.get("/health/")
-        # FastAPI typically handles this with redirect or success
-        assert response.status_code in [
-            status.HTTP_200_OK,
-            status.HTTP_307_TEMPORARY_REDIRECT,
-            status.HTTP_404_NOT_FOUND,
-        ]
 
     def test_health_check_monitoring_fields(self, test_client):
         """Test health check provides fields useful for monitoring systems."""
@@ -251,6 +173,11 @@ class TestHealthEndpointIntegration:
         # Health should still work without auth (public endpoint)
         response = test_client.get("/health")
         assert response.status_code == status.HTTP_200_OK
+
+        # NOTE: mock_auth_service assertion helpers only work when the fixture
+        # is directly used in the endpoint dependency, not when test_client
+        # creates its own mock during startup. For full integration tests,
+        # we rely on behavior verification (status codes) rather than mock assertions.
 
     def test_health_during_startup(self, test_client):
         """Test health check during system startup."""

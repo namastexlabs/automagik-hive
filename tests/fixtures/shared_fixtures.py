@@ -40,42 +40,427 @@ def temp_file():
         os.unlink(temp_path)
 
 
+@pytest.fixture(
+    params=[
+        "minimal",
+        "standard",
+        "maximal",
+        "missing_name",
+        "missing_version",
+        "invalid_types",
+        "empty_config",
+        "very_long_values",
+        "unicode_content",
+    ]
+)
+def sample_yaml_data(request):
+    """
+    Sample YAML data for testing with edge case variants.
+
+    Variants:
+    - minimal: Bare minimum required fields
+    - standard: Normal configuration (default)
+    - maximal: All optional fields populated
+    - missing_name: Missing required 'name' field
+    - missing_version: Missing required 'version' field
+    - invalid_types: Wrong data types for fields
+    - empty_config: Empty nested config dict
+    - very_long_values: Extremely long strings
+    - unicode_content: Unicode and special characters
+    """
+    configs = {
+        "minimal": {
+            "name": "test_component",
+            "version": "1.0.0",
+        },
+        "standard": {
+            "name": "test_component",
+            "version": "1.0.0",
+            "config": {"enabled": True, "timeout": 30, "retries": 3},
+            "metadata": {"tags": ["test", "sample"], "description": "Sample test data"},
+        },
+        "maximal": {
+            "name": "test_component_maximal",
+            "version": "2.5.3",
+            "config": {
+                "enabled": True,
+                "timeout": 300,
+                "retries": 10,
+                "batch_size": 1000,
+                "debug_mode": True,
+                "cache_enabled": True,
+                "max_connections": 50,
+                "pool_size": 20,
+            },
+            "metadata": {
+                "tags": ["test", "sample", "integration", "performance"],
+                "description": "Maximal test configuration with all optional fields",
+                "author": "test_suite",
+                "created_at": "2023-01-01T12:00:00Z",
+                "updated_at": "2023-12-31T23:59:59Z",
+                "license": "MIT",
+            },
+            "optional_section": {
+                "feature_flags": {"flag_a": True, "flag_b": False},
+                "custom_data": {"key1": "value1", "key2": "value2"},
+            },
+        },
+        "missing_name": {
+            "version": "1.0.0",
+            "config": {"enabled": True},
+        },
+        "missing_version": {
+            "name": "test_component",
+            "config": {"enabled": True},
+        },
+        "invalid_types": {
+            "name": 12345,  # Should be string
+            "version": ["1", "0", "0"],  # Should be string
+            "config": "not_a_dict",  # Should be dict
+            "metadata": ["not", "a", "dict"],  # Should be dict
+        },
+        "empty_config": {
+            "name": "test_component",
+            "version": "1.0.0",
+            "config": {},
+            "metadata": {},
+        },
+        "very_long_values": {
+            "name": "test_component_" + "x" * 500,
+            "version": "1.0.0",
+            "config": {"enabled": True},
+            "metadata": {
+                "description": "A" * 10000,  # 10KB description
+                "tags": ["tag_" + str(i) for i in range(1000)],  # 1000 tags
+            },
+        },
+        "unicode_content": {
+            "name": "test_componénte_日本語_🚀",
+            "version": "1.0.0-αλφα",
+            "config": {
+                "enabled": True,
+                "message": "Hello 世界 🌍",
+                "special_chars": "áéíóú ñ ¿¡ « » € £ ¥",
+            },
+            "metadata": {
+                "tags": ["тест", "测试", "परीक्षण", "テスト"],
+                "description": "Multi-language: English, Español, 中文, हिन्दी, 日本語",
+            },
+        },
+    }
+    return configs[request.param]
+
+
+@pytest.fixture(
+    params=[
+        "minimal",
+        "standard",
+        "large_dataset",
+        "missing_headers",
+        "inconsistent_columns",
+        "special_characters",
+        "empty_cells",
+        "numeric_only",
+        "single_row",
+        "wide_dataset",
+    ]
+)
+def sample_csv_data(request):
+    """
+    Sample CSV data for testing with edge case variants.
+
+    Variants:
+    - minimal: Single header + single data row
+    - standard: Normal CSV (default)
+    - large_dataset: 1000+ rows
+    - missing_headers: No header row
+    - inconsistent_columns: Rows with different column counts
+    - special_characters: Unicode and special characters in data
+    - empty_cells: Mix of empty and populated cells
+    - numeric_only: All numeric data
+    - single_row: Header only, no data
+    - wide_dataset: Many columns (50+)
+    """
+    datasets = {
+        "minimal": [
+            ["id"],
+            ["1"],
+        ],
+        "standard": [
+            ["id", "name", "category", "value"],
+            ["1", "Item One", "category_a", "100"],
+            ["2", "Item Two", "category_b", "200"],
+            ["3", "Item Three", "category_a", "150"],
+        ],
+        "large_dataset": [
+            ["id", "name", "category", "value"],
+            *[[str(i), f"Item {i}", f"category_{i % 5}", str(i * 10)] for i in range(1, 1001)],
+        ],
+        "missing_headers": [
+            ["1", "Item One", "category_a", "100"],
+            ["2", "Item Two", "category_b", "200"],
+        ],
+        "inconsistent_columns": [
+            ["id", "name", "category", "value"],
+            ["1", "Item One", "category_a"],  # Missing value
+            ["2", "Item Two", "category_b", "200", "extra"],  # Extra column
+            ["3"],  # Only ID
+        ],
+        "special_characters": [
+            ["id", "name", "description", "tags"],
+            ["1", "Café ☕", 'Quote: "Hello"', "tag1,tag2"],
+            ["2", "日本語 Item", "New\nLine\nData", "测试,テスト"],
+            ["3", "O'Reilly & Co.", "Semicolon; comma,", "áéíóú"],
+        ],
+        "empty_cells": [
+            ["id", "name", "category", "value"],
+            ["1", "", "category_a", "100"],
+            ["2", "Item Two", "", ""],
+            ["", "", "", ""],
+            ["4", "Item Four", "category_b", "400"],
+        ],
+        "numeric_only": [
+            ["col1", "col2", "col3", "col4"],
+            ["1", "100", "1.5", "-50"],
+            ["2", "200", "2.75", "-100"],
+            ["3", "300", "3.14", "-150"],
+        ],
+        "single_row": [
+            ["id", "name", "category", "value"],
+        ],
+        "wide_dataset": [
+            [f"col_{i}" for i in range(50)],
+            [str(i * 10) for i in range(50)],
+            [f"value_{i}" for i in range(50)],
+        ],
+    }
+    return datasets[request.param]
+
+
+@pytest.fixture(
+    params=[
+        "minimal",
+        "standard",
+        "maximal",
+        "missing_required",
+        "invalid_types",
+        "negative_values",
+        "extreme_values",
+        "zero_values",
+        "failed_execution",
+    ]
+)
+def sample_metrics_data(request):
+    """
+    Sample metrics data for testing with edge case variants.
+
+    Variants:
+    - minimal: Bare minimum required fields
+    - standard: Normal metrics (default)
+    - maximal: All optional fields populated
+    - missing_required: Missing required 'agent_id' field
+    - invalid_types: Wrong data types for fields
+    - negative_values: Negative numbers where unexpected
+    - extreme_values: Very large numbers
+    - zero_values: All numeric values are zero
+    - failed_execution: Represents a failed execution
+    """
+    metrics_variants = {
+        "minimal": {
+            "agent_id": "test_agent_001",
+            "timestamp": "2023-01-01T12:00:00Z",
+        },
+        "standard": {
+            "agent_id": "test_agent_001",
+            "execution_time": 1.234,
+            "tokens_used": 150,
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "cost": 0.001,
+            "success": True,
+            "error_count": 0,
+            "timestamp": "2023-01-01T12:00:00Z",
+            "metadata": {"model": "claude-3", "temperature": 0.7},
+        },
+        "maximal": {
+            "agent_id": "test_agent_maximal_001",
+            "execution_time": 45.678,
+            "tokens_used": 5000,
+            "input_tokens": 3500,
+            "output_tokens": 1500,
+            "cost": 0.125,
+            "success": True,
+            "error_count": 0,
+            "timestamp": "2023-01-01T12:00:00Z",
+            "metadata": {
+                "model": "claude-sonnet-4-20250514",
+                "temperature": 0.9,
+                "max_tokens": 8192,
+                "top_p": 0.95,
+                "frequency_penalty": 0.5,
+                "presence_penalty": 0.3,
+            },
+            "performance_metrics": {
+                "latency_p50": 1.2,
+                "latency_p95": 2.5,
+                "latency_p99": 4.8,
+                "cache_hits": 15,
+                "cache_misses": 5,
+            },
+            "resource_usage": {
+                "memory_mb": 512,
+                "cpu_percent": 45.3,
+            },
+        },
+        "missing_required": {
+            "execution_time": 1.234,
+            "tokens_used": 150,
+            "timestamp": "2023-01-01T12:00:00Z",
+        },
+        "invalid_types": {
+            "agent_id": 12345,  # Should be string
+            "execution_time": "not_a_number",  # Should be float
+            "tokens_used": [100, 50],  # Should be int
+            "success": "yes",  # Should be bool
+            "metadata": "not_a_dict",  # Should be dict
+        },
+        "negative_values": {
+            "agent_id": "test_agent_neg",
+            "execution_time": -1.234,  # Negative time
+            "tokens_used": -150,  # Negative tokens
+            "cost": -0.001,  # Negative cost
+            "error_count": -5,  # Negative errors
+            "timestamp": "2023-01-01T12:00:00Z",
+        },
+        "extreme_values": {
+            "agent_id": "test_agent_extreme",
+            "execution_time": 999999.999,  # ~11.5 days
+            "tokens_used": 2147483647,  # Max 32-bit int
+            "input_tokens": 1000000000,  # 1 billion
+            "output_tokens": 1000000000,  # 1 billion
+            "cost": 999999.999,  # Absurdly high cost
+            "error_count": 1000000,  # Many errors
+            "timestamp": "2023-01-01T12:00:00Z",
+        },
+        "zero_values": {
+            "agent_id": "test_agent_zero",
+            "execution_time": 0.0,
+            "tokens_used": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cost": 0.0,
+            "success": True,
+            "error_count": 0,
+            "timestamp": "2023-01-01T12:00:00Z",
+        },
+        "failed_execution": {
+            "agent_id": "test_agent_failed",
+            "execution_time": 0.156,
+            "tokens_used": 25,  # Minimal tokens before failure
+            "input_tokens": 20,
+            "output_tokens": 5,
+            "cost": 0.0001,
+            "success": False,
+            "error_count": 5,
+            "timestamp": "2023-01-01T12:00:00Z",
+            "metadata": {
+                "model": "claude-3",
+                "temperature": 0.7,
+                "error_type": "TimeoutError",
+                "error_message": "Execution timed out after 30s",
+            },
+        },
+    }
+    return metrics_variants[request.param]
+
+
 @pytest.fixture
-def sample_yaml_data():
-    """Sample YAML data for testing."""
+def invalid_yaml_data():
+    """
+    Collection of invalid YAML configurations for negative testing.
+
+    Returns dict with various invalid configurations.
+    """
     return {
-        "name": "test_component",
-        "version": "1.0.0",
-        "config": {"enabled": True, "timeout": 30, "retries": 3},
-        "metadata": {"tags": ["test", "sample"], "description": "Sample test data"},
+        "completely_empty": {},
+        "null_values": {"name": None, "version": None, "config": None},
+        "missing_all_required": {"metadata": {"tags": ["test"]}},
+        "wrong_structure": {
+            "name": {"nested": "should_be_string"},
+            "version": {"another": "nested"},
+        },
+        "circular_reference_placeholder": {
+            "name": "test",
+            "version": "1.0.0",
+            "config": {"self_ref": "CIRCULAR"},  # Placeholder for circular ref
+        },
     }
 
 
 @pytest.fixture
-def sample_csv_data():
-    """Sample CSV data for testing."""
-    return [
-        ["id", "name", "category", "value"],
-        ["1", "Item One", "category_a", "100"],
-        ["2", "Item Two", "category_b", "200"],
-        ["3", "Item Three", "category_a", "150"],
-    ]
+def edge_case_yaml_data():
+    """
+    Edge case YAML configurations for stress testing.
+
+    Returns dict with various edge case configurations.
+    """
+    return {
+        "deeply_nested": {
+            "name": "nested_component",
+            "version": "1.0.0",
+            "level1": {
+                "level2": {
+                    "level3": {
+                        "level4": {
+                            "level5": {
+                                "level6": {
+                                    "level7": {"deep_value": "found it"},
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        "many_keys": {
+            "name": "many_keys_component",
+            "version": "1.0.0",
+            **{f"key_{i}": f"value_{i}" for i in range(500)},
+        },
+        "mixed_types": {
+            "name": "mixed_component",
+            "version": "1.0.0",
+            "config": {
+                "string": "text",
+                "int": 42,
+                "float": 3.14,
+                "bool": True,
+                "null": None,
+                "list": [1, "two", 3.0, None],
+                "nested_dict": {"a": 1, "b": [2, 3]},
+            },
+        },
+        "boundary_values": {
+            "name": "boundary_component",
+            "version": "1.0.0",
+            "config": {
+                "max_int": 9223372036854775807,  # Max 64-bit signed int
+                "min_int": -9223372036854775808,
+                "tiny_float": 1e-308,  # Near min positive float
+                "huge_float": 1e308,  # Near max float
+                "empty_string": "",
+                "single_char": "x",
+            },
+        },
+    }
 
 
 @pytest.fixture
-def sample_metrics_data():
-    """Sample metrics data for testing."""
+def minimal_yaml_config():
+    """Bare minimum YAML configuration with only required fields."""
     return {
-        "agent_id": "test_agent_001",
-        "execution_time": 1.234,
-        "tokens_used": 150,
-        "input_tokens": 100,
-        "output_tokens": 50,
-        "cost": 0.001,
-        "success": True,
-        "error_count": 0,
-        "timestamp": "2023-01-01T12:00:00Z",
-        "metadata": {"model": "claude-3", "temperature": 0.7},
+        "name": "minimal_component",
+        "version": "1.0.0",
     }
 
 
@@ -465,7 +850,7 @@ def generate_test_yaml_config(component_type: str = "test") -> dict[str, Any]:
     }
 
 
-# Export commonly used functions
+# Export commonly used functions and fixtures
 __all__ = [
     "AssertionHelpers",
     "DatabaseTestHelpers",
@@ -476,4 +861,8 @@ __all__ = [
     "generate_test_csv_data",
     "generate_test_metrics",
     "generate_test_yaml_config",
+    # New edge case fixtures
+    "invalid_yaml_data",
+    "edge_case_yaml_data",
+    "minimal_yaml_config",
 ]

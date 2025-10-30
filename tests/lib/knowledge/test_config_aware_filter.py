@@ -339,9 +339,6 @@ class TestDocumentFilteringEdgeCases:
             # Expected behavior for None input
             pass
 
-    @pytest.mark.skip(
-        reason="Blocked by task-7c683705-5031-4d2c-97b2-fa229f22c6dc - BusinessUnitFilter needs type checking for non-string content"
-    )
     def test_filter_documents_mixed_content_types(self, simple_filter):
         """Test filtering documents with mixed content types.
 

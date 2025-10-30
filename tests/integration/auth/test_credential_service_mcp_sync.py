@@ -45,7 +45,6 @@ class TestCredentialServiceMcpSync:
             assert "postgres_user" in result
             assert "api_key" in result
 
-    @pytest.mark.skip(reason="BLOCKED: Source fix needed - TASK-cd4d8f02-118d-4a62-b8ec-05ae6b220376")
     def test_setup_complete_credentials_sync_mcp_false_explicit(self, tmp_path):
         """
         FAILING TEST: setup_complete_credentials(sync_mcp=False) should NOT call sync_mcp_config_with_credentials().

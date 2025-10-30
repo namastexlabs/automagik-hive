@@ -10,7 +10,17 @@ from psycopg_pool import AsyncConnectionPool
 
 @pytest.fixture
 def mock_database_pool():
-    """Mock database connection pool."""
+    """
+    Mock database connection pool with assertion helpers.
+
+    Use mock.assert_* methods to verify database operations:
+    - mocks['pool'].assert_connection_opened(): Verify connection was acquired
+    - mocks['cursor'].assert_query_executed(expected_sql): Verify SQL was executed
+    - mocks['cursor'].assert_fetchone_called(): Verify fetchone was called
+    - mocks['cursor'].assert_fetchall_called(): Verify fetchall was called
+    - mocks['connection'].assert_transaction_used(): Verify transaction was used
+    - mocks.reset_assertions(): Reset all call counts
+    """
     mock_pool = AsyncMock(spec=AsyncConnectionPool)
     mock_connection = AsyncMock()
     mock_cursor = AsyncMock()
@@ -40,7 +50,7 @@ def mock_database_pool():
 
     mock_connection.cursor = mock_cursor_factory
 
-    # Setup transaction context manager - transaction() should return a mock that supports async context management
+    # Setup transaction context manager - transaction() should return a mock that supports async management
     class MockTransactionAsyncContext:
         async def __aenter__(self):
             return None
@@ -51,7 +61,54 @@ def mock_database_pool():
     # Make transaction() method a Mock that returns the async context manager
     mock_connection.transaction = MagicMock(return_value=MockTransactionAsyncContext())
 
-    return {"pool": mock_pool, "connection": mock_connection, "cursor": mock_cursor}
+    # Add assertion helpers to pool
+    def assert_connection_opened():
+        """Assert that pool.connection() was called."""
+        mock_pool.connection.assert_called()
+
+    # Add assertion helpers to cursor
+    def assert_query_executed(expected_sql=None):
+        """Assert execute was called, optionally with specific SQL."""
+        mock_cursor.execute.assert_called()
+        if expected_sql is not None:
+            # Check if any call matches the expected SQL
+            calls = [str(call[0][0]) if call[0] else "" for call in mock_cursor.execute.call_args_list]
+            assert any(expected_sql in call for call in calls), (
+                f"Expected SQL '{expected_sql}' not found in calls: {calls}"
+            )
+
+    def assert_fetchone_called():
+        """Assert fetchone was called."""
+        mock_cursor.fetchone.assert_called()
+
+    def assert_fetchall_called():
+        """Assert fetchall was called."""
+        mock_cursor.fetchall.assert_called()
+
+    # Add assertion helpers to connection
+    def assert_transaction_used():
+        """Assert transaction() was called."""
+        mock_connection.transaction.assert_called()
+
+    # Global reset
+    def reset_assertions():
+        """Reset all mock call counts."""
+        mock_pool.connection.reset_mock()
+        mock_cursor.execute.reset_mock()
+        mock_cursor.fetchone.reset_mock()
+        mock_cursor.fetchall.reset_mock()
+        mock_connection.transaction.reset_mock()
+
+    mock_pool.assert_connection_opened = assert_connection_opened
+    mock_cursor.assert_query_executed = assert_query_executed
+    mock_cursor.assert_fetchone_called = assert_fetchone_called
+    mock_cursor.assert_fetchall_called = assert_fetchall_called
+    mock_connection.assert_transaction_used = assert_transaction_used
+
+    mocks = {"pool": mock_pool, "connection": mock_connection, "cursor": mock_cursor}
+    mocks["reset_assertions"] = reset_assertions
+
+    return mocks
 
 
 @pytest.fixture
@@ -141,7 +198,16 @@ def sample_database_rows():
 
 @pytest.fixture
 def mock_version_service_db():
-    """Mock database operations for version service."""
+    """
+    Mock database operations for version service with assertion helpers.
+
+    Use mock_ops assertion helpers:
+    - mock_ops['fetch_one'].assert_called(): Verify single fetch
+    - mock_ops['fetch_all'].assert_called(): Verify multi fetch
+    - mock_ops['execute'].assert_called(): Verify execute
+    - mock_ops['execute_transaction'].assert_called(): Verify transaction
+    - mock_ops.assert_version_fetched(): Verify version query
+    """
     mock_ops = {
         "fetch_one": AsyncMock(),
         "fetch_all": AsyncMock(),
@@ -149,9 +215,27 @@ def mock_version_service_db():
         "execute_transaction": AsyncMock(),
     }
 
+    # Add assertion helper
+    def assert_version_fetched():
+        """Assert that fetch_one or fetch_all was called."""
+        assert mock_ops["fetch_one"].called or mock_ops["fetch_all"].called, (
+            "Expected fetch_one or fetch_all to be called"
+        )
+
+    def reset_assertions():
+        """Reset all db operation mocks."""
+        for mock_op in mock_ops.values():
+            if hasattr(mock_op, "reset_mock"):
+                mock_op.reset_mock()
+
+    mock_ops["assert_version_fetched"] = assert_version_fetched
+    mock_ops["reset_assertions"] = reset_assertions
+
     with patch("lib.services.component_version_service.get_db_service") as mock_get_db:
         mock_db = AsyncMock()
         for op_name, mock_op in mock_ops.items():
+            if not callable(mock_op):  # Skip our helper functions
+                continue
             setattr(mock_db, op_name, mock_op)
 
         mock_get_db.return_value = mock_db
@@ -177,12 +261,50 @@ def mock_migration_operations():
 
 @pytest.fixture
 def mock_metrics_queue():
-    """Mock metrics queue operations."""
+    """
+    Mock metrics queue operations with assertion helpers.
+
+    Use mock.assert_* methods to verify queue operations:
+    - mock.assert_metric_added(): Verify put was called
+    - mock.assert_metric_retrieved(): Verify get was called
+    - mock.assert_queue_size_checked(): Verify qsize was called
+    - mock.assert_put_count(expected_count): Verify specific number of puts
+    """
     mock_queue = AsyncMock()
     mock_queue.put = AsyncMock()
     mock_queue.get = AsyncMock()
     mock_queue.empty.return_value = False
     mock_queue.qsize.return_value = 5
+
+    # Add assertion helpers
+    def assert_metric_added():
+        """Assert that put was called to add a metric."""
+        mock_queue.put.assert_called()
+
+    def assert_metric_retrieved():
+        """Assert that get was called to retrieve a metric."""
+        mock_queue.get.assert_called()
+
+    def assert_queue_size_checked():
+        """Assert that qsize was called."""
+        mock_queue.qsize.assert_called()
+
+    def assert_put_count(expected_count):
+        """Assert put was called exactly N times."""
+        assert mock_queue.put.call_count == expected_count
+
+    def reset_assertions():
+        """Reset all queue mock call counts."""
+        mock_queue.put.reset_mock()
+        mock_queue.get.reset_mock()
+        mock_queue.qsize.reset_mock()
+        mock_queue.empty.reset_mock()
+
+    mock_queue.assert_metric_added = assert_metric_added
+    mock_queue.assert_metric_retrieved = assert_metric_retrieved
+    mock_queue.assert_queue_size_checked = assert_queue_size_checked
+    mock_queue.assert_put_count = assert_put_count
+    mock_queue.reset_assertions = reset_assertions
 
     with patch("asyncio.Queue", return_value=mock_queue):
         yield mock_queue
@@ -213,10 +335,40 @@ def sample_metrics_data():
 
 @pytest.fixture
 def mock_langwatch_client():
-    """Mock LangWatch client."""
+    """
+    Mock LangWatch client with assertion helpers.
+
+    Use mock.assert_* methods to verify telemetry:
+    - mock.assert_trace_created(): Verify trace was called
+    - mock.assert_span_created(): Verify span was called
+    - mock.assert_telemetry_count(expected_count): Verify trace call count
+    """
     mock_client = AsyncMock()
     mock_client.trace = AsyncMock()
     mock_client.span = AsyncMock()
+
+    # Add assertion helpers
+    def assert_trace_created():
+        """Assert that trace was called."""
+        mock_client.trace.assert_called()
+
+    def assert_span_created():
+        """Assert that span was called."""
+        mock_client.span.assert_called()
+
+    def assert_telemetry_count(expected_count):
+        """Assert trace was called exactly N times."""
+        assert mock_client.trace.call_count == expected_count
+
+    def reset_assertions():
+        """Reset all LangWatch call counts."""
+        mock_client.trace.reset_mock()
+        mock_client.span.reset_mock()
+
+    mock_client.assert_trace_created = assert_trace_created
+    mock_client.assert_span_created = assert_span_created
+    mock_client.assert_telemetry_count = assert_telemetry_count
+    mock_client.reset_assertions = reset_assertions
 
     with patch("langwatch.langwatch.LangWatch", return_value=mock_client):
         yield mock_client

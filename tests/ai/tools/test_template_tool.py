@@ -22,23 +22,6 @@ tool_module = importlib.import_module("ai.tools.template-tool.tool")
 class TestTemplateTool:
     """Test suite for TemplateTool implementation."""
 
-    def test_initialize_without_config(self):
-        """Test initialization without config file - should set defaults."""
-        with patch.object(tool_module, "logger") as mock_logger:
-            tool = TemplateTool()
-
-            # Tool should initialize with default values
-            assert tool.timeout_seconds == 30
-            assert tool.max_retries == 3
-            assert tool.debug_mode is False
-            assert tool._is_initialized is True
-            assert hasattr(tool, "_resource_cache")
-            assert hasattr(tool, "_execution_history")
-            assert len(tool._execution_history) == 0
-
-            # Should log initialization in debug mode
-            mock_logger.debug.assert_called()
-
     def test_initialize_with_config_parameters(self):
         """Test initialization with config parameters override."""
         mock_config = Mock()

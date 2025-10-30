@@ -2,6 +2,7 @@
 Tests for lib/mcp/connection_manager.py - MCP Connection Manager
 """
 
+import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -122,9 +123,13 @@ class TestGetMCPTools:
         mock_tools_instance.__aexit__ = AsyncMock(return_value=None)
         mock_mcp_tools_class.return_value = mock_tools_instance
 
-        # Test the async context manager
-        async with get_mcp_tools("sse-server") as tools:
-            assert tools is mock_tools_instance
+        # Test the async context manager with timeout protection
+        try:
+            async with asyncio.timeout(5.0):
+                async with get_mcp_tools("sse-server") as tools:
+                    assert tools is mock_tools_instance
+        except asyncio.TimeoutError:
+            pytest.fail("MCP tools connection timed out after 5 seconds")
 
         # Verify MCPTools was created with correct parameters
         mock_mcp_tools_class.assert_called_once_with(
@@ -161,9 +166,13 @@ class TestGetMCPTools:
         mock_tools_instance.__aexit__ = AsyncMock(return_value=None)
         mock_mcp_tools_class.return_value = mock_tools_instance
 
-        # Test the async context manager
-        async with get_mcp_tools("cmd-server") as tools:
-            assert tools is mock_tools_instance
+        # Test the async context manager with timeout protection
+        try:
+            async with asyncio.timeout(5.0):
+                async with get_mcp_tools("cmd-server") as tools:
+                    assert tools is mock_tools_instance
+        except asyncio.TimeoutError:
+            pytest.fail("MCP tools connection timed out after 5 seconds")
 
         # Verify MCPTools was created with correct parameters
         mock_mcp_tools_class.assert_called_once_with(
@@ -198,8 +207,12 @@ class TestGetMCPTools:
         mock_tools_instance.__aexit__ = AsyncMock(return_value=None)
         mock_mcp_tools_class.return_value = mock_tools_instance
 
-        async with get_mcp_tools("simple-cmd") as tools:
-            assert tools is mock_tools_instance
+        try:
+            async with asyncio.timeout(5.0):
+                async with get_mcp_tools("simple-cmd") as tools:
+                    assert tools is mock_tools_instance
+        except asyncio.TimeoutError:
+            pytest.fail("MCP tools connection timed out after 5 seconds")
 
         # Should only use the command without args
         mock_mcp_tools_class.assert_called_once_with(
@@ -231,9 +244,13 @@ class TestGetMCPTools:
         mock_tools_instance.__aexit__ = AsyncMock(return_value=None)
         mock_mcp_tools_class.return_value = mock_tools_instance
 
-        # Test the async context manager
-        async with get_mcp_tools("http-server") as tools:
-            assert tools is mock_tools_instance
+        # Test the async context manager with timeout protection
+        try:
+            async with asyncio.timeout(5.0):
+                async with get_mcp_tools("http-server") as tools:
+                    assert tools is mock_tools_instance
+        except asyncio.TimeoutError:
+            pytest.fail("MCP tools connection timed out after 5 seconds")
 
         # Verify MCPTools was created with correct parameters
         mock_mcp_tools_class.assert_called_once_with(
@@ -251,8 +268,12 @@ class TestGetMCPTools:
         mock_get_catalog.return_value = mock_catalog
 
         with pytest.raises(MCPConnectionError, match="Server 'nonexistent' not found"):
-            async with get_mcp_tools("nonexistent"):
-                pass
+            try:
+                async with asyncio.timeout(5.0):
+                    async with get_mcp_tools("nonexistent"):
+                        pass
+            except asyncio.TimeoutError:
+                pytest.fail("MCP tools error handling timed out after 5 seconds")
 
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
@@ -274,8 +295,12 @@ class TestGetMCPTools:
             MCPConnectionError,
             match="Unknown server type for unknown-server",
         ):
-            async with get_mcp_tools("unknown-server"):
-                pass
+            try:
+                async with asyncio.timeout(5.0):
+                    async with get_mcp_tools("unknown-server"):
+                        pass
+            except asyncio.TimeoutError:
+                pytest.fail("MCP tools error handling timed out after 5 seconds")
 
     @pytest.mark.asyncio
     @patch("lib.mcp.connection_manager.get_catalog")
@@ -305,8 +330,12 @@ class TestGetMCPTools:
             MCPConnectionError,
             match="Failed to connect to failing-server",
         ):
-            async with get_mcp_tools("failing-server"):
-                pass
+            try:
+                async with asyncio.timeout(5.0):
+                    async with get_mcp_tools("failing-server"):
+                        pass
+            except asyncio.TimeoutError:
+                pytest.fail("MCP tools error handling timed out after 5 seconds")
 
         # Should log the error
         mock_logger.error.assert_called_once()
@@ -336,8 +365,12 @@ class TestGetMCPTools:
         mock_tools_instance.__aexit__ = AsyncMock(return_value=None)
         mock_mcp_tools_class.return_value = mock_tools_instance
 
-        async with get_mcp_tools("sse-no-env") as tools:
-            assert tools is mock_tools_instance
+        try:
+            async with asyncio.timeout(5.0):
+                async with get_mcp_tools("sse-no-env") as tools:
+                    assert tools is mock_tools_instance
+        except asyncio.TimeoutError:
+            pytest.fail("MCP tools connection timed out after 5 seconds")
 
         # Should default to empty dict for env
         mock_mcp_tools_class.assert_called_once_with(
@@ -527,19 +560,31 @@ class TestLegacyCompatibility:
     @pytest.mark.asyncio
     async def test_get_mcp_connection_manager(self) -> None:
         """Test legacy connection manager function."""
-        result = await get_mcp_connection_manager()
+        try:
+            result = await asyncio.wait_for(
+                get_mcp_connection_manager(),
+                timeout=5.0,
+            )
 
-        # Should return the get_mcp_tools function
-        assert result is get_mcp_tools
+            # Should return the get_mcp_tools function
+            assert result is get_mcp_tools
+        except asyncio.TimeoutError:
+            pytest.fail("get_mcp_connection_manager timed out after 5 seconds")
 
     @pytest.mark.asyncio
     async def test_shutdown_mcp_connection_manager(self) -> None:
         """Test legacy shutdown function (no-op)."""
         # Should not raise any exception
-        result = await shutdown_mcp_connection_manager()
+        try:
+            result = await asyncio.wait_for(
+                shutdown_mcp_connection_manager(),
+                timeout=5.0,
+            )
 
-        # Should return None (no-op)
-        assert result is None
+            # Should return None (no-op)
+            assert result is None
+        except asyncio.TimeoutError:
+            pytest.fail("shutdown_mcp_connection_manager timed out after 5 seconds")
 
 
 if __name__ == "__main__":

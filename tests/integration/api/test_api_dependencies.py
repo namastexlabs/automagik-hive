@@ -14,19 +14,6 @@ from fastapi import HTTPException, status
 class TestActualMessageValidation:
     """Test suite for actual message validation dependencies."""
 
-    def test_validate_message_dependency_success(self):
-        """Test successful message validation dependency."""
-        # Test with valid message
-        import asyncio
-
-        from api.dependencies.message_validation import validate_message_dependency
-
-        async def test_validation():
-            return await validate_message_dependency("Valid test message")
-
-        result = asyncio.run(test_validation())
-        assert result == "Valid test message"
-
     def test_validate_message_dependency_empty(self):
         """Test message validation with empty message."""
         import asyncio

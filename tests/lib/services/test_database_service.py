@@ -113,7 +113,8 @@ class TestDatabaseService:
         async with service.get_connection() as conn:
             assert conn is mock_database_pool["connection"]
 
-        mock_database_pool["pool"].connection.assert_called_once()
+        # Verify connection was opened
+        mock_database_pool["pool"].assert_connection_opened()
 
     @pytest.mark.asyncio
     async def test_database_service_get_connection_initializes_pool(
@@ -143,9 +144,15 @@ class TestDatabaseService:
         query = "INSERT INTO test (name) VALUES (%(name)s)"
         params = {"name": "test_value"}
 
+        # Setup connection execute mock (execute goes directly to connection, not cursor)
+        mock_database_pool["connection"].execute = AsyncMock()
+
         await service.execute(query, params)
 
+        # Verify query execution via connection
         mock_database_pool["connection"].execute.assert_called_once_with(query, params)
+        # Also verify connection was opened
+        mock_database_pool["pool"].assert_connection_opened()
 
     @pytest.mark.asyncio
     async def test_database_service_fetch_one(self, mock_database_pool):
@@ -164,8 +171,9 @@ class TestDatabaseService:
         result = await service.fetch_one(query, params)
 
         assert result == expected_result
-        mock_database_pool["cursor"].execute.assert_called_once_with(query, params)
-        mock_database_pool["cursor"].fetchone.assert_called_once()
+        # Use assertion helpers
+        mock_database_pool["cursor"].assert_query_executed("SELECT")
+        mock_database_pool["cursor"].assert_fetchone_called()
 
     @pytest.mark.asyncio
     async def test_database_service_fetch_one_no_result(self, mock_database_pool):

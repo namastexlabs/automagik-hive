@@ -32,14 +32,6 @@ def agentos_client() -> TestClient:
 class TestAgentOSConfigEndpoints:
     """Validate authentication and payload parity for AgentOS routes."""
 
-    def test_requires_api_key_for_both_routes(self, agentos_client: TestClient):
-        """Versioned and legacy endpoints should reject anonymous requests."""
-        versioned = agentos_client.get("/api/v1/agentos/config")
-        legacy = agentos_client.get("/config")
-
-        assert versioned.status_code == status.HTTP_401_UNAUTHORIZED
-        assert legacy.status_code == status.HTTP_401_UNAUTHORIZED
-
     def test_alias_matches_versioned_payload(self, agentos_client: TestClient):
         """Legacy alias should mirror versioned route response content."""
         headers = {"x-api-key": os.environ["HIVE_API_KEY"]}

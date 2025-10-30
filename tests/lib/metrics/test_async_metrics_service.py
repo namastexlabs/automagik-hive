@@ -46,8 +46,11 @@ async def test_collect_from_response_normalizes_metrics(monkeypatch):
 
     result = service.collect_from_response(response, "demo-agent", "agent")
 
-    # Allow scheduled task to finish
-    await asyncio.gather(*created_tasks)
+    # Allow scheduled task to finish - let failures propagate
+    try:
+        await asyncio.gather(*created_tasks)
+    except Exception as e:
+        pytest.fail(f"Async task failed: {e}")
 
     assert result is True
     assert captured_metrics, "metrics should be captured from the async task"

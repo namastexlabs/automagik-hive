@@ -234,8 +234,8 @@ class YAMLConfigParser:
             return {
                 "valid": True,
                 "config_path": config_path,
-                "agent_id": config.config.agent_id,
-                "version": config.config.version,
+                "agent_id": config.config.agent.agent_id,
+                "version": config.config.agent.version,
                 "tools_summary": self.get_mcp_tools_summary(config),
                 "errors": [],
                 "warnings": [],

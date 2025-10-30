@@ -81,7 +81,8 @@ class BusinessUnitFilter:
         Returns:
             Business unit ID with highest keyword match score, or None
         """
-        if not text:
+        # Handle None, empty strings, and non-string types
+        if not text or not isinstance(text, str):
             return None
 
         text_lower = text.lower()

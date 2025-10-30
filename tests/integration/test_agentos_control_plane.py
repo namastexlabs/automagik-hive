@@ -26,6 +26,9 @@ if str(project_root) not in sys.path:
 
 from api.main import create_app  # noqa: E402
 
+# Import reset fixture from shared fixtures
+pytest_plugins = ["tests.fixtures.auth_fixtures"]
+
 
 class TestAgentOSControlPlaneIntegration:
     """End-to-end integration tests for Control Pane contract."""
@@ -132,10 +135,7 @@ class TestAgentOSControlPlaneIntegration:
             override_url = os.environ.get("HIVE_CONTROL_PANE_BASE_URL")
             assert override_url == custom_base
 
-    @pytest.mark.skip(
-        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
-    )
-    def test_authentication_enforcement(self, integration_client):
+    def test_authentication_enforcement(self, integration_client, reset_auth_singleton):
         """Ensure Control Pane endpoints enforce authentication."""
         # Request without auth should fail
         response = integration_client.get("/api/v1/agentos/config")
@@ -213,10 +213,7 @@ class TestControlPlaneErrorHandling:
         """Authentication headers."""
         return {"x-api-key": os.environ["HIVE_API_KEY"]}
 
-    @pytest.mark.skip(
-        reason="Test isolation issue: passes individually but fails in full suite due to environment pollution from API module reloads"
-    )
-    def test_malformed_auth_header(self, integration_client):
+    def test_malformed_auth_header(self, integration_client, reset_auth_singleton):
         """Test handling of malformed authentication headers."""
         # Missing x-api-key prefix
         response = integration_client.get("/api/v1/agentos/config", headers={"authorization": "Bearer test"})

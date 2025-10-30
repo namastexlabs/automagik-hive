@@ -281,7 +281,11 @@ class CredentialService:
         postgres_creds = self.extract_postgres_credentials_from_env()
         api_key = self.extract_hive_api_key_from_env()
 
-        if not (postgres_creds["user"] and postgres_creds["password"] and api_key):
+        # Require at least one credential type (postgres OR api_key)
+        has_postgres = postgres_creds["user"] and postgres_creds["password"]
+        has_api_key = api_key is not None
+
+        if not (has_postgres or has_api_key):
             logger.warning("Cannot update MCP config - missing credentials")
             return
 

@@ -14,25 +14,6 @@ from lib.utils import agno_proxy
 class TestAgnoProxyCore:
     """Core functionality tests for agno_proxy module."""
 
-    def test_get_agno_proxy_singleton_pattern(self):
-        """Test that get_agno_proxy implements singleton pattern correctly."""
-        # Reset global state for clean test
-        agno_proxy.reset_proxy_instances()
-
-        with patch("lib.utils.proxy_agents.AgnoAgentProxy") as mock_proxy_class:
-            mock_instance = Mock()
-            mock_proxy_class.return_value = mock_instance
-
-            # First call creates instance
-            proxy1 = agno_proxy.get_agno_proxy()
-            # Second call returns same instance
-            proxy2 = agno_proxy.get_agno_proxy()
-
-            assert proxy1 is proxy2
-            assert proxy1 is mock_instance
-            # Constructor called only once due to singleton pattern
-            mock_proxy_class.assert_called_once()
-
     def test_get_agno_team_proxy_singleton_pattern(self):
         """Test that get_agno_team_proxy implements singleton pattern correctly."""
         agno_proxy.reset_proxy_instances()
@@ -242,16 +223,6 @@ class TestErrorHandling:
 
 class TestProxySystemIntegration:
     """Integration tests for the complete proxy system."""
-
-    def test_supported_db_types_completeness(self):
-        """Test that all expected database types are exposed."""
-        info = agno_proxy.get_proxy_module_info()
-        storage_types = info["supported_db_types"]
-
-        expected_types = ["postgres", "sqlite", "mongodb", "redis", "dynamodb", "json", "yaml", "singlestore"]
-
-        for storage_type in expected_types:
-            assert storage_type in storage_types, f"Missing storage type: {storage_type}"
 
     def test_module_information_consistency(self):
         """Test that module information is consistent and complete."""

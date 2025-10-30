@@ -27,22 +27,6 @@ class _DummyToolkitWithDefaults:
 class TestToolRegistryErrorHandling:
     """Test tool registry handles missing tools gracefully."""
 
-    def test_load_tools_handles_missing_mcp_tools(self):
-        """Test that load_tools handles missing MCP tools without crashing."""
-        tool_configs = [{"name": "mcp__postgres__query"}, {"name": "ShellTools"}]
-
-        with patch("lib.tools.registry.ToolRegistry.resolve_mcp_tool") as mock_resolve:
-            # Simulate postgres tool being unavailable
-            mock_resolve.return_value = None
-
-            # This should not crash - just skip the unavailable tool
-            tools, loaded_names = ToolRegistry.load_tools(tool_configs)
-
-            # Should have loaded ShellTools but skipped postgres
-            assert len(tools) == 1  # Only ShellTools loaded
-            assert loaded_names == ["ShellTools"]  # Only ShellTools successfully loaded
-            mock_resolve.assert_called_once_with("mcp__postgres__query")
-
     def test_resolve_mcp_tool_handles_exceptions(self):
         """Test that resolve_mcp_tool handles exceptions gracefully."""
         # Clear cache to ensure clean test

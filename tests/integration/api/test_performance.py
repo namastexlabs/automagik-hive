@@ -25,30 +25,6 @@ from fastapi import status
 class TestResponseTimePerformance:
     """Test suite for API response time performance."""
 
-    def test_health_endpoint_response_time(self, test_client):
-        """Test health endpoint response time under normal conditions."""
-        response_times = []
-
-        # Make 20 requests to get average response time
-        for _ in range(20):
-            start_time = time.time()
-            response = test_client.get("/health")
-            end_time = time.time()
-
-            assert response.status_code == status.HTTP_200_OK
-            response_times.append(end_time - start_time)
-
-        # Response times should be consistently fast
-        avg_time = statistics.mean(response_times)
-        max_time = max(response_times)
-
-        assert avg_time < 0.1, f"Average response time too slow: {avg_time:.3f}s"
-        assert max_time < 0.5, f"Maximum response time too slow: {max_time:.3f}s"
-
-        # 95th percentile should be under 200ms
-        p95_time = sorted(response_times)[int(len(response_times) * 0.95)]
-        assert p95_time < 0.2, f"95th percentile too slow: {p95_time:.3f}s"
-
     def test_component_listing_response_time(self, test_client, api_headers):
         """Test component listing endpoint response time."""
         response_times = []

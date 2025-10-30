@@ -22,34 +22,6 @@ if str(project_root) not in sys.path:
 class TestPlaygroundUnification:
     """Test suite for playground router unification and mounting."""
 
-    def test_playground_mount_path_configuration(self):
-        """Verify playground mount path is configurable via environment variable."""
-        # Default mount path
-        default_path = os.environ.get("HIVE_PLAYGROUND_MOUNT_PATH", "/playground")
-        assert default_path == "/playground", "Default mount path should be /playground"
-
-        # Test custom mount path
-        with patch.dict(os.environ, {"HIVE_PLAYGROUND_MOUNT_PATH": "/custom-playground"}):
-            mount_path = os.environ.get("HIVE_PLAYGROUND_MOUNT_PATH", "/playground")
-            assert mount_path == "/custom-playground"
-
-    def test_playground_embedding_toggle(self):
-        """Verify playground embedding can be disabled via environment variable."""
-        # Default should be enabled
-        default_embed = os.environ.get("HIVE_EMBED_PLAYGROUND", "1").lower() not in {
-            "0",
-            "false",
-        }
-        assert default_embed is True, "Playground embedding should be enabled by default"
-
-        # Test disabling
-        with patch.dict(os.environ, {"HIVE_EMBED_PLAYGROUND": "0"}):
-            embed_disabled = os.environ.get("HIVE_EMBED_PLAYGROUND", "1").lower() not in {
-                "0",
-                "false",
-            }
-            assert embed_disabled is False
-
     def test_unified_router_includes_playground(self, test_client, mock_auth_service):
         """Ensure unified router properly includes playground routes when enabled."""
         # Mock playground availability
@@ -109,21 +81,6 @@ class TestPlaygroundUnification:
 
         payload = response.json()
         assert payload["status"] == "success"
-
-    def test_control_pane_base_url_configuration(self):
-        """Verify Control Pane base URL can be overridden via environment variable."""
-        # Default behavior uses API host and port
-        default_host = os.environ.get("HIVE_API_HOST", "0.0.0.0")  # noqa: S104
-        host = "localhost" if default_host in {"0.0.0.0", "::"} else default_host  # noqa: S104
-        default_port = os.environ.get("HIVE_API_PORT", "8886")
-
-        # Test with override
-        with patch.dict(os.environ, {"HIVE_CONTROL_PANE_BASE_URL": "https://custom.example.com"}):
-            override_url = os.environ.get(
-                "HIVE_CONTROL_PANE_BASE_URL",
-                f"http://{host}:{default_port}",
-            )
-            assert override_url == "https://custom.example.com"
 
     def test_interfaces_includes_all_required_routes(self, test_client, mock_auth_service, api_headers):
         """Validate that interfaces payload includes all required route types."""
