@@ -1,17 +1,42 @@
 """Agent discovery and registration for Hive V2.
 
-This module discovers and loads agents from hive/examples/agents/
-using their factory functions (get_*_agent).
+This module discovers and loads agents from:
+1. Project directory (ai/agents/) if hive.yaml exists
+2. Package examples (hive/examples/agents/) as fallback
 """
 
 from pathlib import Path
 import importlib.util
-from typing import List
+import yaml
+from typing import List, Optional
 from agno.agent import Agent
 
 
+def _find_project_root() -> Optional[Path]:
+    """Find project root by locating hive.yaml.
+
+    Searches upward from current directory.
+    Returns None if not in a Hive project.
+    """
+    current = Path.cwd()
+
+    # Try current directory and up to 5 levels up
+    for _ in range(5):
+        if (current / "hive.yaml").exists():
+            return current
+        if current.parent == current:  # Reached filesystem root
+            break
+        current = current.parent
+
+    return None
+
+
 def discover_agents() -> List[Agent]:
-    """Discover and load all agents from hive/examples/agents/.
+    """Discover and load agents from project or package.
+
+    Discovery order:
+    1. If hive.yaml exists: use discovery_path from config
+    2. Otherwise: use package examples (hive/examples/agents/)
 
     Scans for agent directories containing:
     - agent.py: Factory function (get_*_agent)
@@ -26,54 +51,87 @@ def discover_agents() -> List[Agent]:
         Found 3 agents
     """
     agents = []
-    agents_dir = Path(__file__).parent.parent / "examples" / "agents"
+
+    # Try to find project root with hive.yaml
+    project_root = _find_project_root()
+
+    if project_root:
+        # User project mode - use discovery_path from hive.yaml
+        config_path = project_root / "hive.yaml"
+        try:
+            with open(config_path) as f:
+                config = yaml.safe_load(f)
+
+            discovery_path = config.get("agents", {}).get("discovery_path", "ai/agents")
+            agents_dir = project_root / discovery_path
+            print(f"🔍 Discovering agents in project: {agents_dir}")
+        except Exception as e:
+            print(f"⚠️  Failed to load hive.yaml: {e}")
+            return agents
+    else:
+        # Package mode - use builtin examples
+        agents_dir = Path(__file__).parent.parent / "examples" / "agents"
+        print(f"🔍 Discovering agents in package: {agents_dir}")
 
     if not agents_dir.exists():
         print(f"⚠️  Agent directory not found: {agents_dir}")
         return agents
 
-    print(f"🔍 Discovering agents in: {agents_dir}")
+    # Directories to scan: main dir + examples subdir if it exists
+    dirs_to_scan = [agents_dir]
+    examples_dir = agents_dir / "examples"
+    if examples_dir.exists():
+        dirs_to_scan.append(examples_dir)
+        print(f"  📂 Also scanning examples: {examples_dir}")
 
-    for agent_path in agents_dir.iterdir():
-        # Skip non-directories and private directories
-        if not agent_path.is_dir() or agent_path.name.startswith("_"):
-            continue
-
-        factory_file = agent_path / "agent.py"
-        if not factory_file.exists():
-            print(f"  ⏭️  Skipping {agent_path.name} (no agent.py)")
-            continue
-
-        try:
-            # Load module dynamically
-            spec = importlib.util.spec_from_file_location(
-                f"hive.agents.{agent_path.name}",
-                factory_file
-            )
-            if spec is None or spec.loader is None:
-                print(f"  ❌ Failed to load spec for {agent_path.name}")
+    for scan_dir in dirs_to_scan:
+        for agent_path in scan_dir.iterdir():
+            # Skip non-directories and private directories
+            if not agent_path.is_dir() or agent_path.name.startswith("_"):
                 continue
 
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            # Skip "examples" directory itself (not its contents)
+            if agent_path.name == "examples":
+                continue
 
-            # Find factory function (get_*_agent)
-            factory_found = False
-            for name in dir(module):
-                if name.startswith("get_") and name.endswith("_agent"):
-                    factory = getattr(module, name)
-                    agent = factory()
-                    agents.append(agent)
-                    print(f"  ✅ Loaded agent: {agent.name} (id: {agent.agent_id})")
-                    factory_found = True
-                    break
+            factory_file = agent_path / "agent.py"
+            if not factory_file.exists():
+                print(f"  ⏭️  Skipping {agent_path.name} (no agent.py)")
+                continue
 
-            if not factory_found:
-                print(f"  ⚠️  No factory function found in {agent_path.name}/agent.py")
+            try:
+                # Load module dynamically
+                spec = importlib.util.spec_from_file_location(f"hive.agents.{agent_path.name}", factory_file)
+                if spec is None or spec.loader is None:
+                    print(f"  ❌ Failed to load spec for {agent_path.name}")
+                    continue
 
-        except Exception as e:
-            print(f"  ❌ Failed to load agent from {agent_path.name}: {e}")
-            continue
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+
+                # Find factory function (get_*)
+                factory_found = False
+                for name in dir(module):
+                    if name.startswith("get_") and callable(getattr(module, name)):
+                        factory = getattr(module, name)
+                        # Try to call it - if it returns an Agent, use it
+                        try:
+                            result = factory()
+                            if isinstance(result, Agent):
+                                agents.append(result)
+                                print(f"  ✅ Loaded agent: {result.name} (id: {result.agent_id})")
+                                factory_found = True
+                                break
+                        except Exception:
+                            # Not a valid factory, continue searching
+                            continue
+
+                if not factory_found:
+                    print(f"  ⚠️  No factory function found in {agent_path.name}/agent.py")
+
+            except Exception as e:
+                print(f"  ❌ Failed to load agent from {agent_path.name}: {e}")
+                continue
 
     print(f"\n🎯 Total agents loaded: {len(agents)}")
     return agents

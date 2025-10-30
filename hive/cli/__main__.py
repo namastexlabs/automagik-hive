@@ -1,6 +1,6 @@
 """CLI entry point."""
 
-from .cli import app
+from . import app
 
 if __name__ == "__main__":
     app()
