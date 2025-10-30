@@ -58,29 +58,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Custom health endpoint
-    @base_app.get("/health")
-    async def health_check():
-        """Health check endpoint with agent count."""
-        return {
-            "status": "healthy",
-            "version": "2.0.0",
-            "environment": config.hive_environment,
-            "agents_count": len(agents),
-            "agents": [agent.agent_id for agent in agents] if agents else [],
-        }
-
-    # Root endpoint
-    @base_app.get("/")
-    async def root():
-        """Root endpoint with API information."""
-        return {
-            "message": "🚀 Hive V2 API powered by Agno AgentOS",
-            "version": "2.0.0",
-            "docs": "/docs" if config.is_development else None,
-            "config_endpoint": "/config",  # AgentOS endpoint
-            "agents_count": len(agents),
-        }
+    # Note: AgentOS provides default /health and / endpoints
+    # We let AgentOS handle those to avoid route conflicts
 
     # Initialize AgentOS with agents and base app
     # AgentOS will auto-generate:
