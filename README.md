@@ -1,650 +1,413 @@
-<p align="center">
-  <img src=".github/assets/logo.svg" alt="Automagik Hive Logo" width="400">
-</p>
-<h2 align="center">Production-Ready Multi-Agent AI in Minutes, Not Months</h2>
+# 🚀 Automagik Hive V2
 
-<p align="center">
-  <strong>🎯 The Only Framework Where YAML Creates Production-Ready AI Teams</strong><br>
-  One-click install with database, memory, RAG, and orchestration included.<br>
-  From zero to intelligent AI systems in 5 minutes.
-</p>
+**AI that generates AI** - The YAML-first scaffolding and DevX layer for Agno that makes agent creation delightful.
 
-<p align="center">
-  <a href="https://pypi.org/project/automagik-hive/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/automagik-hive?style=flat-square&color=00D9FF" /></a>
-  <a href="https://pypi.org/project/automagik-hive/"><img alt="Python 3.12+" src="https://img.shields.io/badge/python-3.12+-00D9FF?style=flat-square" /></a>
-  <a href="https://pepy.tech/project/automagik-hive"><img alt="Downloads" src="https://img.shields.io/pepy/dt/automagik-hive?style=flat-square&color=00D9FF" /></a>
-  <a href="https://github.com/namastexlabs/automagik-hive/actions/workflows/ci-cd.yml"><img alt="CI/CD Pipeline" src="https://img.shields.io/github/actions/workflow/status/namastexlabs/automagik-hive/ci-cd.yml?branch=main&style=flat-square&label=CI/CD" /></a>
-  <a href="https://github.com/namastexlabs/automagik-hive/pkgs/container/automagik-hive"><img alt="Docker Image" src="https://img.shields.io/badge/docker-ghcr.io-00D9FF?style=flat-square&logo=docker" /></a>
-  <a href="https://github.com/namastexlabs/automagik-hive/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/namastexlabs/automagik-hive?style=flat-square&color=00D9FF" /></a>
-  <a href="https://discord.gg/xcW8c7fF3R"><img alt="Discord" src="https://img.shields.io/discord/1095114867012292758?style=flat-square&color=00D9FF&label=discord" /></a>
-  <a href="https://github.com/orgs/namastexlabs/projects/9/views/1?filterQuery=project%3Ahive"><img alt="Roadmap" src="https://img.shields.io/badge/📍_roadmap-view_initiatives-5319E7?style=flat-square" /></a>
-</p>
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](http://mypy-lang.org/)
 
-<p align="center">
-  <a href="#-key-features">Features</a> •
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="https://github.com/orgs/namastexlabs/projects/9/views/1?filterQuery=project%3Ahive">Roadmap</a> •
-  <a href="#-development">Development</a> •
-  <a href="#-contributing">Contributing</a>
-</p>
+## What is Hive?
 
----
+Think **"Create React App" but for Agno agents**. Hive is not a competing framework - it's a scaffolding layer that makes building with [Agno](https://github.com/agno-agi/agno) faster and more delightful.
 
-## 🚀 What is Automagik Hive?
+### The Killer Feature
 
-**Automagik Hive** is a production-ready multi-agent orchestration platform that transforms weeks of infrastructure setup into a single command. Built on [Agno's](https://agno.com) blazing-fast core (3μs agent instantiation), Hive is the difference between building a house from scratch and moving into one that's already furnished.
+**Use Agno agents to generate Agno agent configurations** - describe what you want in natural language, and Hive's AI generator creates optimal YAML configs with intelligent model selection, tool recommendations, and production-ready instructions.
 
-### 🏭 The Problem We Solve
+## Features
 
-**The Reality of AI Development:**
-```
-Week 1: Setup PostgreSQL + pgvector
-Week 2: Configure authentication
-Week 3: Build RAG system
-Week 4: Implement agent coordination
-Week 5: Add hot reload
-Week 6: Write deployment scripts
-Result: Still not production-ready 😰
-```
+- 🤖 **AI-Powered Generation** - Natural language → optimized agent configs
+- 🎯 **YAML-First Config** - Newbie-friendly agent creation
+- 🔄 **Smart RAG System** - CSV hot reload with hash-based incremental loading
+- 📦 **Version Management** - Track agent evolution over time
+- 🚀 **API-Driven Lifecycle** - Create/update agents via REST
+- 🛠️ **Builtin Tools Catalog** - 12 production-ready tools
+- 🎨 **Project Templates** - Zero-to-agent in 30 seconds
 
-**With Automagik Hive:**
+## Quick Start
+
+### Installation
+
 ```bash
-# Install
-curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
+# Install via uvx (recommended - no system pollution)
+uvx automagik-hive --help
 
-# Start development server
-automagik-hive dev
-
-# 5 minutes later: Production-ready AI agents running ✨
+# Or install globally
+uv pip install automagik-hive
 ```
 
-### ✨ What Makes Hive Different
+### Create Your First Project
 
-**Other Frameworks Make You Choose:**
-- ❌ Simple YAML configs OR production-ready systems
-- ❌ Fast prototyping OR enterprise features
-- ❌ Easy setup OR powerful capabilities
+```bash
+# Initialize project
+uvx automagik-hive init my-project
+cd my-project
 
-**Hive Gives You Everything:**
-- ✅ **YAML-First Configuration** - No complex code needed
-- ✅ **Production-Ready Out of the Box** - Database, auth, monitoring included
-- ✅ **True Multi-Agent Coordination** - Not just chained tool calls
-- ✅ **One-Click Install** - Complete environment in minutes
-- ✅ **Hot Reload** - Changes apply without restarting
-- ✅ **Built on Agno** - 3μs agent instantiation, 6.5KB memory per agent
+# Option 1: Template-based (fast)
+hive create agent my-bot
 
----
+# Option 2: AI-powered (optimal)
+hive ai my-bot --description "Customer support bot with CSV knowledge"
 
-## 🌟 Key Features
+# Start dev server
+hive dev
+```
 
-### 🚀 **One-Click Production Environment**
-Complete stack ready in minutes: PostgreSQL + pgvector, authentication, logging, metrics, and deployment scripts. No weeks of DevOps work.
+## AI-Powered Generation
 
-### 📝 **YAML-First Agent Design**
+The killer feature - use natural language to generate optimal agent configurations:
+
+```bash
+$ hive ai support-bot --interactive
+
+🤖 AI-Powered Agent Generator
+────────────────────────────────────────────────────────
+
+💭 What should your agent do?
+> I need a customer support bot that answers questions using
+  a CSV knowledge base. Should be friendly and helpful.
+
+🧠 Analyzing requirements...
+🤖 Generating optimal configuration...
+✅ Agent generated successfully!
+
+💡 AI Recommendations:
+  • Model: gpt-4o-mini (cost-effective for support tasks)
+  • Tools: CSVTools, WebSearch (for knowledge lookup + fallback)
+  • Temperature: 0.7 (balanced creativity/consistency)
+  • Storage: PostgreSQL with auto-schema (production-ready)
+
+📋 Next Steps:
+  1. Add your CSV knowledge base to data/support_docs.csv
+  2. Review and customize config.yaml
+  3. Test: hive dev
+```
+
+**Generated config.yaml:**
 ```yaml
 agent:
-  name: "Customer Support"
-  model: "gpt-4"
+  name: "Customer Support Bot"
+  agent_id: "support-bot"
+  version: "1.0.0"
+
+model:
+  provider: "openai"
+  id: "gpt-4o-mini"  # AI-selected for cost-effectiveness
+  temperature: 0.7
 
 instructions: |
-  You help customers with billing and account issues.
+  You are a friendly and helpful customer support agent.
 
-knowledge_filter:
-  business_unit_filter: "customer_support"
-```
-Create sophisticated agents without touching Python. Extend with code only when needed.
+  Your role is to answer customer questions using the knowledge base.
+  Always be polite, concise, and solution-oriented.
 
-### 🔄 **Hot Reload Everything**
-Change configurations, update knowledge bases, modify agents - all without restarting. Deploy updates with zero downtime.
+  When you don't know something, offer to escalate to a human agent.
 
-### 🧠 **Built-in RAG System**
-CSV-based knowledge with pgvector, automatic vectorization, business unit filtering, and Portuguese optimization. Drop a CSV file, get intelligent retrieval.
+tools:
+  - name: CSVTools
+    csv_path: "./data/support_docs.csv"
+  - name: WebSearch  # Fallback for questions not in KB
 
-### ⚡ **Powered by Agno's Speed**
-- **3 microseconds** agent instantiation (spawn 1000s instantly)
-- **6.5KB** memory per agent (entire teams on minimal infrastructure)
-- **True coordination** - Shared context and memory, not tool calling
-
-### 🤖 **Three-Layer Intelligence**
-```
-🧞 GENIE TEAM → Strategic coordination
-    ↓
-🎯 DOMAIN ORCHESTRATORS → genie-dev, genie-testing, genie-quality
-    ↓
-🤖 EXECUTION AGENTS → Specialized workers with 30-run memory
+storage:
+  table_name: "support_bot_sessions"
+  auto_upgrade_schema: true
 ```
 
-### 🔌 **Model Context Protocol (MCP)**
-Native integration with external services: WhatsApp, databases, APIs, and tools. Extend agents beyond their boundaries.
+## Project Structure
 
-### 📊 **Enterprise Features Included**
-- PostgreSQL with auto-schema migration
-- API key authentication
-- Structured logging with emoji enrichment
-- Metrics and monitoring
-- Docker deployment ready
-- Multi-tenancy support
+When you run `hive init my-project`:
 
----
+```
+my-project/
+├── ai/                         # All AI components
+│   ├── agents/
+│   │   ├── examples/           # Built-in examples (read-only)
+│   │   │   ├── support-bot/    # Customer support w/ CSV
+│   │   │   ├── code-reviewer/  # Code review w/ security
+│   │   │   └── researcher/     # Web research w/ synthesis
+│   │   └── [your-agents]/      # Your custom agents
+│   │
+│   ├── teams/                  # Multi-agent teams
+│   │   ├── examples/
+│   │   └── [your-teams]/
+│   │
+│   ├── workflows/              # Step-based workflows
+│   │   ├── examples/
+│   │   └── [your-workflows]/
+│   │
+│   └── tools/                  # Custom tools
+│       ├── examples/
+│       └── [your-tools]/
+│
+├── data/                       # Knowledge bases
+│   ├── csv/                    # CSV knowledge
+│   └── documents/              # Document stores
+│
+├── .env                        # Environment config
+├── hive.yaml                   # Project config
+└── pyproject.toml              # Python dependencies
+```
 
-## 🎭 How It Works
+## Smart RAG System
 
-### From YAML to Running Agent in 30 Seconds
+Hash-based incremental CSV loading with hot reload - one of the few gems from Hive V1:
+
+```python
+from hive.rag import create_knowledge_base
+
+# Create knowledge base with hot reload
+kb = create_knowledge_base(
+    csv_path="data/knowledge.csv",
+    embedder="text-embedding-3-small",
+    num_documents=5,
+    hot_reload=True
+)
+
+# Use with agent
+agent = Agent(name="Bot", knowledge=kb)
+```
+
+**Performance:**
+- ✅ **450x faster** for unchanged CSVs
+- ✅ **10x faster** for small updates
+- ✅ **99% cost savings** on embeddings
+
+## Builtin Tools Catalog
+
+12 production-ready tools:
+
+| Category | Tools |
+|----------|-------|
+| **Execution** | PythonTools, ShellTools |
+| **Web** | DuckDuckGoSearch, WebScraper, YoutubeTools |
+| **Files** | FileTools, CSVTools |
+| **Database** | SQLQuery |
+| **APIs** | GitHubAPI, SlackAPI, EmailTools |
+| **Compute** | Calculator |
+
+```python
+from hive.scaffolder.builtin_tools import search_tools, recommend_tools
+
+# Search for tools
+results = search_tools("web search")
+# [{'name': 'DuckDuckGoSearch', 'description': '...', 'use_cases': [...]}]
+
+# Get AI recommendations
+recommendations = recommend_tools("I need to analyze CSV data and send Slack alerts")
+# Recommends: CSVTools, SlackAPI
+```
+
+## CLI Commands
+
+```bash
+# Initialize project
+hive init <project-name>
+
+# Create components (templates)
+hive create agent <name>
+hive create team <name> --mode route|coordinate|collaborate
+hive create workflow <name>
+hive create tool <name>
+
+# Create with AI (KILLER FEATURE)
+hive ai <agent-name> --interactive
+hive ai <agent-name> --description "Natural language description"
+
+# Development
+hive dev                    # Start dev server with hot reload
+hive dev --port 8000        # Custom port
+hive dev --reload           # Enable file watching
+
+# Info
+hive version                # Show version
+hive --help                 # Show all commands
+```
+
+## Example Agents
+
+### Customer Support Bot
 
 ```yaml
-# ai/agents/support-agent/config.yaml
 agent:
-  name: "Customer Support"
-  agent_id: "support-agent"
-  version: "1.0.0"
+  name: "Customer Support Bot"
+  agent_id: "support-bot"
+
+model:
+  provider: "openai"
+  id: "gpt-4o-mini"
+
+tools:
+  - name: CSVTools
+    csv_path: "./data/faqs.csv"
+  - name: WebSearch
+
+instructions: |
+  You are a friendly customer support agent.
+  Answer questions using the FAQ knowledge base.
+  Be helpful and concise.
+```
+
+### Code Reviewer
+
+```yaml
+agent:
+  name: "Security Code Reviewer"
+  agent_id: "code-reviewer"
 
 model:
   provider: "anthropic"
   id: "claude-sonnet-4"
 
+tools:
+  - name: FileTools
+  - name: GitHubAPI
+
 instructions: |
-  You are a friendly customer support agent.
-  Help users with billing questions using the knowledge base.
-
-knowledge_filter:
-  business_unit_filter: "customer_support"
-
-storage:
-  table_name: "support_sessions"
+  You are a security-focused code reviewer.
+  Check for OWASP Top 10 vulnerabilities.
+  Provide educational feedback with fix suggestions.
 ```
 
-```bash
-# Start the system
-automagik-hive dev
-
-# Your agent is live at:
-# http://localhost:8886/agents/support-agent/run
-```
-
-### Extend with Python When Needed
-
-```python
-# ai/agents/support-agent/agent.py
-from agno.agent import Agent
-
-def get_support_agent(**kwargs) -> Agent:
-    config = yaml.safe_load(open("config.yaml"))
-
-    agent = Agent.from_yaml("config.yaml")
-
-    # Add custom tools when needed
-    agent.add_tool(check_billing_system)
-    agent.add_tool(create_support_ticket)
-
-    return agent
-```
-
-**The Power**: Start with YAML, extend with Python. No rewrites, no migrations, no platform lock-in.
-
----
-
-## 📊 Built by Practitioners
-
-We created Automagik Hive at Namastex Labs after building multi-agent systems for clients from startups to Fortune 500. We were tired of:
-
-- 🔁 Rewriting boilerplate for every project
-- 🚫 "Multi-agent" tools that were just chained agents with flaky tool calling
-- ⚠️ Prototypes requiring complete rewrites for production
-
-**In Production**: Powering hundreds of agents for real businesses
-**Battle-Tested**: From startup MVPs to enterprise-scale deployments
-**Continuously Improved**: We use this daily, so we keep it working
-
----
-
-## 🎯 Who Uses Hive?
-
-### 👨‍💻 **Individual Developers**
-**Tired of**: Writing 1000 lines of boilerplate for simple agents
-**With Hive**: YAML config → Working agent in 5 minutes
-**Result**: Ship AI features 10x faster
-
-### 🏢 **Product Teams**
-**Tired of**: Waiting weeks for dev resources to prototype
-**With Hive**: Configure → Test → Iterate immediately
-**Result**: Validate ideas before writing code
-
-### 🚀 **Enterprises**
-**Tired of**: Prototypes that can't scale to production
-**With Hive**: Same YAML from prototype to millions of requests
-**Result**: Innovation at startup speed, enterprise reliability
-
-### 🛠️ **CTOs & Tech Leads**
-**Tired of**: Months of infrastructure work before value delivery
-**With Hive**: Complete stack included, focus on business logic
-**Result**: 95% faster time-to-production
-
----
-
-## 📦 Quick Start
-
-### Prerequisites
-
-- Python 3.12+
-- One AI provider key (Anthropic, OpenAI, Google, etc.)
-- **Docker is OPTIONAL** (only required for PostgreSQL backend; SQLite works without Docker)
-
-### One-Line Installation
-
-```bash
-# Install with SQLite (default - no Docker required)
-curl -sSL https://raw.githubusercontent.com/namastexlabs/automagik-hive/main/install.sh | bash
-
-# Start development server
-automagik-hive dev
-
-# Open http://localhost:8886 🎉
-```
-
-**Backend Selection:** SQLite is the default for quick setup. For production deployments with agent memory and vector search, use PostgreSQL. See [Database Backend Selection](#-database-backend-selection) for details.
-
-### Manual Installation
-
-```bash
-# Clone repository
-git clone https://github.com/namastexlabs/automagik-hive.git
-cd automagik-hive
-
-# Install with SQLite backend (default - no Docker)
-make install-sqlite
-
-# Or install with PostgreSQL backend (requires Docker)
-make install-postgres
-
-# Start development server
-make dev
-```
-
-**Backend Options:**
-- `make install-sqlite` - SQLite backend (default, no Docker required)
-- `make install-postgres` - PostgreSQL backend (production-grade, requires Docker)
-
-See [Database Backend Selection](#-database-backend-selection) for detailed comparison.
-
-### Create Your First Agent
-
-```bash
-# Copy template
-cp -r ai/agents/template-agent ai/agents/my-agent
-
-# Edit config
-nano ai/agents/my-agent/config.yaml
-
-# Restart server (or wait for hot reload)
-# Your agent is now live!
-```
-
----
-
-## 🗄️ Database Backend Selection
-
-Automagik Hive supports two database backends to match your deployment needs:
-
-### SQLite (Default)
-
-**Simple file-based database** - Zero configuration setup for quick development.
-
-**Best For:**
-- Development and prototyping
-- CI/CD integration tests
-- Quick setup and iteration
-- Minimal dependency environments
-
-**Advantages:**
-- ✅ No Docker required
-- ✅ Instant setup (<1 minute)
-- ✅ Zero configuration
-- ✅ Simple file-based storage
-
-**Limitations:**
-- ⚠️ **Agent memory** - Limited session persistence
-- ⚠️ **No PgVector embeddings** - Basic search only
-- ⚠️ **Limited concurrent writes** - Single-writer model
-- ⚠️ **Not production-ready** - Use PostgreSQL for production
-
-**Installation:**
-```bash
-make install-sqlite
-# or
-automagik-hive install --backend sqlite
-```
-
-**Configuration:**
-```bash
-HIVE_DATABASE_BACKEND=sqlite
-HIVE_DATABASE_URL=sqlite:///./data/automagik_hive.db
-```
-
-### PostgreSQL (Production)
-
-**Production-grade database** - Full PostgreSQL with Docker orchestration.
-
-**Best For:**
-- Production deployments
-- High concurrency workloads
-- Large-scale knowledge bases
-- Advanced vector search with pgvector
-
-**Advantages:**
-- ✅ **Full agent memory** - Complete session persistence
-- ✅ **PgVector embeddings** - Advanced semantic search
-- ✅ Production-grade reliability
-- ✅ Best concurrent performance
-- ✅ Advanced indexing (HNSW)
-
-**Requirements:**
-- Docker 20.10+
-- Docker Compose 2.0+
-
-**Installation:**
-```bash
-make install-postgres
-# or
-automagik-hive install --backend postgresql
-```
-
-**Configuration:**
-```bash
-HIVE_DATABASE_BACKEND=postgresql
-HIVE_DATABASE_URL=postgresql+psycopg://user:password@localhost:5532/hive
-```
-
-### Backend Comparison
-
-| Feature | SQLite | PostgreSQL |
-|---------|--------|------------|
-| **Agent Memory/Sessions** | ⚠️ **Limited** | ✅ **Full Support** |
-| Docker Required | ❌ No | ✅ Yes |
-| Setup Time | <1 min | 2-3 min |
-| Concurrent Writes | ⚠️ Limited | ✅ Excellent |
-| Vector Search | ❌ None | ✅ Excellent (pgvector) |
-| Production Ready | ❌ **No** | ✅ Yes |
-| Memory Footprint | ~10MB | ~100MB |
-| **Recommended For** | **Development & Testing** | **Production** |
-
-### Switching Backends
-
-You can switch backends at any time:
-
-```bash
-# Update .env file
-HIVE_DATABASE_BACKEND=sqlite  # or postgresql
-HIVE_DATABASE_URL=<backend-specific-url>
-
-# Restart application
-make dev
-```
-
-Schema migrations run automatically. Session history and runtime data will reset when switching backends.
-
----
-
-## 🔧 Architecture That Scales
-
-### Project Structure
-
-```
-your-project/
-├── ai/
-│   ├── agents/               # Your AI agents
-│   │   └── my-agent/
-│   │       ├── config.yaml   # Agent configuration
-│   │       └── agent.py      # Optional Python extensions
-│   ├── teams/                # Multi-agent teams
-│   │   └── support-team/
-│   │       └── config.yaml   # Routing logic
-│   └── workflows/            # Business workflows
-│       └── order-process/
-│           └── config.yaml   # Step definitions
-├── knowledge/                # RAG knowledge base
-│   └── knowledge_rag.csv     # Your knowledge data
-└── .env                      # Configuration
-```
-
-### API Endpoints (Auto-Generated)
-
-Every agent, team, and workflow automatically gets REST endpoints following Agno v2 semantics:
-
-```bash
-# Health and system
-GET  /api/v1/health
-GET  /api/v1/mcp/status
-GET  /api/v1/mcp/servers
-
-# Versioning (components and versions)
-GET  /api/v1/version/components
-POST /api/v1/version/execute
-
-# Workflow execution
-POST /v1/workflows/{workflow_id}/run
-
-# Knowledge management
-POST /v1/knowledge/upsert
-GET  /v1/knowledge/search
-```
-
-Agent/team/workflow execution endpoints are auto-generated by Agno's Playground integration and may differ by configuration. See `api/CLAUDE.md` for details on the unified router and Playground mounting strategy.
-
----
-
-## 🎨 Real-World Examples
-
-### Example 1: Customer Support Router
+### Research Assistant
 
 ```yaml
-# ai/teams/support-router/config.yaml
-team:
-  name: "Customer Support Router"
-  team_id: "support-router"
-  mode: "route"  # Automatic intelligent routing
+agent:
+  name: "Research Assistant"
+  agent_id: "researcher"
 
-members:
-  - "billing-specialist"
-  - "technical-support"
-  - "sales-specialist"
+model:
+  provider: "openai"
+  id: "gpt-4o"
 
-instructions:
-  - "Route billing questions to billing-specialist"
-  - "Route technical issues to technical-support"
-  - "Route sales inquiries to sales-specialist"
+tools:
+  - name: WebSearch
+  - name: YoutubeTools
+  - name: WebScraper
+
+instructions: |
+  You are a thorough research assistant.
+  Search multiple sources, synthesize findings.
+  Always cite sources with links.
 ```
 
-**Result**: 24/7 support, 70% query resolution without human intervention
+## Environment Configuration
 
-### Example 2: Order Processing Workflow
-
-```yaml
-# ai/workflows/order-fulfillment/config.yaml
-workflow:
-  name: "Order Fulfillment"
-
-steps:
-  - name: "Validate Order"
-    agent: "validator"
-
-  - name: "Process Payment"
-    parallel:
-      - agent: "payment-processor"
-      - agent: "fraud-checker"
-      - agent: "inventory-checker"
-
-  - name: "Ship Order"
-    agent: "shipping-coordinator"
-
-  - name: "Send Confirmation"
-    agent: "notifier"
-```
-
-**Result**: 3x faster processing, automatic fraud detection
-
-### Example 3: Knowledge-Powered Agent
-
-```python
-# ai/agents/analyst/agent.py
-from lib.knowledge import get_knowledge_base
-
-def get_analyst_agent(**kwargs):
-    # Shared thread-safe knowledge base
-    knowledge = get_knowledge_base(
-        num_documents=5,
-        csv_path="knowledge/company_data.csv"
-    )
-
-    return Agent(
-        name="Data Analyst",
-        knowledge=knowledge,  # Automatic RAG
-        instructions="Analyze data and provide insights",
-        **kwargs
-    )
-```
-
-**Result**: Instant access to company knowledge, always up-to-date
-
----
-
-## 🛡️ Enterprise-Grade Features
-
-### Security & Authentication
-- API key authentication with cryptographic validation
-- User context management and session security
-- Message validation and size limits
-- Production-hardened defaults
-
-### Database & Storage
-- PostgreSQL + pgvector for production
-- SQLite fallback for development
-- Auto-schema migration
-- Connection pooling and optimization
-
-### Monitoring & Observability
-- Structured logging with emoji enrichment
-- Metrics collection and export
-- Health check endpoints
-- Performance tracking
-
-### Deployment Options
-- Docker-ready with compose files
-- Kubernetes examples provided
-- Environment-based scaling
-- Zero-downtime updates with hot reload
-
----
-
-## 🛠️ Development
-
-Interested in contributing? Check our comprehensive documentation:
-
-- **Setup Guide**: See [CLAUDE.md](CLAUDE.md) for development workflow
-- **Agent Development**: [ai/agents/CLAUDE.md](ai/agents/CLAUDE.md)
-- **Testing Guide**: [tests/CLAUDE.md](tests/CLAUDE.md)
-- **API Documentation**: [api/CLAUDE.md](api/CLAUDE.md)
-
-### Development Workflow
+**Minimal .env (20 vars, not 145!):**
 
 ```bash
-# Install dev dependencies
+# Core (Required)
+HIVE_ENVIRONMENT=development
+HIVE_API_PORT=8886
+HIVE_DATABASE_URL=postgresql://localhost:5432/hive
+HIVE_API_KEY=hive_your_key_here
+
+# AI Providers (At least one required)
+ANTHROPIC_API_KEY=your_key
+OPENAI_API_KEY=your_key
+GEMINI_API_KEY=your_key
+
+# Optional
+HIVE_LOG_LEVEL=INFO
+HIVE_ENABLE_METRICS=true
+HIVE_CORS_ORIGINS=http://localhost:3000
+```
+
+## API Server
+
+```bash
+# Start API server
+hive dev
+
+# Access docs
+open http://localhost:8886/docs
+
+# Create agent via API
+curl -X POST http://localhost:8886/api/v1/agents \
+  -H "X-API-Key: $HIVE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "my-bot",
+    "description": "Customer support bot",
+    "model": "gpt-4o-mini"
+  }'
+```
+
+## Development
+
+```bash
+# Install dependencies
 uv sync
 
 # Run tests
 uv run pytest
 
-# Run linting
+# Lint & format
 uv run ruff check --fix
+uv run ruff format
 
-# Run type checking
+# Type check
 uv run mypy .
-
-# Start dev server
-make dev
-
-# View logs
-make logs
 ```
 
----
+## Why Hive vs Pure Agno?
 
-## 🗺️ Roadmap
+| Feature | Pure Agno | With Hive |
+|---------|-----------|-----------|
+| **Agent Creation** | Write Python factory functions | YAML configs or AI generation |
+| **Getting Started** | Study Agno docs, write boilerplate | `hive init` → instant project |
+| **Knowledge Base** | Setup PgVector, write loaders | `create_knowledge_base()` + hot reload |
+| **Project Structure** | DIY | Opinionated `ai/{agents,teams,workflows,tools}` |
+| **Model Selection** | Research options, pick manually | AI recommends optimal model |
+| **Tool Selection** | Browse Agno tools, wire up | Builtin catalog + AI recommendations |
 
-### Completed ✅
-- [x] YAML-first agent configuration
-- [x] Python extensibility
-- [x] Auto-generated REST APIs
-- [x] PostgreSQL + pgvector RAG
-- [x] Docker deployment
-- [x] Hot reload system
-- [x] Three-layer orchestration (Genie → Orchestrators → Execution)
+**Hive is to Agno what Create React App is to React** - scaffolding that removes friction, not a competing framework.
 
-### Next Up 🚀
-- [ ] **Visual Workflow Builder** - Drag-and-drop interface for workflows
-- [ ] **Agent Marketplace** - Community templates and certified agents
-- [ ] **Enhanced GENIE** - Natural language agent creation
-- [ ] **Multi-Tenancy** - Enterprise isolation and governance
-- [ ] **Cloud Deployment** - One-click cloud hosting
+## What Hive Does NOT Do
 
-### Future Vision 🌟
-- [ ] **Hive Cloud** - Fully managed SaaS offering
-- [ ] **Mobile SDKs** - Native iOS and Android support
-- [ ] **AI Marketplace** - Buy and sell agents
-- [ ] **Industry Verticals** - Pre-built solutions for legal, medical, finance
-- [ ] **Advanced Analytics** - Usage patterns and optimization insights
+❌ Compete with Agno (we extend it)
+❌ Reinvent agent orchestration (use Agno's native features)
+❌ Replace your code (generate scaffolds, you own the result)
+❌ Lock you in (generated code is pure Agno)
 
----
+## Roadmap
 
-## 🤝 Contributing
+### V2.0 (Current) - MVP Scaffolding
+- [x] AI-powered agent generation
+- [x] Smart RAG with incremental loading
+- [x] YAML-first configuration
+- [x] Builtin tools catalog
+- [x] Project templates
 
-We love contributions! Whether it's bug fixes, new features, or documentation improvements:
+### V2.1 - Enhanced DevX
+- [ ] Interactive TUI for agent creation
+- [ ] Live agent testing in terminal
+- [ ] Knowledge base quality scoring
+- [ ] Tool compatibility checker
 
-1. **Discuss First**: Open an issue before starting work
-2. **Align with Roadmap**: Ensure changes fit our vision
-3. **Follow Standards**: Match existing code patterns
-4. **Test Thoroughly**: Include tests for new features
-5. **Document Well**: Update docs with your changes
+### V2.2 - Production Features
+- [ ] Multi-environment configs (dev/staging/prod)
+- [ ] Agent performance monitoring
+- [ ] Cost tracking and optimization
+- [ ] Deployment helpers (Docker, AWS, etc.)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+## Contributing
 
----
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## 🙏 Acknowledgments
+## License
 
-Built with ❤️ by [Namastex Labs](https://namastex.ai) using:
-- [Agno](https://agno.com) - The blazing-fast multi-agent framework
-- [PostgreSQL](https://www.postgresql.org/) + [pgvector](https://github.com/pgvector/pgvector) - Vector database
-- [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
-- [Loguru](https://github.com/Delgan/loguru) - Beautiful logging
+MIT License - see [LICENSE](LICENSE) for details.
 
-Special thanks to our early adopters and contributors who helped shape Hive into the production-ready platform it is today.
+## Credits
 
----
+Built with ❤️ by the Automagik team.
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🔗 Links
-
-- **GitHub**: [github.com/namastexlabs/automagik-hive](https://github.com/namastexlabs/automagik-hive)
-- **Discord**: [discord.gg/xcW8c7fF3R](https://discord.gg/xcW8c7fF3R)
-- **Twitter**: [@namastexlabs](https://twitter.com/namastexlabs)
-- **DeepWiki Docs**: [deepwiki.com/namastexlabs/automagik-hive](https://deepwiki.com/namastexlabs/automagik-hive)
+**Powered by:**
+- [Agno](https://github.com/agno-agi/agno) - The AI agent framework
+- [UV](https://github.com/astral-sh/uv) - Modern Python packaging
+- [Typer](https://typer.tiangolo.com/) - CLI framework
+- [Rich](https://rich.readthedocs.io/) - Beautiful terminal output
 
 ---
 
-<p align="center">
-  <strong>🚀 Stop spending weeks on infrastructure. Start building AI that matters.</strong><br>
-  <strong>From Zero to Production-Ready AI in 5 Minutes</strong><br><br>
-  <a href="https://github.com/namastexlabs/automagik-hive">Star us on GitHub</a> •
-  <a href="https://discord.gg/xcW8c7fF3R">Join our Discord</a>
-</p>
-
-<p align="center">
-  Made with ❤️ by <a href="https://namastex.ai">Namastex Labs</a><br>
-  <em>AI that elevates human potential, not replaces it</em>
-</p>
-<a href="https://deepwiki.com/namastexlabs/automagik-hive"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+**Remember:** Hive doesn't compete with Agno. We make it easier to use. 🚀

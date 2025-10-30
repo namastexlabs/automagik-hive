@@ -1,7 +1,7 @@
 [project]
 name = "automagik-hive"
-version = "1.0.0"
-description = "Hive Agents - AI-powered scaffolding for Agno agents - YAML-first DevX layer"
+version = "2.0.0"
+description = "AI-powered scaffolding for Agno agents - YAML-first DevX layer"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
