@@ -15,6 +15,7 @@ from typing import Optional
 
 import yaml
 
+from hive.generators.meta_agent import MetaAgentGenerator
 from hive.generators.model_selector import ModelSelector, TaskComplexity
 from hive.generators.prompt_optimizer import PromptOptimizer
 from hive.generators.tool_recommender import ToolRecommender
@@ -47,7 +48,9 @@ class GenerationResult:
 
 
 class AgentGenerator:
-    """AI-powered agent configuration generator.
+    """REAL AI-powered agent configuration generator.
+
+    Now uses MetaAgentGenerator for ACTUAL LLM intelligence instead of keyword matching.
 
     Usage:
         generator = AgentGenerator()
@@ -58,8 +61,17 @@ class AgentGenerator:
         print(result.yaml_content)
     """
 
-    def __init__(self):
-        """Initialize generator with component services."""
+    def __init__(self, use_real_ai: bool = True, meta_model: str = "gpt-4o-mini"):
+        """Initialize generator with REAL AI or legacy fallback.
+
+        Args:
+            use_real_ai: Use MetaAgentGenerator (True) or legacy rules (False)
+            meta_model: Model to use for meta-agent (gpt-4o-mini, gpt-4o, claude-sonnet-4)
+        """
+        self.use_real_ai = use_real_ai
+        self.meta_agent = MetaAgentGenerator(model_id=meta_model) if use_real_ai else None
+
+        # Legacy components (used as fallback or validation)
         self.model_selector = ModelSelector()
         self.tool_recommender = ToolRecommender()
         self.prompt_optimizer = PromptOptimizer()
@@ -187,7 +199,11 @@ class AgentGenerator:
         next_steps = self._generate_next_steps(config, tool_configs)
 
         return GenerationResult(
-            config=config, yaml_content=yaml_content, recommendations=recommendations, warnings=warnings, next_steps=next_steps
+            config=config,
+            yaml_content=yaml_content,
+            recommendations=recommendations,
+            warnings=warnings,
+            next_steps=next_steps,
         )
 
     def _generate_yaml(self, config: AgentConfig) -> str:
@@ -254,9 +270,7 @@ class AgentGenerator:
 
         return steps
 
-    def refine(
-        self, current_yaml: str, feedback: str, aspect: str = "instructions"
-    ) -> tuple[str, list[str]]:
+    def refine(self, current_yaml: str, feedback: str, aspect: str = "instructions") -> tuple[str, list[str]]:
         """Refine existing agent configuration based on feedback.
 
         Args:
