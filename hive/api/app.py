@@ -6,12 +6,17 @@ This is the PROPER way to build an Agno-powered API:
 - Built-in session management, memory, and knowledge base handling
 """
 
+import warnings
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from agno.os import AgentOS
 
 from hive.config import settings
 from hive.discovery import discover_agents
+
+# Suppress AgentOS route conflict warnings (expected behavior when merging routes)
+warnings.filterwarnings("ignore", message=".*Route conflict detected.*")
 
 # AGUI is optional - requires ag_ui package
 try:
@@ -60,6 +65,7 @@ def create_app() -> FastAPI:
 
     # Note: AgentOS provides default /health and / endpoints
     # We let AgentOS handle those to avoid route conflicts
+    # (The warning about route conflicts is expected and harmless)
 
     # Initialize AgentOS with agents and base app
     # AgentOS will auto-generate:

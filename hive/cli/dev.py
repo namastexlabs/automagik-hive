@@ -1,4 +1,4 @@
-"""Dev command - Start development server with hot reload."""
+"""Dev and Serve commands - Start Hive API server."""
 
 import os
 import sys
@@ -11,7 +11,6 @@ from rich.panel import Panel
 
 from hive.config.defaults import CLI_EMOJIS
 
-dev_app = typer.Typer()
 console = Console()
 
 
@@ -23,28 +22,65 @@ def _get_default_port() -> int:
         return 8886
 
 
-@dev_app.command()
-def start(
-    port: Optional[int] = typer.Option(None, "--port", "-p", help="Server port (defaults to HIVE_API_PORT from .env or 8886)"),
+def dev_command(
+    port: Optional[int] = typer.Option(
+        None, "--port", "-p", help="Server port (defaults to HIVE_API_PORT from .env or 8886)"
+    ),
     host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),
-    reload: bool = typer.Option(True, "--reload/--no-reload", help="Enable hot reload"),
+    examples: bool = typer.Option(False, "--examples", "-e", help="Run with Hive example agents (for learning)"),
 ):
-    """Start the development server with Agno Playground."""
+    """Start development server with hot reload."""
+    # Use environment port if not explicitly set
+    if port is None:
+        port = _get_default_port()
+
+    # Check if we're in a Hive project (unless --examples flag)
+    if not examples and not _is_hive_project():
+        console.print(f"\n{CLI_EMOJIS['error']} Not a Hive project. Run [yellow]uvx automagik-hive init <project-name>[/yellow] first.")
+        console.print(f"\n{CLI_EMOJIS['info']} Or try: [yellow]uvx automagik-hive dev --examples[/yellow] to explore Hive's built-in agents\n")
+        raise typer.Exit(1)
+
+    # Force package mode for examples
+    if examples:
+        os.environ["HIVE_FORCE_PACKAGE_MODE"] = "true"
+        console.print(f"\n{CLI_EMOJIS['rocket']} Starting Hive V2 with example agents...\n")
+    else:
+        console.print(f"\n{CLI_EMOJIS['rocket']} Starting Hive V2 development server...\n")
+
+    # Show startup info
+    _show_startup_info(port, host, reload=True, examples=examples)
+
+    # Start uvicorn server
+    _start_server(host, port, reload=True)
+
+
+def serve_command(
+    port: Optional[int] = typer.Option(
+        None, "--port", "-p", help="Server port (defaults to HIVE_API_PORT from .env or 8886)"
+    ),
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),
+):
+    """Start production server (no hot reload)."""
     # Use environment port if not explicitly set
     if port is None:
         port = _get_default_port()
 
     # Check if we're in a Hive project
     if not _is_hive_project():
-        console.print(f"\n{CLI_EMOJIS['error']} Not a Hive project. Run 'hive init' first.")
+        console.print(f"\n{CLI_EMOJIS['error']} Not a Hive project. Run [yellow]uvx automagik-hive init <project-name>[/yellow] first.")
         raise typer.Exit(1)
 
-    console.print(f"\n{CLI_EMOJIS['rocket']} Starting Hive V2 development server...\n")
+    console.print(f"\n{CLI_EMOJIS['rocket']} Starting Hive V2 production server...\n")
 
     # Show startup info
-    _show_startup_info(port, host, reload)
+    _show_startup_info(port, host, reload=False, examples=False)
 
     # Start uvicorn server
+    _start_server(host, port, reload=False)
+
+
+def _start_server(host: str, port: int, reload: bool):
+    """Start uvicorn server with specified configuration."""
     try:
         import uvicorn
 
@@ -70,27 +106,40 @@ def _is_hive_project() -> bool:
     return (Path.cwd() / "hive.yaml").exists() or (Path.cwd() / "ai").exists()
 
 
-def _show_startup_info(port: int, host: str, reload: bool):
+def _show_startup_info(port: int, host: str, reload: bool, examples: bool):
     """Show startup information."""
     reload_status = "✅ Enabled" if reload else "❌ Disabled"
+    mode = "Examples Mode" if examples else "Project Mode"
+
+    if examples:
+        commands_section = f"""[bold cyan]Available Example Agents:[/bold cyan]
+  • researcher (Claude Sonnet 4)
+  • support-bot (GPT-4o)
+  • code-reviewer (Claude Sonnet 4)"""
+    else:
+        commands_section = f"""[bold cyan]Quick Commands:[/bold cyan]
+  • Create agent: [yellow]uvx automagik-hive ai my-agent[/yellow]
+  • Create team: [yellow]uvx automagik-hive create team my-team[/yellow]
+  • Stop server: [yellow]Ctrl+C[/yellow]"""
+
+    watch_info = "[dim]Watching for changes in: ./ai/[/dim]" if reload and not examples else ""
 
     message = f"""[bold cyan]Server Configuration:[/bold cyan]
 
   {CLI_EMOJIS["api"]} API: http://{host}:{port}
   {CLI_EMOJIS["file"]} Docs: http://localhost:{port}/docs
   {CLI_EMOJIS["workflow"]} Hot Reload: {reload_status}
+  {CLI_EMOJIS["agent"]} Mode: {mode}
 
-[bold cyan]Quick Commands:[/bold cyan]
-  • Create agent: [yellow]hive create agent my-agent[/yellow]
-  • Create team: [yellow]hive create team my-team[/yellow]
-  • Stop server: [yellow]Ctrl+C[/yellow]
+{commands_section}
 
-[dim]Watching for changes in: ./ai/[/dim]
+{watch_info}
 """
 
+    title = f"{CLI_EMOJIS['rocket']} Hive V2 {'Examples' if examples else 'Development'} Server"
     panel = Panel(
         message,
-        title=f"{CLI_EMOJIS['rocket']} Hive V2 Development Server",
+        title=title,
         border_style="cyan",
     )
 

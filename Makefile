@@ -392,6 +392,14 @@ dev: ## 🛠️ Start development server (runs from repository root, uses builti
 	@echo -e "$(FONT_YELLOW)💡 This runs the dev server with builtin examples$(FONT_RESET)"
 	@echo -e "$(FONT_YELLOW)💡 For a user project: cd your-project && hive dev start$(FONT_RESET)"
 	@echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
+	@echo ""
+	@echo -e "$(FONT_CYAN)🌐 Access URLs:$(FONT_RESET)"
+	@echo -e "   $(FONT_GREEN)WSL/Linux:$(FONT_RESET) http://localhost:$(HIVE_PORT)/docs"
+	@WSL_IP=$$(hostname -I 2>/dev/null | awk '{print $$1}'); \
+	if [ -n "$$WSL_IP" ]; then \
+		echo -e "   $(FONT_GREEN)Windows:$(FONT_RESET)   http://$$WSL_IP:$(HIVE_PORT)/docs"; \
+	fi
+	@echo ""
 	@echo -e "$(FONT_PURPLE)🚀 Starting server on port $(HIVE_PORT)...$(FONT_RESET)"
 	@HIVE_API_PORT=$(HIVE_PORT) uv run uvicorn hive.api.app:create_app --factory --host 0.0.0.0 --port $(HIVE_PORT) --reload
 
