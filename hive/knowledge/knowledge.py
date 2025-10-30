@@ -8,7 +8,7 @@ Creates and manages Agno DocumentKnowledgeBase instances with:
 - Thread-safe shared instance pattern
 
 Usage:
-    from hive.rag import create_knowledge_base
+    from hive.knowledge import create_knowledge_base
 
     kb = create_knowledge_base(
         csv_path="data/knowledge.csv",
@@ -28,8 +28,8 @@ from agno.knowledge.embedder.openai import OpenAIEmbedder
 from agno.vectordb.pgvector import HNSW, PgVector, SearchType
 from loguru import logger
 
-from hive.rag.csv_loader import CSVKnowledgeLoader
-from hive.rag.watcher import DebouncedFileWatcher
+from hive.knowledge.csv_loader import CSVKnowledgeLoader
+from hive.knowledge.watcher import DebouncedFileWatcher
 
 # Global shared knowledge base instance
 _shared_kb: Knowledge | None = None

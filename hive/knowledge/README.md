@@ -25,7 +25,7 @@ How does ML work?,Machine learning uses...,technology,ai;ml;training
 ### 2. Create Knowledge Base
 
 ```python
-from hive.rag import create_knowledge_base
+from hive.knowledge import create_knowledge_base
 
 kb = create_knowledge_base(
     csv_path="data/knowledge.csv",
@@ -40,7 +40,7 @@ kb = create_knowledge_base(
 
 ```python
 from agno import Agent
-from hive.rag import create_knowledge_base
+from hive.knowledge import create_knowledge_base
 
 kb = create_knowledge_base(csv_path="data/knowledge.csv")
 
@@ -219,7 +219,7 @@ sales_kb = create_knowledge_base(
 ### Manual Reload Control
 
 ```python
-from hive.rag.csv_loader import CSVKnowledgeLoader
+from hive.knowledge.csv_loader import CSVKnowledgeLoader
 
 # Create loader without hot reload
 loader = CSVKnowledgeLoader(vector_db=vector_db)
@@ -232,7 +232,7 @@ print(f"Added: {stats['added']}, Changed: {stats['changed']}")
 ### Access Shared Instance
 
 ```python
-from hive.rag import get_shared_knowledge_base, clear_shared_knowledge_base
+from hive.knowledge import get_shared_knowledge_base, clear_shared_knowledge_base
 
 # Get existing shared instance
 kb = get_shared_knowledge_base()
@@ -247,15 +247,15 @@ clear_shared_knowledge_base()
 
 ```bash
 # All RAG tests
-uv run pytest tests/hive/rag/
+uv run pytest tests/hive/knowledge/
 
 # Specific test modules
-uv run pytest tests/hive/rag/test_incremental.py
-uv run pytest tests/hive/rag/test_csv_loader.py
-uv run pytest tests/hive/rag/test_watcher.py
+uv run pytest tests/hive/knowledge/test_incremental.py
+uv run pytest tests/hive/knowledge/test_csv_loader.py
+uv run pytest tests/hive/knowledge/test_watcher.py
 
 # With coverage
-uv run pytest tests/hive/rag/ --cov=hive.rag
+uv run pytest tests/hive/knowledge/ --cov=hive.knowledge
 ```
 
 ### Test Coverage
@@ -309,7 +309,7 @@ If migrating from the previous `lib/knowledge/` implementation:
    from lib.knowledge.factories.knowledge_factory import get_knowledge_base
 
    # New
-   from hive.rag import create_knowledge_base
+   from hive.knowledge import create_knowledge_base
    ```
 
 2. **Update function calls:**
@@ -335,7 +335,7 @@ If migrating from the previous `lib/knowledge/` implementation:
 When adding features:
 
 1. Follow existing code patterns
-2. Add tests to `tests/hive/rag/`
+2. Add tests to `tests/hive/knowledge/`
 3. Update this README
 4. Run full test suite: `uv run pytest`
 

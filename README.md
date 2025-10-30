@@ -153,7 +153,7 @@ my-project/
 Hash-based incremental CSV loading with hot reload - one of the few gems from Hive V1:
 
 ```python
-from hive.rag import create_knowledge_base
+from hive.knowledge import create_knowledge_base
 
 # Create knowledge base with hot reload
 kb = create_knowledge_base(

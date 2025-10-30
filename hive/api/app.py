@@ -11,11 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from agno.os import AgentOS
 
 from hive.config import settings
-from hive.agents import discover_agents
+from hive.discovery import discover_agents
 
 # AGUI is optional - requires ag_ui package
 try:
     from agno.os.interfaces.agui import AGUI
+
     AGUI_AVAILABLE = True
 except ImportError:
     AGUI_AVAILABLE = False

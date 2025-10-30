@@ -70,7 +70,7 @@ def discover_agents() -> List[Agent]:
             return agents
     else:
         # Package mode - use builtin examples
-        agents_dir = Path(__file__).parent.parent / "examples" / "agents"
+        agents_dir = Path(__file__).parent / "examples" / "agents"
         print(f"🔍 Discovering agents in package: {agents_dir}")
 
     if not agents_dir.exists():

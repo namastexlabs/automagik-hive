@@ -14,7 +14,7 @@ Key Features:
 - Tracks change history
 
 Usage:
-    from hive.rag import create_knowledge_base
+    from hive.knowledge import create_knowledge_base
 
     # Returns agno.knowledge.Knowledge instance
     kb = create_knowledge_base(
@@ -25,6 +25,6 @@ Usage:
     )
 """
 
-from hive.rag.knowledge import create_knowledge_base
+from hive.knowledge.knowledge import create_knowledge_base
 
 __all__ = ["create_knowledge_base"]

@@ -19,7 +19,7 @@ from agno.knowledge.document import Document
 from agno.vectordb.pgvector import PgVector
 from loguru import logger
 
-from hive.rag.incremental import IncrementalCSVLoader
+from hive.knowledge.incremental import IncrementalCSVLoader
 
 
 class CSVKnowledgeLoader:
