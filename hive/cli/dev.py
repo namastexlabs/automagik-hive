@@ -1,5 +1,6 @@
 """Dev command - Start development server with hot reload."""
 
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -14,13 +15,25 @@ dev_app = typer.Typer()
 console = Console()
 
 
+def _get_default_port() -> int:
+    """Get default port from .env or fallback to 8886."""
+    try:
+        return int(os.getenv("HIVE_API_PORT", "8886"))
+    except (ValueError, TypeError):
+        return 8886
+
+
 @dev_app.command()
 def start(
-    port: int = typer.Option(8886, "--port", "-p", help="Server port"),
+    port: Optional[int] = typer.Option(None, "--port", "-p", help="Server port (defaults to HIVE_API_PORT from .env or 8886)"),
     host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),
     reload: bool = typer.Option(True, "--reload/--no-reload", help="Enable hot reload"),
 ):
     """Start the development server with Agno Playground."""
+    # Use environment port if not explicitly set
+    if port is None:
+        port = _get_default_port()
+
     # Check if we're in a Hive project
     if not _is_hive_project():
         console.print(f"\n{CLI_EMOJIS['error']} Not a Hive project. Run 'hive init' first.")
@@ -63,9 +76,9 @@ def _show_startup_info(port: int, host: str, reload: bool):
 
     message = f"""[bold cyan]Server Configuration:[/bold cyan]
 
-  {CLI_EMOJIS['api']} API: http://{host}:{port}
-  {CLI_EMOJIS['file']} Docs: http://localhost:{port}/docs
-  {CLI_EMOJIS['workflow']} Hot Reload: {reload_status}
+  {CLI_EMOJIS["api"]} API: http://{host}:{port}
+  {CLI_EMOJIS["file"]} Docs: http://localhost:{port}/docs
+  {CLI_EMOJIS["workflow"]} Hot Reload: {reload_status}
 
 [bold cyan]Quick Commands:[/bold cyan]
   • Create agent: [yellow]hive create agent my-agent[/yellow]

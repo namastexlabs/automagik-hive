@@ -337,14 +337,16 @@ install-local: ## 🛠️ Install development environment (local only)
 	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
 
 .PHONY: install
-install: ## 🛠️ Complete environment setup - mirrors CLI install
-	@$(call print_status,Installing complete Automagik Hive environment...)
+install: ## 🛠️ Complete environment setup for Hive V2 development
+	@$(call print_status,Installing Automagik Hive V2 development environment...)
 	@$(call check_prerequisites)
 	@$(call setup_python_env)
-	@uv run automagik-hive install
-	@$(call sync_mcp_config_with_credentials)
+	@$(call check_env_file)
+	@$(call show_hive_logo)
+	@$(call show_api_key_info)
 	@$(call print_success,Environment ready!)
-	@echo -e "$(FONT_CYAN)🌐 API available at: http://localhost:$(HIVE_PORT)$(FONT_RESET)"
+	@echo -e "$(FONT_CYAN)💡 Run 'make dev' to start development server$(FONT_RESET)"
+	@echo -e "$(FONT_CYAN)💡 Or create a new project: hive init project my-project$(FONT_RESET)"
 
 .PHONY: install-sqlite
 install-sqlite: ## 🛠️ Install with SQLite backend (no Docker required)
@@ -378,7 +380,7 @@ install-postgres: ## 🛠️ Install with PostgreSQL backend (requires Docker)
 # 🎛️ Service Management
 # ===========================================
 .PHONY: dev
-dev: ## 🛠️ Start development server with hot reload
+dev: ## 🛠️ Start development server (runs from repository root, uses builtin examples)
 	@$(call show_hive_logo)
 	@$(call print_status,Starting Automagik Hive development server...)
 	@$(call check_env_file)
@@ -387,9 +389,11 @@ dev: ## 🛠️ Start development server with hot reload
 		echo -e "$(FONT_YELLOW)💡 Run 'make install' first$(FONT_RESET)"; \
 		exit 1; \
 	fi
+	@echo -e "$(FONT_YELLOW)💡 This runs the dev server with builtin examples$(FONT_RESET)"
+	@echo -e "$(FONT_YELLOW)💡 For a user project: cd your-project && hive dev start$(FONT_RESET)"
 	@echo -e "$(FONT_YELLOW)💡 Press Ctrl+C to stop the server$(FONT_RESET)"
-	@echo -e "$(FONT_PURPLE)🚀 Starting server...$(FONT_RESET)"
-	@HIVE_DEV_GRACEFUL=1 uv run automagik-hive dev
+	@echo -e "$(FONT_PURPLE)🚀 Starting server on port $(HIVE_PORT)...$(FONT_RESET)"
+	@HIVE_API_PORT=$(HIVE_PORT) uv run uvicorn hive.api.app:create_app --factory --host 0.0.0.0 --port $(HIVE_PORT) --reload
 
 .PHONY: serve
 serve: ## 🚀 Start production server (Docker) - mirrors CLI --serve
