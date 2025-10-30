@@ -1,11 +1,36 @@
-"""AI-powered agent generation system.
+"""AI-powered generation system for Hive agents.
 
-Meta concept: Use Agno agents to generate Agno agent configurations.
+Core Components:
+- AgentGenerator: Main interface for agent generation
+- MetaAgentGenerator: LLM-powered analysis and generation
+- GenerationResult: Complete generation output
+- AgentConfig: Structured agent configuration
+
+Example:
+    from hive.generators import AgentGenerator
+
+    generator = AgentGenerator()
+    result = generator.generate(
+        name="support-bot",
+        description="Customer support bot with knowledge base"
+    )
+    print(result.yaml_content)
 """
 
-from hive.generators.agent_generator import AgentGenerator
-from hive.generators.model_selector import ModelSelector
-from hive.generators.prompt_optimizer import PromptOptimizer
-from hive.generators.tool_recommender import ToolRecommender
+from hive.generators.agent_generator import (
+    AgentGenerator,
+    AgentConfig,
+    GenerationResult,
+)
+from hive.generators.meta_agent import (
+    MetaAgentGenerator,
+    GenerationError,
+)
 
-__all__ = ["AgentGenerator", "ModelSelector", "PromptOptimizer", "ToolRecommender"]
+__all__ = [
+    "AgentGenerator",
+    "AgentConfig",
+    "GenerationResult",
+    "MetaAgentGenerator",
+    "GenerationError",
+]

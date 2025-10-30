@@ -8,12 +8,17 @@ This is NOT keyword matching. This uses actual LLM intelligence to:
 """
 
 import os
+import time
 from dataclasses import dataclass
 from typing import Optional
 
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 
+
+class GenerationError(Exception):
+    """Error during AI generation process."""
+    pass
 
 @dataclass
 class MetaAnalysis:
@@ -124,7 +129,7 @@ COMPLEXITY: <1-10 score>
 WARNINGS: <any concerns or requirements, or "none">
 
 Be specific, practical, and optimization-focused.""",
-            markdown=False
+            markdown=False,
         )
         # Set agent_id as attribute (not in constructor)
         self.meta_agent.agent_id = "meta-agent-generator"
