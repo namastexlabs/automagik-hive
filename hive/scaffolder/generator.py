@@ -9,7 +9,7 @@ Handles model resolution, tool loading, knowledge base setup, and MCP integratio
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from agno.agent import Agent
@@ -59,7 +59,7 @@ class ConfigGenerator:
         agent_config = config.get("agent", {})
         name = agent_config.get("name")
         description = agent_config.get("description")
-        model = agent_config.get("model")
+        model_string = agent_config.get("model")
 
         # Instructions
         instructions = config.get("instructions")
@@ -86,6 +86,9 @@ class ConfigGenerator:
         mcp_servers = config.get("mcp_servers")
 
         # Build agent parameters
+        # Parse model string into Model object
+        model = cls._parse_model(model_string)
+
         agent_params = {
             "name": name,
             "description": description,
@@ -165,7 +168,7 @@ class ConfigGenerator:
         instructions = config.get("instructions")
 
         # Model (optional for teams)
-        model = config.get("model")
+        model_string = config.get("model")
 
         # Setup storage
         storage = cls._setup_storage(config.get("storage"))
@@ -174,6 +177,9 @@ class ConfigGenerator:
         settings = config.get("settings", {})
         show_routing = settings.get("show_routing")
         stream = settings.get("stream")
+        # Parse model string into Model object
+        model = cls._parse_model(model_string)
+
         debug_mode = settings.get("debug_mode")
 
         # Build team parameters (NO 'mode' parameter in Agno)
@@ -249,9 +255,12 @@ class ConfigGenerator:
         # Setup storage
         storage = cls._setup_storage(config.get("storage"))
 
-        # Extract settings
+        model_string = config.get("model")
         settings = config.get("settings", {})
         shared_state = settings.get("shared_state")
+        # Parse model string into Model object
+        model = cls._parse_model(model_string)
+
         retry_on_error = settings.get("retry_on_error")
         max_retries = settings.get("max_retries")
         stream = settings.get("stream")
@@ -316,6 +325,58 @@ class ConfigGenerator:
             raise GeneratorError(f"Invalid YAML syntax: {e}") from e
         except Exception as e:
             raise GeneratorError(f"Failed to load config: {e}") from e
+
+    @classmethod
+    def _parse_model(cls, model_string: Optional[str]) -> Optional[Any]:
+        """Parse model string into Agno Model object.
+
+        Args:
+            model_string: Model identifier (e.g., 'openai:gpt-4o-mini', 'anthropic:claude-3-sonnet')
+
+        Returns:
+            Agno Model instance or None
+
+        Raises:
+            GeneratorError: If model format is invalid
+        """
+        if not model_string:
+            return None
+
+        if not isinstance(model_string, str):
+            # Already a model object
+            return model_string
+
+        # Parse provider:model_id format
+        if ":" not in model_string:
+            raise GeneratorError(
+                f"Invalid model format: {model_string}\n"
+                f"Expected format: 'provider:model_id' (e.g., 'openai:gpt-4o-mini')"
+            )
+
+        provider, model_id = model_string.split(":", 1)
+        provider = provider.lower()
+
+        # Import and create appropriate model class
+        if provider == "openai":
+            from agno.models.openai import OpenAIChat
+
+            return OpenAIChat(id=model_id)
+        elif provider == "anthropic":
+            from agno.models.anthropic import Claude
+
+            return Claude(id=model_id)
+        elif provider == "google":
+            from agno.models.google import Gemini
+
+            return Gemini(id=model_id)
+        elif provider == "groq":
+            from agno.models.groq import Groq
+
+            return Groq(id=model_id)
+        else:
+            raise GeneratorError(
+                f"Unsupported model provider: {provider}\nSupported providers: openai, anthropic, google, groq"
+            )
 
     @classmethod
     def _substitute_env_vars(cls, config: Any) -> Any:
