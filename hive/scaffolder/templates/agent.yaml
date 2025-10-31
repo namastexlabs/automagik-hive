@@ -1,0 +1,202 @@
+# ============================================================
+# AGENT CONFIGURATION TEMPLATE
+# ============================================================
+# This file defines an Agno agent using YAML configuration.
+# Replace the example values with your own.
+#
+# YAML-first: All configuration happens here, no Python needed!
+# ============================================================
+
+# -----------------------------
+# 1. AGENT IDENTITY (Required)
+# -----------------------------
+agent:
+  # Unique identifier for your agent (lowercase, hyphens)
+  name: "my-agent"
+
+  # Human-readable description of what this agent does
+  description: "Brief description of your agent's purpose"
+
+  # Model to use (see AVAILABLE MODELS below)
+  model: "gpt-4o-mini"
+
+
+# -----------------------------
+# 2. AGENT INSTRUCTIONS (Required)
+# -----------------------------
+# This is your agent's personality and behavior guide.
+# Be clear, specific, and conversational.
+# -----------------------------
+instructions: |
+  You are a helpful assistant that [describe primary role].
+
+  Your responsibilities:
+  - [Responsibility 1]
+  - [Responsibility 2]
+  - [Responsibility 3]
+
+  Guidelines:
+  - Be friendly and professional
+  - Ask clarifying questions when needed
+  - Provide clear, actionable responses
+  - Use tools when appropriate
+
+
+# -----------------------------
+# 3. TOOLS (Optional)
+# -----------------------------
+# Tools give your agent superpowers!
+# Choose from builtin tools or define custom ones.
+# -----------------------------
+tools:
+  # Builtin tools (ready to use):
+  - "web_search"         # Search the web using DuckDuckGo
+  # - "web_scraper"      # Scrape and extract web content
+  # - "file_reader"      # Read files (txt, csv, json, yaml)
+  # - "python_executor"  # Execute Python code safely
+  # - "calculator"       # Perform math calculations
+  # - "sql_query"        # Execute SQL queries
+  # - "github_api"       # Interact with GitHub
+  # - "slack_api"        # Send Slack messages
+
+  # Custom tools (define your own):
+  # - name: "my_custom_tool"
+  #   import_path: "my_package.tools.MyTool"
+  #   config:
+  #     api_key: "${MY_API_KEY}"  # Use env vars for secrets!
+
+
+# -----------------------------
+# 4. KNOWLEDGE BASE (Optional)
+# -----------------------------
+# Give your agent a memory! Load data from CSV, databases, etc.
+# The agent will use this to answer questions.
+# -----------------------------
+knowledge:
+  # CSV knowledge base (easiest option)
+  source: "./data/knowledge.csv"
+  type: "csv"
+
+  # Hot reload: automatically update when CSV changes
+  hot_reload: true
+
+  # Number of relevant documents to retrieve per query
+  num_documents: 5
+
+  # Alternatively, use a database:
+  # type: "database"
+  # connection: "${DATABASE_URL}"
+  # table: "knowledge_base"
+
+
+# -----------------------------
+# 5. MCP SERVERS (Optional)
+# -----------------------------
+# Connect to external services via Model Context Protocol
+# Examples: WhatsApp, custom APIs, databases
+# -----------------------------
+mcp_servers:
+  # - "whatsapp-server"
+  # - "postgres"
+  # - "custom-api-server"
+
+
+# -----------------------------
+# 6. STORAGE (Optional)
+# -----------------------------
+# Where to store conversation history and session state
+# -----------------------------
+storage:
+  # PostgreSQL (recommended for production)
+  type: "postgres"
+  connection: "${HIVE_DATABASE_URL}"
+  table_name: "my_agent_sessions"
+
+  # SQLite (good for development)
+  # type: "sqlite"
+  # db_file: "./data/agent.db"
+
+
+# -----------------------------
+# 7. ADVANCED SETTINGS (Optional)
+# -----------------------------
+settings:
+  # Model parameters
+  temperature: 0.7           # 0.0 = focused, 1.0 = creative
+  max_tokens: 1000          # Maximum response length
+
+  # Behavior
+  show_tool_calls: true     # Show when tools are used
+  markdown: true            # Enable markdown formatting
+
+  # Performance
+  stream: true              # Stream responses (better UX)
+  debug_mode: false         # Enable detailed logging
+
+
+# ============================================================
+# AVAILABLE MODELS
+# ============================================================
+# OpenAI:
+#   - gpt-4o-mini         (fast, cheap, good for most tasks)
+#   - gpt-4o              (most capable OpenAI model)
+#   - gpt-4.1             (balanced performance)
+#   - o1-mini             (reasoning-focused)
+#
+# Anthropic:
+#   - claude-sonnet-4     (best Claude model)
+#   - claude-3.5-sonnet   (previous generation)
+#   - claude-opus         (most capable, slower)
+#
+# Google:
+#   - gemini-pro          (fast and capable)
+#   - gemini-flash        (fastest)
+#
+# Open Source (via Groq/local):
+#   - llama-3.1-8b        (fast, local-friendly)
+#   - mixtral-8x7b        (strong reasoning)
+# ============================================================
+
+
+# ============================================================
+# QUICK START EXAMPLES
+# ============================================================
+#
+# 1. Simple chatbot (no tools or knowledge):
+#    - Just fill in name, model, and instructions
+#    - Remove tools, knowledge, mcp_servers sections
+#
+# 2. Knowledge-powered agent (customer support):
+#    - Add CSV knowledge base with FAQs
+#    - Use tools: ["csv_search"]
+#    - Set instructions to reference knowledge
+#
+# 3. Code review agent:
+#    - Use tools: ["github_api", "code_analyzer"]
+#    - Set instructions for code review guidelines
+#    - Add knowledge base with coding standards
+#
+# 4. Research assistant:
+#    - Use tools: ["web_search", "web_scraper", "file_reader"]
+#    - Higher temperature (0.8+) for creativity
+#    - Enable streaming for better UX
+#
+# ============================================================
+
+
+# ============================================================
+# ENVIRONMENT VARIABLES
+# ============================================================
+# Use ${VAR_NAME} syntax to reference environment variables.
+# Never hardcode secrets in this file!
+#
+# Required env vars (add to .env):
+#   - ANTHROPIC_API_KEY     (if using Claude models)
+#   - OPENAI_API_KEY        (if using OpenAI models)
+#   - HIVE_DATABASE_URL     (if using postgres storage)
+#
+# Optional env vars:
+#   - MY_API_KEY            (for custom tools)
+#   - GITHUB_TOKEN          (for GitHub tools)
+#   - SLACK_BOT_TOKEN       (for Slack tools)
+# ============================================================

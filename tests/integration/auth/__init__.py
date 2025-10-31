@@ -1,1 +1,0 @@
-"""Authentication integration tests."""

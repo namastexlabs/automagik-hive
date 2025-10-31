@@ -1,0 +1,326 @@
+# ============================================================
+# CUSTOM TOOL CONFIGURATION TEMPLATE
+# ============================================================
+# Tools extend agent capabilities with custom functionality.
+# Create tools for API integrations, data processing, etc.
+#
+# Use custom tools when:
+#   - Builtin tools don't fit your needs
+#   - You need specific API integrations
+#   - Custom business logic required
+# ============================================================
+
+# -----------------------------
+# 1. TOOL IDENTITY (Required)
+# -----------------------------
+tool:
+  # Unique identifier (lowercase, underscores)
+  name: "my_custom_tool"
+
+  # Human-readable description (shown to LLM)
+  description: "Brief description of what this tool does"
+
+  # Tool category
+  category: "integration"
+  # Options: integration, data, utility, analysis, custom
+
+
+# -----------------------------
+# 2. TOOL IMPLEMENTATION (Required)
+# -----------------------------
+# Point to your Python class that implements the tool.
+# Must inherit from BaseTool.
+# -----------------------------
+implementation:
+  # Python import path to your tool class
+  import_path: "my_package.tools.MyCustomTool"
+
+  # Tool class name
+  class_name: "MyCustomTool"
+
+
+# -----------------------------
+# 3. TOOL PARAMETERS (Optional)
+# -----------------------------
+# Configuration parameters for your tool.
+# Use environment variables for secrets!
+# -----------------------------
+parameters:
+  # API configuration
+  api_url: "${MY_API_URL}"
+  api_key: "${MY_API_KEY}"
+  timeout: 30
+
+  # Tool-specific settings
+  max_retries: 3
+  cache_enabled: true
+
+
+# -----------------------------
+# 4. TOOL SCHEMA (Required)
+# -----------------------------
+# Define inputs and outputs for the LLM.
+# This helps the AI know when and how to use your tool.
+# -----------------------------
+schema:
+  # Input parameters the tool accepts
+  inputs:
+    - name: "query"
+      type: "string"
+      required: true
+      description: "The search query or input text"
+
+    - name: "limit"
+      type: "integer"
+      required: false
+      default: 10
+      description: "Maximum number of results to return"
+
+    - name: "filter"
+      type: "object"
+      required: false
+      description: "Optional filters to apply"
+
+  # Output structure the tool returns
+  outputs:
+    - name: "results"
+      type: "array"
+      description: "List of matching results"
+
+    - name: "count"
+      type: "integer"
+      description: "Total number of results found"
+
+    - name: "metadata"
+      type: "object"
+      description: "Additional metadata about the search"
+
+
+# -----------------------------
+# 5. ERROR HANDLING (Optional)
+# -----------------------------
+error_handling:
+  # Retry configuration
+  retry_on_failure: true
+  max_retries: 3
+  retry_delay: 1  # seconds
+
+  # Fallback behavior
+  fallback_value: null
+  raise_on_error: false
+
+
+# -----------------------------
+# 6. ADVANCED SETTINGS (Optional)
+# -----------------------------
+settings:
+  # Caching
+  cache_results: true
+  cache_ttl: 3600  # seconds
+
+  # Performance
+  async_execution: true
+  timeout: 30  # seconds
+
+  # Logging
+  log_calls: true
+  log_results: false  # Set true for debugging
+
+
+# ============================================================
+# TOOL IMPLEMENTATION EXAMPLE
+# ============================================================
+#
+# File: my_package/tools/my_custom_tool.py
+#
+# from typing import Any, Dict
+# from hive.tools import BaseTool
+#
+# class MyCustomTool(BaseTool):
+#     """Custom tool implementation."""
+#
+#     def initialize(self, **kwargs) -> None:
+#         """Setup tool with configuration."""
+#         self.api_url = kwargs.get("api_url")
+#         self.api_key = kwargs.get("api_key")
+#         self.timeout = kwargs.get("timeout", 30)
+#
+#     def execute(
+#         self,
+#         query: str,
+#         limit: int = 10,
+#         filter: Dict[str, Any] = None
+#     ) -> Dict[str, Any]:
+#         """Execute the tool logic."""
+#         try:
+#             # Your custom logic here
+#             results = self._make_api_call(query, limit)
+#
+#             return {
+#                 "status": "success",
+#                 "results": results,
+#                 "count": len(results),
+#                 "metadata": {
+#                     "query": query,
+#                     "tool": self.config.name
+#                 }
+#             }
+#         except Exception as e:
+#             return {
+#                 "status": "error",
+#                 "error": str(e),
+#                 "metadata": {"tool": self.config.name}
+#             }
+#
+#     def _make_api_call(self, query: str, limit: int):
+#         """Helper method for API interaction."""
+#         # Implementation details...
+#         pass
+#
+# ============================================================
+
+
+# ============================================================
+# REAL-WORLD TOOL EXAMPLES
+# ============================================================
+#
+# 1. CUSTOM API INTEGRATION
+# --------------------------
+# tool:
+#   name: "stripe_payments"
+#   description: "Process payments via Stripe API"
+# parameters:
+#   api_key: "${STRIPE_API_KEY}"
+#   webhook_secret: "${STRIPE_WEBHOOK_SECRET}"
+# schema:
+#   inputs:
+#     - name: "amount"
+#       type: "number"
+#       required: true
+#     - name: "currency"
+#       type: "string"
+#       default: "usd"
+#     - name: "customer_id"
+#       type: "string"
+#       required: true
+#
+#
+# 2. DATA PROCESSING TOOL
+# ------------------------
+# tool:
+#   name: "csv_processor"
+#   description: "Process and analyze CSV files"
+# parameters:
+#   max_file_size: 10485760  # 10MB
+#   allowed_formats: ["csv", "tsv"]
+# schema:
+#   inputs:
+#     - name: "file_path"
+#       type: "string"
+#       required: true
+#     - name: "operations"
+#       type: "array"
+#       description: "List of operations to perform"
+#
+#
+# 3. NOTIFICATION TOOL
+# --------------------
+# tool:
+#   name: "slack_notifier"
+#   description: "Send notifications to Slack channels"
+# parameters:
+#   bot_token: "${SLACK_BOT_TOKEN}"
+#   default_channel: "#general"
+# schema:
+#   inputs:
+#     - name: "message"
+#       type: "string"
+#       required: true
+#     - name: "channel"
+#       type: "string"
+#       required: false
+#     - name: "attachments"
+#       type: "array"
+#       required: false
+#
+# ============================================================
+
+
+# ============================================================
+# TOOL DEVELOPMENT TIPS
+# ============================================================
+#
+# 1. Clear Description
+#    - Write description for the AI, not humans
+#    - Explain WHEN to use the tool
+#    - Include example use cases
+#
+# 2. Input Validation
+#    - Validate all inputs in execute()
+#    - Provide helpful error messages
+#    - Use type hints consistently
+#
+# 3. Error Handling
+#    - Always return structured responses
+#    - Include "status" field (success/error)
+#    - Add metadata for debugging
+#
+# 4. Testing
+#    - Write unit tests for tool logic
+#    - Test error conditions
+#    - Mock external dependencies
+#
+# 5. Documentation
+#    - Document parameter meanings
+#    - Include usage examples
+#    - Explain return value structure
+#
+# 6. Security
+#    - Never hardcode API keys
+#    - Use environment variables
+#    - Validate and sanitize inputs
+#
+# 7. Performance
+#    - Use async for I/O operations
+#    - Implement caching when appropriate
+#    - Set reasonable timeouts
+#
+# ============================================================
+
+
+# ============================================================
+# ENVIRONMENT VARIABLES
+# ============================================================
+# Tools should never hardcode secrets!
+# Always use environment variables:
+#
+# In this file:
+#   api_key: "${MY_API_KEY}"
+#
+# In .env:
+#   MY_API_KEY=your_secret_key_here
+#
+# The framework will substitute these at runtime.
+# ============================================================
+
+
+# ============================================================
+# TOOL LIFECYCLE
+# ============================================================
+#
+# 1. REGISTRATION
+#    Tool config is loaded from this YAML file
+#
+# 2. INITIALIZATION
+#    initialize() called with parameters from config
+#    Setup connections, validate config, load resources
+#
+# 3. EXECUTION
+#    execute() called each time agent uses tool
+#    Process inputs, perform action, return results
+#
+# 4. CLEANUP (optional)
+#    Implement cleanup() for resource management
+#    Called when tool is no longer needed
+#
+# ============================================================
