@@ -1,6 +1,7 @@
 """Test Hive V2 infrastructure foundation."""
 
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 import pytest
@@ -15,7 +16,11 @@ def test_hive_package_exists():
     """Test that hive package can be imported."""
     import hive
 
-    assert hive.__version__ == "2.0.0"
+    # Version should match package metadata
+    assert hive.__version__ is not None
+    assert isinstance(hive.__version__, str)
+    # In dev mode, version might be "dev" or actual version from pyproject.toml
+    assert hive.__version__ in ("dev", version("automagik-hive"))
 
 
 def test_config_settings_import():

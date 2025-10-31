@@ -12,6 +12,7 @@ from agno.os import AgentOS
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from hive import __version__
 from hive.config import settings
 from hive.discovery import discover_agents
 
@@ -50,7 +51,7 @@ def create_app() -> FastAPI:
     base_app = FastAPI(
         title="Hive V2 API",
         description="AI-powered multi-agent framework powered by Agno AgentOS",
-        version="2.0.0",
+        version=__version__,
         docs_url="/docs" if config.is_development else None,
         redoc_url="/redoc" if config.is_development else None,
     )
