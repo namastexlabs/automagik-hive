@@ -5,8 +5,58 @@ from the main Automagik Hive pyproject.toml file, ensuring scaffolded projects
 always use the correct versions without hardcoding.
 """
 
+import sys
 import tomllib
 from pathlib import Path
+
+if sys.version_info >= (3, 10):
+    from importlib.metadata import PackageNotFoundError, version
+else:
+    from importlib_metadata import PackageNotFoundError, version
+
+
+def _get_dependencies_from_metadata() -> list[str]:
+    """Get dependencies from installed package metadata.
+
+    Used when pyproject.toml is not available (installed package).
+
+    Returns:
+        List of dependency specifications
+    """
+    # Get known package names and fetch their installed versions
+    known_packages = [
+        "agno",
+        "typer",
+        "rich",
+        "pyyaml",
+        "pydantic",
+        "pydantic-settings",
+        "python-dotenv",
+        "fastapi",
+        "uvicorn",
+        "httpx",
+        "sqlalchemy",
+        "psycopg",
+        "pgvector",
+        "aiosqlite",
+        "greenlet",
+        "anthropic",
+        "openai",
+        "loguru",
+        "watchdog",
+        "pandas",
+    ]
+
+    dependencies = []
+    for package in known_packages:
+        try:
+            pkg_version = version(package)
+            dependencies.append(f"{package}>={pkg_version}")
+        except PackageNotFoundError:
+            # Package not installed, skip it
+            continue
+
+    return dependencies
 
 
 def get_hive_dependencies() -> dict[str, list[str]]:
@@ -19,17 +69,20 @@ def get_hive_dependencies() -> dict[str, list[str]]:
         FileNotFoundError: If pyproject.toml cannot be found
         KeyError: If required dependency sections are missing
     """
-    # Find main pyproject.toml (hive package root)
+    # Try to find pyproject.toml in source tree first (for development)
     hive_root = Path(__file__).parent.parent.parent
     pyproject_path = hive_root / "pyproject.toml"
 
-    if not pyproject_path.exists():
-        raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
-
-    with open(pyproject_path, "rb") as f:
-        pyproject = tomllib.load(f)
-
-    all_deps = pyproject["project"]["dependencies"]
+    if pyproject_path.exists():
+        # Development mode - read from source
+        with open(pyproject_path, "rb") as f:
+            pyproject = tomllib.load(f)
+        all_deps = pyproject["project"]["dependencies"]
+    else:
+        # Installed mode - use package metadata
+        # When installed via uvx/pip, pyproject.toml isn't included
+        # So we reconstruct dependencies from what we know is installed
+        all_deps = _get_dependencies_from_metadata()
 
     # Core dependencies (minimal for agents)
     # These are essential for any Hive project to function
@@ -76,14 +129,15 @@ def get_python_version() -> str:
     hive_root = Path(__file__).parent.parent.parent
     pyproject_path = hive_root / "pyproject.toml"
 
-    if not pyproject_path.exists():
-        raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
-
-    with open(pyproject_path, "rb") as f:
-        pyproject = tomllib.load(f)
-
-    requires_python: str = pyproject["project"]["requires-python"]
-    return requires_python
+    if pyproject_path.exists():
+        # Development mode - read from source
+        with open(pyproject_path, "rb") as f:
+            pyproject = tomllib.load(f)
+        requires_python: str = pyproject["project"]["requires-python"]
+        return requires_python
+    else:
+        # Installed mode - return default
+        return ">=3.11"
 
 
 def format_dependencies_for_toml(dependencies: list[str], indent: int = 4) -> str:
