@@ -5,10 +5,11 @@ Generated using Automagik Hive meta-agent generator.
 """
 
 from pathlib import Path
+
+import yaml
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.tools.file import FileTools
-import yaml
 
 
 def get_support_bot_agent(**kwargs) -> Agent:
@@ -30,10 +31,7 @@ def get_support_bot_agent(**kwargs) -> Agent:
     model_config = config.get("model", {})
 
     # Create Model instance
-    model = OpenAIChat(
-        id=model_config.get("id"),
-        temperature=model_config.get("temperature", 0.7)
-    )
+    model = OpenAIChat(id=model_config.get("id"), temperature=model_config.get("temperature", 0.7))
 
     # Prepare tools
     tools = [FileTools()]
@@ -45,15 +43,15 @@ def get_support_bot_agent(**kwargs) -> Agent:
         "instructions": config.get("instructions"),
         "description": agent_config.get("description"),
         "tools": tools if tools else None,
-        **kwargs
+        **kwargs,
     }
 
     # Create agent
     agent = Agent(**agent_params)
 
-    # Set agent_id as instance attribute (NOT in constructor)
-    if agent_config.get("agent_id"):
-        agent.agent_id = agent_config.get("agent_id")
+    # Set agent id as instance attribute (NOT in constructor)
+    if agent_config.get("id"):
+        agent.id = agent_config.get("id")
 
     return agent
 
@@ -65,7 +63,7 @@ if __name__ == "__main__":
     agent = get_support_bot_agent()
     print(f"✅ Agent created: {agent.name}")
     print(f"✅ Model: {agent.model.id}")
-    print(f"✅ Agent ID: {agent.agent_id}")
+    print(f"✅ Agent ID: {agent.id}")
 
     # Test with a simple query
     response = agent.run("Hello, what can you help me with?")

@@ -1,6 +1,6 @@
 agent:
   name: support-bot
-  agent_id: support-bot
+  id: support-bot
   description: Customer support agent with CSV knowledge base and web search capabilities.
     Handles FAQs, searches web for complex issues, and escalates when needed.
 model:

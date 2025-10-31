@@ -1,8 +1,6 @@
 """Init command - Scaffold new Hive projects."""
 
-import shutil
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -18,7 +16,7 @@ console = Console()
 @init_app.command()
 def project(
     name: str = typer.Argument(..., help="Project name"),
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Project path (default: current directory)"),
+    path: Path | None = typer.Option(None, "--path", "-p", help="Project path (default: current directory)"),
 ):
     """Initialize a new Hive project with standard structure."""
     # Determine project path
@@ -106,7 +104,7 @@ def _create_init_files(project_path: Path):
         ("ai/tools/examples", "Example tools"),
     ]
 
-    for dir_path, description in init_dirs:
+    for dir_path, _description in init_dirs:
         full_path = project_path / dir_path
         if full_path.exists():
             init_file = full_path / "__init__.py"
@@ -147,7 +145,7 @@ __all__ = ["get_support_bot"]
 
     config_content = """agent:
   name: "Support Bot"
-  agent_id: "support-bot"
+  id: "support-bot"
   version: "1.0.0"
   description: "Friendly customer support agent"
 
@@ -208,9 +206,9 @@ def get_support_bot(**kwargs) -> Agent:
         **kwargs
     )
 
-    # Set agent_id
-    if agent_config.get("agent_id"):
-        agent.agent_id = agent_config.get("agent_id")
+    # Set agent id
+    if agent_config.get("id"):
+        agent.id = agent_config.get("id")
 
     return agent
 """
@@ -688,8 +686,8 @@ def get_my_custom_agent(**kwargs) -> Agent:
         **kwargs
     )
 
-    if agent_config.get("agent_id"):
-        agent.agent_id = agent_config.get("agent_id")
+    if agent_config.get("id"):
+        agent.id = agent_config.get("id")
 
     return agent
 ```

@@ -8,8 +8,7 @@ configuration issues.
 """
 
 import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import yaml
 
@@ -17,7 +16,7 @@ import yaml
 class ValidationError(Exception):
     """Configuration validation failed."""
 
-    def __init__(self, message: str, field: Optional[str] = None, value: Any = None):
+    def __init__(self, message: str, field: str | None = None, value: Any = None):
         self.field = field
         self.value = value
         super().__init__(message)
@@ -118,7 +117,7 @@ class ConfigValidator:
     }
 
     @classmethod
-    def validate_agent(cls, config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_agent(cls, config: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate agent configuration.
 
         Args:
@@ -130,7 +129,7 @@ class ConfigValidator:
         return cls._validate_config(config, cls.AGENT_SCHEMA, "agent")
 
     @classmethod
-    def validate_team(cls, config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_team(cls, config: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate team configuration.
 
         Args:
@@ -142,7 +141,7 @@ class ConfigValidator:
         return cls._validate_config(config, cls.TEAM_SCHEMA, "team")
 
     @classmethod
-    def validate_workflow(cls, config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_workflow(cls, config: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate workflow configuration.
 
         Args:
@@ -154,7 +153,7 @@ class ConfigValidator:
         return cls._validate_config(config, cls.WORKFLOW_SCHEMA, "workflow")
 
     @classmethod
-    def validate_tool(cls, config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_tool(cls, config: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate tool configuration.
 
         Args:
@@ -166,7 +165,7 @@ class ConfigValidator:
         return cls._validate_config(config, cls.TOOL_SCHEMA, "tool")
 
     @classmethod
-    def validate_file(cls, file_path: str) -> Tuple[bool, List[str]]:
+    def validate_file(cls, file_path: str) -> tuple[bool, list[str]]:
         """Validate a YAML configuration file.
 
         Args:
@@ -175,7 +174,6 @@ class ConfigValidator:
         Returns:
             Tuple of (is_valid, error_messages)
         """
-        errors = []
 
         # Check file exists
         if not os.path.exists(file_path):
@@ -183,7 +181,7 @@ class ConfigValidator:
 
         # Try to load YAML
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 config = yaml.safe_load(f)
         except yaml.YAMLError as e:
             return False, [f"❌ Invalid YAML syntax: {e}"]
@@ -208,7 +206,7 @@ class ConfigValidator:
         return False, ["❌ Configuration type detection failed"]
 
     @classmethod
-    def _detect_config_type(cls, config: Dict[str, Any]) -> Optional[str]:
+    def _detect_config_type(cls, config: dict[str, Any]) -> str | None:
         """Detect configuration type from structure.
 
         Args:
@@ -229,8 +227,8 @@ class ConfigValidator:
 
     @classmethod
     def _validate_config(
-        cls, config: Dict[str, Any], schema: Dict[str, Any], config_type: str
-    ) -> Tuple[bool, List[str]]:
+        cls, config: dict[str, Any], schema: dict[str, Any], config_type: str
+    ) -> tuple[bool, list[str]]:
         """Validate configuration against schema.
 
         Args:
@@ -321,7 +319,7 @@ class ConfigValidator:
         return len(errors) == 0, errors
 
     @classmethod
-    def _validate_nested_fields(cls, config: Dict[str, Any], schema: Dict[str, Any], parent_field: str) -> List[str]:
+    def _validate_nested_fields(cls, config: dict[str, Any], schema: dict[str, Any], parent_field: str) -> list[str]:
         """Validate nested dictionary fields.
 
         Args:
@@ -371,7 +369,7 @@ class ConfigValidator:
         return errors
 
     @classmethod
-    def _validate_env_vars(cls, config: Dict[str, Any]) -> List[str]:
+    def _validate_env_vars(cls, config: dict[str, Any]) -> list[str]:
         """Validate that referenced environment variables exist.
 
         Args:
@@ -390,7 +388,7 @@ class ConfigValidator:
         return warnings
 
     @classmethod
-    def _extract_env_vars(cls, obj: Any, vars_set: Optional[set] = None) -> set:
+    def _extract_env_vars(cls, obj: Any, vars_set: set | None = None) -> set:
         """Recursively extract ${VAR} references from config.
 
         Args:

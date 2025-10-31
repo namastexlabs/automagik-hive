@@ -2,12 +2,11 @@
 
 import typer
 from rich.console import Console
-from typing import Optional
 
-from .init import init_app
 from .create import create_app
 from .create_ai import create_agent_with_ai
 from .dev import dev_command, serve_command
+from .init import init_app
 from .version import version_app
 
 # Create main app
@@ -27,11 +26,12 @@ app.add_typer(version_app, name="version", help="Show version information")
 app.command(name="dev", help="Start development server with hot reload")(dev_command)
 app.command(name="serve", help="Start production server (no reload)")(serve_command)
 
+
 # Add AI-powered agent creation command
 @app.command(name="ai")
 def ai_create(
     name: str = typer.Argument(..., help="Agent name (kebab-case)"),
-    description: Optional[str] = typer.Option(None, "--description", "-d", help="Agent description"),
+    description: str | None = typer.Option(None, "--description", "-d", help="Agent description"),
     interactive: bool = typer.Option(True, "--interactive/--no-interactive", help="Use interactive mode"),
 ):
     """🤖 Create agent with AI-powered generation (uses Agno to generate configs)."""

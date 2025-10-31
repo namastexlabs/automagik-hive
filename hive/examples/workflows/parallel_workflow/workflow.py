@@ -5,14 +5,13 @@ Demonstrates concurrent execution of multiple steps using Agno's Parallel() feat
 Shows how to process multiple data sources simultaneously and merge results.
 """
 
-from pathlib import Path
-from typing import Dict, Any, List
-import yaml
 import time
+from pathlib import Path
 
-from agno.workflow import Workflow, Step, Parallel, StepOutput
+import yaml
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
+from agno.workflow import Parallel, Step, StepOutput, Workflow
 
 
 def preparation_step(step_input) -> StepOutput:
@@ -33,24 +32,9 @@ def preparation_step(step_input) -> StepOutput:
 
     # Define data sources to process
     data_sources = [
-        {
-            "id": "source1",
-            "name": "User Database",
-            "type": "database",
-            "records": 1000
-        },
-        {
-            "id": "source2",
-            "name": "API Logs",
-            "type": "logs",
-            "records": 5000
-        },
-        {
-            "id": "source3",
-            "name": "Analytics Data",
-            "type": "analytics",
-            "records": 3000
-        }
+        {"id": "source1", "name": "User Database", "type": "database", "records": 1000},
+        {"id": "source2", "name": "API Logs", "type": "logs", "records": 5000},
+        {"id": "source3", "name": "Analytics Data", "type": "analytics", "records": 3000},
     ]
 
     # Store sources in workflow state
@@ -60,11 +44,11 @@ def preparation_step(step_input) -> StepOutput:
 
     prep_summary = f"""
 Data sources prepared for parallel processing:
-- Source 1: {data_sources[0]['name']} ({data_sources[0]['records']} records)
-- Source 2: {data_sources[1]['name']} ({data_sources[1]['records']} records)
-- Source 3: {data_sources[2]['name']} ({data_sources[2]['records']} records)
+- Source 1: {data_sources[0]["name"]} ({data_sources[0]["records"]} records)
+- Source 2: {data_sources[1]["name"]} ({data_sources[1]["records"]} records)
+- Source 3: {data_sources[2]["name"]} ({data_sources[2]["records"]} records)
 
-Total Records: {sum(s['records'] for s in data_sources)}
+Total Records: {sum(s["records"] for s in data_sources)}
 Processing Request: {request}
 """
 
@@ -95,7 +79,7 @@ def process_source1(step_input) -> StepOutput:
         "records_processed": source.get("records"),
         "processing_time": elapsed,
         "status": "success",
-        "insights": f"Analyzed {source.get('records')} records from {source.get('name')}"
+        "insights": f"Analyzed {source.get('records')} records from {source.get('name')}",
     }
 
     # Store in state
@@ -130,7 +114,7 @@ def process_source2(step_input) -> StepOutput:
         "records_processed": source.get("records"),
         "processing_time": elapsed,
         "status": "success",
-        "insights": f"Processed {source.get('records')} log entries from {source.get('name')}"
+        "insights": f"Processed {source.get('records')} log entries from {source.get('name')}",
     }
 
     # Store in state
@@ -165,7 +149,7 @@ def process_source3(step_input) -> StepOutput:
         "records_processed": source.get("records"),
         "processing_time": elapsed,
         "status": "success",
-        "insights": f"Extracted analytics from {source.get('records')} data points"
+        "insights": f"Extracted analytics from {source.get('records')} data points",
     }
 
     # Store in state
@@ -201,7 +185,7 @@ def aggregation_step(step_input) -> StepOutput:
         "total_time": total_processing_time,
         "avg_time_per_source": avg_time_per_source,
         "time_saved": (sum(r["processing_time"] for r in results) - total_processing_time),
-        "all_results": results
+        "all_results": results,
     }
 
     # Store aggregation
@@ -210,11 +194,11 @@ def aggregation_step(step_input) -> StepOutput:
     summary = f"""
 AGGREGATION COMPLETE:
 --------------------
-Sources Processed: {aggregation['total_sources']}
-Total Records: {aggregation['total_records']:,}
-Total Processing Time: {aggregation['total_time']:.2f}s
-Average Time Per Source: {aggregation['avg_time_per_source']:.2f}s
-Time Saved by Parallel Processing: {aggregation['time_saved']:.2f}s
+Sources Processed: {aggregation["total_sources"]}
+Total Records: {aggregation["total_records"]:,}
+Total Processing Time: {aggregation["total_time"]:.2f}s
+Average Time Per Source: {aggregation["avg_time_per_source"]:.2f}s
+Time Saved by Parallel Processing: {aggregation["time_saved"]:.2f}s
 
 Individual Results:
 """
@@ -248,17 +232,17 @@ def report_step(step_input) -> StepOutput:
         - Performance Metrics
         - Recommendations
 
-        Keep it concise and actionable."""
+        Keep it concise and actionable.""",
     )
 
     context = f"""
 Processing Request: {request}
 
 Aggregation Results:
-- Sources: {aggregation.get('total_sources', 0)}
-- Records: {aggregation.get('total_records', 0):,}
-- Processing Time: {aggregation.get('total_time', 0):.2f}s
-- Time Saved: {aggregation.get('time_saved', 0):.2f}s
+- Sources: {aggregation.get("total_sources", 0)}
+- Records: {aggregation.get("total_records", 0):,}
+- Processing Time: {aggregation.get("total_time", 0):.2f}s
+- Time Saved: {aggregation.get("time_saved", 0):.2f}s
 
 Source Details:
 """
@@ -307,12 +291,12 @@ def get_parallel_workflow(**kwargs) -> Workflow:
             Parallel(
                 Step(name="ProcessSource1", function=process_source1),
                 Step(name="ProcessSource2", function=process_source2),
-                Step(name="ProcessSource3", function=process_source3)
+                Step(name="ProcessSource3", function=process_source3),
             ),
             Step(name="Aggregation", function=aggregation_step),
-            Step(name="Report", function=report_step)
+            Step(name="Report", function=report_step),
         ],
-        **kwargs
+        **kwargs,
     )
 
     return workflow
@@ -337,10 +321,10 @@ if __name__ == "__main__":
     print(f"\n📝 Final Report:\n{response.content}")
 
     # Show performance benefits
-    if hasattr(response, 'workflow_session_state'):
+    if hasattr(response, "workflow_session_state"):
         state = response.workflow_session_state
-        aggregation = state.get('aggregation', {})
-        print(f"\n⚡ Performance Metrics:")
+        aggregation = state.get("aggregation", {})
+        print("\n⚡ Performance Metrics:")
         print(f"  - Total Workflow Time: {elapsed:.2f}s")
         print(f"  - Sources Processed: {aggregation.get('total_sources', 0)}")
         print(f"  - Records Processed: {aggregation.get('total_records', 0):,}")

@@ -171,7 +171,9 @@ def test_load_auto_incremental(csv_loader: CSVKnowledgeLoader, tmp_path: Path) -
 
     # Mock existing hashes (subsequent load)
     with patch.object(csv_loader.incremental_loader, "_load_existing_hashes", return_value={0: "hash0"}):
-        with patch.object(csv_loader, "load_incremental", return_value={"added": 0, "changed": 0, "deleted": 0}) as mock_inc:
+        with patch.object(
+            csv_loader, "load_incremental", return_value={"added": 0, "changed": 0, "deleted": 0}
+        ) as mock_inc:
             result = csv_loader.load(csv_path)
 
     assert result["mode"] == "incremental"

@@ -5,11 +5,11 @@ A wrapper around Agno's SlackTools for sending notifications to Slack.
 Demonstrates tool integration with external services.
 """
 
-from pathlib import Path
-from typing import Dict, Any, Optional
-import yaml
 import os
+from pathlib import Path
+from typing import Any
 
+import yaml
 from agno.tools.slack import SlackTools
 
 
@@ -24,7 +24,7 @@ class SlackNotifierTool:
     - Channel defaults
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         """
         Initialize Slack notifier tool.
 
@@ -58,17 +58,13 @@ class SlackNotifierTool:
             self.slack = SlackTools(
                 token=token,
                 username=self.integration.get("username", "Automagik Bot"),
-                icon_emoji=self.integration.get("default_icon", ":robot_face:")
+                icon_emoji=self.integration.get("default_icon", ":robot_face:"),
             )
-            print(f"✅ Slack integration initialized")
+            print("✅ Slack integration initialized")
 
     def send_notification(
-        self,
-        message: str,
-        channel: Optional[str] = None,
-        thread_ts: Optional[str] = None,
-        urgent: bool = False
-    ) -> Dict[str, Any]:
+        self, message: str, channel: str | None = None, thread_ts: str | None = None, urgent: bool = False
+    ) -> dict[str, Any]:
         """
         Send a notification to Slack.
 
@@ -90,30 +86,21 @@ class SlackNotifierTool:
 
             # Send notification
             if self.slack:
-                result = self.slack.send_message(
-                    channel=target_channel,
-                    text=formatted_message,
-                    thread_ts=thread_ts
-                )
+                result = self.slack.send_message(channel=target_channel, text=formatted_message, thread_ts=thread_ts)
 
                 return {
                     "status": "success",
                     "channel": target_channel,
                     "message_id": result.get("ts"),
                     "message": formatted_message,
-                    "urgent": urgent
+                    "urgent": urgent,
                 }
             else:
                 # Simulation mode
                 return self._simulate_send(target_channel, formatted_message, urgent)
 
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "channel": channel,
-                "message": message
-            }
+            return {"status": "error", "error": str(e), "channel": channel, "message": message}
 
     def _format_message(self, message: str, urgent: bool) -> str:
         """
@@ -132,17 +119,13 @@ class SlackNotifierTool:
         # Add timestamp if configured
         if self.params.get("include_timestamp", True):
             from datetime import datetime
+
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return f"[{timestamp}] {message}"
 
         return message
 
-    def _simulate_send(
-        self,
-        channel: str,
-        message: str,
-        urgent: bool
-    ) -> Dict[str, Any]:
+    def _simulate_send(self, channel: str, message: str, urgent: bool) -> dict[str, Any]:
         """
         Simulate sending message (when no token available).
 
@@ -154,7 +137,7 @@ class SlackNotifierTool:
         Returns:
             Simulated result dict
         """
-        print(f"\n📱 Simulated Slack Notification:")
+        print("\n📱 Simulated Slack Notification:")
         print(f"   Channel: {channel}")
         print(f"   Urgent: {urgent}")
         print(f"   Message:\n{message}\n")
@@ -165,15 +148,10 @@ class SlackNotifierTool:
             "message_id": "simulated-msg-123",
             "message": message,
             "urgent": urgent,
-            "note": "No SLACK_BOT_TOKEN found - running in simulation mode"
+            "note": "No SLACK_BOT_TOKEN found - running in simulation mode",
         }
 
-    def send_thread_reply(
-        self,
-        message: str,
-        channel: str,
-        thread_ts: str
-    ) -> Dict[str, Any]:
+    def send_thread_reply(self, message: str, channel: str, thread_ts: str) -> dict[str, Any]:
         """
         Send a reply in an existing thread.
 
@@ -185,18 +163,9 @@ class SlackNotifierTool:
         Returns:
             Result dict with status
         """
-        return self.send_notification(
-            message=message,
-            channel=channel,
-            thread_ts=thread_ts,
-            urgent=False
-        )
+        return self.send_notification(message=message, channel=channel, thread_ts=thread_ts, urgent=False)
 
-    def send_alert(
-        self,
-        message: str,
-        channel: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def send_alert(self, message: str, channel: str | None = None) -> dict[str, Any]:
         """
         Send an urgent alert notification.
 
@@ -207,11 +176,7 @@ class SlackNotifierTool:
         Returns:
             Result dict with status
         """
-        return self.send_notification(
-            message=message,
-            channel=channel,
-            urgent=True
-        )
+        return self.send_notification(message=message, channel=channel, urgent=True)
 
     @property
     def is_configured(self) -> bool:
@@ -247,26 +212,18 @@ if __name__ == "__main__":
     print("\n📨 Testing notifications...\n")
 
     # Standard notification
-    result1 = tool.send_notification(
-        message="System startup complete",
-        channel="#general"
-    )
+    result1 = tool.send_notification(message="System startup complete", channel="#general")
     print(f"Standard notification: {result1['status']}")
 
     # Urgent notification
-    result2 = tool.send_alert(
-        message="Database connection failed - immediate attention required",
-        channel="#alerts"
-    )
+    result2 = tool.send_alert(message="Database connection failed - immediate attention required", channel="#alerts")
     print(f"Urgent alert: {result2['status']}")
 
     # Thread reply
     result3 = tool.send_thread_reply(
-        message="Investigation complete - issue resolved",
-        channel="#alerts",
-        thread_ts="1234567890.123456"
+        message="Investigation complete - issue resolved", channel="#alerts", thread_ts="1234567890.123456"
     )
     print(f"Thread reply: {result3['status']}")
 
     print("\n✅ All tests completed")
-    print(f"\nNote: Add SLACK_BOT_TOKEN to .env for real Slack integration")
+    print("\nNote: Add SLACK_BOT_TOKEN to .env for real Slack integration")

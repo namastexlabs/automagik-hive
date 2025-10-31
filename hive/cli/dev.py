@@ -3,7 +3,6 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -23,10 +22,10 @@ def _get_default_port() -> int:
 
 
 def dev_command(
-    port: Optional[int] = typer.Option(
+    port: int | None = typer.Option(
         None, "--port", "-p", help="Server port (defaults to HIVE_API_PORT from .env or 8886)"
     ),
-    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),  # noqa: S104
     examples: bool = typer.Option(False, "--examples", "-e", help="Run with Hive example agents (for learning)"),
 ):
     """Start development server with hot reload."""
@@ -59,10 +58,10 @@ def dev_command(
 
 
 def serve_command(
-    port: Optional[int] = typer.Option(
+    port: int | None = typer.Option(
         None, "--port", "-p", help="Server port (defaults to HIVE_API_PORT from .env or 8886)"
     ),
-    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),  # noqa: S104
 ):
     """Start production server (no hot reload)."""
     # Use environment port if not explicitly set
@@ -130,12 +129,12 @@ def _show_startup_info(port: int, host: str, reload: bool, examples: bool):
     mode = "Examples Mode" if examples else "Project Mode"
 
     if examples:
-        commands_section = f"""[bold cyan]Available Example Agents:[/bold cyan]
+        commands_section = """[bold cyan]Available Example Agents:[/bold cyan]
   • researcher (Claude Sonnet 4)
   • support-bot (GPT-4o)
   • code-reviewer (Claude Sonnet 4)"""
     else:
-        commands_section = f"""[bold cyan]Quick Commands:[/bold cyan]
+        commands_section = """[bold cyan]Quick Commands:[/bold cyan]
   • Create agent: [yellow]uvx automagik-hive ai my-agent[/yellow]
   • Create team: [yellow]uvx automagik-hive create team my-team[/yellow]
   • Stop server: [yellow]Ctrl+C[/yellow]"""

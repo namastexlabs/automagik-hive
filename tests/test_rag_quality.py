@@ -10,10 +10,7 @@ Tests the CSV-based RAG system:
 """
 
 import hashlib
-import tempfile
 import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -127,7 +124,7 @@ class TestIncrementalUpdates:
         reader = csv.DictReader(StringIO(csv_content))
         for row in reader:
             row_data = "|".join(row.values())
-            hash_val = hashlib.md5(row_data.encode()).hexdigest()
+            hash_val = hashlib.md5(row_data.encode()).hexdigest()  # noqa: S324
             hashes.append(hash_val)
         return hashes
 
@@ -225,7 +222,6 @@ class TestHotReload:
     def test_reload_preserves_existing_data(self, temp_project_dir):
         """Test that reload doesn't lose existing embeddings."""
         # GIVEN: Existing knowledge base
-        existing_data = {"Q1": "embedding_vector_1", "Q2": "embedding_vector_2"}
 
         # WHEN: Reload triggered
         csv_file = temp_project_dir / "knowledge.csv"
@@ -233,14 +229,14 @@ class TestHotReload:
 
         # Simulate reload: preserve Q1, Q2, add Q3
         import csv
-        from io import StringIO
         import hashlib
+        from io import StringIO
 
         hashes = []
         reader = csv.DictReader(StringIO(csv_file.read_text()))
         for row in reader:
             row_data = "|".join(row.values())
-            hash_val = hashlib.md5(row_data.encode()).hexdigest()
+            hash_val = hashlib.md5(row_data.encode()).hexdigest()  # noqa: S324
             hashes.append(hash_val)
 
         # THEN: Existing data preserved

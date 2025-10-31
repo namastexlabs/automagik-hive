@@ -13,12 +13,16 @@ Features:
 
 import asyncio
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING
 
 from loguru import logger
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
+
+if TYPE_CHECKING:
+    from watchdog.observers.api import BaseObserver
 
 
 class DebouncedFileWatcher(FileSystemEventHandler):
@@ -41,7 +45,7 @@ class DebouncedFileWatcher(FileSystemEventHandler):
         self.file_path = Path(file_path).resolve()
         self.callback = callback
         self.debounce_delay = debounce_delay
-        self.observer: Observer | None = None
+        self.observer: BaseObserver | None = None
         self._timer: threading.Timer | None = None
         self._lock = threading.Lock()
         self._stopped = False
@@ -52,7 +56,7 @@ class DebouncedFileWatcher(FileSystemEventHandler):
             return
 
         # Check if this is our target file
-        event_path = Path(event.src_path).resolve()
+        event_path = Path(str(event.src_path)).resolve()
         if event_path != self.file_path:
             return
 
@@ -64,7 +68,7 @@ class DebouncedFileWatcher(FileSystemEventHandler):
         if event.is_directory:
             return
 
-        event_path = Path(event.src_path).resolve()
+        event_path = Path(str(event.src_path)).resolve()
         if event_path != self.file_path:
             return
 

@@ -1,6 +1,6 @@
 agent:
   name: "Support Bot"
-  agent_id: "support-bot"
+  id: "support-bot"
   version: "1.0.0"
   description: "Friendly customer support agent"
 

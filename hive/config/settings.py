@@ -1,9 +1,7 @@
 """Essential settings for Hive V2 - 20 core environment variables."""
 
-import os
 from functools import lru_cache
 from pathlib import Path
-from typing import List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,13 +23,12 @@ class HiveSettings(BaseSettings):
 
     # API Configuration
     hive_api_port: int = Field(default=8886, description="API server port")
-    hive_api_host: str = Field(default="0.0.0.0", description="API server host")
+    hive_api_host: str = Field(default="0.0.0.0", description="API server host")  # noqa: S104
     hive_cors_origins: str = Field(default="*", description="Comma-separated CORS origins")
 
     # Database
     hive_database_url: str = Field(
-        default="postgresql+psycopg://hive:hive@localhost:5532/automagik_hive",
-        description="Database connection URL"
+        default="postgresql+psycopg://hive:hive@localhost:5532/automagik_hive", description="Database connection URL"
     )
 
     # AI Providers (at least one required)
@@ -62,7 +59,7 @@ class HiveSettings(BaseSettings):
     hive_session_timeout: int = Field(default=1800, description="Session timeout in seconds")
 
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         """Parse CORS origins into list."""
         if self.hive_cors_origins == "*":
             return ["*"]

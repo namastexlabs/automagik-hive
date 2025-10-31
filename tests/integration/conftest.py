@@ -7,8 +7,6 @@ No mocks - real execution only.
 import asyncio
 import os
 import time
-from pathlib import Path
-from typing import Dict, List
 
 import pytest
 import yaml
@@ -46,19 +44,15 @@ def anthropic_model():
 
 
 @pytest.fixture
-def retry_config() -> Dict[str, int]:
+def retry_config() -> dict[str, int | float]:
     """Configuration for retry logic."""
-    return {
-        "max_attempts": 3,
-        "initial_delay": 1.0,
-        "max_delay": 10.0,
-        "backoff_factor": 2.0
-    }
+    return {"max_attempts": 3, "initial_delay": 1.0, "max_delay": 10.0, "backoff_factor": 2.0}
 
 
 @pytest.fixture
 async def async_retry_executor(retry_config):
     """Execute async function with exponential backoff."""
+
     async def execute(func, *args, **kwargs):
         delay = retry_config["initial_delay"]
 
@@ -80,7 +74,7 @@ async def async_retry_executor(retry_config):
 @pytest.fixture
 def measure_response_time():
     """Measure and validate response times."""
-    times: List[float] = []
+    times: list[float] = []
 
     class ResponseTimer:
         def __enter__(self):
@@ -108,62 +102,30 @@ def test_agent_configs():
     """Standard test agent configurations."""
     return {
         "openai_simple": {
-            "agent": {
-                "name": "OpenAI Test Agent",
-                "agent_id": "openai-test",
-                "version": 1
-            },
-            "model": {
-                "provider": "openai",
-                "id": "gpt-4o-mini",
-                "temperature": 0.7
-            },
-            "instructions": "You are a helpful assistant. Answer questions clearly and concisely."
+            "agent": {"name": "OpenAI Test Agent", "agent_id": "openai-test", "version": 1},
+            "model": {"provider": "openai", "id": "gpt-4o-mini", "temperature": 0.7},
+            "instructions": "You are a helpful assistant. Answer questions clearly and concisely.",
         },
         "anthropic_simple": {
-            "agent": {
-                "name": "Anthropic Test Agent",
-                "agent_id": "anthropic-test",
-                "version": 1
-            },
-            "model": {
-                "provider": "anthropic",
-                "id": "claude-3-5-haiku-20241022",
-                "temperature": 0.7
-            },
-            "instructions": "You are a helpful assistant. Answer questions clearly and concisely."
+            "agent": {"name": "Anthropic Test Agent", "agent_id": "anthropic-test", "version": 1},
+            "model": {"provider": "anthropic", "id": "claude-3-5-haiku-20241022", "temperature": 0.7},
+            "instructions": "You are a helpful assistant. Answer questions clearly and concisely.",
         },
         "math_specialist": {
-            "agent": {
-                "name": "Math Specialist",
-                "agent_id": "math-specialist",
-                "version": 1
-            },
-            "model": {
-                "provider": "openai",
-                "id": "gpt-4o-mini",
-                "temperature": 0.0
-            },
+            "agent": {"name": "Math Specialist", "agent_id": "math-specialist", "version": 1},
+            "model": {"provider": "openai", "id": "gpt-4o-mini", "temperature": 0.0},
             "instructions": """You are a math specialist.
 Solve mathematical problems step by step.
 Show your work clearly.
-Provide the final answer in this format: ANSWER: [number]"""
+Provide the final answer in this format: ANSWER: [number]""",
         },
         "creative_writer": {
-            "agent": {
-                "name": "Creative Writer",
-                "agent_id": "creative-writer",
-                "version": 1
-            },
-            "model": {
-                "provider": "anthropic",
-                "id": "claude-3-5-haiku-20241022",
-                "temperature": 0.9
-            },
+            "agent": {"name": "Creative Writer", "agent_id": "creative-writer", "version": 1},
+            "model": {"provider": "anthropic", "id": "claude-3-5-haiku-20241022", "temperature": 0.9},
             "instructions": """You are a creative writing assistant.
 Generate engaging, original content.
-Be creative but stay on topic."""
-        }
+Be creative but stay on topic.""",
+        },
     }
 
 
@@ -175,62 +137,61 @@ def test_queries():
             "query": "Hello! How are you?",
             "min_length": 10,
             "should_contain": ["hello", "hi", "greet"],
-            "timeout": 10.0
+            "timeout": 10.0,
         },
         "math_question": {
             "query": "What is 17 * 23? Show your work.",
             "min_length": 20,
             "should_contain": ["391", "answer"],
-            "timeout": 15.0
+            "timeout": 15.0,
         },
         "factual_question": {
             "query": "What is the capital of France?",
             "min_length": 5,
             "should_contain": ["Paris"],
-            "timeout": 10.0
+            "timeout": 10.0,
         },
         "creative_prompt": {
             "query": "Write a two-sentence story about a robot.",
             "min_length": 30,
             "should_contain": ["robot"],
-            "timeout": 20.0
+            "timeout": 20.0,
         },
         "multi_step": {
             "query": "List three primary colors and explain why they're called primary.",
             "min_length": 50,
             "should_contain": ["red", "blue", "yellow", "primary"],
-            "timeout": 20.0
-        }
+            "timeout": 20.0,
+        },
     }
 
 
 @pytest.fixture
 def quality_validator():
     """Validate response quality."""
+
     class QualityValidator:
         @staticmethod
-        def validate_response(response: str, criteria: Dict) -> Dict[str, bool]:
+        def validate_response(response: str, criteria: dict) -> dict[str, bool]:
             """Validate response against criteria."""
             results = {
                 "has_content": bool(response and response.strip()),
                 "min_length": len(response) >= criteria.get("min_length", 0),
                 "contains_keywords": False,
-                "not_error": "error" not in response.lower() or "exception" not in response.lower()
+                "not_error": "error" not in response.lower() or "exception" not in response.lower(),
             }
 
             # Check if any required keywords present
             keywords = criteria.get("should_contain", [])
             if keywords:
-                results["contains_keywords"] = any(
-                    kw.lower() in response.lower() for kw in keywords
-                )
+                results["contains_keywords"] = any(kw.lower() in response.lower() for kw in keywords)
             else:
                 results["contains_keywords"] = True
 
             return results
 
         @staticmethod
-        def calculate_quality_score(results: Dict[str, bool]) -> float:
+        def calculate_quality_score(results: dict[str, bool]) -> float:
             """Calculate quality score (0.0 - 1.0)."""
             return sum(results.values()) / len(results)
 
@@ -240,7 +201,8 @@ def quality_validator():
 @pytest.fixture
 def create_test_agent(tmp_path):
     """Factory to create test agents from configs."""
-    def _create_agent(config: Dict, model_override=None) -> Agent:
+
+    def _create_agent(config: dict, model_override=None) -> Agent:
         """Create agent from config dict."""
         from agno.models.anthropic import Claude
         from agno.models.openai import OpenAIChat
@@ -267,12 +229,12 @@ def create_test_agent(tmp_path):
             name=agent_config.get("name", "Test Agent"),
             model=model,
             instructions=config.get("instructions", "You are a helpful assistant."),
-            markdown=True
+            markdown=True,
         )
 
         # Set agent_id if provided
         if "agent_id" in agent_config:
-            agent.agent_id = agent_config["agent_id"]
+            agent.id = agent_config["agent_id"]  # type: ignore[attr-defined]
 
         return agent
 
@@ -283,24 +245,13 @@ def create_test_agent(tmp_path):
 def test_results_logger(tmp_path):
     """Log test results for analysis."""
     results_file = tmp_path / "integration_test_results.yaml"
-    results = {
-        "test_runs": [],
-        "summary": {
-            "total_tests": 0,
-            "passed": 0,
-            "failed": 0,
-            "avg_response_time": 0.0
-        }
-    }
+    results = {"test_runs": [], "summary": {"total_tests": 0, "passed": 0, "failed": 0, "avg_response_time": 0.0}}
 
     class ResultsLogger:
-        def log_test(self, test_name: str, success: bool, duration: float, details: Dict = None):
-            results["test_runs"].append({
-                "test": test_name,
-                "success": success,
-                "duration": duration,
-                "details": details or {}
-            })
+        def log_test(self, test_name: str, success: bool, duration: float, details: dict | None = None):
+            results["test_runs"].append(
+                {"test": test_name, "success": success, "duration": duration, "details": details or {}}
+            )
             results["summary"]["total_tests"] += 1
             if success:
                 results["summary"]["passed"] += 1

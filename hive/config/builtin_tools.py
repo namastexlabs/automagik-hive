@@ -6,8 +6,7 @@ Makes it dead simple to add powerful capabilities to agents.
 12-year-old friendly: Pick tools like ordering from a menu!
 """
 
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 # ============================================================
 # BUILTIN TOOLS CATALOG
@@ -155,7 +154,7 @@ TOOL_CATEGORIES = {
 # ============================================================
 
 
-def load_builtin_tool(tool_name: str) -> Optional[Any]:
+def load_builtin_tool(tool_name: str) -> Any | None:
     """Load a builtin tool by name.
 
     Args:
@@ -172,7 +171,7 @@ def load_builtin_tool(tool_name: str) -> Optional[Any]:
         return None
 
     tool_config = BUILTIN_TOOLS[tool_name]
-    import_path = tool_config["import_path"]
+    import_path: str = tool_config["import_path"]  # type: ignore[assignment]
 
     try:
         # Dynamic import
@@ -187,7 +186,7 @@ def load_builtin_tool(tool_name: str) -> Optional[Any]:
         return None
 
 
-def get_tool_info(tool_name: str) -> Optional[Dict[str, Any]]:
+def get_tool_info(tool_name: str) -> dict[str, Any] | None:
     """Get information about a builtin tool.
 
     Args:
@@ -204,7 +203,7 @@ def get_tool_info(tool_name: str) -> Optional[Dict[str, Any]]:
     return BUILTIN_TOOLS.get(tool_name)
 
 
-def list_builtin_tools(category: Optional[str] = None) -> List[str]:
+def list_builtin_tools(category: str | None = None) -> list[str]:
     """List available builtin tools.
 
     Args:
@@ -227,7 +226,7 @@ def list_builtin_tools(category: Optional[str] = None) -> List[str]:
     return list(BUILTIN_TOOLS.keys())
 
 
-def get_tools_by_category() -> Dict[str, List[str]]:
+def get_tools_by_category() -> dict[str, list[str]]:
     """Get all tools organized by category.
 
     Returns:
@@ -241,7 +240,7 @@ def get_tools_by_category() -> Dict[str, List[str]]:
     return TOOL_CATEGORIES.copy()
 
 
-def search_tools(query: str) -> List[Dict[str, Any]]:
+def search_tools(query: str) -> list[dict[str, Any]]:
     """Search for tools by description or use case.
 
     Args:
@@ -260,12 +259,14 @@ def search_tools(query: str) -> List[Dict[str, Any]]:
 
     for tool_name, tool_config in BUILTIN_TOOLS.items():
         # Search in description
-        if query_lower in tool_config["description"].lower():
+        description: str = tool_config["description"]  # type: ignore[assignment]
+        if query_lower in description.lower():
             results.append({"name": tool_name, **tool_config})
             continue
 
         # Search in use cases
-        use_cases = " ".join(tool_config["use_cases"])
+        use_cases_list: list[str] = tool_config["use_cases"]  # type: ignore[assignment]
+        use_cases = " ".join(use_cases_list)
         if query_lower in use_cases.lower():
             results.append({"name": tool_name, **tool_config})
 
@@ -303,7 +304,7 @@ def print_tool_catalog():
 # ============================================================
 
 
-def recommend_tools_for_task(task_description: str) -> List[Dict[str, Any]]:
+def recommend_tools_for_task(task_description: str) -> list[dict[str, Any]]:
     """Recommend tools based on task description.
 
     Args:

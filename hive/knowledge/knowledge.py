@@ -21,10 +21,10 @@ Usage:
 import os
 import threading
 from pathlib import Path
-from typing import Any
 
 from agno.knowledge import Knowledge
 from agno.knowledge.embedder.openai import OpenAIEmbedder
+from agno.vectordb.distance import Distance
 from agno.vectordb.pgvector import HNSW, PgVector, SearchType
 from loguru import logger
 
@@ -99,7 +99,7 @@ def create_knowledge_base(
         embedder=OpenAIEmbedder(id=embedder),
         search_type=SearchType.hybrid,
         vector_index=HNSW(),
-        distance="cosine",
+        distance=Distance.cosine,
     )
 
     # Create CSV loader
@@ -140,7 +140,7 @@ def create_knowledge_base(
         watcher.start()
 
         # Store watcher reference on knowledge base
-        kb._csv_watcher = watcher
+        kb._csv_watcher = watcher  # type: ignore[attr-defined]
         logger.info("Hot reload enabled", path=str(csv_path))
 
     # Store as shared instance if requested

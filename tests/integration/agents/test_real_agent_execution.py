@@ -14,12 +14,8 @@ Run with: uv run pytest tests/integration/agents/test_real_agent_execution.py -v
 
 import asyncio
 import time
-from typing import Dict
 
 import pytest
-from agno.agent import Agent
-from agno.models.anthropic import Claude
-from agno.models.openai import OpenAIChat
 
 
 @pytest.mark.integration
@@ -34,7 +30,7 @@ class TestRealAgentExecution:
         test_agent_configs,
         test_queries,
         quality_validator,
-        test_results_logger
+        test_results_logger,
     ):
         """Test OpenAI agent actually responds to queries."""
         # GIVEN: Real OpenAI agent
@@ -42,7 +38,7 @@ class TestRealAgentExecution:
         agent = create_test_agent(config)
         query_config = test_queries["simple_greeting"]
 
-        print(f"\n=== Testing OpenAI Agent ===")
+        print("\n=== Testing OpenAI Agent ===")
         print(f"Model: {config['model']['id']}")
         print(f"Query: {query_config['query']}")
 
@@ -77,10 +73,7 @@ class TestRealAgentExecution:
             assert duration < query_config["timeout"], f"Response too slow: {duration}s"
 
             test_results_logger.log_test(
-                "openai_simple_query",
-                True,
-                duration,
-                {"quality_score": quality_score, "response_length": len(content)}
+                "openai_simple_query", True, duration, {"quality_score": quality_score, "response_length": len(content)}
             )
 
             print("✅ OpenAI agent test PASSED")
@@ -97,7 +90,7 @@ class TestRealAgentExecution:
         test_agent_configs,
         test_queries,
         quality_validator,
-        test_results_logger
+        test_results_logger,
     ):
         """Test Anthropic agent actually responds to queries."""
         # GIVEN: Real Anthropic agent
@@ -105,7 +98,7 @@ class TestRealAgentExecution:
         agent = create_test_agent(config)
         query_config = test_queries["factual_question"]
 
-        print(f"\n=== Testing Anthropic Agent ===")
+        print("\n=== Testing Anthropic Agent ===")
         print(f"Model: {config['model']['id']}")
         print(f"Query: {query_config['query']}")
 
@@ -142,7 +135,7 @@ class TestRealAgentExecution:
                 "anthropic_factual_query",
                 True,
                 duration,
-                {"quality_score": quality_score, "response_length": len(content)}
+                {"quality_score": quality_score, "response_length": len(content)},
             )
 
             print("✅ Anthropic agent test PASSED")
@@ -159,7 +152,7 @@ class TestRealAgentExecution:
         test_agent_configs,
         test_queries,
         quality_validator,
-        test_results_logger
+        test_results_logger,
     ):
         """Test specialized agent with specific task."""
         # GIVEN: Math specialist agent
@@ -167,7 +160,7 @@ class TestRealAgentExecution:
         agent = create_test_agent(config)
         query_config = test_queries["math_question"]
 
-        print(f"\n=== Testing Math Specialist ===")
+        print("\n=== Testing Math Specialist ===")
         print(f"Query: {query_config['query']}")
 
         # WHEN: Running math query
@@ -190,10 +183,7 @@ class TestRealAgentExecution:
             assert quality_score >= 0.75
 
             test_results_logger.log_test(
-                "math_specialist_query",
-                True,
-                duration,
-                {"quality_score": quality_score, "correct_answer": True}
+                "math_specialist_query", True, duration, {"quality_score": quality_score, "correct_answer": True}
             )
 
             print("✅ Math specialist test PASSED")
@@ -210,7 +200,7 @@ class TestRealAgentExecution:
         test_agent_configs,
         test_queries,
         quality_validator,
-        test_results_logger
+        test_results_logger,
     ):
         """Test creative agent with high temperature."""
         # GIVEN: Creative writer agent
@@ -218,7 +208,7 @@ class TestRealAgentExecution:
         agent = create_test_agent(config)
         query_config = test_queries["creative_prompt"]
 
-        print(f"\n=== Testing Creative Writer ===")
+        print("\n=== Testing Creative Writer ===")
         print(f"Temperature: {config['model']['temperature']}")
         print(f"Query: {query_config['query']}")
 
@@ -246,7 +236,7 @@ class TestRealAgentExecution:
                 "creative_writer_query",
                 True,
                 duration,
-                {"quality_score": quality_score, "response_length": len(content)}
+                {"quality_score": quality_score, "response_length": len(content)},
             )
 
             print("✅ Creative writer test PASSED")
@@ -257,19 +247,14 @@ class TestRealAgentExecution:
 
     @pytest.mark.asyncio
     async def test_multi_turn_conversation(
-        self,
-        verify_api_keys,
-        create_test_agent,
-        test_agent_configs,
-        quality_validator,
-        test_results_logger
+        self, verify_api_keys, create_test_agent, test_agent_configs, quality_validator, test_results_logger
     ):
         """Test agent maintains context across multiple turns."""
         # GIVEN: Agent with conversation
         config = test_agent_configs["openai_simple"]
         agent = create_test_agent(config)
 
-        print(f"\n=== Testing Multi-Turn Conversation ===")
+        print("\n=== Testing Multi-Turn Conversation ===")
 
         start = time.time()
         try:
@@ -293,12 +278,7 @@ class TestRealAgentExecution:
             assert "blue" in content2.lower(), f"Agent forgot context: {content2}"
             print(f"Duration: {duration:.2f}s")
 
-            test_results_logger.log_test(
-                "multi_turn_conversation",
-                True,
-                duration,
-                {"context_retained": True}
-            )
+            test_results_logger.log_test("multi_turn_conversation", True, duration, {"context_retained": True})
 
             print("✅ Multi-turn conversation test PASSED")
 
@@ -312,18 +292,13 @@ class TestAgentReliability:
     """Test agent reliability and error handling."""
 
     @pytest.mark.asyncio
-    async def test_handles_empty_query(
-        self,
-        verify_api_keys,
-        create_test_agent,
-        test_agent_configs
-    ):
+    async def test_handles_empty_query(self, verify_api_keys, create_test_agent, test_agent_configs):
         """Test agent handles empty query gracefully."""
         # GIVEN: Agent
         config = test_agent_configs["openai_simple"]
         agent = create_test_agent(config)
 
-        print(f"\n=== Testing Empty Query Handling ===")
+        print("\n=== Testing Empty Query Handling ===")
 
         # WHEN: Empty query
         try:
@@ -338,18 +313,14 @@ class TestAgentReliability:
 
     @pytest.mark.asyncio
     async def test_handles_very_long_query(
-        self,
-        verify_api_keys,
-        create_test_agent,
-        test_agent_configs,
-        test_results_logger
+        self, verify_api_keys, create_test_agent, test_agent_configs, test_results_logger
     ):
         """Test agent handles long queries."""
         # GIVEN: Agent
         config = test_agent_configs["openai_simple"]
         agent = create_test_agent(config)
 
-        print(f"\n=== Testing Long Query ===")
+        print("\n=== Testing Long Query ===")
 
         # WHEN: Very long query (but within limits)
         long_query = "Tell me about " + ("the history of technology " * 50)
@@ -369,7 +340,7 @@ class TestAgentReliability:
                 "long_query_handling",
                 True,
                 duration,
-                {"query_length": len(long_query), "response_length": len(response.content)}
+                {"query_length": len(long_query), "response_length": len(response.content)},
             )
 
             print("✅ Long query handled")
@@ -380,31 +351,23 @@ class TestAgentReliability:
 
     @pytest.mark.asyncio
     async def test_concurrent_requests(
-        self,
-        verify_api_keys,
-        create_test_agent,
-        test_agent_configs,
-        test_results_logger
+        self, verify_api_keys, create_test_agent, test_agent_configs, test_results_logger
     ):
         """Test agent handles concurrent requests."""
         # GIVEN: Multiple agents
         config = test_agent_configs["openai_simple"]
         agents = [create_test_agent(config) for _ in range(3)]
 
-        print(f"\n=== Testing Concurrent Requests ===")
+        print("\n=== Testing Concurrent Requests ===")
 
         # WHEN: Running concurrent queries
-        queries = [
-            "What is 2+2?",
-            "What is the capital of Japan?",
-            "Name a primary color."
-        ]
+        queries = ["What is 2+2?", "What is the capital of Japan?", "Name a primary color."]
 
         start = time.time()
         try:
             # Run all concurrently
             responses = await asyncio.gather(
-                *[agent.arun(query) for agent, query in zip(agents, queries)]
+                *[agent.arun(query) for agent, query in zip(agents, queries, strict=False)]
             )
             duration = time.time() - start
 
@@ -415,13 +378,10 @@ class TestAgentReliability:
                 print(f"Response {i}: {response.content[:100]}...")
 
             print(f"Total duration: {duration:.2f}s")
-            print(f"Average per request: {duration/3:.2f}s")
+            print(f"Average per request: {duration / 3:.2f}s")
 
             test_results_logger.log_test(
-                "concurrent_requests",
-                True,
-                duration,
-                {"num_requests": 3, "avg_duration": duration/3}
+                "concurrent_requests", True, duration, {"num_requests": 3, "avg_duration": duration / 3}
             )
 
             print("✅ Concurrent requests handled")
@@ -437,12 +397,7 @@ class TestAgentPerformance:
 
     @pytest.mark.asyncio
     async def test_response_time_consistency(
-        self,
-        verify_api_keys,
-        create_test_agent,
-        test_agent_configs,
-        measure_response_time,
-        test_results_logger
+        self, verify_api_keys, create_test_agent, test_agent_configs, measure_response_time, test_results_logger
     ):
         """Test that response times are reasonably consistent."""
         # GIVEN: Agent
@@ -450,7 +405,7 @@ class TestAgentPerformance:
         agent = create_test_agent(config)
         query = "What is 1+1?"
 
-        print(f"\n=== Testing Response Time Consistency ===")
+        print("\n=== Testing Response Time Consistency ===")
 
         # WHEN: Multiple requests
         times = []
@@ -459,7 +414,7 @@ class TestAgentPerformance:
                 response = await agent.arun(query)
                 assert response.content
             times.append(timer.duration)
-            print(f"Request {i+1}: {timer.duration:.2f}s")
+            print(f"Request {i + 1}: {timer.duration:.2f}s")
             await asyncio.sleep(0.5)  # Rate limiting
 
         # THEN: Times are consistent
@@ -478,12 +433,7 @@ class TestAgentPerformance:
             "response_time_consistency",
             True,
             avg_time,
-            {
-                "avg": avg_time,
-                "min": min_time,
-                "max": max_time,
-                "variance": variance
-            }
+            {"avg": avg_time, "min": min_time, "max": max_time, "variance": variance},
         )
 
         assert variance < 10.0, f"Response time too inconsistent: {variance}s variance"

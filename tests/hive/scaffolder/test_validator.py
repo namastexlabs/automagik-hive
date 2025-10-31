@@ -314,9 +314,7 @@ class TestValidateWorkflowConfig:
     def test_missing_workflow_section_fails(self):
         """Missing 'workflow' section should fail validation."""
         config = {
-            "steps": [
-                {"name": "step1", "type": "sequential", "agent": "agent1"}
-            ],
+            "steps": [{"name": "step1", "type": "sequential", "agent": "agent1"}],
         }
 
         is_valid, errors = ConfigValidator.validate_workflow(config)

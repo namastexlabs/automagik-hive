@@ -9,8 +9,6 @@ Tests the AI-powered generation of agent/team/workflow configs:
 - Quality of generated configs
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 import yaml
 
@@ -22,7 +20,6 @@ class TestAgentGenerator:
     async def test_generates_valid_yaml_from_description(self, mock_agno_agent):
         """Test that natural language converts to valid agent YAML."""
         # GIVEN: User description
-        description = "Create a customer support agent that handles billing questions"
 
         # WHEN: AI generates config (mocked)
         generated_yaml = """agent:
@@ -159,7 +156,6 @@ knowledge:
         initial_config = {"agent": {"name": "Bot"}, "model": {"id": "gpt-4o-mini"}}
 
         # WHEN: User provides feedback
-        feedback = "Make it more professional and add billing tools"
 
         # Mock refinement (in real implementation, this calls LLM again)
         refined_config = copy.deepcopy(initial_config)
@@ -178,7 +174,6 @@ class TestTeamGenerator:
     def test_generates_routing_team(self):
         """Test generation of team with routing logic."""
         # GIVEN: Team description
-        description = "Create a support team with billing, technical, and sales specialists"
 
         # WHEN: AI generates team config
         generated = """team:
@@ -226,7 +221,6 @@ class TestWorkflowGenerator:
 
     def test_generates_sequential_workflow(self):
         """Test generation of step-by-step workflow."""
-        description = "Create a research workflow: analyze → summarize → review"
 
         generated = """workflow:
   name: "Research Pipeline"
@@ -352,7 +346,6 @@ class TestGenerationQuality:
     def test_instructions_are_substantive(self):
         """Test that generated instructions are detailed."""
         # GIVEN: Agent purpose
-        purpose = "billing support"
 
         # Mock instruction generation
         instructions = (

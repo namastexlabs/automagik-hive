@@ -113,8 +113,8 @@ def get_agent_name_agent(**kwargs) -> Agent:
         **kwargs
     )
 
-    # Set agent_id as attribute (NOT in constructor)
-    agent.agent_id = config["agent"]["agent_id"]
+    # Set agent id as attribute (NOT in constructor)
+    agent.id = config["agent"]["id"]
 
     return agent
 ```
@@ -124,7 +124,7 @@ def get_agent_name_agent(**kwargs) -> Agent:
 ```yaml
 agent:
   name: "agent-name"
-  agent_id: "agent-name"
+  id: "agent-name"
   description: "What the agent does"
 
 model:
@@ -179,8 +179,8 @@ model = OpenAIChat(id="gpt-4o-mini", temperature=0.7)
 # Create Agent
 agent = Agent(model=model, ...)
 
-# Set agent_id as attribute
-agent.agent_id = "my-agent"
+# Set agent id as attribute
+agent.id = "my-agent"
 
 # Access response
 response = agent.run(query)

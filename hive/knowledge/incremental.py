@@ -18,7 +18,7 @@ Performance Benefits:
 
 import hashlib
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from agno.vectordb.pgvector import PgVector
@@ -59,10 +59,10 @@ class IncrementalCSVLoader:
 
         # Build string from column values
         parts = [str(row[col]).strip() for col in columns if col in row.index]
-        data = "\u241F".join(parts)  # Unit separator for clean concatenation
+        data = "\u241f".join(parts)  # Unit separator for clean concatenation
 
-        # Compute MD5 hash
-        return hashlib.md5(data.encode()).hexdigest()
+        # Compute MD5 hash (used for content fingerprinting, not cryptographic purposes)
+        return hashlib.md5(data.encode()).hexdigest()  # noqa: S324
 
     def _load_existing_hashes(self) -> dict[int, str]:
         """
@@ -73,14 +73,15 @@ class IncrementalCSVLoader:
         """
         try:
             # Query existing hashes
+            # Note: table name is controlled internally, not user input
             query = f"""
                 SELECT row_id, hash
                 FROM {self._hash_table}
                 ORDER BY row_id
-            """
+            """  # noqa: S608
             with self.vector_db.Session() as session:
                 result = session.execute(query)
-                return {row_id: hash_val for row_id, hash_val in result}
+                return dict(result)
         except Exception:
             # Table doesn't exist yet or query failed
             logger.debug("No existing hashes found", table=self._hash_table)
@@ -125,10 +126,10 @@ class IncrementalCSVLoader:
         df = pd.read_csv(csv_path)
 
         # Compute hashes for current rows
-        current_hashes = {}
+        current_hashes: dict[int, str] = {}
         for idx, row in df.iterrows():
             row_hash = self._compute_row_hash(row)
-            current_hashes[idx] = row_hash
+            current_hashes[cast(int, idx)] = row_hash
 
         # Load existing hashes
         existing_hashes = self._load_existing_hashes()
@@ -137,9 +138,7 @@ class IncrementalCSVLoader:
         added = [idx for idx in current_hashes if idx not in existing_hashes]
         deleted = [idx for idx in existing_hashes if idx not in current_hashes]
         changed = [
-            idx
-            for idx in current_hashes
-            if idx in existing_hashes and current_hashes[idx] != existing_hashes[idx]
+            idx for idx in current_hashes if idx in existing_hashes and current_hashes[idx] != existing_hashes[idx]
         ]
 
         logger.info(
@@ -168,13 +167,13 @@ class IncrementalCSVLoader:
         try:
             with self.vector_db.Session() as session:
                 for row_id, hash_val in hashes.items():
-                    # Upsert hash
+                    # Upsert hash (table name is controlled internally, not user input)
                     upsert = f"""
                         INSERT INTO {self._hash_table} (row_id, hash, updated_at)
                         VALUES (:row_id, :hash, CURRENT_TIMESTAMP)
                         ON CONFLICT (row_id)
                         DO UPDATE SET hash = :hash, updated_at = CURRENT_TIMESTAMP
-                    """
+                    """  # noqa: S608
                     session.execute(upsert, {"row_id": int(row_id), "hash": hash_val})
                 session.commit()
             logger.debug("Hashes updated", count=len(hashes))
@@ -194,10 +193,11 @@ class IncrementalCSVLoader:
 
         try:
             with self.vector_db.Session() as session:
+                # Table name is controlled internally, not user input
                 delete = f"""
                     DELETE FROM {self._hash_table}
                     WHERE row_id = ANY(:row_ids)
-                """
+                """  # noqa: S608
                 session.execute(delete, {"row_ids": row_ids})
                 session.commit()
             logger.debug("Hashes deleted", count=len(row_ids))

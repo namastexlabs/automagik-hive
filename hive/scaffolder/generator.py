@@ -8,8 +8,7 @@ Handles model resolution, tool loading, knowledge base setup, and MCP integratio
 
 import os
 import re
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 from agno.agent import Agent
@@ -50,7 +49,7 @@ class ConfigGenerator:
         if validate:
             is_valid, errors = ConfigValidator.validate_agent(config)
             if not is_valid:
-                raise GeneratorError(f"Invalid agent config:\n" + "\n".join(errors))
+                raise GeneratorError("Invalid agent config:\n" + "\n".join(errors))
 
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
@@ -149,7 +148,7 @@ class ConfigGenerator:
         if validate:
             is_valid, errors = ConfigValidator.validate_team(config)
             if not is_valid:
-                raise GeneratorError(f"Invalid team config:\n" + "\n".join(errors))
+                raise GeneratorError("Invalid team config:\n" + "\n".join(errors))
 
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
@@ -238,7 +237,7 @@ class ConfigGenerator:
         if validate:
             is_valid, errors = ConfigValidator.validate_workflow(config)
             if not is_valid:
-                raise GeneratorError(f"Invalid workflow config:\n" + "\n".join(errors))
+                raise GeneratorError("Invalid workflow config:\n" + "\n".join(errors))
 
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
@@ -259,7 +258,7 @@ class ConfigGenerator:
         settings = config.get("settings", {})
         shared_state = settings.get("shared_state")
         # Parse model string into Model object
-        model = cls._parse_model(model_string)
+        cls._parse_model(model_string)
 
         retry_on_error = settings.get("retry_on_error")
         max_retries = settings.get("max_retries")
@@ -303,7 +302,7 @@ class ConfigGenerator:
     # ===== HELPER METHODS =====
 
     @classmethod
-    def _load_yaml(cls, yaml_path: str) -> Dict[str, Any]:
+    def _load_yaml(cls, yaml_path: str) -> dict[str, Any]:
         """Load and parse YAML file.
 
         Args:
@@ -319,16 +318,19 @@ class ConfigGenerator:
             raise GeneratorError(f"Config file not found: {yaml_path}")
 
         try:
-            with open(yaml_path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f)
+            with open(yaml_path, encoding="utf-8") as f:
+                config: dict[str, Any] = yaml.safe_load(f)
+                return config
         except yaml.YAMLError as e:
             raise GeneratorError(f"Invalid YAML syntax: {e}") from e
         except Exception as e:
             raise GeneratorError(f"Failed to load config: {e}") from e
 
     @classmethod
-    def _parse_model(cls, model_string: Optional[str]) -> Optional[Any]:
+    def _parse_model(cls, model_string: str | None) -> Any | None:
         """Parse model string into Agno Model object.
+
+        Supports 38+ providers via explicit mapping + dynamic fallback.
 
         Args:
             model_string: Model identifier (e.g., 'openai:gpt-4o-mini', 'anthropic:claude-3-sonnet')
@@ -356,27 +358,66 @@ class ConfigGenerator:
         provider, model_id = model_string.split(":", 1)
         provider = provider.lower()
 
-        # Import and create appropriate model class
-        if provider == "openai":
-            from agno.models.openai import OpenAIChat
+        # Map provider names to their main model class
+        # Covers most common providers - extensible mapping
+        provider_class_map = {
+            "openai": ("agno.models.openai", "OpenAIChat"),
+            "anthropic": ("agno.models.anthropic", "Claude"),
+            "google": ("agno.models.google", "Gemini"),
+            "groq": ("agno.models.groq", "Groq"),
+            "ollama": ("agno.models.ollama", "Ollama"),
+            "xai": ("agno.models.xai", "xAI"),
+            "together": ("agno.models.together", "Together"),
+            "fireworks": ("agno.models.fireworks", "Fireworks"),
+            "mistral": ("agno.models.mistral", "Mistral"),
+            "cohere": ("agno.models.cohere", "Cohere"),
+            "openrouter": ("agno.models.openrouter", "OpenRouter"),
+            "perplexity": ("agno.models.perplexity", "Perplexity"),
+            "deepseek": ("agno.models.deepseek", "DeepSeek"),
+            "azure": ("agno.models.azure", "AzureOpenAIChat"),
+            "aws": ("agno.models.aws", "AwsBedrock"),
+            "vertexai": ("agno.models.vertexai", "Gemini"),
+        }
 
-            return OpenAIChat(id=model_id)
-        elif provider == "anthropic":
-            from agno.models.anthropic import Claude
+        if provider in provider_class_map:
+            module_path, class_name = provider_class_map[provider]
+            try:
+                import importlib
 
-            return Claude(id=model_id)
-        elif provider == "google":
-            from agno.models.google import Gemini
-
-            return Gemini(id=model_id)
-        elif provider == "groq":
-            from agno.models.groq import Groq
-
-            return Groq(id=model_id)
+                module = importlib.import_module(module_path)
+                model_class = getattr(module, class_name)
+                return model_class(id=model_id)
+            except Exception as e:
+                raise GeneratorError(
+                    f"Failed to initialize {provider} model: {e}\nMake sure the provider is installed and configured"
+                ) from e
         else:
-            raise GeneratorError(
-                f"Unsupported model provider: {provider}\nSupported providers: openai, anthropic, google, groq"
-            )
+            # Fallback: try generic import pattern (agno.models.<provider>.<Provider>)
+            try:
+                import importlib
+
+                module_path = f"agno.models.{provider}"
+                module = importlib.import_module(module_path)
+
+                # Try to find main class (usually capitalized provider name)
+                provider_capitalized = provider.capitalize()
+                if hasattr(module, provider_capitalized):
+                    model_class = getattr(module, provider_capitalized)
+                    return model_class(id=model_id)
+
+                # List available classes for better error message
+                available = [c for c in dir(module) if not c.startswith("_") and c[0].isupper()]
+                raise GeneratorError(
+                    f"Provider '{provider}' found but main class unclear.\n"
+                    f"Available classes: {', '.join(available[:5])}\n"
+                    f"Please add mapping to provider_class_map in generator.py"
+                )
+            except ImportError:
+                raise GeneratorError(
+                    f"Unknown model provider: {provider}\n"
+                    f"Common providers: {', '.join(list(provider_class_map.keys())[:8])}\n"
+                    f"See agno.models for full list of 38+ supported providers"
+                )
 
     @classmethod
     def _substitute_env_vars(cls, config: Any) -> Any:
@@ -408,7 +449,7 @@ class ConfigGenerator:
             return config
 
     @classmethod
-    def _load_tools(cls, tools_config: List) -> List:
+    def _load_tools(cls, tools_config: list) -> list:
         """Load tools from configuration.
 
         Args:
@@ -451,7 +492,7 @@ class ConfigGenerator:
         return tools
 
     @classmethod
-    def _setup_knowledge(cls, knowledge_config: Optional[Dict]) -> Optional[Any]:
+    def _setup_knowledge(cls, knowledge_config: dict | None) -> Any | None:
         """Setup knowledge base from configuration.
 
         Args:
@@ -468,8 +509,8 @@ class ConfigGenerator:
 
         if kb_type == "csv":
             # CSV knowledge base
-            from agno.knowledge import DocumentKnowledgeBase
-            from agno.document import CSVReader
+            from agno.document import CSVReader  # type: ignore[import-not-found]
+            from agno.knowledge import DocumentKnowledgeBase  # type: ignore[attr-defined]
 
             try:
                 reader = CSVReader(path=source)
@@ -483,8 +524,8 @@ class ConfigGenerator:
 
         elif kb_type == "database":
             # Database knowledge base
-            connection = knowledge_config.get("connection")
-            table = knowledge_config.get("table")
+            knowledge_config.get("connection")
+            knowledge_config.get("table")
 
             # TODO: Implement database knowledge base
             raise GeneratorError("Database knowledge base not yet implemented")
@@ -493,7 +534,7 @@ class ConfigGenerator:
             raise GeneratorError(f"Unknown knowledge base type: {kb_type}")
 
     @classmethod
-    def _setup_storage(cls, storage_config: Optional[Dict]) -> Optional[Any]:
+    def _setup_storage(cls, storage_config: dict | None) -> Any | None:
         """Setup storage from configuration.
 
         Args:
@@ -509,7 +550,7 @@ class ConfigGenerator:
 
         if storage_type == "postgres":
             # PostgreSQL storage
-            from agno.storage import PostgresStorage
+            from agno.storage import PostgresStorage  # type: ignore[import-not-found]
 
             return PostgresStorage(
                 connection_url=storage_config.get("connection"),
@@ -519,7 +560,7 @@ class ConfigGenerator:
 
         elif storage_type == "sqlite":
             # SQLite storage
-            from agno.storage import SqliteStorage
+            from agno.storage import SqliteStorage  # type: ignore[import-not-found]
 
             return SqliteStorage(
                 db_file=storage_config.get("db_file", "./data/agent.db"),
@@ -531,7 +572,7 @@ class ConfigGenerator:
             raise GeneratorError(f"Unknown storage type: {storage_type}")
 
     @classmethod
-    def _load_member_agents(cls, member_ids: List[str]) -> List[Agent]:
+    def _load_member_agents(cls, member_ids: list[str]) -> list[Agent]:
         """Load member agents for a team.
 
         Args:
@@ -560,13 +601,11 @@ class ConfigGenerator:
                     raise GeneratorError(f"Failed to load member agent from {member_id}: {e}") from e
             else:
                 # Lookup by agent_id from discovered agents
-                agent = get_agent_by_id(member_id, available_agents)
-                if agent is None:
-                    raise GeneratorError(
-                        f"Member agent not found: {member_id}\n"
-                        f"Available agents: {[a.agent_id for a in available_agents]}"
-                    )
-                members.append(agent)
+                found_agent = get_agent_by_id(member_id, available_agents)
+                if found_agent is None:
+                    agent_ids = [getattr(a, "id", a.name) for a in available_agents]
+                    raise GeneratorError(f"Member agent not found: {member_id}\nAvailable agents: {agent_ids}")
+                members.append(found_agent)
 
         return members
 
@@ -594,12 +633,13 @@ class ConfigGenerator:
         agent = get_agent_by_id(agent_ref, available_agents)
 
         if agent is None:
-            raise GeneratorError(f"Agent not found: {agent_ref}\nAvailable: {[a.agent_id for a in available_agents]}")
+            agent_ids = [getattr(a, "id", a.name) for a in available_agents]
+            raise GeneratorError(f"Agent not found: {agent_ref}\nAvailable: {agent_ids}")
 
         return agent
 
     @classmethod
-    def _translate_team_mode(cls, mode_string: Optional[str]) -> Dict[str, bool]:
+    def _translate_team_mode(cls, mode_string: str | None) -> dict[str, bool]:
         """Translate simplified mode string to Agno Team boolean flags.
 
         Args:
@@ -650,7 +690,7 @@ class ConfigGenerator:
             raise GeneratorError(f"Unknown team mode: {mode_string}\nAvailable modes: {list(mode_mappings.keys())}")
 
     @classmethod
-    def _build_condition_evaluator(cls, condition_config: Dict):
+    def _build_condition_evaluator(cls, condition_config: dict):
         """Build condition evaluation function from config.
 
         Args:
@@ -662,7 +702,6 @@ class ConfigGenerator:
         Raises:
             GeneratorError: If condition config is invalid
         """
-        from agno.workflow.types import StepInput
 
         operator = condition_config.get("operator")
         field = condition_config.get("field")
@@ -671,25 +710,29 @@ class ConfigGenerator:
         if not all([operator, field, value]):
             raise GeneratorError("Condition config must include: operator, field, value")
 
+        # Ensure field is a string
+        if not isinstance(field, str):
+            raise GeneratorError(f"Condition field must be a string, got: {type(field)}")
+
         # Build condition lambda based on operator
         # Each lambda receives StepInput (not raw input)
         operators = {
             "equals": lambda si: getattr(si.input, field, None) == value
             if hasattr(si.input, field)
-            else si.input.get(field) == value,
+            else si.input.get(field) == value,  # type: ignore[union-attr]
             "not_equals": lambda si: getattr(si.input, field, None) != value
             if hasattr(si.input, field)
-            else si.input.get(field) != value,
-            "contains": lambda si: value
-            in str(getattr(si.input, field, "") if hasattr(si.input, field) else si.input.get(field, "")),
+            else si.input.get(field) != value,  # type: ignore[union-attr]
+            "contains": lambda si: (value if value is not None else "")
+            in str(getattr(si.input, field, "") if hasattr(si.input, field) else si.input.get(field, "")),  # type: ignore[union-attr]
             "greater_than": lambda si: (
-                getattr(si.input, field, 0) if hasattr(si.input, field) else si.input.get(field, 0)
+                getattr(si.input, field, 0) if hasattr(si.input, field) else si.input.get(field, 0)  # type: ignore[union-attr]
             )
-            > value,
+            > (value if value is not None else 0),
             "less_than": lambda si: (
-                getattr(si.input, field, 0) if hasattr(si.input, field) else si.input.get(field, 0)
+                getattr(si.input, field, 0) if hasattr(si.input, field) else si.input.get(field, 0)  # type: ignore[union-attr]
             )
-            < value,
+            < (value if value is not None else 0),
         }
 
         if operator not in operators:
@@ -698,7 +741,7 @@ class ConfigGenerator:
         return operators[operator]
 
     @classmethod
-    def _build_loop_end_condition(cls, condition_config: Dict):
+    def _build_loop_end_condition(cls, condition_config: dict):
         """Build loop end condition function from config.
 
         Args:
@@ -711,7 +754,6 @@ class ConfigGenerator:
         Raises:
             GeneratorError: If condition config is invalid
         """
-        from agno.workflow.types import StepOutput
 
         check_type = condition_config.get("type")
         threshold = condition_config.get("threshold")
@@ -725,7 +767,7 @@ class ConfigGenerator:
             if not threshold:
                 raise GeneratorError("content_length requires 'threshold'")
 
-            def end_condition(outputs: List) -> bool:
+            def end_condition(outputs: list) -> bool:
                 if not outputs:
                     return False
                 for output in outputs:
@@ -741,11 +783,11 @@ class ConfigGenerator:
             if not threshold:
                 raise GeneratorError("success_count requires 'threshold'")
 
-            def end_condition(outputs: List) -> bool:
+            def end_condition(outputs: list) -> bool:
                 if not outputs:
                     return False
                 success_count = sum(1 for o in outputs if hasattr(o, "success") and o.success)
-                return success_count >= threshold  # True = BREAK
+                return bool(success_count >= (threshold if threshold is not None else 0))  # True = BREAK
 
             return end_condition
 
@@ -793,7 +835,7 @@ class ConfigGenerator:
             )
 
     @classmethod
-    def _load_workflow_steps(cls, steps_config: List[Dict]) -> List:
+    def _load_workflow_steps(cls, steps_config: list[dict]) -> list:
         """Load workflow steps from configuration.
 
         Args:
@@ -805,7 +847,7 @@ class ConfigGenerator:
         Raises:
             GeneratorError: If loading fails
         """
-        from agno.workflow import Step, Parallel, Condition, Loop
+        from agno.workflow import Condition, Loop, Parallel, Step
 
         steps = []
 
@@ -843,7 +885,7 @@ class ConfigGenerator:
                     name=step_name,
                     description=step_config.get("description"),
                 )
-                steps.append(parallel_step)
+                steps.append(parallel_step)  # type: ignore[arg-type]
 
             elif step_type == "conditional":
                 # Conditional step
@@ -867,7 +909,7 @@ class ConfigGenerator:
                     name=step_name,
                     description=step_config.get("description"),
                 )
-                steps.append(condition_step)
+                steps.append(condition_step)  # type: ignore[arg-type]
 
             elif step_type == "loop":
                 # Loop step
@@ -895,7 +937,7 @@ class ConfigGenerator:
                     loop_params["end_condition"] = end_condition
 
                 loop_step = Loop(**loop_params)
-                steps.append(loop_step)
+                steps.append(loop_step)  # type: ignore[arg-type]
 
             elif step_type == "function":
                 # Function step with executor

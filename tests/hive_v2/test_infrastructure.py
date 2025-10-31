@@ -14,12 +14,14 @@ if str(project_root) not in sys.path:
 def test_hive_package_exists():
     """Test that hive package can be imported."""
     import hive
+
     assert hive.__version__ == "2.0.0"
 
 
 def test_config_settings_import():
     """Test that settings can be imported."""
     from hive.config import settings
+
     config = settings()
     assert config is not None
     assert hasattr(config, "hive_environment")
@@ -28,12 +30,14 @@ def test_config_settings_import():
 def test_cli_app_import():
     """Test that CLI app can be imported."""
     from hive.cli import app
+
     assert app is not None
 
 
 def test_api_app_creation():
     """Test that API app can be created."""
     from hive.api import create_app
+
     app = create_app()
     assert app is not None
     assert app.title == "Hive V2 API"
@@ -42,6 +46,7 @@ def test_api_app_creation():
 def test_default_emojis_defined():
     """Test that CLI emojis are defined."""
     from hive.config.defaults import CLI_EMOJIS
+
     assert "success" in CLI_EMOJIS
     assert "error" in CLI_EMOJIS
     assert "rocket" in CLI_EMOJIS

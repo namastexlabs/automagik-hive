@@ -22,7 +22,7 @@ from hive.generators.agent_generator import AgentGenerator
 # Skip all tests in this file if OPENAI_API_KEY is not set
 pytestmark = pytest.mark.skipif(
     not os.getenv("OPENAI_API_KEY"),
-    reason="OPENAI_API_KEY not set - these are integration tests requiring real API calls"
+    reason="OPENAI_API_KEY not set - these are integration tests requiring real API calls",
 )
 
 
@@ -158,7 +158,7 @@ class TestExampleScenarios:
     def test_example_template_usage(self, generator: AgentGenerator) -> None:
         """Example: Using predefined templates."""
         # TODO: Implement generate_from_template() in AgentGenerator
-        result = generator.generate_from_template(
+        result = generator.generate_from_template(  # type: ignore[attr-defined]
             "customer_support", customizations={"name": "my-support-bot", "description": "Support for SaaS platform"}
         )
 
@@ -209,7 +209,7 @@ class TestExampleScenarios:
         print(result.config.instructions[:300] + "...")
 
         # Refine instructions
-        refined_yaml, warnings = generator.refine(
+        refined_yaml, warnings = generator.refine(  # type: ignore[attr-defined]
             result.yaml_content,
             feedback="Make the tone more professional and add technical depth",
             aspect="instructions",
@@ -237,7 +237,7 @@ class TestExampleScenarios:
         print("=" * 80)
 
         # Validate
-        is_valid, issues = generator.validate(result.yaml_content)
+        is_valid, issues = generator.validate(result.yaml_content)  # type: ignore[attr-defined]
 
         print(f"\nValidation Result: {'PASS' if is_valid else 'FAIL'}")
         if issues:
@@ -258,7 +258,7 @@ class TestExampleScenarios:
         simple = generator.generate(name="simple-bot", description="A simple FAQ bot for quick responses")
 
         # Complex agent
-        complex = generator.generate(
+        complex_agent = generator.generate(
             name="complex-bot",
             description=(
                 "An advanced research and analysis bot that performs deep investigation, "
@@ -275,13 +275,13 @@ class TestExampleScenarios:
         print(f"  Instructions Length: {len(simple.config.instructions)} chars")
 
         print("\nCOMPLEX AGENT:")
-        print(f"  Model: {complex.config.model_id}")
-        print(f"  Tools: {len(complex.config.tools)} tools")
-        print(f"  Instructions Length: {len(complex.config.instructions)} chars")
+        print(f"  Model: {complex_agent.config.model_id}")
+        print(f"  Tools: {len(complex_agent.config.tools)} tools")
+        print(f"  Instructions Length: {len(complex_agent.config.instructions)} chars")
 
         print("\nMODEL COMPARISON:")
         print(f"  Simple uses: {simple.config.model_id}")
-        print(f"  Complex uses: {complex.config.model_id}")
+        print(f"  Complex uses: {complex_agent.config.model_id}")
         print("=" * 80 + "\n")
 
         # Validations
@@ -309,14 +309,14 @@ class TestExampleScenarios:
 
         # Step 2: Validate
         print("\n[2/4] Validating configuration...")
-        is_valid, issues = generator.validate(result.yaml_content)
+        is_valid, issues = generator.validate(result.yaml_content)  # type: ignore[attr-defined]
         print(f"✓ Validation: {'PASS' if is_valid else 'FAIL'}")
         assert is_valid
 
         # Step 3: Export
         print("\n[3/4] Exporting to file...")
         output_path = tmp_path / "email-assistant" / "config.yaml"
-        generator.export_config_file(result, str(output_path))
+        generator.export_config_file(result, str(output_path))  # type: ignore[attr-defined]
         print(f"✓ Exported to: {output_path}")
         assert output_path.exists()
 

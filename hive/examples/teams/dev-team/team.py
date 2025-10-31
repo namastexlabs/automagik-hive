@@ -1,10 +1,11 @@
 """Development Team factory."""
 
-import yaml
 from pathlib import Path
+
+import yaml
 from agno.agent import Agent
-from agno.team import Team
 from agno.models.openai import OpenAIChat
+from agno.team import Team
 
 
 def get_dev_team(**kwargs) -> Team:

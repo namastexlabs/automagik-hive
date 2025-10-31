@@ -1,6 +1,6 @@
 agent:
   name: researcher
-  agent_id: researcher
+  id: researcher
   description: Web research agent that searches for information, synthesizes findings,
     and provides comprehensive summaries with sources.
 model:

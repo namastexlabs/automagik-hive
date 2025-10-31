@@ -7,10 +7,9 @@ always use the correct versions without hardcoding.
 
 import tomllib
 from pathlib import Path
-from typing import Dict, List
 
 
-def get_hive_dependencies() -> Dict[str, List[str]]:
+def get_hive_dependencies() -> dict[str, list[str]]:
     """Extract dependencies from main Hive pyproject.toml.
 
     Returns:
@@ -35,40 +34,25 @@ def get_hive_dependencies() -> Dict[str, List[str]]:
     # Core dependencies (minimal for agents)
     # These are essential for any Hive project to function
     core_packages = ["agno", "pydantic", "pyyaml", "python-dotenv", "typer", "rich"]
-    core = [
-        dep for dep in all_deps
-        if any(pkg in dep.lower() for pkg in core_packages)
-    ]
+    core = [dep for dep in all_deps if any(pkg in dep.lower() for pkg in core_packages)]
 
     # API dependencies (for dev server)
     # Required for FastAPI-based development servers
     api_packages = ["fastapi", "uvicorn", "httpx"]
-    api = [
-        dep for dep in all_deps
-        if any(pkg in dep.lower() for pkg in api_packages)
-    ]
+    api = [dep for dep in all_deps if any(pkg in dep.lower() for pkg in api_packages)]
 
     # Database dependencies (for storage/RAG)
     # Required for persistent storage and RAG capabilities
     database_packages = ["sqlalchemy", "psycopg", "pgvector", "aiosqlite", "greenlet"]
-    database = [
-        dep for dep in all_deps
-        if any(pkg in dep.lower() for pkg in database_packages)
-    ]
+    database = [dep for dep in all_deps if any(pkg in dep.lower() for pkg in database_packages)]
 
     # AI Provider dependencies (optional but commonly needed)
     ai_packages = ["anthropic", "openai"]
-    ai = [
-        dep for dep in all_deps
-        if any(pkg in dep.lower() for pkg in ai_packages)
-    ]
+    ai = [dep for dep in all_deps if any(pkg in dep.lower() for pkg in ai_packages)]
 
     # Utilities (logging, file watching, etc.)
     utility_packages = ["loguru", "watchdog", "pandas"]
-    utilities = [
-        dep for dep in all_deps
-        if any(pkg in dep.lower() for pkg in utility_packages)
-    ]
+    utilities = [dep for dep in all_deps if any(pkg in dep.lower() for pkg in utility_packages)]
 
     return {
         "core": core,
@@ -98,10 +82,11 @@ def get_python_version() -> str:
     with open(pyproject_path, "rb") as f:
         pyproject = tomllib.load(f)
 
-    return pyproject["project"]["requires-python"]
+    requires_python: str = pyproject["project"]["requires-python"]
+    return requires_python
 
 
-def format_dependencies_for_toml(dependencies: List[str], indent: int = 4) -> str:
+def format_dependencies_for_toml(dependencies: list[str], indent: int = 4) -> str:
     """Format dependency list for TOML output.
 
     Args:

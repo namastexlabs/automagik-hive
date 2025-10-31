@@ -6,11 +6,13 @@ Demonstrates data analysis tool patterns.
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any
+
 import yaml
 
 try:
     import pandas as pd
+
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
@@ -29,7 +31,7 @@ class CSVAnalyzerTool:
     - Column correlations (optional)
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         """
         Initialize CSV analyzer tool.
 
@@ -50,12 +52,7 @@ class CSVAnalyzerTool:
         self.params = self.tool_config.get("parameters", {})
         self.analysis_options = self.tool_config.get("analysis_options", {})
 
-    def analyze(
-        self,
-        file_path: str,
-        delimiter: Optional[str] = None,
-        columns: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+    def analyze(self, file_path: str, delimiter: str | None = None, columns: list[str] | None = None) -> dict[str, Any]:
         """
         Analyze CSV file and generate comprehensive report.
 
@@ -71,19 +68,13 @@ class CSVAnalyzerTool:
             # Validate file
             file_path_obj = Path(file_path)
             if not file_path_obj.exists():
-                return {
-                    "status": "error",
-                    "error": f"File not found: {file_path}"
-                }
+                return {"status": "error", "error": f"File not found: {file_path}"}
 
             # Check file size
             file_size_mb = file_path_obj.stat().st_size / (1024 * 1024)
             max_size = self.params.get("max_file_size_mb", 50)
             if file_size_mb > max_size:
-                return {
-                    "status": "error",
-                    "error": f"File too large: {file_size_mb:.2f}MB (max: {max_size}MB)"
-                }
+                return {"status": "error", "error": f"File too large: {file_size_mb:.2f}MB (max: {max_size}MB)"}
 
             # Read CSV
             delim = delimiter or self.params.get("default_delimiter", ",")
@@ -95,10 +86,7 @@ class CSVAnalyzerTool:
             if columns:
                 missing_cols = [c for c in columns if c not in df.columns]
                 if missing_cols:
-                    return {
-                        "status": "error",
-                        "error": f"Columns not found: {missing_cols}"
-                    }
+                    return {"status": "error", "error": f"Columns not found: {missing_cols}"}
                 df = df[columns]
 
             # Run analysis
@@ -108,17 +96,13 @@ class CSVAnalyzerTool:
                 "status": "success",
                 "file": str(file_path_obj),
                 "file_size_mb": round(file_size_mb, 2),
-                "analysis": analysis
+                "analysis": analysis,
             }
 
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "file": file_path
-            }
+            return {"status": "error", "error": str(e), "file": file_path}
 
-    def _run_analysis(self, df: pd.DataFrame, filename: str) -> Dict[str, Any]:
+    def _run_analysis(self, df: pd.DataFrame, filename: str) -> dict[str, Any]:
         """
         Run comprehensive analysis on dataframe.
 
@@ -155,39 +139,36 @@ class CSVAnalyzerTool:
 
         return analysis
 
-    def _get_overview(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _get_overview(self, df: pd.DataFrame) -> dict[str, Any]:
         """Get basic overview of dataset."""
         return {
             "total_rows": len(df),
             "total_columns": len(df.columns),
             "columns": df.columns.tolist(),
-            "memory_usage_mb": round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
+            "memory_usage_mb": round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2),
         }
 
-    def _get_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _get_statistics(self, df: pd.DataFrame) -> dict[str, Any]:
         """Get descriptive statistics for numeric columns."""
-        numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+        numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
 
         if not numeric_cols:
             return {"note": "No numeric columns found"}
 
         stats = df[numeric_cols].describe().to_dict()
 
-        return {
-            "numeric_columns": numeric_cols,
-            "statistics": stats
-        }
+        return {"numeric_columns": numeric_cols, "statistics": stats}
 
-    def _get_data_types(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _get_data_types(self, df: pd.DataFrame) -> dict[str, Any]:
         """Analyze data types in dataset."""
         dtype_counts = df.dtypes.value_counts().to_dict()
 
         return {
             "by_column": df.dtypes.astype(str).to_dict(),
-            "summary": {str(k): int(v) for k, v in dtype_counts.items()}
+            "summary": {str(k): int(v) for k, v in dtype_counts.items()},
         }
 
-    def _get_missing_values(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _get_missing_values(self, df: pd.DataFrame) -> dict[str, Any]:
         """Analyze missing values."""
         missing = df.isnull().sum()
         missing_pct = (missing / len(df) * 100).round(2)
@@ -199,15 +180,12 @@ class CSVAnalyzerTool:
             "total_missing": int(missing.sum()),
             "columns_with_missing": len(cols_with_missing),
             "by_column": {
-                col: {
-                    "count": int(cols_with_missing[col]),
-                    "percentage": float(pct_with_missing[col])
-                }
+                col: {"count": int(cols_with_missing[col]), "percentage": float(pct_with_missing[col])}
                 for col in cols_with_missing
-            }
+            },
         }
 
-    def _get_duplicates(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _get_duplicates(self, df: pd.DataFrame) -> dict[str, Any]:
         """Analyze duplicate rows."""
         duplicates = df.duplicated()
         dup_count = duplicates.sum()
@@ -215,12 +193,12 @@ class CSVAnalyzerTool:
         return {
             "total_duplicates": int(dup_count),
             "percentage": round(dup_count / len(df) * 100, 2) if len(df) > 0 else 0,
-            "has_duplicates": dup_count > 0
+            "has_duplicates": dup_count > 0,
         }
 
-    def _get_correlations(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _get_correlations(self, df: pd.DataFrame) -> dict[str, Any]:
         """Calculate correlations between numeric columns."""
-        numeric_df = df.select_dtypes(include=['number'])
+        numeric_df = df.select_dtypes(include=["number"])
 
         if numeric_df.shape[1] < 2:
             return {"note": "Need at least 2 numeric columns for correlation"}
@@ -232,33 +210,39 @@ class CSVAnalyzerTool:
         correlations = []
         for i in range(len(corr_matrix.columns)):
             for j in range(i + 1, len(corr_matrix.columns)):
-                correlations.append({
-                    "column1": corr_matrix.columns[i],
-                    "column2": corr_matrix.columns[j],
-                    "correlation": round(corr_matrix.iloc[i, j], 3)
-                })
+                correlations.append(
+                    {
+                        "column1": corr_matrix.columns[i],
+                        "column2": corr_matrix.columns[j],
+                        "correlation": round(corr_matrix.iloc[i, j], 3),
+                    }
+                )
 
         # Sort by absolute correlation
         correlations.sort(key=lambda x: abs(x["correlation"]), reverse=True)
 
         return {
             "top_correlations": correlations[:10],  # Top 10
-            "correlation_matrix": corr_matrix.to_dict()
+            "correlation_matrix": corr_matrix.to_dict(),
         }
 
-    def _generate_insights(self, df: pd.DataFrame, analysis: Dict[str, Any]) -> List[str]:
+    def _generate_insights(self, df: pd.DataFrame, analysis: dict[str, Any]) -> list[str]:
         """Generate human-readable insights from analysis."""
         insights = []
 
         # Overview insights
         overview = analysis.get("overview", {})
-        insights.append(f"Dataset contains {overview.get('total_rows', 0):,} rows and {overview.get('total_columns', 0)} columns")
+        insights.append(
+            f"Dataset contains {overview.get('total_rows', 0):,} rows and {overview.get('total_columns', 0)} columns"
+        )
 
         # Missing values
         if "missing_values" in analysis:
             missing = analysis["missing_values"]
             if missing["total_missing"] > 0:
-                insights.append(f"Found {missing['total_missing']:,} missing values across {missing['columns_with_missing']} columns")
+                insights.append(
+                    f"Found {missing['total_missing']:,} missing values across {missing['columns_with_missing']} columns"
+                )
             else:
                 insights.append("No missing values detected - data quality is good")
 
@@ -305,8 +289,8 @@ def get_csv_analyzer_tool(**kwargs) -> CSVAnalyzerTool:
 
 # Quick test function
 if __name__ == "__main__":
-    import tempfile
     import os
+    import tempfile
 
     print("Testing CSV Analyzer Tool...")
 
@@ -329,7 +313,7 @@ Frank Miller,30,74000,Sales,4
 Grace Lee,28,71000,Sales,3
 Henry Davis,34,82000,Engineering,9"""
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(sample_data)
         temp_file = f.name
 

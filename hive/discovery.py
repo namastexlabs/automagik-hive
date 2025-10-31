@@ -5,14 +5,14 @@ This module discovers and loads agents from:
 2. Package examples (hive/examples/agents/) as fallback
 """
 
-from pathlib import Path
 import importlib.util
+from pathlib import Path
+
 import yaml
-from typing import List, Optional
 from agno.agent import Agent
 
 
-def _find_project_root() -> Optional[Path]:
+def _find_project_root() -> Path | None:
     """Find project root by locating hive.yaml.
 
     Searches upward from current directory.
@@ -31,7 +31,7 @@ def _find_project_root() -> Optional[Path]:
     return None
 
 
-def discover_agents() -> List[Agent]:
+def discover_agents() -> list[Agent]:
     """Discover and load agents from project or package.
 
     Discovery order:
@@ -50,7 +50,7 @@ def discover_agents() -> List[Agent]:
         >>> print(f"Found {len(agents)} agents")
         Found 3 agents
     """
-    agents = []
+    agents: list[Agent] = []
 
     # Try to find project root with hive.yaml
     project_root = _find_project_root()
@@ -119,11 +119,13 @@ def discover_agents() -> List[Agent]:
                             result = factory()
                             if isinstance(result, Agent):
                                 agents.append(result)
-                                print(f"  ✅ Loaded agent: {result.name} (id: {result.agent_id})")
+                                agent_id = getattr(result, "id", result.name)
+                                print(f"  ✅ Loaded agent: {result.name} (id: {agent_id})")
                                 factory_found = True
                                 break
-                        except Exception:
-                            # Not a valid factory, continue searching
+                        except Exception as e:
+                            # Not a valid factory, log and continue searching
+                            print(f"  ⚠️  Factory {name} failed: {e}")
                             continue
 
                 if not factory_found:
@@ -137,7 +139,7 @@ def discover_agents() -> List[Agent]:
     return agents
 
 
-def get_agent_by_id(agent_id: str, agents: List[Agent]) -> Agent | None:
+def get_agent_by_id(agent_id: str, agents: list[Agent]) -> Agent | None:
     """Get agent by ID from list of agents.
 
     Args:
@@ -148,6 +150,7 @@ def get_agent_by_id(agent_id: str, agents: List[Agent]) -> Agent | None:
         Agent if found, None otherwise
     """
     for agent in agents:
-        if agent.agent_id == agent_id:
+        agent_attr_id = getattr(agent, "id", agent.name)
+        if agent_attr_id == agent_id:
             return agent
     return None

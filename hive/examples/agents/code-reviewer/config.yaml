@@ -1,6 +1,6 @@
 agent:
   name: code-reviewer
-  agent_id: code-reviewer
+  id: code-reviewer
   description: Code review agent that analyzes code quality, suggests improvements,
     checks for bugs, and follows best practices. Focus on Python code.
 model:

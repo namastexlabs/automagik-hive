@@ -3,7 +3,6 @@
 import sys
 import tomllib
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -172,8 +171,9 @@ class TestPyprojectTomlGeneration:
 
         for line in comment_lines:
             # Comments shouldn't have version patterns like ">=2.2.3"
-            assert not any(pattern in line for pattern in [">=" + str(i) for i in range(10)]), \
+            assert not any(pattern in line for pattern in [">=" + str(i) for i in range(10)]), (
                 f"Comment should not have hardcoded version: {line}"
+            )
 
 
 class TestInitFileGeneration:

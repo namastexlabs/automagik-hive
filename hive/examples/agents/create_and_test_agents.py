@@ -9,8 +9,8 @@ This script:
 5. Provides evidence of successful execution
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Setup path
@@ -44,12 +44,9 @@ else:
 print()
 
 # Import after environment is loaded
-from hive.generators.meta_agent import quick_generate
-from agno.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.models.anthropic import Claude
 import yaml
 
+from hive.generators.meta_agent import quick_generate
 
 # Agent specifications
 AGENTS = [
@@ -94,7 +91,7 @@ def generate_config_with_ai(agent_name: str, description: str) -> dict:
     analysis = quick_generate(
         description + "\n\nIMPORTANT: Use only available models (gpt-4o-mini, gpt-4o, claude-sonnet-4-20250514) "
         "and basic tools (PythonTools, ShellTools, FileTools).",
-        model="gpt-4o-mini"
+        model="gpt-4o-mini",
     )
 
     print(f"  ✅ Model recommendation: {analysis.model_recommendation}")
@@ -126,13 +123,13 @@ def generate_config_with_ai(agent_name: str, description: str) -> dict:
     filtered_tools = [t for t in analysis.tools_recommended if t in supported_tools]
 
     if not filtered_tools:
-        print(f"  ⚠️  No supported tools found, using no tools")
+        print("  ⚠️  No supported tools found, using no tools")
 
     # Create config structure
     config = {
         "agent": {
             "name": agent_name,
-            "agent_id": agent_name,
+            "id": agent_name,
             "description": description,
         },
         "model": {
@@ -240,9 +237,9 @@ def get_{agent_name.replace("-", "_")}_agent(**kwargs) -> Agent:
     # Create agent
     agent = Agent(**agent_params)
 
-    # Set agent_id as instance attribute (NOT in constructor)
-    if agent_config.get("agent_id"):
-        agent.agent_id = agent_config.get("agent_id")
+    # Set agent id as instance attribute (NOT in constructor)
+    if agent_config.get("id"):
+        agent.id = agent_config.get("id")
 
     return agent
 
@@ -254,7 +251,7 @@ if __name__ == "__main__":
     agent = get_{agent_name.replace("-", "_")}_agent()
     print(f"✅ Agent created: {{agent.name}}")
     print(f"✅ Model: {{agent.model.id}}")
-    print(f"✅ Agent ID: {{agent.agent_id}}")
+    print(f"✅ Agent ID: {{agent.id}}")
 
     # Test with a simple query
     response = agent.run("Hello, what can you help me with?")
@@ -340,7 +337,7 @@ def test_agent(agent_dir: Path, agent_name: str, test_query: str):
     agent = get_agent()
     print(f"  ✅ Agent created: {agent.name}")
     print(f"  ✅ Model: {agent.model.id}")
-    print(f"  ✅ Agent ID: {agent.agent_id}")
+    print(f"  ✅ Agent ID: {agent.id}")
 
     # Test with query
     print(f"\n  📤 Query: {test_query}")

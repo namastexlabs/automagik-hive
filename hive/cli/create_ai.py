@@ -1,13 +1,12 @@
 """AI-powered component creation using AgentGenerator."""
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.prompt import Prompt
 
 from hive.config.defaults import CLI_EMOJIS
 from hive.generators import AgentGenerator
@@ -15,11 +14,7 @@ from hive.generators import AgentGenerator
 console = Console()
 
 
-def create_agent_with_ai(
-    name: str,
-    description: Optional[str] = None,
-    interactive: bool = True
-) -> None:
+def create_agent_with_ai(name: str, description: str | None = None, interactive: bool = True) -> None:
     """Create agent using AI-powered generation.
 
     Args:
@@ -34,8 +29,7 @@ def create_agent_with_ai(
     if not description and interactive:
         console.print("\n[bold cyan]Let's create your agent together![/bold cyan]")
         description = Prompt.ask(
-            "\n💭 What should your agent do? (describe in natural language)",
-            default="A helpful assistant"
+            "\n💭 What should your agent do? (describe in natural language)", default="A helpful assistant"
         )
     elif not description:
         description = f"{name.replace('-', ' ').title()} Agent"
@@ -69,7 +63,7 @@ def create_agent_with_ai(
             # Generate agent
             result = generator.generate(name=name, description=description)
 
-            progress.update(task, description=f"✅ Agent generated successfully!")
+            progress.update(task, description="✅ Agent generated successfully!")
 
         except Exception as e:
             console.print(f"\n{CLI_EMOJIS['error']} Generation failed: {str(e)}")
@@ -93,7 +87,7 @@ def _generate_simple_agent(agent_path: Path, name: str, description: str):
     """Fallback to simple template generation."""
     config_content = f"""agent:
   name: "{description}"
-  agent_id: "{name}"
+  id: "{name}"
   version: "1.0.0"
   description: "{description}"
 
@@ -108,7 +102,7 @@ instructions: |
   [Add your agent instructions here]
 
 storage:
-  table_name: "{name.replace('-', '_')}_sessions"
+  table_name: "{name.replace("-", "_")}_sessions"
   auto_upgrade_schema: true
 """
     (agent_path / "config.yaml").write_text(config_content)
@@ -143,8 +137,8 @@ def get_{name.replace("-", "_")}_agent(**kwargs) -> Agent:
         **kwargs
     )
 
-    if agent_config.get("agent_id"):
-        agent.agent_id = agent_config.get("agent_id")
+    if agent_config.get("id"):
+        agent.id = agent_config.get("id")
 
     return agent
 '''
@@ -173,7 +167,7 @@ def get_{name.replace("-", "_")}_agent(**kwargs) -> Agent:
     (agent_path / "agent.py").write_text(agent_py)
 
     # Write README if available
-    if hasattr(result, 'readme') and result.readme:
+    if hasattr(result, "readme") and result.readme:
         (agent_path / "README.md").write_text(result.readme)
 
 
@@ -182,14 +176,14 @@ def _show_ai_generation_results(name: str, agent_path: Path, result):
 
     # Format recommendations
     recs_text = ""
-    if hasattr(result, 'recommendations') and result.recommendations:
+    if hasattr(result, "recommendations") and result.recommendations:
         recs_text = "\n[bold cyan]💡 AI Recommendations:[/bold cyan]\n"
         for key, value in result.recommendations.items():
             recs_text += f"  • {key}: {value}\n"
 
     # Format next steps
     steps_text = ""
-    if hasattr(result, 'next_steps') and result.next_steps:
+    if hasattr(result, "next_steps") and result.next_steps:
         steps_text = "\n[bold cyan]📋 Next Steps:[/bold cyan]\n"
         for i, step in enumerate(result.next_steps, 1):
             steps_text += f"  {i}. {step}\n"
@@ -197,14 +191,14 @@ def _show_ai_generation_results(name: str, agent_path: Path, result):
     message = f"""Agent '{name}' created with AI optimization!
 
 [bold cyan]✅ Files created:[/bold cyan]
-  {CLI_EMOJIS['file']} {agent_path}/config.yaml
-  {CLI_EMOJIS['file']} {agent_path}/agent.py
-  {CLI_EMOJIS['file']} {agent_path}/README.md
+  {CLI_EMOJIS["file"]} {agent_path}/config.yaml
+  {CLI_EMOJIS["file"]} {agent_path}/agent.py
+  {CLI_EMOJIS["file"]} {agent_path}/README.md
 {recs_text}{steps_text}
 [bold yellow]Test your agent:[/bold yellow]
   hive dev
 """
 
-    panel = Panel(message, title=f"🤖 AI-Generated Agent", border_style="green")
+    panel = Panel(message, title="🤖 AI-Generated Agent", border_style="green")
     console.print("\n")
     console.print(panel)

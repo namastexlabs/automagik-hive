@@ -7,18 +7,17 @@ This is NOT keyword matching. This uses actual LLM intelligence to:
 - Recommend appropriate tools with reasoning
 """
 
-import os
-import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any
 
 from agno.agent import Agent
-from agno.models.openai import OpenAIChat
 
 
 class GenerationError(Exception):
     """Error during AI generation process."""
+
     pass
+
 
 @dataclass
 class MetaAnalysis:
@@ -56,6 +55,7 @@ class MetaAgentGenerator:
             model_id: LLM to use for generation (gpt-4o, gpt-4o-mini, claude-sonnet-4, etc.)
         """
         # Detect provider from model_id
+        model: Any
         if model_id.startswith("gpt") or model_id.startswith("o1"):
             from agno.models.openai import OpenAIChat
 
@@ -132,10 +132,10 @@ Be specific, practical, and optimization-focused.""",
             markdown=False,
         )
         # Set agent_id as attribute (not in constructor)
-        self.meta_agent.agent_id = "meta-agent-generator"
+        self.meta_agent.id = "meta-agent-generator"  # type: ignore[attr-defined]
 
     def analyze_requirements(
-        self, description: str, agent_name: Optional[str] = None, constraints: Optional[dict] = None
+        self, description: str, agent_name: str | None = None, constraints: dict | None = None
     ) -> MetaAnalysis:
         """Analyze requirements using REAL AI and generate configuration.
 
@@ -167,6 +167,9 @@ REQUIREMENT:
         # Get AI analysis (REAL LLM call, not keyword matching!)
         response = self.meta_agent.run(prompt)
         analysis_text = response.content
+
+        if not isinstance(analysis_text, str):
+            raise GenerationError("AI response content was not a string")
 
         # Parse the structured response
         return self._parse_analysis(analysis_text, description)
@@ -281,7 +284,12 @@ FEEDBACK:
 Analyze and provide improved configuration in the specified format."""
 
         response = self.meta_agent.run(prompt)
-        return self._parse_analysis(response.content, f"{current_config}\n\nFeedback: {feedback}")
+        analysis_text = response.content
+
+        if not isinstance(analysis_text, str):
+            raise GenerationError("AI response content was not a string")
+
+        return self._parse_analysis(analysis_text, f"{current_config}\n\nFeedback: {feedback}")
 
     def compare_models(self, description: str, model_ids: list[str]) -> dict[str, str]:
         """Compare multiple models for a use case using REAL AI.
@@ -303,10 +311,14 @@ For each model, provide a brief assessment of its suitability.
 Format: MODEL_ID: assessment"""
 
         response = self.meta_agent.run(prompt)
+        content = response.content
+
+        if not isinstance(content, str):
+            raise GenerationError("AI response content was not a string")
 
         # Parse comparisons
         comparisons = {}
-        for line in response.content.split("\n"):
+        for line in content.split("\n"):
             if ":" in line:
                 parts = line.split(":", 1)
                 model = parts[0].strip()

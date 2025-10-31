@@ -1,7 +1,6 @@
 """Create command - AI-powered component generation."""
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -17,7 +16,7 @@ console = Console()
 @create_app.command()
 def agent(
     name: str = typer.Argument(..., help="Agent name (kebab-case)"),
-    description: Optional[str] = typer.Option(None, "--description", "-d", help="Agent description"),
+    description: str | None = typer.Option(None, "--description", "-d", help="Agent description"),
     model: str = typer.Option("gpt-4o-mini", "--model", "-m", help="LLM model to use"),
 ):
     """Create a new agent with AI-powered generation."""
@@ -97,7 +96,7 @@ def team(
 @create_app.command()
 def workflow(
     name: str = typer.Argument(..., help="Workflow name (kebab-case)"),
-    description: Optional[str] = typer.Option(None, "--description", "-d", help="Workflow description"),
+    description: str | None = typer.Option(None, "--description", "-d", help="Workflow description"),
 ):
     """Create a new workflow for step-based orchestration."""
     with Progress(
@@ -134,7 +133,7 @@ def workflow(
 @create_app.command()
 def tool(
     name: str = typer.Argument(..., help="Tool name (kebab-case)"),
-    description: Optional[str] = typer.Option(None, "--description", "-d", help="Tool description"),
+    description: str | None = typer.Option(None, "--description", "-d", help="Tool description"),
 ):
     """Create a new custom tool."""
     with Progress(
@@ -178,7 +177,7 @@ def _generate_agent_files(agent_path: Path, name: str, description: str, model: 
     # Generate config.yaml
     config_content = f"""agent:
   name: "{description}"
-  agent_id: "{name}"
+  id: "{name}"
   version: "1.0.0"
   description: "{description}"
 
@@ -231,9 +230,9 @@ def get_{name.replace("-", "_")}_agent(**kwargs) -> Agent:
         **kwargs
     )
 
-    # Set agent_id
-    if agent_config.get("agent_id"):
-        agent.agent_id = agent_config.get("agent_id")
+    # Set agent id
+    if agent_config.get("id"):
+        agent.id = agent_config.get("id")
 
     return agent
 '''

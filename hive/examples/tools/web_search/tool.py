@@ -6,9 +6,9 @@ Demonstrates integration with external search APIs.
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional, List
-import yaml
+from typing import Any
 
+import yaml
 from agno.tools.duckduckgo import DuckDuckGoTools
 
 
@@ -24,7 +24,7 @@ class WebSearchTool:
     - News search (optional)
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         """
         Initialize web search tool.
 
@@ -47,17 +47,12 @@ class WebSearchTool:
             fixed_max_results=self.params.get("max_results", 5),
             search=True,
             news=self.search_options.get("include_news", False),
-            timeout=self.params.get("timeout_seconds", 30)
+            timeout=self.params.get("timeout_seconds", 30),
         )
 
-        print(f"✅ Web search tool initialized (DuckDuckGo)")
+        print("✅ Web search tool initialized (DuckDuckGo)")
 
-    def search(
-        self,
-        query: str,
-        max_results: Optional[int] = None,
-        safe_search: Optional[bool] = None
-    ) -> Dict[str, Any]:
+    def search(self, query: str, max_results: int | None = None, safe_search: bool | None = None) -> dict[str, Any]:
         """
         Search the web for a query.
 
@@ -71,21 +66,14 @@ class WebSearchTool:
         """
         try:
             if not query or not query.strip():
-                return {
-                    "status": "error",
-                    "error": "Query cannot be empty",
-                    "results": []
-                }
+                return {"status": "error", "error": "Query cannot be empty", "results": []}
 
             # Use overrides or defaults
             max_res = max_results or self.params.get("max_results", 5)
             safe = safe_search if safe_search is not None else self.params.get("safe_search", True)
 
             # Execute search
-            search_results = self.ddg.search(
-                query=query,
-                max_results=max_res
-            )
+            search_results = self.ddg.search(query=query, max_results=max_res)
 
             # Format results
             formatted_results = self._format_results(search_results)
@@ -95,18 +83,13 @@ class WebSearchTool:
                 "query": query,
                 "total_results": len(formatted_results),
                 "results": formatted_results,
-                "safe_search": safe
+                "safe_search": safe,
             }
 
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "query": query,
-                "results": []
-            }
+            return {"status": "error", "error": str(e), "query": query, "results": []}
 
-    def _format_results(self, raw_results: Any) -> List[Dict[str, str]]:
+    def _format_results(self, raw_results: Any) -> list[dict[str, str]]:
         """
         Format raw search results into consistent structure.
 
@@ -122,28 +105,21 @@ class WebSearchTool:
         if isinstance(raw_results, list):
             for result in raw_results:
                 if isinstance(result, dict):
-                    formatted.append({
-                        "title": result.get("title", "No title"),
-                        "url": result.get("href", result.get("url", "")),
-                        "snippet": result.get("body", result.get("snippet", "")),
-                        "source": "DuckDuckGo"
-                    })
+                    formatted.append(
+                        {
+                            "title": result.get("title", "No title"),
+                            "url": result.get("href", result.get("url", "")),
+                            "snippet": result.get("body", result.get("snippet", "")),
+                            "source": "DuckDuckGo",
+                        }
+                    )
         elif isinstance(raw_results, str):
             # If results are a string (summary), parse it
-            formatted.append({
-                "title": "Search Summary",
-                "url": "",
-                "snippet": raw_results,
-                "source": "DuckDuckGo"
-            })
+            formatted.append({"title": "Search Summary", "url": "", "snippet": raw_results, "source": "DuckDuckGo"})
 
         return formatted
 
-    def search_news(
-        self,
-        query: str,
-        max_results: Optional[int] = None
-    ) -> Dict[str, Any]:
+    def search_news(self, query: str, max_results: int | None = None) -> dict[str, Any]:
         """
         Search for news articles.
 
@@ -156,11 +132,7 @@ class WebSearchTool:
         """
         try:
             if not self.search_options.get("include_news", False):
-                return {
-                    "status": "error",
-                    "error": "News search not enabled in configuration",
-                    "results": []
-                }
+                return {"status": "error", "error": "News search not enabled in configuration", "results": []}
 
             max_res = max_results or self.params.get("max_results", 5)
 
@@ -174,18 +146,13 @@ class WebSearchTool:
                 "query": query,
                 "type": "news",
                 "total_results": len(formatted_results),
-                "results": formatted_results
+                "results": formatted_results,
             }
 
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "query": query,
-                "results": []
-            }
+            return {"status": "error", "error": str(e), "query": query, "results": []}
 
-    def quick_answer(self, query: str) -> Dict[str, Any]:
+    def quick_answer(self, query: str) -> dict[str, Any]:
         """
         Get a quick answer for a query (instant answer).
 
@@ -206,23 +173,13 @@ class WebSearchTool:
                         "status": "success",
                         "query": query,
                         "answer": formatted[0].get("snippet", "No answer found"),
-                        "source": formatted[0].get("url", "")
+                        "source": formatted[0].get("url", ""),
                     }
 
-            return {
-                "status": "success",
-                "query": query,
-                "answer": "No instant answer available",
-                "source": ""
-            }
+            return {"status": "success", "query": query, "answer": "No instant answer available", "source": ""}
 
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "query": query,
-                "answer": None
-            }
+            return {"status": "error", "error": str(e), "query": query, "answer": None}
 
     def search_and_summarize(self, query: str) -> str:
         """

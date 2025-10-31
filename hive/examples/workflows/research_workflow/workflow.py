@@ -6,13 +6,11 @@ Shows how to build complex research pipelines with Agno Workflows.
 """
 
 from pathlib import Path
-from typing import Dict, Any
-import yaml
 
-from agno.workflow import Workflow, Step, StepOutput
+import yaml
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
-from agno.storage.postgres import PgStorage
+from agno.workflow import Step, StepOutput, Workflow
 
 
 def planning_step(step_input) -> StepOutput:
@@ -40,7 +38,7 @@ def planning_step(step_input) -> StepOutput:
         2. Areas to explore
         3. Expected outcomes
 
-        Keep it concise and actionable."""
+        Keep it concise and actionable.""",
     )
 
     response = planner.run(f"Create a research plan for: {topic}")
@@ -75,7 +73,7 @@ def research_step(step_input) -> StepOutput:
         gather key information and findings. Provide structured data with:
         - Main findings
         - Supporting evidence
-        - Key insights"""
+        - Key insights""",
     )
 
     response = researcher.run(f"Research Topic: {topic}\n\nPlan:\n{plan}\n\nProvide research findings.")
@@ -104,7 +102,7 @@ def analysis_function(step_input) -> StepOutput:
 ANALYSIS RESULTS:
 -----------------
 
-Data Points Found: {len(findings.split('.'))}
+Data Points Found: {len(findings.split("."))}
 Key Themes: [Extracted from findings]
 
 Analysis:
@@ -145,7 +143,7 @@ def summary_step(step_input) -> StepOutput:
         - Recommendations
         - Conclusion
 
-        Make it clear and actionable."""
+        Make it clear and actionable.""",
     )
 
     full_context = f"""
@@ -201,9 +199,9 @@ def get_research_workflow(**kwargs) -> Workflow:
             Step(name="Planning", function=planning_step),
             Step(name="Research", function=research_step),
             Step(name="Analysis", function=analysis_function),
-            Step(name="Summary", function=summary_step)
+            Step(name="Summary", function=summary_step),
         ],
-        **kwargs
+        **kwargs,
     )
 
     return workflow
@@ -211,8 +209,6 @@ def get_research_workflow(**kwargs) -> Workflow:
 
 # Quick test function
 if __name__ == "__main__":
-    import asyncio
-
     print("Testing Sequential Research Workflow...")
 
     workflow = get_research_workflow()
@@ -226,9 +222,9 @@ if __name__ == "__main__":
     print(f"\n📝 Final Result:\n{response.content}")
 
     # Show final state
-    if hasattr(response, 'workflow_session_state'):
+    if hasattr(response, "workflow_session_state"):
         state = response.workflow_session_state
-        print(f"\n📊 Workflow State:")
+        print("\n📊 Workflow State:")
         print(f"  - Topic: {state.get('topic', 'N/A')}")
         print(f"  - Plan: {len(state.get('plan', ''))} chars")
         print(f"  - Findings: {len(state.get('findings', ''))} chars")

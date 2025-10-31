@@ -11,8 +11,8 @@ This script demonstrates:
 6. Real LLM responses via response.content
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Setup path
@@ -80,7 +80,7 @@ def demo_agent(name: str, factory_fn, query: str):
         # Verify proper Agno pattern
         print(f"  ✅ Name: {agent.name}")
         print(f"  ✅ Model: {agent.model.id}")
-        print(f"  ✅ Agent ID: {agent.agent_id}")
+        print(f"  ✅ Agent ID: {agent.id}")
         print(f"  ✅ Has tools: {len(agent.tools) if agent.tools else 0}")
 
         # Test with real query
@@ -90,7 +90,7 @@ def demo_agent(name: str, factory_fn, query: str):
         response = agent.run(query)
 
         # Display response
-        print(f"\n📥 Response (via response.content):")
+        print("\n📥 Response (via response.content):")
         print("-" * 80)
         # Truncate for readability
         content = response.content
@@ -157,9 +157,9 @@ def main():
         print("  ✅ Real LLM calls to OpenAI and Anthropic")
         print("  ✅ Tool integration (PythonTools, FileTools)")
         print("\n📂 Agent Locations:")
-        print(f"  • hive/examples/agents/support-bot/")
-        print(f"  • hive/examples/agents/code-reviewer/")
-        print(f"  • hive/examples/agents/researcher/")
+        print("  • hive/examples/agents/support-bot/")
+        print("  • hive/examples/agents/code-reviewer/")
+        print("  • hive/examples/agents/researcher/")
         return 0
     else:
         print(f"\n⚠️  {len(results) - successful} agent(s) failed")

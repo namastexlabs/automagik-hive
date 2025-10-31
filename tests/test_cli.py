@@ -8,7 +8,6 @@ Tests the CLI commands that users interact with:
 - hive version: Shows version information
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -88,14 +87,14 @@ class TestHiveCreate:
 
         # WHEN: AI generates config
         # Mock the AI generator response
-        with patch("hive.generators.agent_generator.AgentGenerator") as MockGen:
+        with patch("hive.generators.agent_generator.AgentGenerator") as mock_gen:
             mock_instance = MagicMock()
             mock_instance.generate.return_value = {
                 "name": "Billing Support Bot",
                 "model": "gpt-4o-mini",
                 "tools": ["search", "database"],
             }
-            MockGen.return_value = mock_instance
+            mock_gen.return_value = mock_instance
 
             # THEN: Valid YAML is generated
             result = mock_instance.generate(description)

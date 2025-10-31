@@ -12,7 +12,7 @@ Features:
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from agno.knowledge.document import Document
@@ -67,7 +67,7 @@ class CSVKnowledgeLoader:
         }
         for col, value in row.items():
             if col != self.content_column:
-                metadata[col] = str(value)
+                metadata[str(col)] = str(value)
 
         # Create document
         return Document(
@@ -93,15 +93,16 @@ class CSVKnowledgeLoader:
 
         # Convert rows to documents
         documents = []
-        current_hashes = {}
+        current_hashes: dict[int, str] = {}
         for idx, row in df.iterrows():
-            doc = self._row_to_document(row, idx)
+            idx_int = cast(int, idx)
+            doc = self._row_to_document(row, idx_int)
             documents.append(doc)
             row_hash = self.incremental_loader._compute_row_hash(row)
-            current_hashes[idx] = row_hash
+            current_hashes[idx_int] = row_hash
 
         # Upsert documents to vector DB
-        self.vector_db.upsert(documents=documents)
+        self.vector_db.upsert(documents=documents)  # type: ignore[call-arg]
 
         # Store hashes for future incremental loads
         self.incremental_loader.update_hashes(current_hashes)
@@ -131,20 +132,20 @@ class CSVKnowledgeLoader:
         # Process additions
         if added:
             add_docs = [self._row_to_document(df.loc[idx], idx) for idx in added]
-            self.vector_db.upsert(documents=add_docs)
+            self.vector_db.upsert(documents=add_docs)  # type: ignore[call-arg]
             logger.info("Added documents", count=len(add_docs))
 
         # Process changes (re-embed)
         if changed:
             change_docs = [self._row_to_document(df.loc[idx], idx) for idx in changed]
-            self.vector_db.upsert(documents=change_docs)
+            self.vector_db.upsert(documents=change_docs)  # type: ignore[call-arg]
             logger.info("Updated documents", count=len(change_docs))
 
         # Process deletions
         if deleted:
             # Delete by metadata filter
             for row_id in deleted:
-                self.vector_db.delete(filters={"row_id": row_id})
+                self.vector_db.delete(name=f"csv_row_{row_id}")  # type: ignore[call-arg]
             self.incremental_loader.delete_hashes(deleted)
             logger.info("Deleted documents", count=len(deleted))
 

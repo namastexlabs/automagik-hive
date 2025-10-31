@@ -1,9 +1,9 @@
 """Default configuration values for Hive V2."""
 
-from typing import Dict, Any
+from typing import Any
 
 # Default agent configuration
-DEFAULT_AGENT_CONFIG: Dict[str, Any] = {
+DEFAULT_AGENT_CONFIG: dict[str, Any] = {
     "model": {
         "provider": "openai",
         "id": "gpt-4o-mini",
@@ -16,7 +16,7 @@ DEFAULT_AGENT_CONFIG: Dict[str, Any] = {
 }
 
 # Default team configuration
-DEFAULT_TEAM_CONFIG: Dict[str, Any] = {
+DEFAULT_TEAM_CONFIG: dict[str, Any] = {
     "mode": "route",
     "model": {
         "provider": "openai",
@@ -25,7 +25,7 @@ DEFAULT_TEAM_CONFIG: Dict[str, Any] = {
 }
 
 # Default workflow configuration
-DEFAULT_WORKFLOW_CONFIG: Dict[str, Any] = {
+DEFAULT_WORKFLOW_CONFIG: dict[str, Any] = {
     "storage": {
         "provider": "postgresql",
         "auto_upgrade_schema": True,

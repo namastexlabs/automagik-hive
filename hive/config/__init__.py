@@ -1,6 +1,5 @@
 """Configuration management for Hive V2."""
 
-from .settings import settings
 from .builtin_tools import (
     BUILTIN_TOOLS,
     TOOL_CATEGORIES,
@@ -12,6 +11,7 @@ from .builtin_tools import (
     recommend_tools_for_task,
     search_tools,
 )
+from .settings import settings
 
 __all__ = [
     "settings",

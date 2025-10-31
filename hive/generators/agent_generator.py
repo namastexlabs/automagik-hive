@@ -11,11 +11,11 @@ Example:
     print(result.yaml_content)
 """
 
-import yaml
 from dataclasses import dataclass
-from typing import Optional
 
-from hive.generators.meta_agent import MetaAgentGenerator, GenerationError
+import yaml
+
+from hive.generators.meta_agent import GenerationError, MetaAgentGenerator
 
 
 @dataclass
@@ -65,9 +65,9 @@ class AgentGenerator:
         self,
         name: str,
         description: str,
-        model_id: Optional[str] = None,
-        tools: Optional[list[str]] = None,
-        custom_instructions: Optional[str] = None,
+        model_id: str | None = None,
+        tools: list[str] | None = None,
+        custom_instructions: str | None = None,
         version: str = "1.0.0",
     ) -> GenerationResult:
         """Generate complete agent configuration using AI.
@@ -103,10 +103,10 @@ class AgentGenerator:
             }
 
             # Extract AI recommendations
-            recommended_model = analysis.get("model", "gpt-4o-mini")
-            recommended_provider = analysis.get("provider", "openai")
-            recommended_tools = analysis.get("tools", [])
-            generated_instructions = analysis.get("instructions", "")
+            recommended_model: str = analysis.get("model", "gpt-4o-mini")  # type: ignore[assignment]
+            recommended_provider: str = analysis.get("provider", "openai")  # type: ignore[assignment]
+            recommended_tools: list[str] = analysis.get("tools", [])  # type: ignore[assignment]
+            generated_instructions: str = analysis.get("instructions", "")  # type: ignore[assignment]
 
             # Apply overrides (user preferences take precedence)
             final_model = model_id or recommended_model

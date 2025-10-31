@@ -18,13 +18,13 @@ Example:
 """
 
 from hive.generators.agent_generator import (
-    AgentGenerator,
     AgentConfig,
+    AgentGenerator,
     GenerationResult,
 )
 from hive.generators.meta_agent import (
-    MetaAgentGenerator,
     GenerationError,
+    MetaAgentGenerator,
 )
 
 __all__ = [

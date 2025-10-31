@@ -12,9 +12,7 @@ Tests the complete lifecycle:
 This is the test that matters most.
 """
 
-import subprocess
 import time
-from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -105,13 +103,13 @@ storage:
         print("✅ Step 3: Agent validated")
 
         # STEP 4: Run agent (mocked)
-        with patch("agno.agent.Agent") as MockAgent:
+        with patch("agno.agent.Agent") as mock_agent:
             mock_instance = AsyncMock()
             mock_instance.run.return_value.content = "Hello! How can I help you today?"
-            MockAgent.return_value = mock_instance
+            mock_agent.return_value = mock_instance
 
             # Simulate agent creation and execution
-            agent = MockAgent(
+            agent = mock_agent(
                 name=config["agent"]["name"],
                 instructions=config["instructions"],
             )
@@ -277,12 +275,12 @@ class TestProductionScenarios:
     def test_handles_api_errors_gracefully(self):
         """Test that system handles API errors without crashing."""
         # Mock API error
-        with patch("agno.agent.Agent") as MockAgent:
+        with patch("agno.agent.Agent") as mock_agent:
             mock_instance = AsyncMock()
             mock_instance.run.side_effect = Exception("API Error: Rate limit")
-            MockAgent.return_value = mock_instance
+            mock_agent.return_value = mock_instance
 
-            agent = MockAgent(name="Test")
+            agent = mock_agent(name="Test")
 
             # WHEN: API fails
             # THEN: Should raise but not crash system

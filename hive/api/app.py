@@ -8,9 +8,9 @@ This is the PROPER way to build an Agno-powered API:
 
 import warnings
 
+from agno.os import AgentOS
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from agno.os import AgentOS
 
 from hive.config import settings
 from hive.discovery import discover_agents
@@ -23,9 +23,10 @@ try:
     from agno.os.interfaces.agui import AGUI
 
     AGUI_AVAILABLE = True
+    AGUI_TYPE: type[AGUI] | None = AGUI
 except ImportError:
     AGUI_AVAILABLE = False
-    AGUI = None
+    AGUI_TYPE = None
 
 
 def create_app() -> FastAPI:
@@ -85,7 +86,7 @@ def create_app() -> FastAPI:
         description="Automagik Hive - Multi-Agent Framework",
         agents=agents,
         base_app=base_app,  # Merges custom routes with AgentOS routes
-        interfaces=interfaces,
+        interfaces=interfaces if interfaces else None,  # type: ignore[arg-type]
     )
 
     # Get combined app with AgentOS routes + custom routes

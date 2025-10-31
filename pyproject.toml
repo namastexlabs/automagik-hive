@@ -94,6 +94,7 @@ exclude = [
     '^\.venv/',
     '^\.git/',
     '__pycache__',
+    'hive/examples', 
 ]
 
 [tool.pytest.ini_options]

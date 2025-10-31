@@ -10,8 +10,8 @@ This module provides:
 
 import os
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 from unittest.mock import patch
 
 import pytest
@@ -69,7 +69,7 @@ def sample_agent_yaml() -> str:
     """
     return """agent:
   name: "Test Agent"
-  agent_id: "test-agent"
+  id: "test-agent"
   version: 1
 
 model:
@@ -130,10 +130,11 @@ def mock_agno_agent(monkeypatch):
     """
     Mock Agno Agent class to avoid hitting real LLMs in tests.
     """
+
     class MockAgent:
         def __init__(self, **kwargs):
             self.name = kwargs.get("name", "Mock Agent")
-            self.agent_id = kwargs.get("agent_id", "mock-agent")
+            self.id = kwargs.get("id", "mock-agent")
             self.instructions = kwargs.get("instructions", "Test instructions")
 
         def run(self, message: str, **kwargs):
@@ -160,6 +161,7 @@ def mock_database():
     """
     Mock database operations for testing without real DB.
     """
+
     class MockDB:
         def __init__(self):
             self.data = {}
@@ -180,15 +182,7 @@ def mock_database():
 # Test markers for categorization
 def pytest_configure(config):
     """Register custom pytest markers."""
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-    )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "e2e: marks tests as end-to-end tests"
-    )
-    config.addinivalue_line(
-        "markers", "requires_api_key: marks tests that need real API keys"
-    )
+    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "e2e: marks tests as end-to-end tests")
+    config.addinivalue_line("markers", "requires_api_key: marks tests that need real API keys")
