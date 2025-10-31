@@ -38,6 +38,7 @@ dependencies = [
 
 [project.scripts]
 hive = "hive.cli:app"
+automagik-hive = "hive.cli:app" 
 
 [build-system]
 requires = ["hatchling"]

@@ -6,9 +6,9 @@ name: Auto Format
 
 on:
   push:
-    branches: [ main, v2, develop, 'fix/**', 'feat/**', 'feature/**' ]
+    branches: [ main, v2, dev, develop, 'fix/**', 'feat/**', 'feature/**' ]
   pull_request:
-    branches: [ main, v2, develop ]
+    branches: [ main, v2, dev, develop ]
 
 permissions:
   contents: write
