@@ -20,12 +20,13 @@ team:
   # Human-readable description
   description: "Brief description of team purpose"
 
-  # Team mode (determines coordination strategy)
-  mode: "route"
+  # Team mode (determines coordination strategy - Agno-compliant)
+  mode: "default"
   # Options:
-  #   - "route"       → Auto-route to best agent (recommended)
-  #   - "coordinate"  → Agents collaborate on task
-  #   - "collaborate" → Shared goal, parallel work
+  #   - "default"       → Team leader decides which agent(s), synthesizes response (recommended)
+  #   - "collaboration" → ALL agents work in parallel, leader synthesizes
+  #   - "router"        → Route to agent, return AS-IS (no synthesis)
+  #   - "passthrough"   → Same as router - direct passthrough
 
 
 # -----------------------------
@@ -96,17 +97,17 @@ settings:
 
 
 # ============================================================
-# TEAM MODE EXAMPLES
+# TEAM MODE EXAMPLES (Agno-Compatible)
 # ============================================================
 #
-# MODE: "route" (Automatic Routing)
-# ----------------------------------
+# MODE: "default" (Smart Routing with Synthesis)
+# -----------------------------------------------
 # Best for: Specialist teams, support routing, domain experts
 # How it works:
 #   1. User asks question
-#   2. Team analyzes and selects best agent
-#   3. Agent processes and responds
-#   4. Response goes back to user
+#   2. Team leader analyzes and selects best agent(s)
+#   3. Selected agent(s) process request
+#   4. Team leader synthesizes and responds
 #
 # Example: Customer support team
 #   - billing-agent (handles payment issues)
@@ -114,47 +115,52 @@ settings:
 #   - sales-agent (handles product questions)
 #
 #
-# MODE: "coordinate" (Collaborative)
-# ----------------------------------
+# MODE: "collaboration" (Parallel Work with Synthesis)
+# -----------------------------------------------------
 # Best for: Complex tasks, multiple perspectives, brainstorming
 # How it works:
 #   1. User provides task
-#   2. Multiple agents analyze and contribute
-#   3. Team synthesizes responses
-#   4. Unified answer to user
+#   2. ALL agents work on same task in parallel
+#   3. Team leader synthesizes all responses
+#   4. Unified answer delivered to user
 #
 # Example: Product strategy team
-#   - market-researcher
-#   - data-analyst
-#   - business-strategist
+#   - market-researcher (researches market)
+#   - data-analyst (analyzes data)
+#   - business-strategist (creates strategy)
 #
 #
-# MODE: "collaborate" (Parallel Work)
-# -----------------------------------
-# Best for: Independent subtasks, parallel processing
+# MODE: "router" (Direct Passthrough)
+# ------------------------------------
+# Best for: Simple routing, no synthesis needed
 # How it works:
-#   1. Task divided into subtasks
-#   2. Agents work simultaneously
-#   3. Results combined
-#   4. Final output delivered
+#   1. User asks question
+#   2. Router selects best agent
+#   3. Agent responds directly
+#   4. Response goes AS-IS to user (no synthesis)
 #
-# Example: Content creation team
-#   - writer (creates draft)
-#   - editor (reviews content)
-#   - seo-optimizer (optimizes for search)
+# Example: Language routing team
+#   - english-agent (English queries)
+#   - spanish-agent (Spanish queries)
+#   - french-agent (French queries)
+#
+#
+# MODE: "passthrough" (Same as Router)
+# -------------------------------------
+# Alias for "router" mode - direct passthrough with no synthesis
 #
 # ============================================================
 
 
 # ============================================================
-# REAL-WORLD TEAM EXAMPLES
+# REAL-WORLD TEAM EXAMPLES (Agno-Compatible)
 # ============================================================
 #
 # 1. CUSTOMER SUPPORT ROUTER
 # ---------------------------
 # team:
 #   name: "support-router"
-#   mode: "route"
+#   mode: "default"
 # members:
 #   - "billing-specialist"
 #   - "technical-specialist"
@@ -169,32 +175,34 @@ settings:
 # ----------------
 # team:
 #   name: "research-team"
-#   mode: "coordinate"
+#   mode: "collaboration"
 # members:
 #   - "web-researcher"
 #   - "data-analyst"
 #   - "report-writer"
 # instructions: |
 #   Collaborate to produce comprehensive research reports.
+#   All agents work in parallel:
 #   - web-researcher: Find sources and gather data
 #   - data-analyst: Analyze trends and patterns
 #   - report-writer: Synthesize into clear report
 #
 #
-# 3. CODE REVIEW TEAM
-# --------------------
+# 3. LANGUAGE ROUTER
+# -------------------
 # team:
-#   name: "code-review-team"
-#   mode: "collaborate"
+#   name: "language-router"
+#   mode: "router"
 # members:
-#   - "security-reviewer"
-#   - "performance-reviewer"
-#   - "style-reviewer"
+#   - "english-agent"
+#   - "spanish-agent"
+#   - "french-agent"
 # instructions: |
-#   Review code in parallel for:
-#   - security-reviewer: Security vulnerabilities
-#   - performance-reviewer: Performance bottlenecks
-#   - style-reviewer: Code style and best practices
+#   Route queries to appropriate language agent.
+#   Return response AS-IS without synthesis.
+#   - english-agent: English queries
+#   - spanish-agent: Spanish queries
+#   - french-agent: French queries
 #
 # ============================================================
 
@@ -209,9 +217,9 @@ settings:
 #    - Make routing rules unambiguous
 #
 # 2. Good Team Size
-#    - Route mode: 2-5 agents (keeps routing simple)
-#    - Coordinate mode: 2-3 agents (too many = chaos)
-#    - Collaborate mode: 2-4 agents (parallel limit)
+#    - Default mode: 2-5 agents (keeps routing simple)
+#    - Collaboration mode: 2-4 agents (parallel processing limit)
+#    - Router/Passthrough mode: 2-10 agents (simple routing scales)
 #
 # 3. Routing Instructions
 #    - Be specific about what triggers each agent

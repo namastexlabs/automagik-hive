@@ -30,9 +30,7 @@ class ConfigGenerator:
     """Generates Agno components from YAML configs."""
 
     @classmethod
-    def generate_agent_from_yaml(
-        cls, yaml_path: str, validate: bool = True, **overrides
-    ) -> Agent:
+    def generate_agent_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Agent:
         """Generate an Agno Agent from YAML configuration.
 
         Args:
@@ -52,9 +50,7 @@ class ConfigGenerator:
         if validate:
             is_valid, errors = ConfigValidator.validate_agent(config)
             if not is_valid:
-                raise GeneratorError(
-                    f"Invalid agent config:\n" + "\n".join(errors)
-                )
+                raise GeneratorError(f"Invalid agent config:\n" + "\n".join(errors))
 
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
@@ -130,9 +126,7 @@ class ConfigGenerator:
             raise GeneratorError(f"Failed to create agent: {e}") from e
 
     @classmethod
-    def generate_team_from_yaml(
-        cls, yaml_path: str, validate: bool = True, **overrides
-    ) -> Team:
+    def generate_team_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Team:
         """Generate an Agno Team from YAML configuration.
 
         Args:
@@ -152,9 +146,7 @@ class ConfigGenerator:
         if validate:
             is_valid, errors = ConfigValidator.validate_team(config)
             if not is_valid:
-                raise GeneratorError(
-                    f"Invalid team config:\n" + "\n".join(errors)
-                )
+                raise GeneratorError(f"Invalid team config:\n" + "\n".join(errors))
 
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
@@ -184,14 +176,18 @@ class ConfigGenerator:
         stream = settings.get("stream")
         debug_mode = settings.get("debug_mode")
 
-        # Build team parameters
+        # Build team parameters (NO 'mode' parameter in Agno)
         team_params = {
             "name": name,
             "description": description,
-            "mode": mode,
             "members": members,
             "instructions": instructions,
         }
+
+        # Translate mode string to boolean flags (if provided)
+        if mode:
+            mode_flags = cls._translate_team_mode(mode)
+            team_params.update(mode_flags)
 
         # Add optional parameters
         if model:
@@ -216,9 +212,7 @@ class ConfigGenerator:
             raise GeneratorError(f"Failed to create team: {e}") from e
 
     @classmethod
-    def generate_workflow_from_yaml(
-        cls, yaml_path: str, validate: bool = True, **overrides
-    ) -> Workflow:
+    def generate_workflow_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Workflow:
         """Generate an Agno Workflow from YAML configuration.
 
         Args:
@@ -238,9 +232,7 @@ class ConfigGenerator:
         if validate:
             is_valid, errors = ConfigValidator.validate_workflow(config)
             if not is_valid:
-                raise GeneratorError(
-                    f"Invalid workflow config:\n" + "\n".join(errors)
-                )
+                raise GeneratorError(f"Invalid workflow config:\n" + "\n".join(errors))
 
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
@@ -346,8 +338,7 @@ class ConfigGenerator:
                 value = os.getenv(var_name)
                 if value is None:
                     raise GeneratorError(
-                        f"Environment variable not set: {var_name}\n"
-                        f"💡 Add {var_name} to your .env file"
+                        f"Environment variable not set: {var_name}\n💡 Add {var_name} to your .env file"
                     )
                 return value
 
@@ -381,9 +372,7 @@ class ConfigGenerator:
                 import_path = tool.get("import_path")
 
                 if not import_path:
-                    raise GeneratorError(
-                        f"Custom tool '{tool_name}' missing import_path"
-                    )
+                    raise GeneratorError(f"Custom tool '{tool_name}' missing import_path")
 
                 # Dynamic import
                 try:
@@ -396,9 +385,7 @@ class ConfigGenerator:
                     tool_instance = tool_class(**tool_config)
                     tools.append(tool_instance)
                 except Exception as e:
-                    raise GeneratorError(
-                        f"Failed to load custom tool '{tool_name}': {e}"
-                    ) from e
+                    raise GeneratorError(f"Failed to load custom tool '{tool_name}': {e}") from e
 
         return tools
 
@@ -431,9 +418,7 @@ class ConfigGenerator:
                 )
                 return kb
             except Exception as e:
-                raise GeneratorError(
-                    f"Failed to setup CSV knowledge base: {e}"
-                ) from e
+                raise GeneratorError(f"Failed to setup CSV knowledge base: {e}") from e
 
         elif kb_type == "database":
             # Database knowledge base
@@ -489,7 +474,7 @@ class ConfigGenerator:
         """Load member agents for a team.
 
         Args:
-            member_ids: List of agent IDs
+            member_ids: List of agent IDs or YAML paths
 
         Returns:
             List of Agent instances
@@ -497,11 +482,254 @@ class ConfigGenerator:
         Raises:
             GeneratorError: If loading fails
         """
-        # TODO: Implement agent registry lookup
-        # For now, placeholder that assumes agents are defined elsewhere
-        raise GeneratorError(
-            "Member agent loading requires agent registry implementation"
-        )
+        from hive.discovery import discover_agents, get_agent_by_id
+
+        # Discover all available agents
+        available_agents = discover_agents()
+
+        members = []
+        for member_id in member_ids:
+            # Check if it's a path to YAML config
+            if member_id.endswith(".yaml") or member_id.endswith(".yml"):
+                # Load agent from YAML file
+                try:
+                    agent = cls.generate_agent_from_yaml(member_id, validate=False)
+                    members.append(agent)
+                except Exception as e:
+                    raise GeneratorError(f"Failed to load member agent from {member_id}: {e}") from e
+            else:
+                # Lookup by agent_id from discovered agents
+                agent = get_agent_by_id(member_id, available_agents)
+                if agent is None:
+                    raise GeneratorError(
+                        f"Member agent not found: {member_id}\n"
+                        f"Available agents: {[a.agent_id for a in available_agents]}"
+                    )
+                members.append(agent)
+
+        return members
+
+    @classmethod
+    def _resolve_agent_reference(cls, agent_ref: str) -> Agent:
+        """Resolve agent reference to Agent instance.
+
+        Args:
+            agent_ref: Agent ID or path to YAML config
+
+        Returns:
+            Agent instance
+
+        Raises:
+            GeneratorError: If agent not found
+        """
+        from hive.discovery import discover_agents, get_agent_by_id
+
+        # Check if it's a YAML path
+        if agent_ref.endswith(".yaml") or agent_ref.endswith(".yml"):
+            return cls.generate_agent_from_yaml(agent_ref, validate=False)
+
+        # Lookup by ID
+        available_agents = discover_agents()
+        agent = get_agent_by_id(agent_ref, available_agents)
+
+        if agent is None:
+            raise GeneratorError(f"Agent not found: {agent_ref}\nAvailable: {[a.agent_id for a in available_agents]}")
+
+        return agent
+
+    @classmethod
+    def _translate_team_mode(cls, mode_string: Optional[str]) -> Dict[str, bool]:
+        """Translate simplified mode string to Agno Team boolean flags.
+
+        Args:
+            mode_string: Mode name (default, collaboration, router, etc.)
+
+        Returns:
+            Dict with boolean flags for Team constructor
+
+        Note:
+            Agno Teams don't have a single 'mode' parameter.
+            Behavior is controlled by combining boolean flags:
+            - respond_directly: True = pass through, False = synthesize
+            - delegate_task_to_all_members: True = all agents, False = team decides
+            - determine_input_for_members: True = transform, False = raw
+        """
+        if not mode_string:
+            # Default mode: team leader decides which agent(s), synthesizes response
+            return {}
+
+        mode_lower = mode_string.lower()
+
+        # Define mode mappings based on Agno research
+        mode_mappings = {
+            "default": {
+                # Team leader decides which agent(s) to use, synthesizes response
+                "respond_directly": False,
+                "delegate_task_to_all_members": False,
+            },
+            "collaboration": {
+                # ALL agents work on same task in parallel, leader synthesizes
+                "delegate_task_to_all_members": True,
+                "respond_directly": False,
+            },
+            "router": {
+                # Route to agent, return response AS-IS (no synthesis)
+                "respond_directly": True,
+                "determine_input_for_members": False,
+            },
+            "passthrough": {
+                # Same as router - direct passthrough
+                "respond_directly": True,
+            },
+        }
+
+        if mode_lower in mode_mappings:
+            return mode_mappings[mode_lower]
+        else:
+            raise GeneratorError(f"Unknown team mode: {mode_string}\nAvailable modes: {list(mode_mappings.keys())}")
+
+    @classmethod
+    def _build_condition_evaluator(cls, condition_config: Dict):
+        """Build condition evaluation function from config.
+
+        Args:
+            condition_config: Condition configuration with operator and operands
+
+        Returns:
+            Callable that evaluates to boolean (receives StepInput)
+
+        Raises:
+            GeneratorError: If condition config is invalid
+        """
+        from agno.workflow.types import StepInput
+
+        operator = condition_config.get("operator")
+        field = condition_config.get("field")
+        value = condition_config.get("value")
+
+        if not all([operator, field, value]):
+            raise GeneratorError("Condition config must include: operator, field, value")
+
+        # Build condition lambda based on operator
+        # Each lambda receives StepInput (not raw input)
+        operators = {
+            "equals": lambda si: getattr(si.input, field, None) == value
+            if hasattr(si.input, field)
+            else si.input.get(field) == value,
+            "not_equals": lambda si: getattr(si.input, field, None) != value
+            if hasattr(si.input, field)
+            else si.input.get(field) != value,
+            "contains": lambda si: value
+            in str(getattr(si.input, field, "") if hasattr(si.input, field) else si.input.get(field, "")),
+            "greater_than": lambda si: (
+                getattr(si.input, field, 0) if hasattr(si.input, field) else si.input.get(field, 0)
+            )
+            > value,
+            "less_than": lambda si: (
+                getattr(si.input, field, 0) if hasattr(si.input, field) else si.input.get(field, 0)
+            )
+            < value,
+        }
+
+        if operator not in operators:
+            raise GeneratorError(f"Unknown condition operator: {operator}\nAvailable: {list(operators.keys())}")
+
+        return operators[operator]
+
+    @classmethod
+    def _build_loop_end_condition(cls, condition_config: Dict):
+        """Build loop end condition function from config.
+
+        Args:
+            condition_config: Loop end condition configuration
+
+        Returns:
+            Callable that evaluates to boolean (receives List[StepOutput])
+            Returns True to break loop, False to continue
+
+        Raises:
+            GeneratorError: If condition config is invalid
+        """
+        from agno.workflow.types import StepOutput
+
+        check_type = condition_config.get("type")
+        threshold = condition_config.get("threshold")
+
+        if not check_type:
+            raise GeneratorError("Loop end condition must include 'type'")
+
+        # Build end condition based on type
+        if check_type == "content_length":
+            # Break if content exceeds threshold
+            if not threshold:
+                raise GeneratorError("content_length requires 'threshold'")
+
+            def end_condition(outputs: List) -> bool:
+                if not outputs:
+                    return False
+                for output in outputs:
+                    if hasattr(output, "content") and output.content:
+                        if len(output.content) >= threshold:
+                            return True  # BREAK
+                return False  # CONTINUE
+
+            return end_condition
+
+        elif check_type == "success_count":
+            # Break if enough successful outputs
+            if not threshold:
+                raise GeneratorError("success_count requires 'threshold'")
+
+            def end_condition(outputs: List) -> bool:
+                if not outputs:
+                    return False
+                success_count = sum(1 for o in outputs if hasattr(o, "success") and o.success)
+                return success_count >= threshold  # True = BREAK
+
+            return end_condition
+
+        elif check_type == "always_continue":
+            # Never break early, always run max_iterations
+            return lambda outputs: False
+
+        else:
+            raise GeneratorError(
+                f"Unknown loop end condition type: {check_type}\n"
+                f"Available: content_length, success_count, always_continue"
+            )
+
+    @classmethod
+    def _load_function_reference(cls, function_name: str):
+        """Load function by name or import path.
+
+        Args:
+            function_name: Function name or dotted import path
+
+        Returns:
+            Callable function
+
+        Raises:
+            GeneratorError: If function not found
+        """
+        # Check if it's a dotted import path
+        if "." in function_name:
+            try:
+                module_path, func_name = function_name.rsplit(".", 1)
+                module = __import__(module_path, fromlist=[func_name])
+                function = getattr(module, func_name)
+
+                if not callable(function):
+                    raise GeneratorError(f"{function_name} is not callable")
+
+                return function
+            except Exception as e:
+                raise GeneratorError(f"Failed to load function {function_name}: {e}") from e
+        else:
+            # Simple function name - would need a function registry
+            raise GeneratorError(
+                f"Simple function name '{function_name}' requires function registry.\n"
+                f"Use dotted import path instead: 'module.submodule.function_name'"
+            )
 
     @classmethod
     def _load_workflow_steps(cls, steps_config: List[Dict]) -> List:
@@ -528,63 +756,100 @@ class ConfigGenerator:
                 # Sequential step with agent
                 agent_id = step_config.get("agent")
                 if not agent_id:
-                    raise GeneratorError(
-                        f"Step '{step_name}' missing agent reference"
-                    )
+                    raise GeneratorError(f"Step '{step_name}' missing agent reference")
 
-                # TODO: Load agent from registry
-                step = Step(name=step_name, description=step_config.get("description"))
+                # Load agent from registry or YAML
+                agent = cls._resolve_agent_reference(agent_id)
+                step = Step(
+                    name=step_name,
+                    agent=agent,
+                    description=step_config.get("description"),
+                )
                 steps.append(step)
 
             elif step_type == "parallel":
-                # Parallel steps
-                parallel_steps = step_config.get("parallel_steps", [])
+                # Parallel steps - NOTE: Parallel takes variadic args, not a list
+                parallel_steps_config = step_config.get("parallel_steps", [])
+                if not parallel_steps_config:
+                    raise GeneratorError(f"Parallel step '{step_name}' has no parallel_steps")
+
+                # Load nested steps
+                loaded_parallel_steps = cls._load_workflow_steps(parallel_steps_config)
+
+                # Parallel() accepts variadic args: Parallel(*steps, name=..., description=...)
                 parallel_step = Parallel(
+                    *loaded_parallel_steps,
                     name=step_name,
                     description=step_config.get("description"),
-                    steps=cls._load_workflow_steps(parallel_steps),
                 )
                 steps.append(parallel_step)
 
             elif step_type == "conditional":
                 # Conditional step
                 condition_config = step_config.get("condition", {})
-                nested_steps = step_config.get("steps", [])
+                nested_steps_config = step_config.get("steps", [])
 
-                # TODO: Implement condition evaluation
+                if not condition_config:
+                    raise GeneratorError(f"Conditional step '{step_name}' missing condition config")
+                if not nested_steps_config:
+                    raise GeneratorError(f"Conditional step '{step_name}' has no nested steps")
+
+                # Build condition evaluator (receives StepInput, returns bool)
+                evaluator = cls._build_condition_evaluator(condition_config)
+
+                # Load nested steps
+                nested_steps = cls._load_workflow_steps(nested_steps_config)
+
                 condition_step = Condition(
+                    evaluator=evaluator,
+                    steps=nested_steps,
                     name=step_name,
                     description=step_config.get("description"),
-                    steps=cls._load_workflow_steps(nested_steps),
                 )
                 steps.append(condition_step)
 
             elif step_type == "loop":
                 # Loop step
-                agent_id = step_config.get("agent")
+                nested_steps_config = step_config.get("steps", [])
                 max_iterations = step_config.get("max_iterations", 3)
+                end_condition_config = step_config.get("end_condition")
 
-                # TODO: Load agent and implement loop
-                loop_step = Loop(
-                    name=step_name,
-                    description=step_config.get("description"),
-                    max_iterations=max_iterations,
-                )
+                if not nested_steps_config:
+                    raise GeneratorError(f"Loop step '{step_name}' has no nested steps")
+
+                # Load nested steps
+                nested_steps = cls._load_workflow_steps(nested_steps_config)
+
+                # Build loop params
+                loop_params = {
+                    "steps": nested_steps,
+                    "name": step_name,
+                    "description": step_config.get("description"),
+                    "max_iterations": max_iterations,
+                }
+
+                # Add end condition if specified
+                if end_condition_config:
+                    end_condition = cls._build_loop_end_condition(end_condition_config)
+                    loop_params["end_condition"] = end_condition
+
+                loop_step = Loop(**loop_params)
                 steps.append(loop_step)
 
             elif step_type == "function":
-                # Function step
+                # Function step with executor
                 function_name = step_config.get("function")
                 if not function_name:
-                    raise GeneratorError(
-                        f"Step '{step_name}' missing function reference"
-                    )
+                    raise GeneratorError(f"Step '{step_name}' missing function reference")
 
-                # TODO: Load function
+                # Load function
+                function = cls._load_function_reference(function_name)
+
+                # Use 'executor' parameter (not 'function')
                 step = Step(
                     name=step_name,
+                    executor=function,
                     description=step_config.get("description"),
-                    function=None,  # Placeholder
                 )
                 steps.append(step)
 

@@ -56,7 +56,7 @@ class ConfigValidator:
                 "mode": {
                     "required": True,
                     "type": str,
-                    "choices": ["route", "coordinate", "collaborate"],
+                    "choices": ["default", "collaboration", "router", "passthrough"],
                 },
             },
         },
@@ -193,9 +193,7 @@ class ConfigValidator:
         # Detect config type and validate
         config_type = cls._detect_config_type(config)
         if not config_type:
-            return False, [
-                "❌ Unknown configuration type. Expected: agent, team, workflow, or tool"
-            ]
+            return False, ["❌ Unknown configuration type. Expected: agent, team, workflow, or tool"]
 
         # Validate based on type
         if config_type == "agent":
@@ -248,10 +246,7 @@ class ConfigValidator:
         for field, rules in schema.items():
             # Check required fields
             if rules.get("required") and field not in config:
-                errors.append(
-                    f"❌ Missing required field: '{field}'\n"
-                    f"   💡 Add this to your {config_type}.yaml file"
-                )
+                errors.append(f"❌ Missing required field: '{field}'\n   💡 Add this to your {config_type}.yaml file")
                 continue
 
             # Skip if field not present and not required
@@ -316,9 +311,7 @@ class ConfigValidator:
 
             # Nested field validation (for dict types)
             if isinstance(value, dict) and "fields" in rules:
-                nested_errors = cls._validate_nested_fields(
-                    value, rules["fields"], field
-                )
+                nested_errors = cls._validate_nested_fields(value, rules["fields"], field)
                 errors.extend(nested_errors)
 
         # Environment variable validation
@@ -328,9 +321,7 @@ class ConfigValidator:
         return len(errors) == 0, errors
 
     @classmethod
-    def _validate_nested_fields(
-        cls, config: Dict[str, Any], schema: Dict[str, Any], parent_field: str
-    ) -> List[str]:
+    def _validate_nested_fields(cls, config: Dict[str, Any], schema: Dict[str, Any], parent_field: str) -> List[str]:
         """Validate nested dictionary fields.
 
         Args:
@@ -349,8 +340,7 @@ class ConfigValidator:
             # Check required nested fields
             if rules.get("required") and field not in config:
                 errors.append(
-                    f"❌ Missing required nested field: '{full_field}'\n"
-                    f"   💡 Add this under '{parent_field}' section"
+                    f"❌ Missing required nested field: '{full_field}'\n   💡 Add this under '{parent_field}' section"
                 )
                 continue
 
@@ -395,10 +385,7 @@ class ConfigValidator:
 
         for var in env_vars:
             if not os.getenv(var):
-                warnings.append(
-                    f"⚠️  Environment variable not set: {var}\n"
-                    f"   💡 Add this to your .env file"
-                )
+                warnings.append(f"⚠️  Environment variable not set: {var}\n   💡 Add this to your .env file")
 
         return warnings
 
