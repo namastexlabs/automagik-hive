@@ -13,8 +13,9 @@ from .version import version_app
 app = typer.Typer(
     name="hive",
     help="🚀 Automagik-Hive V2 - AI-powered multi-agent framework",
-    no_args_is_help=True,
+    no_args_is_help=False,  # Allow --version without command
     rich_markup_mode="rich",
+    invoke_without_command=True,  # Allow callback to run without command
 )
 
 # Register subcommands
@@ -42,9 +43,27 @@ console = Console()
 
 
 @app.callback()
-def main():
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-v",
+        help="Show version and exit",
+        is_eager=True,
+    ),
+):
     """Hive V2 CLI - Build AI agents in minutes."""
-    pass
+    if version:
+        import hive
+
+        console.print(f"[bold cyan]Hive[/bold cyan] version [bold]{hive.__version__}[/bold]")
+        raise typer.Exit()
+
+    # Show help if no command was provided
+    if ctx.invoked_subcommand is None:
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
 
 if __name__ == "__main__":
