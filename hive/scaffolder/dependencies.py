@@ -5,14 +5,9 @@ from the main Automagik Hive pyproject.toml file, ensuring scaffolded projects
 always use the correct versions without hardcoding.
 """
 
-import sys
 import tomllib
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-
-if sys.version_info >= (3, 10):
-    from importlib.metadata import PackageNotFoundError, version
-else:
-    from importlib_metadata import PackageNotFoundError, version
 
 
 def _get_dependencies_from_metadata() -> list[str]:

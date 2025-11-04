@@ -72,20 +72,14 @@ jobs:
         if: steps.format.outputs.changes == 'true'
         run: |
           git add -A
-
-          # Create commit with co-authorship and skip CI
-          git commit -m "style: auto-format code with ruff [skip ci]
-
-Applied automatic formatting and linting fixes:
-- ruff format: code style and formatting
-- ruff check --fix: auto-fixable linting issues
-
-This commit ensures CI checks only fail on unfixable issues.
-Skipping CI to avoid redundant pipeline runs.
-
-Co-authored-by: Automagik Genie 🧞 <genie@namastex.ai>"
-
-          # Push changes
+          git commit -m "style: auto-format code with ruff [skip ci]" \
+            -m "Applied automatic formatting and linting fixes:" \
+            -m "- ruff format: code style and formatting" \
+            -m "- ruff check --fix: auto-fixable linting issues" \
+            -m "" \
+            -m "This commit ensures CI checks only fail on unfixable issues." \
+            -m "Skipping CI to avoid redundant pipeline runs." \
+            --trailer "Co-authored-by: Automagik Genie <genie@namastex.ai>"
           git push
 
       - name: Summary
