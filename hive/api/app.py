@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from hive import __version__
 from hive.config import settings
-from hive.discovery import discover_agents
+from hive.discovery import discover_agents, discover_teams, discover_workflows
 
 # Suppress AgentOS route conflict warnings (expected behavior when merging routes)
 warnings.filterwarnings("ignore", message=".*Route conflict detected.*")
@@ -44,8 +44,11 @@ def create_app() -> FastAPI:
     """
     config = settings()
 
-    # Discover agents from examples (auto-loads all agents)
+    # Discover all components from examples (auto-loads all agents, workflows, and teams)
+    print("\n🔍 Discovering AI components...")
     agents = discover_agents()
+    workflows = discover_workflows()
+    teams = discover_teams()
 
     # Create base FastAPI app for custom routes
     base_app = FastAPI(
@@ -85,7 +88,9 @@ def create_app() -> FastAPI:
 
     agent_os = AgentOS(
         description="Automagik Hive - Multi-Agent Framework",
-        agents=agents,
+        agents=agents if agents else None,
+        workflows=workflows if workflows else None,
+        teams=teams if teams else None,
         base_app=base_app,  # Merges custom routes with AgentOS routes
         interfaces=interfaces if interfaces else None,  # type: ignore[arg-type]
     )
