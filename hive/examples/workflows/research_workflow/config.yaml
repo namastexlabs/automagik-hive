@@ -1,0 +1,41 @@
+workflow:
+  name: "Sequential Research Workflow"
+  workflow_id: "research-workflow"
+  version: "1.0.0"
+  description: "Multi-step research workflow with sequential processing"
+
+model:
+  provider: "openai"
+  id: "gpt-4o-mini"
+  temperature: 0.7
+
+steps:
+  - name: "Planning"
+    description: "Analyze the research topic and create a research plan"
+    type: "agent"
+
+  - name: "Research"
+    description: "Execute research based on the plan"
+    type: "agent"
+
+  - name: "Analysis"
+    description: "Analyze and synthesize research findings"
+    type: "function"
+
+  - name: "Summary"
+    description: "Create final summary with key insights"
+    type: "agent"
+
+instructions: |
+  This workflow executes research tasks in four sequential steps:
+
+  1. PLANNING - Understand the topic and create a structured research plan
+  2. RESEARCH - Gather information from available sources
+  3. ANALYSIS - Process and analyze the collected data
+  4. SUMMARY - Generate a comprehensive summary with key findings
+
+  Each step builds on the previous one, passing state forward.
+
+storage:
+  table_name: "research_workflow_sessions"
+  auto_upgrade_schema: true

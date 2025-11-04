@@ -1,0 +1,48 @@
+tool:
+  name: "Web Search"
+  tool_id: "web-search"
+  version: "1.0.0"
+  description: "Search the web using DuckDuckGo and return results"
+  category: "integration"
+  tags: ["web", "search", "duckduckgo", "research"]
+  enabled: true
+
+  parameters:
+    max_results: 5
+    include_snippets: true
+    safe_search: true
+    region: "us-en"  # Region code for search results
+    timeout_seconds: 30
+
+  search_options:
+    include_news: false     # Include news results
+    include_images: false   # Include image results
+    time_filter: null       # d (day), w (week), m (month), y (year)
+
+metadata:
+  author: "Automagik Hive"
+  created_date: "2025-10-30"
+  license: "MIT"
+  documentation_url: "https://docs.agno.com/tools/duckduckgo"
+
+interface:
+  inputs:
+    - name: "query"
+      type: "str"
+      required: true
+      description: "Search query to execute"
+
+    - name: "max_results"
+      type: "int"
+      required: false
+      description: "Maximum number of results to return"
+
+    - name: "safe_search"
+      type: "bool"
+      required: false
+      description: "Enable safe search filtering"
+
+  outputs:
+    - name: "result"
+      type: "dict"
+      description: "Search results with titles, URLs, and snippets"

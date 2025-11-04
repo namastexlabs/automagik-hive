@@ -1,0 +1,329 @@
+# ============================================================
+# WORKFLOW CONFIGURATION TEMPLATE
+# ============================================================
+# Workflows define step-by-step processes with agents or functions.
+# Perfect for multi-stage tasks with clear sequences.
+#
+# Use workflows when:
+#   - Tasks have clear sequential steps
+#   - Need conditional logic or branching
+#   - Want parallel execution
+#   - Require loops or retries
+# ============================================================
+
+# -----------------------------
+# 1. WORKFLOW IDENTITY (Required)
+# -----------------------------
+workflow:
+  # Unique identifier (lowercase, hyphens)
+  name: "my-workflow"
+
+  # Human-readable description
+  description: "Brief description of workflow purpose"
+
+
+# -----------------------------
+# 2. WORKFLOW STEPS (Required)
+# -----------------------------
+# Define the sequence of steps.
+# Each step can use an agent or a custom function.
+# -----------------------------
+steps:
+  # ===== STEP 1: Sequential Step =====
+  - name: "analysis"
+    type: "sequential"
+    agent: "analyzer-agent"  # Agent ID from agent config
+    description: "Analyze the input data"
+
+  # ===== STEP 2: Parallel Steps =====
+  - name: "parallel-processing"
+    type: "parallel"
+    description: "Process multiple tasks simultaneously"
+    parallel_steps:
+      - name: "testing"
+        agent: "qa-agent"
+        description: "Run quality tests"
+
+      - name: "documentation"
+        agent: "doc-agent"
+        description: "Generate documentation"
+
+  # ===== STEP 3: Conditional Step =====
+  - name: "review"
+    type: "conditional"
+    description: "Review if complexity is high"
+    condition:
+      # Condition function checks workflow state
+      function: "check_complexity"
+      threshold: 0.7
+    steps:
+      - name: "deep-review"
+        agent: "expert-agent"
+        description: "Perform deep analysis"
+
+  # ===== STEP 4: Loop Step =====
+  - name: "iteration"
+    type: "loop"
+    description: "Iterate until quality threshold met"
+    agent: "iterative-agent"
+    max_iterations: 3
+    exit_condition:
+      function: "check_quality"
+      target: 0.9
+
+  # ===== STEP 5: Function Step =====
+  - name: "finalization"
+    type: "function"
+    function: "finalize_output"
+    description: "Format and prepare final output"
+
+
+# -----------------------------
+# 3. STORAGE (Optional)
+# -----------------------------
+# Workflow state and session storage
+# -----------------------------
+storage:
+  type: "postgres"
+  connection: "${HIVE_DATABASE_URL}"
+  table_name: "my_workflow_sessions"
+
+
+# -----------------------------
+# 4. ADVANCED SETTINGS (Optional)
+# -----------------------------
+settings:
+  # Session state sharing
+  shared_state: true       # Steps can access/modify shared data
+
+  # Error handling
+  retry_on_error: true     # Retry failed steps
+  max_retries: 3          # Maximum retry attempts
+
+  # Performance
+  stream: true            # Stream step outputs
+  show_progress: true     # Show step-by-step progress
+
+  # Debugging
+  debug_mode: false       # Detailed execution logs
+
+
+# ============================================================
+# STEP TYPES EXPLAINED
+# ============================================================
+#
+# SEQUENTIAL (Default)
+# --------------------
+# Steps execute one after another.
+# Each step waits for previous to complete.
+# Use for: Linear processes, dependent steps
+#
+# Example:
+#   - name: "step1"
+#     type: "sequential"
+#     agent: "agent-1"
+#
+#
+# PARALLEL
+# --------
+# Multiple steps execute simultaneously.
+# Wait for all to complete before continuing.
+# Use for: Independent tasks, time-saving
+#
+# Example:
+#   - name: "parallel-work"
+#     type: "parallel"
+#     parallel_steps:
+#       - name: "task-a"
+#         agent: "agent-a"
+#       - name: "task-b"
+#         agent: "agent-b"
+#
+#
+# CONDITIONAL
+# -----------
+# Steps execute only if condition is met.
+# Condition checks workflow session state.
+# Use for: Branching logic, optional steps
+#
+# Example:
+#   - name: "optional-step"
+#     type: "conditional"
+#     condition:
+#       function: "needs_review"
+#     steps:
+#       - name: "review"
+#         agent: "reviewer"
+#
+#
+# LOOP
+# ----
+# Repeat step until condition met or max iterations.
+# Use for: Iterative improvement, retries
+#
+# Example:
+#   - name: "improve"
+#     type: "loop"
+#     agent: "optimizer"
+#     max_iterations: 5
+#     exit_condition:
+#       function: "quality_check"
+#
+#
+# FUNCTION
+# --------
+# Execute custom Python function.
+# Use for: Data processing, API calls, custom logic
+#
+# Example:
+#   - name: "process"
+#     type: "function"
+#     function: "my_custom_function"
+#
+# ============================================================
+
+
+# ============================================================
+# REAL-WORLD WORKFLOW EXAMPLES
+# ============================================================
+#
+# 1. BLOG POST CREATION
+# ----------------------
+# workflow:
+#   name: "blog-post-workflow"
+# steps:
+#   - name: "research"
+#     agent: "researcher"
+#   - name: "outline"
+#     agent: "outliner"
+#   - name: "write"
+#     agent: "writer"
+#   - name: "parallel-review"
+#     type: "parallel"
+#     parallel_steps:
+#       - name: "grammar"
+#         agent: "grammar-checker"
+#       - name: "seo"
+#         agent: "seo-optimizer"
+#   - name: "finalize"
+#     function: "publish_post"
+#
+#
+# 2. CODE REVIEW PIPELINE
+# ------------------------
+# workflow:
+#   name: "code-review-workflow"
+# steps:
+#   - name: "analyze"
+#     agent: "code-analyzer"
+#   - name: "quality-check"
+#     type: "conditional"
+#     condition:
+#       function: "has_issues"
+#     steps:
+#       - name: "deep-review"
+#         agent: "senior-reviewer"
+#   - name: "parallel-tests"
+#     type: "parallel"
+#     parallel_steps:
+#       - name: "security"
+#         agent: "security-scanner"
+#       - name: "performance"
+#         agent: "performance-tester"
+#   - name: "approve"
+#     function: "merge_if_passed"
+#
+#
+# 3. CUSTOMER ONBOARDING
+# -----------------------
+# workflow:
+#   name: "onboarding-workflow"
+# steps:
+#   - name: "welcome"
+#     agent: "welcome-agent"
+#   - name: "setup-account"
+#     function: "create_account"
+#   - name: "personalization"
+#     type: "loop"
+#     agent: "personalization-agent"
+#     max_iterations: 3
+#     exit_condition:
+#       function: "preferences_complete"
+#   - name: "parallel-setup"
+#     type: "parallel"
+#     parallel_steps:
+#       - name: "tutorial"
+#         agent: "tutorial-agent"
+#       - name: "integrate-tools"
+#         agent: "integration-agent"
+#   - name: "completion"
+#     agent: "completion-agent"
+#
+# ============================================================
+
+
+# ============================================================
+# SESSION STATE & DATA FLOW
+# ============================================================
+#
+# Workflows maintain session state that flows between steps:
+#
+# Step 1 Output → Step 2 Input → Step 3 Input → Final Output
+#
+# Each step can:
+#   - Read from workflow_session_state
+#   - Write to workflow_session_state
+#   - Access previous step outputs
+#
+# Example custom function:
+#
+#   def my_step_function(step_input):
+#       # Access shared state
+#       data = step_input.workflow_session_state
+#
+#       # Process
+#       result = process_data(step_input.message)
+#
+#       # Update state for next steps
+#       data["processed"] = result
+#
+#       return StepOutput(content=result)
+#
+# ============================================================
+
+
+# ============================================================
+# TIPS FOR GREAT WORKFLOWS
+# ============================================================
+#
+# 1. Single Responsibility per Step
+#    - Each step should do ONE thing well
+#    - Break complex operations into smaller steps
+#    - Clear, descriptive step names
+#
+# 2. Use Parallel When Possible
+#    - Identify independent operations
+#    - Run them simultaneously for speed
+#    - Great for testing, reviews, notifications
+#
+# 3. Handle Errors Gracefully
+#    - Enable retry_on_error for flaky steps
+#    - Set reasonable max_retries
+#    - Use conditional steps for fallbacks
+#
+# 4. Session State Management
+#    - Store intermediate results in state
+#    - Clean up unnecessary data
+#    - Use clear key names
+#
+# 5. Testing
+#    - Test each step independently first
+#    - Then test full workflow
+#    - Use debug_mode during development
+#
+# 6. Performance
+#    - Keep workflows focused (5-10 steps max)
+#    - Use streaming for long-running steps
+#    - Consider parallel execution
+#
+# ============================================================

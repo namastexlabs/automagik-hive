@@ -1,1 +1,0 @@
-"""Shared tools for agents."""

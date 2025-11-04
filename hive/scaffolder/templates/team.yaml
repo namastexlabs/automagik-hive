@@ -1,0 +1,239 @@
+# ============================================================
+# TEAM CONFIGURATION TEMPLATE
+# ============================================================
+# Teams coordinate multiple agents to solve complex tasks.
+# Agno handles routing and orchestration automatically!
+#
+# Use teams when:
+#   - Different specialists handle different topics
+#   - Tasks require multiple perspectives
+#   - You want automatic agent selection
+# ============================================================
+
+# -----------------------------
+# 1. TEAM IDENTITY (Required)
+# -----------------------------
+team:
+  # Unique identifier (lowercase, hyphens)
+  name: "my-team"
+
+  # Human-readable description
+  description: "Brief description of team purpose"
+
+  # Team mode (determines coordination strategy - Agno-compliant)
+  mode: "default"
+  # Options:
+  #   - "default"       → Team leader decides which agent(s), synthesizes response (recommended)
+  #   - "collaboration" → ALL agents work in parallel, leader synthesizes
+  #   - "router"        → Route to agent, return AS-IS (no synthesis)
+  #   - "passthrough"   → Same as router - direct passthrough
+
+
+# -----------------------------
+# 2. TEAM MEMBERS (Required)
+# -----------------------------
+# List agent IDs that are part of this team.
+# Each agent should be defined in separate agent config files.
+# -----------------------------
+members:
+  - "agent-1"  # Replace with actual agent IDs
+  - "agent-2"
+  - "agent-3"
+
+
+# -----------------------------
+# 3. ROUTING INSTRUCTIONS (Required)
+# -----------------------------
+# Tell the team HOW to route queries to agents.
+# Be specific about what each agent handles.
+# -----------------------------
+instructions: |
+  You are a team coordinator that routes queries to specialist agents.
+
+  Routing rules:
+  - Route [topic A] questions to agent-1
+  - Route [topic B] questions to agent-2
+  - Route [topic C] questions to agent-3
+
+  Guidelines:
+  - Analyze the user's query carefully
+  - Choose the most appropriate specialist
+  - Forward the complete context
+  - If uncertain, ask for clarification
+
+
+# -----------------------------
+# 4. TEAM MODEL (Optional)
+# -----------------------------
+# Model used by the team coordinator for routing decisions.
+# Usually fast models work best (routing is simple).
+# -----------------------------
+model: "gpt-4o-mini"
+
+
+# -----------------------------
+# 5. STORAGE (Optional)
+# -----------------------------
+# Team-level conversation storage
+# -----------------------------
+storage:
+  type: "postgres"
+  connection: "${HIVE_DATABASE_URL}"
+  table_name: "my_team_sessions"
+
+
+# -----------------------------
+# 6. ADVANCED SETTINGS (Optional)
+# -----------------------------
+settings:
+  # Show which agent handled each query
+  show_routing: true
+
+  # Enable streaming responses
+  stream: true
+
+  # Debug mode (shows routing decisions)
+  debug_mode: false
+
+
+# ============================================================
+# TEAM MODE EXAMPLES (Agno-Compatible)
+# ============================================================
+#
+# MODE: "default" (Smart Routing with Synthesis)
+# -----------------------------------------------
+# Best for: Specialist teams, support routing, domain experts
+# How it works:
+#   1. User asks question
+#   2. Team leader analyzes and selects best agent(s)
+#   3. Selected agent(s) process request
+#   4. Team leader synthesizes and responds
+#
+# Example: Customer support team
+#   - billing-agent (handles payment issues)
+#   - technical-agent (handles technical issues)
+#   - sales-agent (handles product questions)
+#
+#
+# MODE: "collaboration" (Parallel Work with Synthesis)
+# -----------------------------------------------------
+# Best for: Complex tasks, multiple perspectives, brainstorming
+# How it works:
+#   1. User provides task
+#   2. ALL agents work on same task in parallel
+#   3. Team leader synthesizes all responses
+#   4. Unified answer delivered to user
+#
+# Example: Product strategy team
+#   - market-researcher (researches market)
+#   - data-analyst (analyzes data)
+#   - business-strategist (creates strategy)
+#
+#
+# MODE: "router" (Direct Passthrough)
+# ------------------------------------
+# Best for: Simple routing, no synthesis needed
+# How it works:
+#   1. User asks question
+#   2. Router selects best agent
+#   3. Agent responds directly
+#   4. Response goes AS-IS to user (no synthesis)
+#
+# Example: Language routing team
+#   - english-agent (English queries)
+#   - spanish-agent (Spanish queries)
+#   - french-agent (French queries)
+#
+#
+# MODE: "passthrough" (Same as Router)
+# -------------------------------------
+# Alias for "router" mode - direct passthrough with no synthesis
+#
+# ============================================================
+
+
+# ============================================================
+# REAL-WORLD TEAM EXAMPLES (Agno-Compatible)
+# ============================================================
+#
+# 1. CUSTOMER SUPPORT ROUTER
+# ---------------------------
+# team:
+#   name: "support-router"
+#   mode: "default"
+# members:
+#   - "billing-specialist"
+#   - "technical-specialist"
+#   - "account-manager"
+# instructions: |
+#   Route to billing-specialist: payments, invoices, refunds
+#   Route to technical-specialist: bugs, integrations, API
+#   Route to account-manager: upgrades, contracts, sales
+#
+#
+# 2. RESEARCH TEAM
+# ----------------
+# team:
+#   name: "research-team"
+#   mode: "collaboration"
+# members:
+#   - "web-researcher"
+#   - "data-analyst"
+#   - "report-writer"
+# instructions: |
+#   Collaborate to produce comprehensive research reports.
+#   All agents work in parallel:
+#   - web-researcher: Find sources and gather data
+#   - data-analyst: Analyze trends and patterns
+#   - report-writer: Synthesize into clear report
+#
+#
+# 3. LANGUAGE ROUTER
+# -------------------
+# team:
+#   name: "language-router"
+#   mode: "router"
+# members:
+#   - "english-agent"
+#   - "spanish-agent"
+#   - "french-agent"
+# instructions: |
+#   Route queries to appropriate language agent.
+#   Return response AS-IS without synthesis.
+#   - english-agent: English queries
+#   - spanish-agent: Spanish queries
+#   - french-agent: French queries
+#
+# ============================================================
+
+
+# ============================================================
+# TIPS FOR GREAT TEAMS
+# ============================================================
+#
+# 1. Clear Specialization
+#    - Each agent should have a distinct role
+#    - Avoid overlapping responsibilities
+#    - Make routing rules unambiguous
+#
+# 2. Good Team Size
+#    - Default mode: 2-5 agents (keeps routing simple)
+#    - Collaboration mode: 2-4 agents (parallel processing limit)
+#    - Router/Passthrough mode: 2-10 agents (simple routing scales)
+#
+# 3. Routing Instructions
+#    - Be specific about what triggers each agent
+#    - Include examples of typical queries
+#    - Handle edge cases (unclear queries)
+#
+# 4. Testing
+#    - Test with representative queries
+#    - Verify correct agent selection
+#    - Check response quality
+#
+# 5. Performance
+#    - Use fast models for routing (gpt-4o-mini)
+#    - Keep team size reasonable
+#    - Enable streaming for better UX
+#
+# ============================================================

@@ -1,0 +1,31 @@
+project:
+  name: "{PROJECT_NAME}"
+  version: "1.0.0"
+  description: "Hive V2 project"
+
+agents:
+  discovery_path: "ai/agents"
+  examples_enabled: true
+
+teams:
+  discovery_path: "ai/teams"
+
+workflows:
+  discovery_path: "ai/workflows"
+
+tools:
+  discovery_path: "ai/tools"
+
+knowledge:
+  csv_path: "data/csv"
+  auto_reload: true
+  embedder_model: "text-embedding-3-small"
+
+api:
+  port: 8886
+  host: "0.0.0.0"
+  docs_enabled: true
+
+storage:
+  provider: "postgresql"
+  auto_upgrade_schema: true

@@ -277,7 +277,7 @@ automagik-hive/
 # ai/agents/my-agent/config.yaml
 agent:
   name: "My Agent"
-  agent_id: "my-agent"
+  id: "my-agent"
   version: "1.0.0"
 
 model:
@@ -302,7 +302,7 @@ def get_my_agent(**kwargs) -> Agent:
 @pytest.mark.asyncio
 async def test_my_agent(mock_env_vars):
     agent = await get_agent("my-agent")
-    assert agent.agent_id == "my-agent"
+    assert agent.id == "my-agent"
 ```
 
 ## 🎓 Learning Resources

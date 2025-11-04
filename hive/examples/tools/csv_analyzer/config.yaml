@@ -1,0 +1,50 @@
+tool:
+  name: "CSV Analyzer"
+  tool_id: "csv-analyzer"
+  version: "1.0.0"
+  description: "Analyze CSV files and generate statistics and insights"
+  category: "analysis"
+  tags: ["csv", "data-analysis", "statistics", "pandas"]
+  enabled: true
+
+  parameters:
+    max_file_size_mb: 50
+    max_rows_display: 100
+    default_delimiter: ","
+    encoding: "utf-8"
+    generate_visualizations: false
+
+  analysis_options:
+    include_basic_stats: true
+    include_data_types: true
+    include_missing_values: true
+    include_duplicates: true
+    include_correlations: false  # Expensive for large datasets
+
+metadata:
+  author: "Automagik Hive"
+  created_date: "2025-10-30"
+  license: "MIT"
+  dependencies: ["pandas"]
+
+interface:
+  inputs:
+    - name: "file_path"
+      type: "str"
+      required: true
+      description: "Path to CSV file to analyze"
+
+    - name: "delimiter"
+      type: "str"
+      required: false
+      description: "CSV delimiter (default: comma)"
+
+    - name: "columns"
+      type: "list"
+      required: false
+      description: "Specific columns to analyze (default: all)"
+
+  outputs:
+    - name: "result"
+      type: "dict"
+      description: "Analysis results with statistics and insights"
