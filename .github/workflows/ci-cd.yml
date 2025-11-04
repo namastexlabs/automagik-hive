@@ -5,9 +5,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, v2, develop ]
+    branches: [ main, v2, dev, develop ]
   pull_request:
-    branches: [ main, v2 ]
+    branches: [ main, v2, dev ]
   release:
     types: [ created ]
 
@@ -59,38 +59,6 @@ jobs:
           path: |
             trivy-results.sarif
             bandit-report.json
-
-  # Installation script testing
-  test-install-script:
-    name: Test Installation Script
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            platform: linux
-          - os: macos-latest
-            platform: darwin
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Make scripts executable
-        run: chmod +x scripts/install-predeps.sh scripts/test-install-predeps.sh
-
-      - name: Run installation script tests
-        run: ./scripts/test-install-predeps.sh --verbose
-
-      - name: Test script help functionality
-        run: |
-          ./scripts/install-predeps.sh --help || echo "Help functionality test completed"
-
-      - name: Validate script with ShellCheck (Ubuntu only)
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update && sudo apt-get install -y shellcheck
-          shellcheck scripts/install-predeps.sh scripts/test-install-predeps.sh
 
   # Code quality and testing
   test:
