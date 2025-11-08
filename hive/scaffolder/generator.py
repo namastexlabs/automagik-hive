@@ -69,8 +69,8 @@ class ConfigGenerator:
         # Setup knowledge base
         knowledge = cls._setup_knowledge(config.get("knowledge"))
 
-        # Setup storage
-        storage = cls._setup_storage(config.get("storage"))
+        # Setup storage (db parameter for Agent)
+        db = cls._setup_storage(config.get("storage"))
 
         # Extract settings
         settings = config.get("settings", {})
@@ -100,8 +100,8 @@ class ConfigGenerator:
             agent_params["tools"] = tools
         if knowledge:
             agent_params["knowledge"] = knowledge
-        if storage:
-            agent_params["storage"] = storage
+        if db:
+            agent_params["db"] = db
         if mcp_servers:
             agent_params["mcp_servers"] = mcp_servers
         if temperature is not None:
@@ -169,8 +169,8 @@ class ConfigGenerator:
         # Model (optional for teams)
         model_string = config.get("model")
 
-        # Setup storage
-        storage = cls._setup_storage(config.get("storage"))
+        # Setup storage (db parameter for Team)
+        db = cls._setup_storage(config.get("storage"))
 
         # Extract settings
         settings = config.get("settings", {})
@@ -197,8 +197,8 @@ class ConfigGenerator:
         # Add optional parameters
         if model:
             team_params["model"] = model
-        if storage:
-            team_params["storage"] = storage
+        if db:
+            team_params["db"] = db
         if show_routing is not None:
             team_params["show_routing"] = show_routing
         if stream is not None:
@@ -251,8 +251,8 @@ class ConfigGenerator:
         steps_config = config.get("steps", [])
         steps = cls._load_workflow_steps(steps_config)
 
-        # Setup storage
-        storage = cls._setup_storage(config.get("storage"))
+        # Setup storage (db parameter for Workflow)
+        db = cls._setup_storage(config.get("storage"))
 
         model_string = config.get("model")
         settings = config.get("settings", {})
@@ -274,8 +274,8 @@ class ConfigGenerator:
         }
 
         # Add optional parameters
-        if storage:
-            workflow_params["storage"] = storage
+        if db:
+            workflow_params["db"] = db
         if shared_state is not None:
             workflow_params["shared_state"] = shared_state
         if retry_on_error is not None:
@@ -550,12 +550,21 @@ class ConfigGenerator:
 
         if storage_type == "postgres":
             # PostgreSQL storage
-            from agno.storage import PostgresStorage  # type: ignore[import-not-found]
+            from agno.db import PostgresDb  # type: ignore[import-not-found]
 
-            return PostgresStorage(
-                connection_url=storage_config.get("connection"),
-                table_name=storage_config.get("table_name", "agent_sessions"),
-                auto_upgrade_schema=True,
+            connection = storage_config.get("connection")
+            if not connection:
+                # Fallback to HIVE_DATABASE_URL environment variable
+                connection = os.getenv("HIVE_DATABASE_URL")
+
+            if not connection:
+                raise GeneratorError(
+                    "PostgreSQL storage requires 'connection' in config or HIVE_DATABASE_URL environment variable"
+                )
+
+            return PostgresDb(
+                db_url=connection,
+                session_table=storage_config.get("table_name", "agent_sessions"),
             )
 
         elif storage_type == "sqlite":

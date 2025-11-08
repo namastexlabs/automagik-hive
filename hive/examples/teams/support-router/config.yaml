@@ -3,12 +3,14 @@ team:
   team_id: "support-router"
   version: "1.0.0"
   description: "Intelligent routing team that directs customer queries to specialist agents"
-  mode: "route"
+  mode: "router"
 
-model:
-  provider: "openai"
-  id: "gpt-4o-mini"
-  temperature: 0.7
+model: openai:gpt-4o-mini
+
+members:
+  - billing-specialist
+  - technical-specialist
+  - sales-specialist
 
 instructions: |
   You are an intelligent support router that directs customer queries to the right specialist.
@@ -29,5 +31,6 @@ instructions: |
   - If unclear, route to technical-specialist as default
 
 storage:
+  type: postgres
+  connection: ${HIVE_DATABASE_URL}
   table_name: "support_router_sessions"
-  auto_upgrade_schema: true

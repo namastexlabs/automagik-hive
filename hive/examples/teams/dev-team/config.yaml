@@ -3,12 +3,14 @@ team:
   team_id: "dev-team"
   version: "1.0.0"
   description: "Collaborative development team for building features with planning, coding, and review"
-  mode: "collaborate"
+  mode: "collaboration"
 
-model:
-  provider: "openai"
-  id: "gpt-4o-mini"
-  temperature: 0.7
+model: openai:gpt-4o-mini
+
+members:
+  - planner
+  - coder
+  - reviewer
 
 instructions: |
   You are a collaborative development team working together to build features.
@@ -33,5 +35,6 @@ instructions: |
   Work together to deliver robust, well-tested features.
 
 storage:
+  type: postgres
+  connection: ${HIVE_DATABASE_URL}
   table_name: "dev_team_sessions"
-  auto_upgrade_schema: true

@@ -939,15 +939,15 @@ class TestSetupStorage:
         assert result is None
 
     def test_postgres_storage_setup(self):
-        """Should setup PostgreSQL storage."""
-        mock_storage_class = MagicMock()
-        mock_storage_instance = MagicMock()
-        mock_storage_class.return_value = mock_storage_instance
+        """Should setup PostgreSQL storage using agno.db.PostgresDb."""
+        mock_db_class = MagicMock()
+        mock_db_instance = MagicMock()
+        mock_db_class.return_value = mock_db_instance
 
-        mock_storage_module = MagicMock()
-        mock_storage_module.PostgresStorage = mock_storage_class
+        mock_db_module = MagicMock()
+        mock_db_module.PostgresDb = mock_db_class
 
-        with patch.dict("sys.modules", {"agno.storage": mock_storage_module}):
+        with patch.dict("sys.modules", {"agno.db": mock_db_module}):
             storage_config = {
                 "type": "postgres",
                 "connection": "postgresql://localhost/db",
@@ -956,11 +956,10 @@ class TestSetupStorage:
 
             result = ConfigGenerator._setup_storage(storage_config)
 
-            assert result == mock_storage_instance
-            mock_storage_class.assert_called_once_with(
-                connection_url="postgresql://localhost/db",
-                table_name="sessions",
-                auto_upgrade_schema=True,
+            assert result == mock_db_instance
+            mock_db_class.assert_called_once_with(
+                db_url="postgresql://localhost/db",
+                session_table="sessions",
             )
 
     def test_sqlite_storage_setup(self):
