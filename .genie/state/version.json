@@ -1,8 +1,8 @@
 {
-  "version": "2.5.14",
-  "installedAt": "2025-11-11T19:47:19.270Z",
-  "updatedAt": "2025-11-11T19:47:19.270Z",
-  "commit": "4886d6e7",
+  "version": "2.5.15",
+  "installedAt": "2025-11-11T19:50:57.148Z",
+  "updatedAt": "2025-11-11T19:50:57.148Z",
+  "commit": "a4158fed",
   "packageName": "automagik-genie",
   "customizedFiles": [],
   "deletedFiles": [],
@@ -10,7 +10,7 @@
   "previousVersion": null,
   "upgradeHistory": [],
   "migrationInfo": {
-    "backupId": "2025-11-11T19-47-19-097Z",
+    "backupId": "n/a",
     "claudeBackedUp": false
   }
 }
