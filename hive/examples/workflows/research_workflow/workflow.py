@@ -196,10 +196,10 @@ def get_research_workflow(**kwargs) -> Workflow:
     workflow = Workflow(
         name=workflow_config.get("name"),
         steps=[
-            Step(name="Planning", function=planning_step),
-            Step(name="Research", function=research_step),
-            Step(name="Analysis", function=analysis_function),
-            Step(name="Summary", function=summary_step),
+            Step(name="Planning", executor=planning_step),
+            Step(name="Research", executor=research_step),
+            Step(name="Analysis", executor=analysis_function),
+            Step(name="Summary", executor=summary_step),
         ],
         **kwargs,
     )

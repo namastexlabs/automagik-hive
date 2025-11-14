@@ -18,8 +18,9 @@ def agent(
     name: str = typer.Argument(..., help="Agent name (kebab-case)"),
     description: str | None = typer.Option(None, "--description", "-d", help="Agent description"),
     model: str = typer.Option("gpt-4o-mini", "--model", "-m", help="LLM model to use"),
+    with_python: bool = typer.Option(False, "--with-python", help="Generate Python factory file (advanced)"),
 ):
-    """Create a new agent with AI-powered generation."""
+    """Create a new agent with YAML configuration."""
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -42,19 +43,22 @@ def agent(
         progress.update(task, description="Creating directory structure...")
 
         # Generate agent files
-        _generate_agent_files(agent_path, name, description or f"{name.replace('-', ' ').title()} Agent", model)
+        _generate_agent_files(
+            agent_path, name, description or f"{name.replace('-', ' ').title()} Agent", model, with_python
+        )
         progress.update(task, description="Generating agent files...")
 
         progress.update(task, description=f"{CLI_EMOJIS['success']} Agent created successfully!")
 
     # Show success message
-    _show_agent_success(name, agent_path)
+    _show_agent_success(name, agent_path, with_python)
 
 
 @create_app.command()
 def team(
     name: str = typer.Argument(..., help="Team name (kebab-case)"),
-    mode: str = typer.Option("route", "--mode", "-m", help="Team mode: route, coordinate, collaborate"),
+    mode: str = typer.Option("router", "--mode", "-m", help="Team mode: default, collaboration, router, passthrough"),
+    with_python: bool = typer.Option(False, "--with-python", help="Generate Python factory file (advanced)"),
 ):
     """Create a new team for multi-agent coordination."""
     with Progress(
@@ -70,8 +74,8 @@ def team(
             raise typer.Exit(1)
 
         # Validate mode
-        if mode not in ["route", "coordinate", "collaborate"]:
-            console.print(f"\n{CLI_EMOJIS['error']} Invalid mode. Choose: route, coordinate, collaborate")
+        if mode not in ["default", "collaboration", "router", "passthrough"]:
+            console.print(f"\n{CLI_EMOJIS['error']} Invalid mode. Choose: default, collaboration, router, passthrough")
             raise typer.Exit(1)
 
         # Create team directory
@@ -84,19 +88,20 @@ def team(
         progress.update(task, description="Creating directory structure...")
 
         # Generate team files
-        _generate_team_files(team_path, name, mode)
+        _generate_team_files(team_path, name, mode, with_python)
         progress.update(task, description="Generating team files...")
 
         progress.update(task, description=f"{CLI_EMOJIS['success']} Team created successfully!")
 
     # Show success message
-    _show_team_success(name, team_path, mode)
+    _show_team_success(name, team_path, mode, with_python)
 
 
 @create_app.command()
 def workflow(
     name: str = typer.Argument(..., help="Workflow name (kebab-case)"),
     description: str | None = typer.Option(None, "--description", "-d", help="Workflow description"),
+    with_python: bool = typer.Option(False, "--with-python", help="Generate Python factory file (advanced)"),
 ):
     """Create a new workflow for step-based orchestration."""
     with Progress(
@@ -121,13 +126,15 @@ def workflow(
         progress.update(task, description="Creating directory structure...")
 
         # Generate workflow files
-        _generate_workflow_files(workflow_path, name, description or f"{name.replace('-', ' ').title()} Workflow")
+        _generate_workflow_files(
+            workflow_path, name, description or f"{name.replace('-', ' ').title()} Workflow", with_python
+        )
         progress.update(task, description="Generating workflow files...")
 
         progress.update(task, description=f"{CLI_EMOJIS['success']} Workflow created successfully!")
 
     # Show success message
-    _show_workflow_success(name, workflow_path)
+    _show_workflow_success(name, workflow_path, with_python)
 
 
 @create_app.command()
@@ -172,19 +179,15 @@ def _is_valid_name(name: str) -> bool:
     return name.islower() and all(c.isalnum() or c == "-" for c in name)
 
 
-def _generate_agent_files(agent_path: Path, name: str, description: str, model: str):
-    """Generate agent config.yaml and agent.py files."""
-    # Generate config.yaml
+def _generate_agent_files(agent_path: Path, name: str, description: str, model: str, with_python: bool = False):
+    """Generate agent config.yaml and optionally agent.py files."""
+    # Generate config.yaml (always)
     config_content = f"""agent:
   name: "{description}"
   id: "{name}"
   version: "1.0.0"
   description: "{description}"
-
-model:
-  provider: "openai"
-  id: "{model}"
-  temperature: 0.7
+  model: "openai:{model}"
 
 instructions: |
   You are {description}.
@@ -192,13 +195,15 @@ instructions: |
   [Add your agent instructions here]
 
 storage:
+  type: "sqlite"
   table_name: "{name.replace("-", "_")}_sessions"
   auto_upgrade_schema: true
 """
     (agent_path / "config.yaml").write_text(config_content)
 
-    # Generate agent.py
-    agent_py_content = f'''"""Agent factory for {name}."""
+    # Generate agent.py only if requested
+    if with_python:
+        agent_py_content = f'''"""Agent factory for {name}."""
 
 import yaml
 from pathlib import Path
@@ -236,25 +241,24 @@ def get_{name.replace("-", "_")}_agent(**kwargs) -> Agent:
 
     return agent
 '''
-    (agent_path / "agent.py").write_text(agent_py_content)
+        (agent_path / "agent.py").write_text(agent_py_content)
 
 
-def _generate_team_files(team_path: Path, name: str, mode: str):
-    """Generate team config.yaml and team.py files."""
+def _generate_team_files(team_path: Path, name: str, mode: str, with_python: bool = False):
+    """Generate team config.yaml and optionally team.py files."""
     config_content = f"""team:
   name: "{name.replace("-", " ").title()} Team"
   team_id: "{name}"
   mode: "{mode}"
   version: "1.0.0"
 
-model:
-  provider: "openai"
-  id: "gpt-4o-mini"
-
+# Add at least 2 member agent IDs (required for teams)
 members:
-  # Add member agent IDs here
-  # - "agent-1"
-  # - "agent-2"
+  - "agent-1"  # Replace with actual agent ID
+  - "agent-2"  # Replace with actual agent ID
+
+# Optional: Override default model for team coordination
+# model: "openai:gpt-4o-mini"
 
 instructions: |
   You are a {mode} team coordinator.
@@ -262,12 +266,15 @@ instructions: |
   [Add your routing/coordination logic here]
 
 storage:
+  type: "sqlite"
   table_name: "{name.replace("-", "_")}_team"
   auto_upgrade_schema: true
 """
     (team_path / "config.yaml").write_text(config_content)
 
-    team_py_content = f'''"""Team factory for {name}."""
+    # Generate team.py only if requested
+    if with_python:
+        team_py_content = f'''"""Team factory for {name}."""
 
 import yaml
 from pathlib import Path
@@ -294,24 +301,38 @@ def get_{name.replace("-", "_")}_team(**kwargs) -> Team:
         **kwargs
     )
 '''
-    (team_path / "team.py").write_text(team_py_content)
+        (team_path / "team.py").write_text(team_py_content)
 
 
-def _generate_workflow_files(workflow_path: Path, name: str, description: str):
-    """Generate workflow config.yaml and workflow.py files."""
+def _generate_workflow_files(workflow_path: Path, name: str, description: str, with_python: bool = False):
+    """Generate workflow config.yaml and optionally workflow.py files."""
     config_content = f"""workflow:
   name: "{description}"
   workflow_id: "{name}"
   version: "1.0.0"
   description: "{description}"
 
+# Define workflow steps (at least one required)
+steps:
+  - name: "step1"
+    description: "First workflow step"
+    # agent: "agent-id"  # Optional: specify agent for this step
+    # Add step configuration here
+
+  # Add more steps as needed
+  # - name: "step2"
+  #   description: "Second workflow step"
+
 storage:
+  type: "sqlite"
   table_name: "{name.replace("-", "_")}_workflow"
   auto_upgrade_schema: true
 """
     (workflow_path / "config.yaml").write_text(config_content)
 
-    workflow_py_content = f'''"""Workflow factory for {name}."""
+    # Generate workflow.py only if requested
+    if with_python:
+        workflow_py_content = f'''"""Workflow factory for {name}."""
 
 import yaml
 from pathlib import Path
@@ -345,7 +366,7 @@ def step1_function(step_input):
     # Implement step logic
     return {{"result": "Step 1 complete"}}
 '''
-    (workflow_path / "workflow.py").write_text(workflow_py_content)
+        (workflow_path / "workflow.py").write_text(workflow_py_content)
 
 
 def _generate_tool_files(tool_path: Path, name: str, description: str):
@@ -379,54 +400,97 @@ class {name.replace("-", "_").title().replace("_", "")}Tool:
     (tool_path / "tool.py").write_text(tool_py_content)
 
 
-def _show_agent_success(name: str, agent_path: Path):
+def _show_agent_success(name: str, agent_path: Path, with_python: bool = False):
     """Show success message for agent creation."""
+    files_created = [f"{CLI_EMOJIS['file']} {agent_path}/config.yaml"]
+    if with_python:
+        files_created.append(f"{CLI_EMOJIS['file']} {agent_path}/agent.py")
+
+    pattern_info = "Python Factory (Advanced)" if with_python else "YAML-Only (Recommended)"
+
+    next_steps = [
+        "1. Edit config.yaml to customize your agent",
+        "2. Update instructions in config.yaml",
+        "3. Test your agent: [yellow]hive dev[/yellow]",
+    ]
+
+    if not with_python:
+        next_steps.append("4. Use --with-python flag if you need advanced customization")
+
     message = f"""Agent '{name}' created successfully!
 
+[bold cyan]Pattern:[/bold cyan] {pattern_info}
+
 [bold cyan]Files created:[/bold cyan]
-  {CLI_EMOJIS["file"]} {agent_path}/config.yaml
-  {CLI_EMOJIS["file"]} {agent_path}/agent.py
+{chr(10).join(f"  {f}" for f in files_created)}
 
 [bold cyan]Next steps:[/bold cyan]
-  1. Edit config.yaml to customize your agent
-  2. Update instructions in config.yaml
-  3. Test your agent: [yellow]hive dev[/yellow]
+{chr(10).join(f"  {step}" for step in next_steps)}
 """
     panel = Panel(message, title=f"{CLI_EMOJIS['robot']} Agent Created", border_style="green")
     console.print("\n")
     console.print(panel)
 
 
-def _show_team_success(name: str, team_path: Path, mode: str):
+def _show_team_success(name: str, team_path: Path, mode: str, with_python: bool = False):
     """Show success message for team creation."""
+    files_created = [f"{CLI_EMOJIS['file']} {team_path}/config.yaml"]
+    if with_python:
+        files_created.append(f"{CLI_EMOJIS['file']} {team_path}/team.py")
+
+    pattern_info = "Python Factory (Advanced)" if with_python else "YAML-Only (Recommended)"
+
+    next_steps = [
+        "1. Add member agents to config.yaml",
+        "2. Define routing/coordination logic",
+        "3. Test your team: [yellow]hive dev[/yellow]",
+    ]
+
+    if not with_python:
+        next_steps.append("4. Use --with-python flag if you need advanced customization")
+
     message = f"""Team '{name}' created with mode: {mode}!
 
+[bold cyan]Pattern:[/bold cyan] {pattern_info}
+
 [bold cyan]Files created:[/bold cyan]
-  {CLI_EMOJIS["file"]} {team_path}/config.yaml
-  {CLI_EMOJIS["file"]} {team_path}/team.py
+{chr(10).join(f"  {f}" for f in files_created)}
 
 [bold cyan]Next steps:[/bold cyan]
-  1. Add member agents to config.yaml
-  2. Define routing/coordination logic
-  3. Test your team: [yellow]hive dev[/yellow]
+{chr(10).join(f"  {step}" for step in next_steps)}
 """
     panel = Panel(message, title=f"{CLI_EMOJIS['team']} Team Created", border_style="green")
     console.print("\n")
     console.print(panel)
 
 
-def _show_workflow_success(name: str, workflow_path: Path):
+def _show_workflow_success(name: str, workflow_path: Path, with_python: bool = False):
     """Show success message for workflow creation."""
+    files_created = [f"{CLI_EMOJIS['file']} {workflow_path}/config.yaml"]
+    if with_python:
+        files_created.append(f"{CLI_EMOJIS['file']} {workflow_path}/workflow.py")
+
+    pattern_info = "Python Factory (Advanced)" if with_python else "YAML-Only (Recommended)"
+
+    next_steps = [
+        "1. Edit config.yaml to define workflow structure",
+        "2. Test your workflow: [yellow]hive dev[/yellow]",
+    ]
+
+    if with_python:
+        next_steps.insert(1, "2. Define workflow steps in workflow.py")
+    else:
+        next_steps.append("3. Use --with-python flag if you need advanced customization")
+
     message = f"""Workflow '{name}' created successfully!
 
+[bold cyan]Pattern:[/bold cyan] {pattern_info}
+
 [bold cyan]Files created:[/bold cyan]
-  {CLI_EMOJIS["file"]} {workflow_path}/config.yaml
-  {CLI_EMOJIS["file"]} {workflow_path}/workflow.py
+{chr(10).join(f"  {f}" for f in files_created)}
 
 [bold cyan]Next steps:[/bold cyan]
-  1. Define workflow steps in workflow.py
-  2. Add step logic and error handling
-  3. Test your workflow: [yellow]hive dev[/yellow]
+{chr(10).join(f"  {step}" for step in next_steps)}
 """
     panel = Panel(message, title=f"{CLI_EMOJIS['workflow']} Workflow Created", border_style="green")
     console.print("\n")

@@ -3,9 +3,7 @@ agent:
   id: researcher
   description: Web research agent that searches for information, synthesizes findings,
     and provides comprehensive summaries with sources.
-model:
-  id: gpt-4o
-  temperature: 0.7
+  model: openai:gpt-4o
 instructions: '1. Role Definition: Act as a web research agent tasked with finding
   and summarizing information on specified topics.
 
@@ -23,5 +21,5 @@ instructions: '1. Role Definition: Act as a web research agent tasked with findi
   search extensively and provide a summary that includes key findings, relevant studies,
   and direct links to the sources.'
 tools:
-- PythonTools
-- FileTools
+- python_executor
+- file_reader

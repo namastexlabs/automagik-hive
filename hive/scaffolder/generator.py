@@ -57,6 +57,7 @@ class ConfigGenerator:
         # Extract agent config
         agent_config = config.get("agent", {})
         name = agent_config.get("name")
+        agent_id = agent_config.get("id")
         description = agent_config.get("description")
         model_string = agent_config.get("model")
 
@@ -123,6 +124,9 @@ class ConfigGenerator:
         # Create agent
         try:
             agent = Agent(**agent_params)
+            # Set agent id as instance attribute (not in constructor)
+            if agent_id:
+                agent.id = agent_id
             return agent
         except Exception as e:
             raise GeneratorError(f"Failed to create agent: {e}") from e
@@ -546,7 +550,8 @@ class ConfigGenerator:
         if not storage_config:
             return None
 
-        storage_type = storage_config.get("type")
+        # Default to sqlite if type not specified (backward compatibility)
+        storage_type = storage_config.get("type", "sqlite")
 
         if storage_type == "postgres":
             # PostgreSQL storage

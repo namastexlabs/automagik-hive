@@ -12,19 +12,23 @@ model:
 steps:
   - name: "Planning"
     description: "Analyze the research topic and create a research plan"
-    type: "agent"
+    type: "sequential"
+    agent: "researcher"
 
   - name: "Research"
     description: "Execute research based on the plan"
-    type: "agent"
+    type: "sequential"
+    agent: "researcher"
 
   - name: "Analysis"
     description: "Analyze and synthesize research findings"
     type: "function"
+    function: "analyze_research_findings"
 
   - name: "Summary"
     description: "Create final summary with key insights"
-    type: "agent"
+    type: "sequential"
+    agent: "researcher"
 
 instructions: |
   This workflow executes research tasks in four sequential steps:

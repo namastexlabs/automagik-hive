@@ -13,25 +13,34 @@ steps:
   - name: "Preparation"
     description: "Prepare data sources and processing parameters"
     type: "function"
+    function: "prepare_data_sources"
 
   - name: "ParallelProcessing"
     description: "Process multiple data sources concurrently"
     type: "parallel"
-    substeps:
+    parallel_steps:
       - name: "ProcessSource1"
         description: "Process first data source"
+        type: "function"
+        function: "process_source_1"
       - name: "ProcessSource2"
         description: "Process second data source"
+        type: "function"
+        function: "process_source_2"
       - name: "ProcessSource3"
         description: "Process third data source"
+        type: "function"
+        function: "process_source_3"
 
   - name: "Aggregation"
     description: "Merge and analyze all results"
     type: "function"
+    function: "aggregate_results"
 
   - name: "Report"
     description: "Generate final report"
-    type: "agent"
+    type: "sequential"
+    agent: "researcher"
 
 instructions: |
   This workflow demonstrates parallel processing for efficiency:

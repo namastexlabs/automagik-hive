@@ -287,14 +287,14 @@ def get_parallel_workflow(**kwargs) -> Workflow:
     workflow = Workflow(
         name=workflow_config.get("name"),
         steps=[
-            Step(name="Preparation", function=preparation_step),
+            Step(name="Preparation", executor=preparation_step),
             Parallel(
-                Step(name="ProcessSource1", function=process_source1),
-                Step(name="ProcessSource2", function=process_source2),
-                Step(name="ProcessSource3", function=process_source3),
+                Step(name="ProcessSource1", executor=process_source1),
+                Step(name="ProcessSource2", executor=process_source2),
+                Step(name="ProcessSource3", executor=process_source3),
             ),
-            Step(name="Aggregation", function=aggregation_step),
-            Step(name="Report", function=report_step),
+            Step(name="Aggregation", executor=aggregation_step),
+            Step(name="Report", executor=report_step),
         ],
         **kwargs,
     )
