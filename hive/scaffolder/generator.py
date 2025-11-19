@@ -331,13 +331,13 @@ class ConfigGenerator:
             raise GeneratorError(f"Failed to load config: {e}") from e
 
     @classmethod
-    def _parse_model(cls, model_string: str | None) -> Any | None:
-        """Parse model string into Agno Model object.
+    def _parse_model(cls, model_string: str | dict | None) -> Any | None:
+        """Parse model string or dict into Agno Model object.
 
         Supports 38+ providers via explicit mapping + dynamic fallback.
 
         Args:
-            model_string: Model identifier (e.g., 'openai:gpt-4o-mini', 'anthropic:claude-3-sonnet')
+            model_string: Model identifier (string like 'openai:gpt-4o-mini' or dict like {'provider': 'openai', 'id': 'gpt-4o-mini'})
 
         Returns:
             Agno Model instance or None
@@ -348,8 +348,25 @@ class ConfigGenerator:
         if not model_string:
             return None
 
+        # Handle dict format (from YAML with provider/id keys)
+        if isinstance(model_string, dict):
+            provider = model_string.get("provider")
+            model_id = model_string.get("id")
+
+            if not provider or not model_id:
+                # Check if it's already a model object (dict subclass)
+                if hasattr(model_string, 'id'):
+                    return model_string
+                raise GeneratorError(
+                    f"Invalid model dict format: {model_string}\n"
+                    f"Expected keys: 'provider' and 'id'"
+                )
+
+            # Convert dict to string format for parsing
+            model_string = f"{provider}:{model_id}"
+
         if not isinstance(model_string, str):
-            # Already a model object
+            # Already a model object (not dict, not string)
             return model_string
 
         # Parse provider:model_id format

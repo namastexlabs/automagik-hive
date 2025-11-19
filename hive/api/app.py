@@ -6,6 +6,7 @@ This is the PROPER way to build an Agno-powered API:
 - Built-in session management, memory, and knowledge base handling
 """
 
+import os
 import warnings
 
 from agno.os import AgentOS
@@ -43,6 +44,19 @@ def create_app() -> FastAPI:
         FastAPI: Configured application with AgentOS routes
     """
     config = settings()
+
+    # Propagate API keys from settings to environment variables
+    # This ensures Agno models can access them when instantiated
+    if config.openai_api_key:
+        os.environ["OPENAI_API_KEY"] = config.openai_api_key
+    if config.anthropic_api_key:
+        os.environ["ANTHROPIC_API_KEY"] = config.anthropic_api_key
+    if config.gemini_api_key:
+        os.environ["GEMINI_API_KEY"] = config.gemini_api_key
+    if config.groq_api_key:
+        os.environ["GROQ_API_KEY"] = config.groq_api_key
+    if config.cohere_api_key:
+        os.environ["COHERE_API_KEY"] = config.cohere_api_key
 
     # Discover all components from examples (auto-loads all agents, workflows, and teams)
     print("\n🔍 Discovering AI components...")
