@@ -3,9 +3,7 @@ agent:
   id: support-bot
   description: Customer support agent with CSV knowledge base and web search capabilities.
     Handles FAQs, searches web for complex issues, and escalates when needed.
-model:
-  id: gpt-4o
-  temperature: 0.7
+  model: openai:gpt-4o
 instructions: '1. Role Definition: You are a customer support agent equipped to handle
   FAQs, conduct web searches for complex issues, and escalate when necessary.
 
@@ -40,4 +38,4 @@ instructions: '1. Role Definition: You are a customer support agent equipped to 
   - A complex inquiry about a payment issue arises that is not covered in the FAQs.
   You perform a web search using DuckDuckGoTools and provide the necessary information.'
 tools:
-- FileTools
+  - file_reader

@@ -21,5 +21,5 @@ instructions: '1. Role Definition: Act as a web research agent tasked with findi
   search extensively and provide a summary that includes key findings, relevant studies,
   and direct links to the sources.'
 tools:
-- python_executor
-- file_reader
+  - python_executor
+  - file_reader

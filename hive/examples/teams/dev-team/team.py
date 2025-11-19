@@ -1,4 +1,9 @@
-"""Development Team factory."""
+"""
+Development Team
+
+Collaborative development team with planner, coder, and reviewer specialists.
+Hybrid approach: manually create member agents, use ConfigGenerator for team storage.
+"""
 
 from pathlib import Path
 
@@ -7,34 +12,39 @@ from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.team import Team
 
+from hive.scaffolder.generator import ConfigGenerator
+
 
 def get_dev_team(**kwargs) -> Team:
-    """
-    Create collaborative development team.
+    """Create collaborative development team.
 
-    This is a collaborative team where multiple agents work together:
-    - Planner analyzes requirements and creates implementation plans
-    - Coder implements features following best practices
-    - Reviewer validates quality and provides feedback
+    This factory creates member agents inline and uses ConfigGenerator
+    for storage configuration and team setup.
+
+    The team includes:
+    - Planner: Analyzes requirements and creates implementation plans
+    - Coder: Implements features following best practices
+    - Reviewer: Validates quality and provides feedback
 
     Args:
         **kwargs: Runtime overrides (session_id, user_id, debug_mode, etc.)
 
     Returns:
-        Team: Configured collaborative team instance
+        Team: Fully configured collaborative team instance with storage support
     """
+    # Load config for model and storage settings
     config_path = Path(__file__).parent / "config.yaml"
     with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     team_config = config.get("team", {})
-    model_config = config.get("model", {})
+    model_string = config.get("model")
 
-    # Create model for the team
-    model = OpenAIChat(
-        id=model_config.get("id", "gpt-4o-mini"),
-        temperature=model_config.get("temperature", 0.7),
-    )
+    # Parse model using ConfigGenerator
+    model = ConfigGenerator._parse_model(model_string)
+
+    # Setup storage using ConfigGenerator
+    db = ConfigGenerator._setup_storage(config.get("storage"))
 
     # Create team member agents
     planner = Agent(
@@ -110,15 +120,14 @@ def get_dev_team(**kwargs) -> Team:
     )
     reviewer.agent_id = "reviewer"
 
-    # Create collaborative team
-    # Note: Agno Team uses 'role' for coordination behavior, not 'mode'
+    # Create collaborative team with storage
     team = Team(
         name=team_config.get("name"),
-        role="You are a collaborative team coordinator facilitating teamwork between specialists.",
         members=[planner, coder, reviewer],
         model=model,
         instructions=config.get("instructions"),
         description=team_config.get("description"),
+        db=db,  # Storage configured from YAML
         **kwargs,
     )
 
@@ -126,6 +135,21 @@ def get_dev_team(**kwargs) -> Team:
     if team_config.get("team_id"):
         team.team_id = team_config.get("team_id")
     if team_config.get("mode"):
-        team.mode = team_config.get("mode")  # Store mode as metadata
+        team.mode = team_config.get("mode")
 
     return team
+
+
+# Quick test function
+if __name__ == "__main__":
+    print("Testing dev-team...")
+
+    team = get_dev_team()
+    print(f"✅ Team created: {team.name}")
+    print(f"✅ Model: {team.model.id if team.model else 'Default'}")
+    print(f"✅ Members: {len(team.members)}")
+    print(f"✅ Database: {'Enabled' if team.db else 'Disabled'}")
+
+    # Test with a development task
+    response = team.run("Create a function to validate email addresses with comprehensive tests")
+    print(f"\n📝 Response:\n{response.content}")

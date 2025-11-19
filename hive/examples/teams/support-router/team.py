@@ -1,4 +1,9 @@
-"""Support Router team factory."""
+"""
+Support Router Team
+
+Intelligent routing team that directs queries to specialist agents.
+Hybrid approach: manually create member agents, use ConfigGenerator for team storage.
+"""
 
 from pathlib import Path
 
@@ -7,34 +12,39 @@ from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.team import Team
 
+from hive.scaffolder.generator import ConfigGenerator
+
 
 def get_support_router_team(**kwargs) -> Team:
-    """
-    Create support router team with specialist agents.
+    """Create support router team with specialist agents.
 
-    This is a routing team that automatically directs queries to the right specialist:
-    - Billing specialist for payment-related questions
-    - Technical specialist for technical issues
-    - Sales specialist for sales inquiries
+    This factory creates member agents inline and uses ConfigGenerator
+    for storage configuration and team setup.
+
+    The team includes specialist agents for:
+    - Billing: Payment processing, invoices, refunds, subscriptions
+    - Technical: Bug reports, API issues, performance, configuration
+    - Sales: Product features, pricing, demos, upgrades
 
     Args:
         **kwargs: Runtime overrides (session_id, user_id, debug_mode, etc.)
 
     Returns:
-        Team: Configured routing team instance
+        Team: Fully configured routing team instance with storage support
     """
+    # Load config for model and storage settings
     config_path = Path(__file__).parent / "config.yaml"
     with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     team_config = config.get("team", {})
-    model_config = config.get("model", {})
+    model_string = config.get("model")
 
-    # Create model for the team
-    model = OpenAIChat(
-        id=model_config.get("id", "gpt-4o-mini"),
-        temperature=model_config.get("temperature", 0.7),
-    )
+    # Parse model using ConfigGenerator
+    model = ConfigGenerator._parse_model(model_string)
+
+    # Setup storage using ConfigGenerator
+    db = ConfigGenerator._setup_storage(config.get("storage"))
 
     # Create specialist agents
     billing_specialist = Agent(
@@ -85,15 +95,14 @@ def get_support_router_team(**kwargs) -> Team:
     )
     sales_specialist.agent_id = "sales-specialist"
 
-    # Create routing team
-    # Note: Agno Team uses 'role' for coordination behavior, not 'mode'
+    # Create routing team with storage
     team = Team(
         name=team_config.get("name"),
-        role="You are an intelligent routing coordinator that directs queries to the right specialist.",
         members=[billing_specialist, technical_specialist, sales_specialist],
         model=model,
         instructions=config.get("instructions"),
         description=team_config.get("description"),
+        db=db,  # Storage configured from YAML
         **kwargs,
     )
 
@@ -101,6 +110,21 @@ def get_support_router_team(**kwargs) -> Team:
     if team_config.get("team_id"):
         team.team_id = team_config.get("team_id")
     if team_config.get("mode"):
-        team.mode = team_config.get("mode")  # Store mode as metadata
+        team.mode = team_config.get("mode")
 
     return team
+
+
+# Quick test function
+if __name__ == "__main__":
+    print("Testing support-router team...")
+
+    team = get_support_router_team()
+    print(f"✅ Team created: {team.name}")
+    print(f"✅ Model: {team.model.id if team.model else 'Default'}")
+    print(f"✅ Members: {len(team.members)}")
+    print(f"✅ Database: {'Enabled' if team.db else 'Disabled'}")
+
+    # Test with a support query
+    response = team.run("I need help with a failed payment on my recent invoice")
+    print(f"\n📝 Response:\n{response.content}")
