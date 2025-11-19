@@ -355,12 +355,9 @@ class ConfigGenerator:
 
             if not provider or not model_id:
                 # Check if it's already a model object (dict subclass)
-                if hasattr(model_string, 'id'):
+                if hasattr(model_string, "id"):
                     return model_string
-                raise GeneratorError(
-                    f"Invalid model dict format: {model_string}\n"
-                    f"Expected keys: 'provider' and 'id'"
-                )
+                raise GeneratorError(f"Invalid model dict format: {model_string}\nExpected keys: 'provider' and 'id'")
 
             # Convert dict to string format for parsing
             model_string = f"{provider}:{model_id}"
