@@ -196,8 +196,8 @@ instructions: |
 
 storage:
   type: "sqlite"
+  db_file: "./data/automagik_hive.db"
   table_name: "{name.replace("-", "_")}_sessions"
-  auto_upgrade_schema: true
 """
     (agent_path / "config.yaml").write_text(config_content)
 
@@ -267,8 +267,8 @@ instructions: |
 
 storage:
   type: "sqlite"
+  db_file: "./data/automagik_hive.db"
   table_name: "{name.replace("-", "_")}_team"
-  auto_upgrade_schema: true
 """
     (team_path / "config.yaml").write_text(config_content)
 
@@ -325,8 +325,8 @@ steps:
 
 storage:
   type: "sqlite"
+  db_file: "./data/automagik_hive.db"
   table_name: "{name.replace("-", "_")}_workflow"
-  auto_upgrade_schema: true
 """
     (workflow_path / "config.yaml").write_text(config_content)
 

@@ -15,10 +15,10 @@ instructions: '1. Act as a code review agent specifically for Python code, focus
 
   4. Provide clear and actionable feedback with example code snippets where appropriate.
 
-  5. Use PythonTools to execute the code to identify runtime errors and potential
+  5. Use python_executor to execute the code to identify runtime errors and potential
   bugs.
 
-  6. Utilize FileTools to manage input and output files corresponding to the code
+  6. Utilize file_reader to manage input and output files corresponding to the code
   being reviewed.
 
   7. Ensure that your responses are clear, concise, and structured, facilitating easy
@@ -26,3 +26,7 @@ instructions: '1. Act as a code review agent specifically for Python code, focus
 tools:
   - python_executor
   - file_reader
+storage:
+  type: sqlite
+  db_file: ./data/automagik_hive.db
+  table_name: code_reviewer_sessions
