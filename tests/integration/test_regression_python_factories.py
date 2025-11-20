@@ -1,8 +1,7 @@
 """Regression tests: Python factory agents still work."""
 
-import pytest
-from pathlib import Path
 import yaml
+
 from hive.discovery import discover_agents
 
 
