@@ -108,7 +108,7 @@ def discover_agents() -> list[Agent]:
                     if agent:
                         agents.append(agent)
                         continue
-                except Exception:
+                except Exception:  # noqa: S112
                     # Broken Python file - don't fall back to YAML
                     continue
 
@@ -187,7 +187,7 @@ def discover_workflows() -> list[Workflow]:
                 if workflow:
                     workflows.append(workflow)
                     continue
-            except Exception:
+            except Exception:  # noqa: S112
                 # Broken Python file - don't fall back to YAML
                 continue
 
@@ -266,7 +266,7 @@ def discover_teams() -> list[Team]:
                 if team:
                     teams.append(team)
                     continue
-            except Exception:
+            except Exception:  # noqa: S112
                 # Broken Python file - don't fall back to YAML
                 continue
 
