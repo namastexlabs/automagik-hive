@@ -10,10 +10,10 @@ from pathlib import Path
 import yaml
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
-from agno.workflow import Step, StepOutput, Workflow
+from agno.workflow import Step, StepInput, StepOutput, Workflow
 
 
-def planning_step(step_input) -> StepOutput:
+def planning_step(step_input: StepInput) -> StepOutput:
     """
     Step 1: Create a research plan based on the topic.
 
@@ -23,11 +23,10 @@ def planning_step(step_input) -> StepOutput:
     Returns:
         StepOutput with research plan
     """
-    # Initialize workflow state if needed
-    if step_input.workflow_session_state is None:
-        step_input.workflow_session_state = {}
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
 
-    topic = step_input.message
+    topic = step_input.input
 
     # Create simple agent for planning
     planner = Agent(
@@ -45,13 +44,13 @@ def planning_step(step_input) -> StepOutput:
     plan = response.content
 
     # Store plan in workflow state
-    step_input.workflow_session_state["plan"] = plan
-    step_input.workflow_session_state["topic"] = topic
+    session_state["plan"] = plan
+    session_state["topic"] = topic
 
     return StepOutput(content=f"Research Plan Created:\n\n{plan}")
 
 
-def research_step(step_input) -> StepOutput:
+def research_step(step_input: StepInput) -> StepOutput:
     """
     Step 2: Execute research based on the plan.
 
@@ -61,9 +60,10 @@ def research_step(step_input) -> StepOutput:
     Returns:
         StepOutput with research findings
     """
-    # Access previous state
-    plan = step_input.workflow_session_state.get("plan", "")
-    topic = step_input.workflow_session_state.get("topic", "")
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    plan = session_state.get("plan", "")
+    topic = session_state.get("topic", "")
 
     # Create researcher agent
     researcher = Agent(
@@ -80,12 +80,12 @@ def research_step(step_input) -> StepOutput:
     findings = response.content
 
     # Store findings in state
-    step_input.workflow_session_state["findings"] = findings
+    session_state["findings"] = findings
 
     return StepOutput(content=f"Research Complete:\n\n{findings}")
 
 
-def analysis_function(step_input) -> StepOutput:
+def analysis_function(step_input: StepInput) -> StepOutput:
     """
     Step 3: Analyze research findings (pure function example).
 
@@ -95,7 +95,9 @@ def analysis_function(step_input) -> StepOutput:
     Returns:
         StepOutput with analysis
     """
-    findings = step_input.workflow_session_state.get("findings", "")
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    findings = session_state.get("findings", "")
 
     # Simple analysis logic
     analysis = f"""
@@ -113,12 +115,12 @@ Next Steps: Proceed to summary generation
 """
 
     # Store analysis in state
-    step_input.workflow_session_state["analysis"] = analysis
+    session_state["analysis"] = analysis
 
     return StepOutput(content=analysis)
 
 
-def summary_step(step_input) -> StepOutput:
+def summary_step(step_input: StepInput) -> StepOutput:
     """
     Step 4: Create final summary with all insights.
 
@@ -128,10 +130,12 @@ def summary_step(step_input) -> StepOutput:
     Returns:
         StepOutput with final summary
     """
-    topic = step_input.workflow_session_state.get("topic", "")
-    plan = step_input.workflow_session_state.get("plan", "")
-    findings = step_input.workflow_session_state.get("findings", "")
-    analysis = step_input.workflow_session_state.get("analysis", "")
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    topic = session_state.get("topic", "")
+    plan = session_state.get("plan", "")
+    findings = session_state.get("findings", "")
+    analysis = session_state.get("analysis", "")
 
     # Create summarizer agent
     summarizer = Agent(
@@ -164,7 +168,7 @@ Create a comprehensive final summary."""
     summary = response.content
 
     # Store final summary
-    step_input.workflow_session_state["summary"] = summary
+    session_state["summary"] = summary
 
     return StepOutput(content=f"FINAL RESEARCH SUMMARY:\n\n{summary}")
 

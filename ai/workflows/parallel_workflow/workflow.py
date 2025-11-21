@@ -11,10 +11,10 @@ from pathlib import Path
 import yaml
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
-from agno.workflow import Parallel, Step, StepOutput, Workflow
+from agno.workflow import Parallel, Step, StepInput, StepOutput, Workflow
 
 
-def preparation_step(step_input) -> StepOutput:
+def preparation_step(step_input: StepInput) -> StepOutput:
     """
     Step 1: Prepare data sources and processing parameters.
 
@@ -24,11 +24,13 @@ def preparation_step(step_input) -> StepOutput:
     Returns:
         StepOutput with preparation details
     """
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
     # Initialize workflow state
-    if step_input.workflow_session_state is None:
-        step_input.workflow_session_state = {}
+    if session_state is None:
+        session_state = {}
 
-    request = step_input.message
+    request = step_input.input
 
     # Define data sources to process
     data_sources = [
@@ -38,9 +40,9 @@ def preparation_step(step_input) -> StepOutput:
     ]
 
     # Store sources in workflow state
-    step_input.workflow_session_state["sources"] = data_sources
-    step_input.workflow_session_state["request"] = request
-    step_input.workflow_session_state["start_time"] = time.time()
+    session_state["sources"] = data_sources
+    session_state["request"] = request
+    session_state["start_time"] = time.time()
 
     prep_summary = f"""
 Data sources prepared for parallel processing:
@@ -55,7 +57,7 @@ Processing Request: {request}
     return StepOutput(content=prep_summary)
 
 
-def process_source1(step_input) -> StepOutput:
+def process_source1(step_input: StepInput) -> StepOutput:
     """
     Parallel Step 1: Process first data source.
 
@@ -65,7 +67,9 @@ def process_source1(step_input) -> StepOutput:
     Returns:
         StepOutput with processing results
     """
-    sources = step_input.workflow_session_state.get("sources", [])
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    sources = session_state.get("sources", [])
     source = sources[0] if sources else {}
 
     # Simulate processing
@@ -83,14 +87,14 @@ def process_source1(step_input) -> StepOutput:
     }
 
     # Store in state
-    if "results" not in step_input.workflow_session_state:
-        step_input.workflow_session_state["results"] = []
-    step_input.workflow_session_state["results"].append(result)
+    if "results" not in session_state:
+        session_state["results"] = []
+    session_state["results"].append(result)
 
     return StepOutput(content=f"✅ {source.get('name')}: {result['insights']}")
 
 
-def process_source2(step_input) -> StepOutput:
+def process_source2(step_input: StepInput) -> StepOutput:
     """
     Parallel Step 2: Process second data source.
 
@@ -100,7 +104,9 @@ def process_source2(step_input) -> StepOutput:
     Returns:
         StepOutput with processing results
     """
-    sources = step_input.workflow_session_state.get("sources", [])
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    sources = session_state.get("sources", [])
     source = sources[1] if len(sources) > 1 else {}
 
     # Simulate processing (longer than source1)
@@ -118,14 +124,14 @@ def process_source2(step_input) -> StepOutput:
     }
 
     # Store in state
-    if "results" not in step_input.workflow_session_state:
-        step_input.workflow_session_state["results"] = []
-    step_input.workflow_session_state["results"].append(result)
+    if "results" not in session_state:
+        session_state["results"] = []
+    session_state["results"].append(result)
 
     return StepOutput(content=f"✅ {source.get('name')}: {result['insights']}")
 
 
-def process_source3(step_input) -> StepOutput:
+def process_source3(step_input: StepInput) -> StepOutput:
     """
     Parallel Step 3: Process third data source.
 
@@ -135,7 +141,9 @@ def process_source3(step_input) -> StepOutput:
     Returns:
         StepOutput with processing results
     """
-    sources = step_input.workflow_session_state.get("sources", [])
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    sources = session_state.get("sources", [])
     source = sources[2] if len(sources) > 2 else {}
 
     # Simulate processing
@@ -153,14 +161,14 @@ def process_source3(step_input) -> StepOutput:
     }
 
     # Store in state
-    if "results" not in step_input.workflow_session_state:
-        step_input.workflow_session_state["results"] = []
-    step_input.workflow_session_state["results"].append(result)
+    if "results" not in session_state:
+        session_state["results"] = []
+    session_state["results"].append(result)
 
     return StepOutput(content=f"✅ {source.get('name')}: {result['insights']}")
 
 
-def aggregation_step(step_input) -> StepOutput:
+def aggregation_step(step_input: StepInput) -> StepOutput:
     """
     Step 3: Aggregate all parallel processing results.
 
@@ -170,8 +178,10 @@ def aggregation_step(step_input) -> StepOutput:
     Returns:
         StepOutput with aggregated data
     """
-    results = step_input.workflow_session_state.get("results", [])
-    start_time = step_input.workflow_session_state.get("start_time", time.time())
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    results = session_state.get("results", [])
+    start_time = session_state.get("start_time", time.time())
 
     # Calculate statistics
     total_records = sum(r["records_processed"] for r in results)
@@ -189,7 +199,7 @@ def aggregation_step(step_input) -> StepOutput:
     }
 
     # Store aggregation
-    step_input.workflow_session_state["aggregation"] = aggregation
+    session_state["aggregation"] = aggregation
 
     summary = f"""
 AGGREGATION COMPLETE:
@@ -208,7 +218,7 @@ Individual Results:
     return StepOutput(content=summary)
 
 
-def report_step(step_input) -> StepOutput:
+def report_step(step_input: StepInput) -> StepOutput:
     """
     Step 4: Generate final report with AI analysis.
 
@@ -218,9 +228,11 @@ def report_step(step_input) -> StepOutput:
     Returns:
         StepOutput with final report
     """
-    aggregation = step_input.workflow_session_state.get("aggregation", {})
-    request = step_input.workflow_session_state.get("request", "")
-    results = step_input.workflow_session_state.get("results", [])
+    # Access session state
+    session_state = step_input.workflow_session.session_data.get("session_state", {})
+    aggregation = session_state.get("aggregation", {})
+    request = session_state.get("request", "")
+    results = session_state.get("results", [])
 
     # Create report generator agent
     reporter = Agent(
@@ -255,7 +267,7 @@ Source Details:
     report = response.content
 
     # Store final report
-    step_input.workflow_session_state["report"] = report
+    session_state["report"] = report
 
     return StepOutput(content=f"FINAL PROCESSING REPORT:\n\n{report}")
 
