@@ -248,6 +248,8 @@ pip install automagik-hive
 
 ### Create Your First Agent (30 seconds)
 
+**YAML-Only Pattern (Recommended for Beginners):**
+
 ```bash
 # 1. Initialize project
 uvx automagik-hive init my-project
@@ -257,17 +259,34 @@ cd my-project
 cp .env.example .env
 # Edit .env and add your API keys
 
-# 3a. Template-based creation (fast)
+# 3. Create agent with just YAML config
 hive create agent my-bot
 
-# 3b. AI-powered creation (optimal)
-hive ai my-bot --description "Customer support bot with FAQ knowledge"
+# 4. Edit config (optional)
+cat ai/agents/my-bot/config.yaml
 
-# 4. Start development server
+# 5. Start development server
 hive dev
 
-# 5. Access API docs
+# 6. Access API docs
 open http://localhost:8886/docs
+```
+
+**Advanced Pattern (Python Factories):**
+
+```bash
+# Create agent with Python customization
+hive create agent my-bot --with-python
+
+# Now you can customize ai/agents/my-bot/agent.py
+# for advanced tool loading, dynamic instructions, etc.
+```
+
+**AI-Powered Creation (Optimal Configuration):**
+
+```bash
+# AI generates optimal YAML config based on description
+hive ai my-bot --description "Customer support bot with FAQ knowledge"
 ```
 
 ### Your First Conversation

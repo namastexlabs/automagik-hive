@@ -1,0 +1,16 @@
+# Automagik Hive Configuration
+project:
+  name: "automagik-hive"
+  version: "1.0.0"
+
+# Agent discovery configuration
+agents:
+  discovery_path: "ai/agents"
+
+# Workflow discovery configuration
+workflows:
+  discovery_path: "ai/workflows"
+
+# Team discovery configuration
+teams:
+  discovery_path: "ai/teams"

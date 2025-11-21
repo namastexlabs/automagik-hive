@@ -28,6 +28,13 @@ class GeneratorError(Exception):
 class ConfigGenerator:
     """Generates Agno components from YAML configs."""
 
+    # Class-level cache for database instances to ensure singleton behavior
+    # Key: (storage_type, connection_string/db_file) - Note: table_name excluded
+    # Value: Database instance
+    # Rationale: Agno generates DB IDs based on db_file alone. Multiple agents
+    # can share one DB instance with different table_names for their sessions.
+    _db_cache: dict[tuple[str, str], Any] = {}
+
     @classmethod
     def generate_agent_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Agent:
         """Generate an Agno Agent from YAML configuration.
@@ -57,6 +64,7 @@ class ConfigGenerator:
         # Extract agent config
         agent_config = config.get("agent", {})
         name = agent_config.get("name")
+        agent_id = agent_config.get("id")
         description = agent_config.get("description")
         model_string = agent_config.get("model")
 
@@ -102,6 +110,8 @@ class ConfigGenerator:
             agent_params["knowledge"] = knowledge
         if db:
             agent_params["db"] = db
+            # Enable history loading from database when db is configured
+            agent_params["add_history_to_context"] = True
         if mcp_servers:
             agent_params["mcp_servers"] = mcp_servers
         if temperature is not None:
@@ -123,6 +133,9 @@ class ConfigGenerator:
         # Create agent
         try:
             agent = Agent(**agent_params)
+            # Set agent id as instance attribute (not in constructor)
+            if agent_id:
+                agent.id = agent_id
             return agent
         except Exception as e:
             raise GeneratorError(f"Failed to create agent: {e}") from e
@@ -327,13 +340,13 @@ class ConfigGenerator:
             raise GeneratorError(f"Failed to load config: {e}") from e
 
     @classmethod
-    def _parse_model(cls, model_string: str | None) -> Any | None:
-        """Parse model string into Agno Model object.
+    def _parse_model(cls, model_string: str | dict | None) -> Any | None:
+        """Parse model string or dict into Agno Model object.
 
         Supports 38+ providers via explicit mapping + dynamic fallback.
 
         Args:
-            model_string: Model identifier (e.g., 'openai:gpt-4o-mini', 'anthropic:claude-3-sonnet')
+            model_string: Model identifier (string like 'openai:gpt-4o-mini' or dict like {'provider': 'openai', 'id': 'gpt-4o-mini'})
 
         Returns:
             Agno Model instance or None
@@ -344,8 +357,22 @@ class ConfigGenerator:
         if not model_string:
             return None
 
+        # Handle dict format (from YAML with provider/id keys)
+        if isinstance(model_string, dict):
+            provider = model_string.get("provider")
+            model_id = model_string.get("id")
+
+            if not provider or not model_id:
+                # Check if it's already a model object (dict subclass)
+                if hasattr(model_string, "id"):
+                    return model_string
+                raise GeneratorError(f"Invalid model dict format: {model_string}\nExpected keys: 'provider' and 'id'")
+
+            # Convert dict to string format for parsing
+            model_string = f"{provider}:{model_id}"
+
         if not isinstance(model_string, str):
-            # Already a model object
+            # Already a model object (not dict, not string)
             return model_string
 
         # Parse provider:model_id format
@@ -542,11 +569,17 @@ class ConfigGenerator:
 
         Returns:
             Storage instance or None
+
+        Note:
+            Uses class-level cache to ensure singleton behavior. Multiple agents
+            with the same database configuration will share the same DB instance,
+            preventing database ID conflicts in AgentOS.
         """
         if not storage_config:
             return None
 
-        storage_type = storage_config.get("type")
+        # Default to sqlite if type not specified (backward compatibility)
+        storage_type = storage_config.get("type", "sqlite")
 
         if storage_type == "postgres":
             # PostgreSQL storage
@@ -562,20 +595,41 @@ class ConfigGenerator:
                     "PostgreSQL storage requires 'connection' in config or HIVE_DATABASE_URL environment variable"
                 )
 
-            return PostgresDb(
+            table_name = storage_config.get("table_name", "agent_sessions")
+
+            # Cache key excludes table_name to prevent DB ID conflicts
+            cache_key = ("postgres", connection)
+            if cache_key in cls._db_cache:
+                return cls._db_cache[cache_key]
+
+            # Create new instance and cache it (use first table_name encountered)
+            db_instance = PostgresDb(
                 db_url=connection,
-                session_table=storage_config.get("table_name", "agent_sessions"),
+                session_table=table_name,
             )
+            cls._db_cache[cache_key] = db_instance
+            return db_instance
 
         elif storage_type == "sqlite":
             # SQLite storage
-            from agno.storage import SqliteStorage  # type: ignore[import-not-found]
+            from agno.db.sqlite import SqliteDb
 
-            return SqliteStorage(
-                db_file=storage_config.get("db_file", "./data/agent.db"),
-                table_name=storage_config.get("table_name", "agent_sessions"),
-                auto_upgrade_schema=True,
+            db_file = storage_config.get("db_file", "./data/agent.db")
+            table_name = storage_config.get("table_name", "agent_sessions")
+
+            # Cache key excludes table_name to prevent DB ID conflicts
+            # All agents sharing a db_file will share the same DB instance
+            cache_key = ("sqlite", db_file)
+            if cache_key in cls._db_cache:
+                return cls._db_cache[cache_key]
+
+            # Create new instance and cache it (use first table_name encountered)
+            db_instance = SqliteDb(
+                db_file=db_file,
+                session_table=table_name,
             )
+            cls._db_cache[cache_key] = db_instance
+            return db_instance
 
         else:
             raise GeneratorError(f"Unknown storage type: {storage_type}")

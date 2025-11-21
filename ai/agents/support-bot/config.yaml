@@ -2,7 +2,7 @@ agent:
   name: support-bot
   id: support-bot
   description: Customer support agent that handles FAQs and escalates when needed.
-  model: openai:gpt-4o
+  model: openai:gpt-4o-mini
 instructions: |
   You are a friendly customer support agent.
 
@@ -16,7 +16,7 @@ instructions: |
   - Use simple language
   - Provide actionable solutions
 tools:
-  - file_reader
+- file_reader
 storage:
   type: sqlite
   db_file: ./data/automagik_hive.db

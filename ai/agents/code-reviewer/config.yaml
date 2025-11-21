@@ -3,7 +3,9 @@ agent:
   id: code-reviewer
   description: Code review agent that analyzes code quality, suggests improvements,
     checks for bugs, and follows best practices. Focus on Python code.
-  model: anthropic:claude-sonnet-4-20250514
+model:
+  id: claude-sonnet-4-20250514
+  temperature: 0.7
 instructions: '1. Act as a code review agent specifically for Python code, focusing
   on quality assessment, bug detection, and best practice suggestions.
 
@@ -24,8 +26,8 @@ instructions: '1. Act as a code review agent specifically for Python code, focus
   7. Ensure that your responses are clear, concise, and structured, facilitating easy
   understanding and implementation of suggested changes.'
 tools:
-  - python_executor
-  - file_reader
+- python_executor
+- file_reader
 storage:
   type: sqlite
   db_file: ./data/automagik_hive.db

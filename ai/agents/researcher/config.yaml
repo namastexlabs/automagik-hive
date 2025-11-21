@@ -16,8 +16,8 @@ instructions: |
   - Be concise yet thorough
   - Cite sources when available
 tools:
-  - python_executor
-  - file_reader
+- python_executor
+- file_reader
 storage:
   type: sqlite
   db_file: ./data/automagik_hive.db
