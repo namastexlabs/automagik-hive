@@ -202,7 +202,8 @@ define setup_docker_postgres
         chown -R $${POSTGRES_UID}:$${POSTGRES_GID} ./data/postgres 2>/dev/null || sudo chown -R $$USER:$$USER ./data/postgres; \
         echo -e "$(FONT_CYAN)📋 Creating Docker environment file for compose...$(FONT_RESET)"; \
         mkdir -p docker/main; \
-        echo "POSTGRES_USER=$$POSTGRES_USER" > docker/main/.env; \
+        echo "HIVE_DATABASE_URL=$$DB_URL" > docker/main/.env; \
+        echo "POSTGRES_USER=$$POSTGRES_USER" >> docker/main/.env; \
         echo "POSTGRES_PASSWORD=$$POSTGRES_PASSWORD" >> docker/main/.env; \
         echo "POSTGRES_DB=$$POSTGRES_DB" >> docker/main/.env; \
         echo "POSTGRES_UID=$$POSTGRES_UID" >> docker/main/.env; \
