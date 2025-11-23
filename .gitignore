@@ -97,3 +97,4 @@ temp/
 env
 *.pid
 .genie
+docker/main/.env
