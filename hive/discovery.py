@@ -5,10 +5,13 @@ This module discovers and loads agents from:
 2. Package examples (hive/examples/agents/) as fallback
 3. Genie markdown agents (.genie/agents/, .genie/code/agents/)
 
-Supports three loading strategies:
-- Python factory files (agent.py, team.py, workflow.py) - takes precedence
-- YAML-only configs (config.yaml) - fallback when no Python file exists
-- Markdown with frontmatter (.md files in Genie directories)
+Supports three loading strategies (in priority order):
+1. Python factory files (agent.py) - advanced, optional
+2. Markdown with frontmatter (.md files) - Genie format, human-readable
+3. YAML-only configs (config.yaml) - Hive format, fallback
+
+All formats are supported in ai/agents/ and .genie/ directories.
+Python is never required - use YAML or frontmatter for simple agents.
 """
 
 import importlib.util
@@ -173,10 +176,10 @@ def discover_agents() -> list[Agent]:
     2. Otherwise: use package examples (hive/examples/agents/)
     3. Additionally scan Genie markdown agents (.genie/agents/, .genie/code/agents/)
 
-    Scans for agent directories containing:
-    - agent.py: Factory function (get_*_agent) - takes precedence
-    - config.yaml: Agent configuration - fallback
-    - *.md: Genie markdown with frontmatter (in .genie/ directories)
+    Scans for agent directories containing (in priority order):
+    1. agent.py: Python factory function (get_*_agent) - advanced, optional
+    2. *.md: Markdown with YAML frontmatter - Genie format, human-readable
+    3. config.yaml: YAML configuration - Hive format, fallback
 
     Returns:
         List[Agent]: Loaded agent instances ready for AgentOS
@@ -230,7 +233,7 @@ def discover_agents() -> list[Agent]:
             if agent_path.name == "examples":
                 continue
 
-            # Strategy 1: Try Python factory first (backward compatibility)
+            # Strategy 1: Try Python factory first (advanced, optional)
             factory_file = agent_path / "agent.py"
             if factory_file.exists():
                 try:
@@ -239,10 +242,29 @@ def discover_agents() -> list[Agent]:
                         agents.append(agent)
                         continue
                 except Exception:  # noqa: S112
-                    # Broken Python file - don't fall back to YAML
+                    # Broken Python file - don't fall back to other formats
                     continue
 
-            # Strategy 2: Fallback to YAML-only loading
+            # Strategy 2: Markdown with frontmatter (Genie format)
+            md_files = list(agent_path.glob("*.md"))
+            # Filter out documentation files
+            md_files = [
+                f
+                for f in md_files
+                if f.name.upper() not in ("README.MD", "CHANGELOG.MD", "LICENSE.MD", "CONTRIBUTING.MD")
+                and not f.name.startswith("_")
+            ]
+            if md_files:
+                # Use first valid .md file found
+                for md_file in md_files:
+                    agent = _load_agent_from_frontmatter(md_file, agent_path)
+                    if agent:
+                        agents.append(agent)
+                        break
+                if agent:
+                    continue
+
+            # Strategy 3: Fallback to YAML-only loading (Hive format)
             config_file = agent_path / "config.yaml"
             if config_file.exists():
                 agent = _load_agent_from_yaml(config_file, agent_path)
@@ -250,8 +272,8 @@ def discover_agents() -> list[Agent]:
                     agents.append(agent)
                 continue
 
-            # Neither found
-            print(f"  ⏭️  Skipping {agent_path.name} (no agent.py or config.yaml)")
+            # None found
+            print(f"  ⏭️  Skipping {agent_path.name} (no agent.py, *.md, or config.yaml)")
 
     # Strategy 3: Discover Genie markdown agents (only in project mode)
     if project_root:
@@ -493,6 +515,51 @@ def _load_agent_from_yaml(config_file: Path, agent_path: Path) -> Agent | None:
         return agent
     except Exception as e:
         print(f"  ❌ Failed to load YAML agent from {agent_path.name}: {e}")
+        return None
+
+
+def _load_agent_from_frontmatter(md_file: Path, agent_path: Path) -> Agent | None:
+    """Load agent from markdown file with YAML frontmatter (Genie format).
+
+    Args:
+        md_file: Path to .md file with frontmatter
+        agent_path: Path to agent directory
+
+    Returns:
+        Agent instance if loaded successfully, None otherwise
+
+    Note:
+        This supports Genie-style agents defined in markdown with YAML frontmatter.
+        The frontmatter contains agent config, markdown body contains instructions.
+    """
+    try:
+        from hive.scaffolder.generator import ConfigGenerator
+
+        # Parse frontmatter and content
+        parsed = parse_markdown_frontmatter(str(md_file))
+        frontmatter = parsed["frontmatter"]
+        content = parsed["content"]
+
+        # Validate Genie schema
+        ConfigValidator.validate_genie_agent(frontmatter)
+
+        # Map to Hive config
+        hive_config = map_genie_to_hive(frontmatter, content)
+
+        # Use directory name as agent ID (consistent with other strategies)
+        agent_id = agent_path.name
+        hive_config["agent"]["id"] = agent_id
+
+        # Generate Agent instance
+        agent = ConfigGenerator.generate_agent_from_dict(hive_config, validate=True)
+
+        print(f"  ✅ Loaded agent (frontmatter): {agent.name} (id: {agent_id})")
+        return agent
+    except ValueError as e:
+        print(f"  ⚠️  Invalid frontmatter in {md_file.name}: {e}")
+        return None
+    except Exception as e:
+        print(f"  ❌ Failed to load frontmatter agent from {agent_path.name}: {e}")
         return None
 
 

@@ -11,17 +11,14 @@ from typing import Any
 
 
 # Model name conversion table: Genie -> Hive
-# NOTE: Using OpenAI gpt-4o-mini as default (cost-effective)
 MODEL_CONVERSION_MAP = {
-    # Anthropic aliases -> OpenAI equivalents
-    "sonnet": "openai:gpt-4o-mini",
-    "opus": "openai:gpt-4o-mini",
-    "haiku": "openai:gpt-4o-mini",
+    # Anthropic models (primary)
+    "sonnet": "anthropic:claude-sonnet-4-20250514",
+    "opus": "anthropic:claude-opus-4-20250514",
+    "haiku": "anthropic:claude-haiku-3-5-20241022",
     # OpenAI models
-    "gpt-5-codex": "openai:gpt-4o-mini",
     "gpt-4o": "openai:gpt-4o",
     "gpt-4o-mini": "openai:gpt-4o-mini",
-    "opencode/glm-4.6": "openai:gpt-4o-mini",  # fallback
 }
 
 
@@ -33,15 +30,15 @@ def convert_genie_model_to_hive(model_name: str) -> str:
 
     Returns:
         Hive model identifier (e.g., "anthropic:claude-sonnet-4-20250514")
-        Falls back to "openai:gpt-4o" for unknown models.
+        Falls back to "anthropic:claude-sonnet-4-20250514" for unknown models.
 
     Examples:
         >>> convert_genie_model_to_hive("sonnet")
         'anthropic:claude-sonnet-4-20250514'
         >>> convert_genie_model_to_hive("unknown-model")
-        'openai:gpt-4o'
+        'anthropic:claude-sonnet-4-20250514'
     """
-    return MODEL_CONVERSION_MAP.get(model_name, "openai:gpt-4o")
+    return MODEL_CONVERSION_MAP.get(model_name, "anthropic:claude-sonnet-4-20250514")
 
 
 def map_genie_to_hive(genie_config: dict[str, Any], markdown_content: str) -> dict[str, Any]:
