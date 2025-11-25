@@ -26,18 +26,24 @@ def convert_genie_model_to_hive(model_name: str) -> str:
 
     Args:
         model_name: Genie model name (e.g., "sonnet", "opus", "haiku")
+                   or already-formatted Hive model (e.g., "openai:gpt-4o-mini")
 
     Returns:
         Hive model identifier (e.g., "anthropic:claude-sonnet-4-20250514")
-        Falls back to "anthropic:claude-sonnet-4-20250514" for unknown models.
+        Falls back to "openai:gpt-4o-mini" for unknown models.
 
     Examples:
         >>> convert_genie_model_to_hive("sonnet")
         'anthropic:claude-sonnet-4-20250514'
+        >>> convert_genie_model_to_hive("openai:gpt-4o-mini")
+        'openai:gpt-4o-mini'
         >>> convert_genie_model_to_hive("unknown-model")
-        'anthropic:claude-sonnet-4-20250514'
+        'openai:gpt-4o-mini'
     """
-    return MODEL_CONVERSION_MAP.get(model_name, "anthropic:claude-sonnet-4-20250514")
+    # If model is already in Hive format (provider:model), pass through
+    if ":" in model_name:
+        return model_name
+    return MODEL_CONVERSION_MAP.get(model_name, "openai:gpt-4o-mini")
 
 
 def map_genie_to_hive(genie_config: dict[str, Any], markdown_content: str) -> dict[str, Any]:
@@ -86,24 +92,31 @@ def map_genie_to_hive(genie_config: dict[str, Any], markdown_content: str) -> di
         primary_executor = executor_raw
         executor_chain = [executor_raw.lower()]
 
-    # Get model from forge config (default to "sonnet")
-    executor_config = forge_section.get(primary_executor, {})
-    genie_model = executor_config.get("model", "sonnet")
+    # Get model: check top-level first (Hive format), then forge config (Genie format)
+    if "model" in genie_config:
+        # Top-level model field (Hive format or short name)
+        genie_model = genie_config["model"]
+    else:
+        # Fallback to forge section (Genie format)
+        executor_config = forge_section.get(primary_executor, {})
+        genie_model = executor_config.get("model", "gpt-4o-mini")
     hive_model = convert_genie_model_to_hive(genie_model)
 
     # Build Hive configuration structure
-    # Note: Genie agents don't need storage by default (they're orchestrated via CLI)
-    # Storage can be enabled per-agent in frontmatter if needed
     hive_config: dict[str, Any] = {
         "agent": {
             "name": genie_config.get("name", "unnamed-agent"),
-            "id": genie_config.get("name", "unnamed-agent"),
+            "id": genie_config.get("id", genie_config.get("name", "unnamed-agent")),
             "description": genie_config.get("description", ""),
             "model": hive_model,
         },
         "instructions": markdown_content,
-        "tools": [],  # Genie doesn't specify tools
+        "tools": genie_config.get("tools", []),  # Pass through tools from frontmatter
     }
+
+    # Pass through storage configuration if present
+    if "storage" in genie_config:
+        hive_config["storage"] = genie_config["storage"]
 
     # Add executor_chain if present
     if executor_chain:

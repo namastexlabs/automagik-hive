@@ -8,7 +8,6 @@ This test suite validates all components:
 5. Full discovery pipeline integration
 """
 
-
 import pytest
 
 from hive.discovery import derive_genie_agent_id, discover_agents_with_frontmatter
@@ -133,8 +132,32 @@ class TestGenieMapper:
         assert convert_genie_model_to_hive("sonnet") == "anthropic:claude-sonnet-4-20250514"
         assert convert_genie_model_to_hive("opus") == "anthropic:claude-opus-4-20250514"
         assert convert_genie_model_to_hive("haiku") == "anthropic:claude-haiku-3-5-20241022"
-        assert convert_genie_model_to_hive("gpt-5-codex") == "openai:gpt-4o"
-        assert convert_genie_model_to_hive("unknown-model") == "openai:gpt-4o"  # fallback
+        assert convert_genie_model_to_hive("gpt-4o") == "openai:gpt-4o"
+        assert convert_genie_model_to_hive("gpt-4o-mini") == "openai:gpt-4o-mini"
+        assert convert_genie_model_to_hive("unknown-model") == "openai:gpt-4o-mini"  # fallback
+
+    def test_model_passthrough_hive_format(self):
+        """Test that models already in Hive format pass through unchanged."""
+        assert convert_genie_model_to_hive("openai:gpt-4o-mini") == "openai:gpt-4o-mini"
+        assert convert_genie_model_to_hive("openai:gpt-4o") == "openai:gpt-4o"
+        assert convert_genie_model_to_hive("anthropic:claude-sonnet-4-20250514") == "anthropic:claude-sonnet-4-20250514"
+        assert convert_genie_model_to_hive("groq:llama-3.1-70b") == "groq:llama-3.1-70b"
+
+    def test_top_level_model_field(self):
+        """Test top-level model field takes precedence over forge section."""
+        genie_config = {
+            "name": "top-level-model-agent",
+            "description": "Agent with top-level model",
+            "model": "openai:gpt-4o-mini",  # Top-level model field
+            "genie": {"executor": "CLAUDE_CODE"},
+            "forge": {"CLAUDE_CODE": {"model": "sonnet"}},  # Should be ignored
+        }
+        content = "Instructions"
+
+        result = map_genie_to_hive(genie_config, content)
+
+        # Top-level model should take precedence
+        assert result["agent"]["model"] == "openai:gpt-4o-mini"
 
     def test_basic_mapping(self):
         """Test basic Genie to Hive mapping."""
@@ -216,11 +239,11 @@ class TestGenieMapper:
 
         # Check defaults
         assert result["agent"]["name"] == "minimal-agent"
-        assert result["agent"]["model"] == "anthropic:claude-sonnet-4-20250514"  # default model
+        assert result["agent"]["model"] == "openai:gpt-4o-mini"  # default model
         assert result["agent"]["executor_chain"] == ["claude_code"]  # default executor
         assert result["instructions"] == content
         assert result["tools"] == []
-        assert result["storage"]["type"] == "sqlite"
+        # Note: storage is no longer added by default in genie_mapper
 
     def test_model_fallback_from_unknown_executor(self):
         """Test model fallback when executor not in forge section."""
@@ -234,8 +257,8 @@ class TestGenieMapper:
 
         result = map_genie_to_hive(genie_config, content)
 
-        # Should fall back to default model (sonnet -> anthropic:claude-sonnet-4-20250514)
-        assert result["agent"]["model"] == "anthropic:claude-sonnet-4-20250514"
+        # Should fall back to default model (gpt-4o-mini)
+        assert result["agent"]["model"] == "openai:gpt-4o-mini"
 
 
 # ============================================================================
