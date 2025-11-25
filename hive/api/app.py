@@ -4,10 +4,16 @@ This is the PROPER way to build an Agno-powered API:
 - AgentOS() automatically generates REST endpoints for all agents
 - No manual endpoint creation needed
 - Built-in session management, memory, and knowledge base handling
+
+Serverless Mode:
+- When HIVE_DATABASE_URL is not set, embedded PostgreSQL is auto-started
+- Zero configuration required for development/serverless deployments
 """
 
 import os
 import warnings
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 from agno.os import AgentOS
 from fastapi import FastAPI
@@ -20,6 +26,9 @@ from hive.discovery import discover_agents, discover_teams, discover_workflows
 # Suppress AgentOS route conflict warnings (expected behavior when merging routes)
 warnings.filterwarnings("ignore", message=".*Route conflict detected.*")
 
+# Global reference to embedded postgres (for cleanup)
+_embedded_postgres = None
+
 # AGUI is optional - requires ag_ui package
 try:
     from agno.os.interfaces.agui import AGUI
@@ -29,6 +38,64 @@ try:
 except ImportError:
     AGUI_AVAILABLE = False
     AGUI_TYPE = None
+
+
+async def _initialize_embedded_postgres() -> None:
+    """Initialize embedded PostgreSQL if in serverless mode."""
+    global _embedded_postgres
+
+    config = settings()
+
+    if not config.use_embedded_postgres:
+        print(f"📡 Using external PostgreSQL: {config.hive_database_url[:50]}...")
+        return
+
+    print("🚀 Serverless mode: Starting embedded PostgreSQL...")
+
+    # Import here to avoid circular imports and allow optional usage
+    from hive.database import get_embedded_postgres
+
+    # Initialize embedded postgres
+    _embedded_postgres = await get_embedded_postgres(
+        port=config.hive_embedded_postgres_port,
+        data_dir=config.hive_embedded_postgres_data_dir,
+    )
+
+    # Set environment variable so other components can use it
+    db_url = _embedded_postgres.get_connection_url()
+    os.environ["HIVE_DATABASE_URL"] = db_url
+
+    print(f"✅ Embedded PostgreSQL ready on port {config.hive_embedded_postgres_port}")
+
+
+async def _shutdown_embedded_postgres() -> None:
+    """Shutdown embedded PostgreSQL if running."""
+    global _embedded_postgres
+
+    if _embedded_postgres is not None:
+        print("🛑 Stopping embedded PostgreSQL...")
+        from hive.database import stop_embedded_postgres
+
+        await stop_embedded_postgres()
+        _embedded_postgres = None
+        print("✅ Embedded PostgreSQL stopped")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Application lifespan manager.
+
+    Handles:
+    - Embedded PostgreSQL startup (serverless mode)
+    - Graceful shutdown of database connections
+    """
+    # Startup
+    await _initialize_embedded_postgres()
+
+    yield
+
+    # Shutdown
+    await _shutdown_embedded_postgres()
 
 
 def create_app() -> FastAPI:
@@ -71,6 +138,7 @@ def create_app() -> FastAPI:
         version=__version__,
         docs_url="/docs" if config.is_development else None,
         redoc_url="/redoc" if config.is_development else None,
+        lifespan=lifespan,  # Handle embedded postgres lifecycle
     )
 
     # CORS middleware
