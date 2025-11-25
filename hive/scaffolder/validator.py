@@ -556,7 +556,7 @@ class ConfigValidator:
 
                 # Validate executor (can be str or list)
                 if "executor" in genie:
-                    if not isinstance(genie["executor"], (str, list)):
+                    if not isinstance(genie["executor"], str | list):
                         errors.append(
                             f"Field 'genie.executor' must be a string or list, got {type(genie['executor']).__name__}"
                         )

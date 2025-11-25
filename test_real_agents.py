@@ -112,7 +112,6 @@ class TestRealGenieAgents:
 
         # Find specific agents
         agent_names = {agent.name for agent in agents}
-        agent_ids = {agent.id for agent in agents}
 
         print(f"\nDiscovered {len(agents)} agents:")
         for agent in agents:
@@ -149,8 +148,8 @@ class TestRealGenieAgents:
                     # Validate schema
                     ConfigValidator.validate_genie_agent(frontmatter)
 
-                    # Map to Hive
-                    hive_config = map_genie_to_hive(frontmatter, content)
+                    # Map to Hive (validates the mapping works)
+                    map_genie_to_hive(frontmatter, content)
 
                     successful.append(md_file.name)
                 except Exception as e:
