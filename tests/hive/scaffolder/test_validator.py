@@ -189,8 +189,8 @@ class TestValidateTeamStructure:
         assert is_valid is False
         assert any("name" in error.lower() for error in errors)
 
-    def test_missing_mode_fails(self):
-        """Missing mode should fail validation."""
+    def test_missing_mode_is_valid(self):
+        """Missing mode should pass validation (mode is optional)."""
         config = {
             "team": {
                 "name": "test-team",
@@ -202,8 +202,9 @@ class TestValidateTeamStructure:
 
         is_valid, errors = ConfigValidator.validate_team(config)
 
-        assert is_valid is False
-        assert any("mode" in error.lower() for error in errors)
+        # Mode is optional per schema - teams can use behavior flags instead
+        assert is_valid is True
+        assert len(errors) == 0
 
     def test_missing_members_fails(self):
         """Missing members list should fail validation."""
@@ -221,8 +222,8 @@ class TestValidateTeamStructure:
         assert is_valid is False
         assert any("members" in error.lower() for error in errors)
 
-    def test_less_than_two_members_fails(self):
-        """Teams with less than 2 members should fail validation."""
+    def test_single_member_team_is_valid(self):
+        """Teams with 1 member should pass validation (min_length is 1)."""
         config = {
             "team": {
                 "name": "test-team",
@@ -235,8 +236,9 @@ class TestValidateTeamStructure:
 
         is_valid, errors = ConfigValidator.validate_team(config)
 
-        assert is_valid is False
-        assert any("members" in error.lower() and "2" in error for error in errors)
+        # Single member teams are valid per schema
+        assert is_valid is True
+        assert len(errors) == 0
 
     def test_valid_minimal_team_config(self):
         """Minimal valid team config should pass."""
