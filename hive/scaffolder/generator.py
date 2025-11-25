@@ -36,6 +36,280 @@ class ConfigGenerator:
     _db_cache: dict[tuple[str, str], Any] = {}
 
     @classmethod
+    def _extract_section_params(cls, config: dict, section: str, param_map: dict[str, str] | None = None) -> dict:
+        """Extract parameters from a config section with optional key remapping.
+
+        Args:
+            config: Full configuration dictionary
+            section: Section name to extract from
+            param_map: Optional mapping of config_key -> agno_param_name
+
+        Returns:
+            Dictionary of parameters ready for Agno constructor
+        """
+        section_config = config.get(section, {})
+        if not section_config:
+            return {}
+
+        params = {}
+        for key, value in section_config.items():
+            if value is not None:
+                # Use remapped name if provided, otherwise use original key
+                param_name = param_map.get(key, key) if param_map else key
+                params[param_name] = value
+
+        return params
+
+    @classmethod
+    def _load_pydantic_model(cls, import_path: str) -> Any:
+        """Load a Pydantic model class from import path.
+
+        Args:
+            import_path: Dotted import path (e.g., 'myapp.models.ResponseModel')
+
+        Returns:
+            Pydantic model class
+
+        Raises:
+            GeneratorError: If loading fails
+        """
+        if not import_path or not isinstance(import_path, str):
+            return None
+
+        try:
+            module_path, class_name = import_path.rsplit(".", 1)
+            module = __import__(module_path, fromlist=[class_name])
+            return getattr(module, class_name)
+        except Exception as e:
+            raise GeneratorError(f"Failed to load Pydantic model '{import_path}': {e}") from e
+
+    @classmethod
+    def _load_hooks(cls, hook_paths: list | None) -> list:
+        """Load hook functions from import paths.
+
+        Args:
+            hook_paths: List of dotted import paths to hook functions
+
+        Returns:
+            List of callable hook functions
+        """
+        if not hook_paths:
+            return []
+
+        hooks = []
+        for path in hook_paths:
+            if isinstance(path, str):
+                try:
+                    module_path, func_name = path.rsplit(".", 1)
+                    module = __import__(module_path, fromlist=[func_name])
+                    func = getattr(module, func_name)
+                    if callable(func):
+                        hooks.append(func)
+                except Exception as e:
+                    raise GeneratorError(f"Failed to load hook '{path}': {e}") from e
+        return hooks
+
+    @classmethod
+    def _build_agent_params(cls, config: dict) -> dict:
+        """Build complete Agno Agent parameters from config.
+
+        Extracts all Agno Agent parameters from the Hive config structure.
+        Supports all parameters from https://docs.agno.com/reference/agents/agent
+
+        Args:
+            config: Hive agent configuration dictionary
+
+        Returns:
+            Dictionary of parameters ready for Agent constructor
+        """
+        agent_config = config.get("agent", {})
+        agent_params: dict[str, Any] = {}
+
+        # Core parameters
+        agent_params["name"] = agent_config.get("name")
+        agent_params["description"] = agent_config.get("description")
+        agent_params["instructions"] = config.get("instructions")
+
+        # Parse model
+        model_string = agent_config.get("model")
+        if model_string:
+            agent_params["model"] = cls._parse_model(model_string)
+
+        # Role (for team membership)
+        if agent_config.get("role"):
+            agent_params["role"] = agent_config.get("role")
+
+        # Load tools
+        tools = cls._load_tools(config.get("tools", []))
+        if tools:
+            agent_params["tools"] = tools
+
+        # Setup knowledge base
+        knowledge = cls._setup_knowledge(config.get("knowledge"))
+        if knowledge:
+            agent_params["knowledge"] = knowledge
+
+        # Setup storage (db parameter)
+        db = cls._setup_storage(config.get("storage"))
+        if db:
+            agent_params["db"] = db
+            # Auto-enable history when db is configured
+            agent_params["add_history_to_context"] = True
+
+        # MCP servers
+        if config.get("mcp_servers"):
+            agent_params["mcp_servers"] = config.get("mcp_servers")
+
+        # Metadata and dependencies
+        if config.get("metadata"):
+            agent_params["metadata"] = config.get("metadata")
+        if config.get("dependencies"):
+            agent_params["dependencies"] = config.get("dependencies")
+
+        # Session parameters
+        session_config = config.get("session", {})
+        session_params = [
+            "user_id",
+            "session_id",
+            "session_state",
+            "add_session_state_to_context",
+            "enable_agentic_state",
+            "overwrite_db_session_state",
+            "cache_session",
+        ]
+        for param in session_params:
+            if session_config.get(param) is not None:
+                agent_params[param] = session_config[param]
+
+        # Reasoning parameters
+        reasoning_config = config.get("reasoning", {})
+        if reasoning_config.get("enabled"):
+            agent_params["reasoning"] = True
+        if reasoning_config.get("model"):
+            agent_params["reasoning_model"] = cls._parse_model(reasoning_config["model"])
+        if reasoning_config.get("min_steps"):
+            agent_params["reasoning_min_steps"] = reasoning_config["min_steps"]
+        if reasoning_config.get("max_steps"):
+            agent_params["reasoning_max_steps"] = reasoning_config["max_steps"]
+
+        # Memory parameters
+        memory_config = config.get("memory", {})
+        memory_params = [
+            "enable_agentic_memory",
+            "enable_user_memories",
+            "add_memories_to_context",
+            "enable_session_summaries",
+            "add_session_summary_to_context",
+        ]
+        for param in memory_params:
+            if memory_config.get(param) is not None:
+                agent_params[param] = memory_config[param]
+
+        # History parameters
+        history_config = config.get("history", {})
+        history_params = [
+            "add_history_to_context",
+            "num_history_runs",
+            "num_history_messages",
+            "search_session_history",
+            "num_history_sessions",
+            "read_chat_history",
+            "read_tool_call_history",
+        ]
+        for param in history_params:
+            if history_config.get(param) is not None:
+                agent_params[param] = history_config[param]
+
+        # Tool control parameters
+        tool_control = config.get("tool_control", {})
+        if tool_control.get("tool_choice") is not None:
+            agent_params["tool_choice"] = tool_control["tool_choice"]
+        if tool_control.get("tool_call_limit") is not None:
+            agent_params["tool_call_limit"] = tool_control["tool_call_limit"]
+        if tool_control.get("max_tool_calls_from_history") is not None:
+            agent_params["max_tool_calls_from_history"] = tool_control["max_tool_calls_from_history"]
+        if tool_control.get("search_knowledge") is not None:
+            agent_params["search_knowledge"] = tool_control["search_knowledge"]
+        if tool_control.get("update_knowledge") is not None:
+            agent_params["update_knowledge"] = tool_control["update_knowledge"]
+
+        # Context enrichment
+        context_config = config.get("context", {})
+        context_params = [
+            "add_name_to_context",
+            "add_datetime_to_context",
+            "add_location_to_context",
+            "timezone_identifier",
+            "additional_context",
+            "expected_output",
+        ]
+        for param in context_params:
+            if context_config.get(param) is not None:
+                agent_params[param] = context_config[param]
+
+        # Output configuration
+        output_config = config.get("output", {})
+        if output_config.get("output_schema"):
+            agent_params["output_schema"] = cls._load_pydantic_model(output_config["output_schema"])
+        if output_config.get("input_schema"):
+            agent_params["input_schema"] = cls._load_pydantic_model(output_config["input_schema"])
+        for param in [
+            "use_json_mode",
+            "structured_outputs",
+            "parse_response",
+            "references_format",
+            "save_response_to_file",
+        ]:
+            if output_config.get(param) is not None:
+                agent_params[param] = output_config[param]
+
+        # Retry configuration
+        retry_config = config.get("retry", {})
+        for param in ["retries", "delay_between_retries", "exponential_backoff"]:
+            if retry_config.get(param) is not None:
+                agent_params[param] = retry_config[param]
+
+        # Storage behavior
+        store_config = config.get("store", {})
+        for param in ["store_media", "store_tool_messages", "store_history_messages", "send_media_to_model"]:
+            if store_config.get(param) is not None:
+                agent_params[param] = store_config[param]
+
+        # Hooks
+        hooks_config = config.get("hooks", {})
+        if hooks_config.get("pre_hooks"):
+            agent_params["pre_hooks"] = cls._load_hooks(hooks_config["pre_hooks"])
+        if hooks_config.get("post_hooks"):
+            agent_params["post_hooks"] = cls._load_hooks(hooks_config["post_hooks"])
+        if hooks_config.get("tool_hooks"):
+            agent_params["tool_hooks"] = cls._load_hooks(hooks_config["tool_hooks"])
+
+        # Streaming configuration
+        streaming_config = config.get("streaming", {})
+        for param in ["stream", "stream_events", "store_events"]:
+            if streaming_config.get(param) is not None:
+                agent_params[param] = streaming_config[param]
+
+        # Legacy settings (backward compatibility)
+        settings = config.get("settings", {})
+        legacy_params = [
+            "temperature",
+            "max_tokens",
+            "show_tool_calls",
+            "markdown",
+            "stream",
+            "debug_mode",
+            "debug_level",
+            "telemetry",
+        ]
+        for param in legacy_params:
+            if settings.get(param) is not None and param not in agent_params:
+                agent_params[param] = settings[param]
+
+        # Filter out None values
+        return {k: v for k, v in agent_params.items() if v is not None}
+
+    @classmethod
     def generate_agent_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Agent:
         """Generate an Agno Agent from YAML configuration.
 
@@ -61,71 +335,11 @@ class ConfigGenerator:
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
 
-        # Extract agent config
-        agent_config = config.get("agent", {})
-        name = agent_config.get("name")
-        agent_id = agent_config.get("id")
-        description = agent_config.get("description")
-        model_string = agent_config.get("model")
-
-        # Instructions
-        instructions = config.get("instructions")
-
-        # Load tools
-        tools = cls._load_tools(config.get("tools", []))
-
-        # Setup knowledge base
-        knowledge = cls._setup_knowledge(config.get("knowledge"))
-
-        # Setup storage (db parameter for Agent)
-        db = cls._setup_storage(config.get("storage"))
-
-        # Extract settings
-        settings = config.get("settings", {})
-        temperature = settings.get("temperature")
-        max_tokens = settings.get("max_tokens")
-        show_tool_calls = settings.get("show_tool_calls")
-        markdown = settings.get("markdown")
-        stream = settings.get("stream")
-        debug_mode = settings.get("debug_mode")
-
-        # MCP servers
-        mcp_servers = config.get("mcp_servers")
-
         # Build agent parameters
-        # Parse model string into Model object
-        model = cls._parse_model(model_string)
+        agent_params = cls._build_agent_params(config)
 
-        agent_params = {
-            "name": name,
-            "description": description,
-            "model": model,
-            "instructions": instructions,
-        }
-
-        # Add optional parameters
-        if tools:
-            agent_params["tools"] = tools
-        if knowledge:
-            agent_params["knowledge"] = knowledge
-        if db:
-            agent_params["db"] = db
-            # Enable history loading from database when db is configured
-            agent_params["add_history_to_context"] = True
-        if mcp_servers:
-            agent_params["mcp_servers"] = mcp_servers
-        if temperature is not None:
-            agent_params["temperature"] = temperature
-        if max_tokens is not None:
-            agent_params["max_tokens"] = max_tokens
-        if show_tool_calls is not None:
-            agent_params["show_tool_calls"] = show_tool_calls
-        if markdown is not None:
-            agent_params["markdown"] = markdown
-        if stream is not None:
-            agent_params["stream"] = stream
-        if debug_mode is not None:
-            agent_params["debug_mode"] = debug_mode
+        # Extract agent_id for post-creation assignment
+        agent_id = config.get("agent", {}).get("id")
 
         # Apply runtime overrides
         agent_params.update(overrides)
@@ -133,7 +347,6 @@ class ConfigGenerator:
         # Create agent
         try:
             agent = Agent(**agent_params)
-            # Set agent id as instance attribute (not in constructor)
             if agent_id:
                 agent.id = agent_id
             return agent
@@ -174,71 +387,11 @@ class ConfigGenerator:
         # Substitute environment variables (non-strict for Genie runtime agents)
         config = cls._substitute_env_vars(config, strict=strict_env_vars)
 
-        # Extract agent config
-        agent_config = config.get("agent", {})
-        name = agent_config.get("name")
-        agent_id = agent_config.get("id")
-        description = agent_config.get("description")
-        model_string = agent_config.get("model")
+        # Build agent parameters using shared method
+        agent_params = cls._build_agent_params(config)
 
-        # Instructions
-        instructions = config.get("instructions")
-
-        # Load tools
-        tools = cls._load_tools(config.get("tools", []))
-
-        # Setup knowledge base
-        knowledge = cls._setup_knowledge(config.get("knowledge"))
-
-        # Setup storage (db parameter for Agent)
-        db = cls._setup_storage(config.get("storage"))
-
-        # Extract settings
-        settings = config.get("settings", {})
-        temperature = settings.get("temperature")
-        max_tokens = settings.get("max_tokens")
-        show_tool_calls = settings.get("show_tool_calls")
-        markdown = settings.get("markdown")
-        stream = settings.get("stream")
-        debug_mode = settings.get("debug_mode")
-
-        # MCP servers
-        mcp_servers = config.get("mcp_servers")
-
-        # Build agent parameters
-        # Parse model string into Model object
-        model = cls._parse_model(model_string)
-
-        agent_params = {
-            "name": name,
-            "description": description,
-            "model": model,
-            "instructions": instructions,
-        }
-
-        # Add optional parameters
-        if tools:
-            agent_params["tools"] = tools
-        if knowledge:
-            agent_params["knowledge"] = knowledge
-        if db:
-            agent_params["db"] = db
-            # Enable history loading from database when db is configured
-            agent_params["add_history_to_context"] = True
-        if mcp_servers:
-            agent_params["mcp_servers"] = mcp_servers
-        if temperature is not None:
-            agent_params["temperature"] = temperature
-        if max_tokens is not None:
-            agent_params["max_tokens"] = max_tokens
-        if show_tool_calls is not None:
-            agent_params["show_tool_calls"] = show_tool_calls
-        if markdown is not None:
-            agent_params["markdown"] = markdown
-        if stream is not None:
-            agent_params["stream"] = stream
-        if debug_mode is not None:
-            agent_params["debug_mode"] = debug_mode
+        # Extract agent_id for post-creation assignment
+        agent_id = config.get("agent", {}).get("id")
 
         # Apply runtime overrides
         agent_params.update(overrides)
@@ -246,12 +399,203 @@ class ConfigGenerator:
         # Create agent
         try:
             agent = Agent(**agent_params)
-            # Set agent id as instance attribute (not in constructor)
             if agent_id:
                 agent.id = agent_id
             return agent
         except Exception as e:
             raise GeneratorError(f"Failed to create agent: {e}") from e
+
+    @classmethod
+    def _build_team_params(cls, config: dict, members: list) -> dict:
+        """Build complete Agno Team parameters from config.
+
+        Extracts all Agno Team parameters from the Hive config structure.
+        Supports all parameters from https://docs.agno.com/reference/teams/team
+
+        Args:
+            config: Hive team configuration dictionary
+            members: List of loaded Agent/Team members
+
+        Returns:
+            Dictionary of parameters ready for Team constructor
+        """
+        team_config = config.get("team", {})
+        team_params: dict[str, Any] = {}
+
+        # Core parameters
+        team_params["name"] = team_config.get("name")
+        team_params["description"] = team_config.get("description")
+        team_params["members"] = members
+        team_params["instructions"] = config.get("instructions")
+
+        # Role (for nested teams)
+        if team_config.get("role"):
+            team_params["role"] = team_config["role"]
+
+        # Parse model
+        model_string = config.get("model")
+        if model_string:
+            team_params["model"] = cls._parse_model(model_string)
+
+        # Load tools
+        tools = cls._load_tools(config.get("tools", []))
+        if tools:
+            team_params["tools"] = tools
+
+        # Setup knowledge base
+        knowledge = cls._setup_knowledge(config.get("knowledge"))
+        if knowledge:
+            team_params["knowledge"] = knowledge
+
+        # Setup storage
+        db = cls._setup_storage(config.get("storage"))
+        if db:
+            team_params["db"] = db
+
+        # Translate mode to behavior flags (if provided)
+        mode = team_config.get("mode")
+        if mode:
+            mode_flags = cls._translate_team_mode(mode)
+            team_params.update(mode_flags)
+
+        # Behavior configuration (direct control)
+        behavior_config = config.get("behavior", {})
+        behavior_params = [
+            "respond_directly",
+            "delegate_to_all_members",
+            "determine_input_for_members",
+            "share_member_interactions",
+            "get_member_information_tool",
+            "add_member_tools_to_context",
+        ]
+        for param in behavior_params:
+            if behavior_config.get(param) is not None:
+                team_params[param] = behavior_config[param]
+
+        # Session parameters
+        session_config = config.get("session", {})
+        session_params = [
+            "user_id",
+            "session_id",
+            "session_state",
+            "add_session_state_to_context",
+            "enable_agentic_state",
+            "cache_session",
+        ]
+        for param in session_params:
+            if session_config.get(param) is not None:
+                team_params[param] = session_config[param]
+
+        # Reasoning parameters
+        reasoning_config = config.get("reasoning", {})
+        if reasoning_config.get("enabled"):
+            team_params["reasoning"] = True
+        if reasoning_config.get("model"):
+            team_params["reasoning_model"] = cls._parse_model(reasoning_config["model"])
+        if reasoning_config.get("min_steps"):
+            team_params["reasoning_min_steps"] = reasoning_config["min_steps"]
+        if reasoning_config.get("max_steps"):
+            team_params["reasoning_max_steps"] = reasoning_config["max_steps"]
+
+        # Memory parameters
+        memory_config = config.get("memory", {})
+        memory_params = [
+            "enable_agentic_memory",
+            "enable_user_memories",
+            "add_memories_to_context",
+            "enable_session_summaries",
+        ]
+        for param in memory_params:
+            if memory_config.get(param) is not None:
+                team_params[param] = memory_config[param]
+
+        # History parameters
+        history_config = config.get("history", {})
+        history_params = [
+            "add_history_to_context",
+            "num_history_runs",
+            "num_history_messages",
+            "add_team_history_to_members",
+            "num_team_history_runs",
+            "search_session_history",
+            "read_chat_history",
+        ]
+        for param in history_params:
+            if history_config.get(param) is not None:
+                team_params[param] = history_config[param]
+
+        # Context enrichment
+        context_config = config.get("context", {})
+        context_params = [
+            "add_name_to_context",
+            "add_datetime_to_context",
+            "add_location_to_context",
+            "timezone_identifier",
+            "additional_context",
+            "expected_output",
+        ]
+        for param in context_params:
+            if context_config.get(param) is not None:
+                team_params[param] = context_config[param]
+
+        # Tool control
+        tool_control = config.get("tool_control", {})
+        for param in ["tool_choice", "tool_call_limit", "search_knowledge", "update_knowledge"]:
+            if tool_control.get(param) is not None:
+                team_params[param] = tool_control[param]
+
+        # Output configuration
+        output_config = config.get("output", {})
+        if output_config.get("output_schema"):
+            team_params["output_schema"] = cls._load_pydantic_model(output_config["output_schema"])
+        if output_config.get("input_schema"):
+            team_params["input_schema"] = cls._load_pydantic_model(output_config["input_schema"])
+        for param in ["use_json_mode", "parse_response"]:
+            if output_config.get(param) is not None:
+                team_params[param] = output_config[param]
+
+        # Retry configuration
+        retry_config = config.get("retry", {})
+        for param in ["retries", "delay_between_retries", "exponential_backoff"]:
+            if retry_config.get(param) is not None:
+                team_params[param] = retry_config[param]
+
+        # Streaming configuration
+        streaming_config = config.get("streaming", {})
+        for param in ["stream", "stream_events", "stream_member_events", "store_events", "store_member_responses"]:
+            if streaming_config.get(param) is not None:
+                team_params[param] = streaming_config[param]
+
+        # Hooks
+        hooks_config = config.get("hooks", {})
+        if hooks_config.get("pre_hooks"):
+            team_params["pre_hooks"] = cls._load_hooks(hooks_config["pre_hooks"])
+        if hooks_config.get("post_hooks"):
+            team_params["post_hooks"] = cls._load_hooks(hooks_config["post_hooks"])
+        if hooks_config.get("tool_hooks"):
+            team_params["tool_hooks"] = cls._load_hooks(hooks_config["tool_hooks"])
+
+        # Debug configuration
+        debug_config = config.get("debug", {})
+        for param in ["debug_mode", "debug_level", "show_members_responses"]:
+            if debug_config.get(param) is not None:
+                team_params[param] = debug_config[param]
+
+        # Legacy settings (backward compatibility)
+        settings = config.get("settings", {})
+        legacy_params = ["show_routing", "stream", "debug_mode", "telemetry"]
+        for param in legacy_params:
+            if settings.get(param) is not None and param not in team_params:
+                team_params[param] = settings[param]
+
+        # Metadata and dependencies
+        if config.get("metadata"):
+            team_params["metadata"] = config["metadata"]
+        if config.get("dependencies"):
+            team_params["dependencies"] = config["dependencies"]
+
+        # Filter out None values
+        return {k: v for k, v in team_params.items() if v is not None}
 
     @classmethod
     def generate_team_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Team:
@@ -279,58 +623,12 @@ class ConfigGenerator:
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
 
-        # Extract team config
-        team_config = config.get("team", {})
-        name = team_config.get("name")
-        description = team_config.get("description")
-        mode = team_config.get("mode")
-
         # Load member agents
         member_ids = config.get("members", [])
         members = cls._load_member_agents(member_ids)
 
-        # Instructions
-        instructions = config.get("instructions")
-
-        # Model (optional for teams)
-        model_string = config.get("model")
-
-        # Setup storage (db parameter for Team)
-        db = cls._setup_storage(config.get("storage"))
-
-        # Extract settings
-        settings = config.get("settings", {})
-        show_routing = settings.get("show_routing")
-        stream = settings.get("stream")
-        # Parse model string into Model object
-        model = cls._parse_model(model_string)
-
-        debug_mode = settings.get("debug_mode")
-
-        # Build team parameters (NO 'mode' parameter in Agno)
-        team_params = {
-            "name": name,
-            "description": description,
-            "members": members,
-            "instructions": instructions,
-        }
-
-        # Translate mode string to boolean flags (if provided)
-        if mode:
-            mode_flags = cls._translate_team_mode(mode)
-            team_params.update(mode_flags)
-
-        # Add optional parameters
-        if model:
-            team_params["model"] = model
-        if db:
-            team_params["db"] = db
-        if show_routing is not None:
-            team_params["show_routing"] = show_routing
-        if stream is not None:
-            team_params["stream"] = stream
-        if debug_mode is not None:
-            team_params["debug_mode"] = debug_mode
+        # Build team parameters
+        team_params = cls._build_team_params(config, members)
 
         # Apply runtime overrides
         team_params.update(overrides)
@@ -341,6 +639,77 @@ class ConfigGenerator:
             return team
         except Exception as e:
             raise GeneratorError(f"Failed to create team: {e}") from e
+
+    @classmethod
+    def _build_workflow_params(cls, config: dict, steps: list) -> dict:
+        """Build complete Agno Workflow parameters from config.
+
+        Extracts all Agno Workflow parameters from the Hive config structure.
+        Supports all parameters from https://docs.agno.com/reference/workflows/workflow
+
+        Args:
+            config: Hive workflow configuration dictionary
+            steps: List of loaded workflow steps
+
+        Returns:
+            Dictionary of parameters ready for Workflow constructor
+        """
+        workflow_config = config.get("workflow", {})
+        workflow_params: dict[str, Any] = {}
+
+        # Core parameters
+        workflow_params["name"] = workflow_config.get("name")
+        workflow_params["description"] = workflow_config.get("description")
+        workflow_params["steps"] = steps
+
+        # Setup storage
+        db = cls._setup_storage(config.get("storage"))
+        if db:
+            workflow_params["db"] = db
+
+        # Session parameters
+        session_config = config.get("session", {})
+        session_params = ["user_id", "session_id", "session_state", "cache_session"]
+        for param in session_params:
+            if session_config.get(param) is not None:
+                workflow_params[param] = session_config[param]
+
+        # History parameters
+        history_config = config.get("history", {})
+        if history_config.get("add_workflow_history_to_steps") is not None:
+            workflow_params["add_workflow_history_to_steps"] = history_config["add_workflow_history_to_steps"]
+        if history_config.get("num_history_runs") is not None:
+            workflow_params["num_history_runs"] = history_config["num_history_runs"]
+
+        # Streaming configuration
+        streaming_config = config.get("streaming", {})
+        for param in ["stream", "stream_events", "stream_executor_events", "store_events", "store_executor_outputs"]:
+            if streaming_config.get(param) is not None:
+                workflow_params[param] = streaming_config[param]
+
+        # Output configuration
+        output_config = config.get("output", {})
+        if output_config.get("input_schema"):
+            workflow_params["input_schema"] = cls._load_pydantic_model(output_config["input_schema"])
+
+        # Debug configuration
+        debug_config = config.get("debug", {})
+        if debug_config.get("debug_mode") is not None:
+            workflow_params["debug_mode"] = debug_config["debug_mode"]
+
+        # Metadata
+        if config.get("metadata"):
+            workflow_params["metadata"] = config["metadata"]
+
+        # Legacy settings (backward compatibility)
+        settings = config.get("settings", {})
+        legacy_params = ["stream", "debug_mode", "telemetry"]
+        for param in legacy_params:
+            if settings.get(param) is not None and param not in workflow_params:
+                workflow_params[param] = settings[param]
+
+        # Filter out None values
+        return {k: v for k, v in workflow_params.items() if v is not None}
 
     @classmethod
     def generate_workflow_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Workflow:
@@ -368,52 +737,12 @@ class ConfigGenerator:
         # Substitute environment variables
         config = cls._substitute_env_vars(config)
 
-        # Extract workflow config
-        workflow_config = config.get("workflow", {})
-        name = workflow_config.get("name")
-        description = workflow_config.get("description")
-
         # Load workflow steps
         steps_config = config.get("steps", [])
         steps = cls._load_workflow_steps(steps_config)
 
-        # Setup storage (db parameter for Workflow)
-        db = cls._setup_storage(config.get("storage"))
-
-        model_string = config.get("model")
-        settings = config.get("settings", {})
-        shared_state = settings.get("shared_state")
-        # Parse model string into Model object
-        cls._parse_model(model_string)
-
-        retry_on_error = settings.get("retry_on_error")
-        max_retries = settings.get("max_retries")
-        stream = settings.get("stream")
-        show_progress = settings.get("show_progress")
-        debug_mode = settings.get("debug_mode")
-
         # Build workflow parameters
-        workflow_params = {
-            "name": name,
-            "description": description,
-            "steps": steps,
-        }
-
-        # Add optional parameters
-        if db:
-            workflow_params["db"] = db
-        if shared_state is not None:
-            workflow_params["shared_state"] = shared_state
-        if retry_on_error is not None:
-            workflow_params["retry_on_error"] = retry_on_error
-        if max_retries is not None:
-            workflow_params["max_retries"] = max_retries
-        if stream is not None:
-            workflow_params["stream"] = stream
-        if show_progress is not None:
-            workflow_params["show_progress"] = show_progress
-        if debug_mode is not None:
-            workflow_params["debug_mode"] = debug_mode
+        workflow_params = cls._build_workflow_params(config, steps)
 
         # Apply runtime overrides
         workflow_params.update(overrides)

@@ -25,15 +25,18 @@ class ValidationError(Exception):
 class ConfigValidator:
     """Validates YAML configurations against schemas."""
 
-    # Agent configuration schema
+    # Agent configuration schema - Complete Agno Agent parameters
+    # Reference: https://docs.agno.com/reference/agents/agent
     AGENT_SCHEMA = {
         "agent": {
             "required": True,
             "type": dict,
             "fields": {
                 "name": {"required": True, "type": str, "min_length": 1},
+                "id": {"required": False, "type": str},
                 "description": {"required": False, "type": str},
                 "model": {"required": True, "type": str, "min_length": 1},
+                "role": {"required": False, "type": str},  # Role when part of a team
             },
         },
         "instructions": {"required": True, "type": str, "min_length": 10},
@@ -41,19 +44,158 @@ class ConfigValidator:
         "knowledge": {"required": False, "type": dict},
         "mcp_servers": {"required": False, "type": list},
         "storage": {"required": False, "type": dict},
+        # Session/State management
+        "session": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "user_id": {"required": False, "type": str},
+                "session_id": {"required": False, "type": str},
+                "session_state": {"required": False, "type": dict},
+                "add_session_state_to_context": {"required": False, "type": bool},
+                "enable_agentic_state": {"required": False, "type": bool},
+                "overwrite_db_session_state": {"required": False, "type": bool},
+                "cache_session": {"required": False, "type": bool},
+            },
+        },
+        # Reasoning configuration
+        "reasoning": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "enabled": {"required": False, "type": bool},
+                "model": {"required": False, "type": str},
+                "min_steps": {"required": False, "type": int},
+                "max_steps": {"required": False, "type": int},
+            },
+        },
+        # Memory configuration
+        "memory": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "enable_agentic_memory": {"required": False, "type": bool},
+                "enable_user_memories": {"required": False, "type": bool},
+                "add_memories_to_context": {"required": False, "type": bool},
+                "enable_session_summaries": {"required": False, "type": bool},
+                "add_session_summary_to_context": {"required": False, "type": bool},
+            },
+        },
+        # History configuration
+        "history": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "add_history_to_context": {"required": False, "type": bool},
+                "num_history_runs": {"required": False, "type": int},
+                "num_history_messages": {"required": False, "type": int},
+                "search_session_history": {"required": False, "type": bool},
+                "num_history_sessions": {"required": False, "type": int},
+                "read_chat_history": {"required": False, "type": bool},
+                "read_tool_call_history": {"required": False, "type": bool},
+            },
+        },
+        # Tool control
+        "tool_control": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "tool_choice": {"required": False, "type": (str, dict)},
+                "tool_call_limit": {"required": False, "type": int},
+                "max_tool_calls_from_history": {"required": False, "type": int},
+                "search_knowledge": {"required": False, "type": bool},
+                "update_knowledge": {"required": False, "type": bool},
+            },
+        },
+        # Context enrichment
+        "context": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "add_name_to_context": {"required": False, "type": bool},
+                "add_datetime_to_context": {"required": False, "type": bool},
+                "add_location_to_context": {"required": False, "type": bool},
+                "timezone_identifier": {"required": False, "type": str},
+                "additional_context": {"required": False, "type": str},
+                "expected_output": {"required": False, "type": str},
+            },
+        },
+        # Output configuration
+        "output": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "output_schema": {"required": False, "type": str},  # Pydantic model import path
+                "input_schema": {"required": False, "type": str},  # Pydantic model import path
+                "use_json_mode": {"required": False, "type": bool},
+                "structured_outputs": {"required": False, "type": bool},
+                "parse_response": {"required": False, "type": bool},
+                "references_format": {"required": False, "type": str},  # "json" or "yaml"
+                "save_response_to_file": {"required": False, "type": str},
+            },
+        },
+        # Retry configuration
+        "retry": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "retries": {"required": False, "type": int},
+                "delay_between_retries": {"required": False, "type": int},
+                "exponential_backoff": {"required": False, "type": bool},
+            },
+        },
+        # Storage behavior
+        "store": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "store_media": {"required": False, "type": bool},
+                "store_tool_messages": {"required": False, "type": bool},
+                "store_history_messages": {"required": False, "type": bool},
+                "send_media_to_model": {"required": False, "type": bool},
+            },
+        },
+        # Hooks (function import paths)
+        "hooks": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "pre_hooks": {"required": False, "type": list},
+                "post_hooks": {"required": False, "type": list},
+                "tool_hooks": {"required": False, "type": list},
+            },
+        },
+        # Streaming and events
+        "streaming": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "stream": {"required": False, "type": bool},
+                "stream_events": {"required": False, "type": bool},
+                "store_events": {"required": False, "type": bool},
+            },
+        },
+        # Legacy settings (for backward compatibility)
         "settings": {"required": False, "type": dict},
+        # Metadata
+        "metadata": {"required": False, "type": dict},
+        # Dependencies
+        "dependencies": {"required": False, "type": dict},
     }
 
-    # Team configuration schema
+    # Team configuration schema - Complete Agno Team parameters
+    # Reference: https://docs.agno.com/reference/teams/team
     TEAM_SCHEMA = {
         "team": {
             "required": True,
             "type": dict,
             "fields": {
                 "name": {"required": True, "type": str, "min_length": 1},
+                "id": {"required": False, "type": str},
                 "description": {"required": False, "type": str},
+                "role": {"required": False, "type": str},  # Position in parent team
                 "mode": {
-                    "required": True,
+                    "required": False,  # Made optional - can use behavior flags instead
                     "type": str,
                     "choices": ["default", "collaboration", "router", "passthrough"],
                 },
@@ -62,22 +204,168 @@ class ConfigValidator:
         "members": {
             "required": True,
             "type": list,
-            "min_length": 2,
+            "min_length": 1,  # Changed from 2 - single member teams are valid
             "item_type": str,
         },
-        "instructions": {"required": True, "type": str, "min_length": 10},
+        "instructions": {"required": False, "type": str},  # Made optional
         "model": {"required": False, "type": str},
         "storage": {"required": False, "type": dict},
+        # Team behavior flags
+        "behavior": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "respond_directly": {"required": False, "type": bool},
+                "delegate_to_all_members": {"required": False, "type": bool},
+                "determine_input_for_members": {"required": False, "type": bool},
+                "share_member_interactions": {"required": False, "type": bool},
+                "get_member_information_tool": {"required": False, "type": bool},
+                "add_member_tools_to_context": {"required": False, "type": bool},
+            },
+        },
+        # Session/State management (same as Agent)
+        "session": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "user_id": {"required": False, "type": str},
+                "session_id": {"required": False, "type": str},
+                "session_state": {"required": False, "type": dict},
+                "add_session_state_to_context": {"required": False, "type": bool},
+                "enable_agentic_state": {"required": False, "type": bool},
+                "cache_session": {"required": False, "type": bool},
+            },
+        },
+        # Reasoning configuration
+        "reasoning": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "enabled": {"required": False, "type": bool},
+                "model": {"required": False, "type": str},
+                "min_steps": {"required": False, "type": int},
+                "max_steps": {"required": False, "type": int},
+            },
+        },
+        # Memory configuration
+        "memory": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "enable_agentic_memory": {"required": False, "type": bool},
+                "enable_user_memories": {"required": False, "type": bool},
+                "add_memories_to_context": {"required": False, "type": bool},
+                "enable_session_summaries": {"required": False, "type": bool},
+            },
+        },
+        # History configuration
+        "history": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "add_history_to_context": {"required": False, "type": bool},
+                "num_history_runs": {"required": False, "type": int},
+                "num_history_messages": {"required": False, "type": int},
+                "add_team_history_to_members": {"required": False, "type": bool},
+                "num_team_history_runs": {"required": False, "type": int},
+                "search_session_history": {"required": False, "type": bool},
+                "read_chat_history": {"required": False, "type": bool},
+            },
+        },
+        # Context enrichment
+        "context": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "add_name_to_context": {"required": False, "type": bool},
+                "add_datetime_to_context": {"required": False, "type": bool},
+                "add_location_to_context": {"required": False, "type": bool},
+                "timezone_identifier": {"required": False, "type": str},
+                "additional_context": {"required": False, "type": str},
+                "expected_output": {"required": False, "type": str},
+            },
+        },
+        # Tool control
+        "tool_control": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "tool_choice": {"required": False, "type": (str, dict)},
+                "tool_call_limit": {"required": False, "type": int},
+                "search_knowledge": {"required": False, "type": bool},
+                "update_knowledge": {"required": False, "type": bool},
+            },
+        },
+        "tools": {"required": False, "type": list},
+        "knowledge": {"required": False, "type": dict},
+        # Output configuration
+        "output": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "output_schema": {"required": False, "type": str},
+                "input_schema": {"required": False, "type": str},
+                "use_json_mode": {"required": False, "type": bool},
+                "parse_response": {"required": False, "type": bool},
+            },
+        },
+        # Retry configuration
+        "retry": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "retries": {"required": False, "type": int},
+                "delay_between_retries": {"required": False, "type": int},
+                "exponential_backoff": {"required": False, "type": bool},
+            },
+        },
+        # Streaming
+        "streaming": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "stream": {"required": False, "type": bool},
+                "stream_events": {"required": False, "type": bool},
+                "stream_member_events": {"required": False, "type": bool},
+                "store_events": {"required": False, "type": bool},
+                "store_member_responses": {"required": False, "type": bool},
+            },
+        },
+        # Hooks
+        "hooks": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "pre_hooks": {"required": False, "type": list},
+                "post_hooks": {"required": False, "type": list},
+                "tool_hooks": {"required": False, "type": list},
+            },
+        },
+        # Debug
+        "debug": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "debug_mode": {"required": False, "type": bool},
+                "debug_level": {"required": False, "type": int},
+                "show_members_responses": {"required": False, "type": bool},
+            },
+        },
+        # Legacy settings (backward compatibility)
         "settings": {"required": False, "type": dict},
+        "metadata": {"required": False, "type": dict},
+        "dependencies": {"required": False, "type": dict},
     }
 
-    # Workflow configuration schema
+    # Workflow configuration schema - Complete Agno Workflow parameters
+    # Reference: https://docs.agno.com/reference/workflows/workflow
     WORKFLOW_SCHEMA = {
         "workflow": {
             "required": True,
             "type": dict,
             "fields": {
                 "name": {"required": True, "type": str, "min_length": 1},
+                "id": {"required": False, "type": str},
                 "description": {"required": False, "type": str},
             },
         },
@@ -88,7 +376,57 @@ class ConfigValidator:
             "item_type": dict,
         },
         "storage": {"required": False, "type": dict},
+        # Session/State management
+        "session": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "user_id": {"required": False, "type": str},
+                "session_id": {"required": False, "type": str},
+                "session_state": {"required": False, "type": dict},
+                "cache_session": {"required": False, "type": bool},
+            },
+        },
+        # History configuration
+        "history": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "add_workflow_history_to_steps": {"required": False, "type": bool},
+                "num_history_runs": {"required": False, "type": int},
+            },
+        },
+        # Streaming
+        "streaming": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "stream": {"required": False, "type": bool},
+                "stream_events": {"required": False, "type": bool},
+                "stream_executor_events": {"required": False, "type": bool},
+                "store_events": {"required": False, "type": bool},
+                "store_executor_outputs": {"required": False, "type": bool},
+            },
+        },
+        # Output configuration
+        "output": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "input_schema": {"required": False, "type": str},
+            },
+        },
+        # Debug
+        "debug": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "debug_mode": {"required": False, "type": bool},
+            },
+        },
+        # Legacy settings (backward compatibility)
         "settings": {"required": False, "type": dict},
+        "metadata": {"required": False, "type": dict},
     }
 
     # Tool configuration schema
