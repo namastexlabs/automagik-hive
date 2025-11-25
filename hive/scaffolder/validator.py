@@ -116,6 +116,23 @@ class ConfigValidator:
         "settings": {"required": False, "type": dict},
     }
 
+    # Genie agent configuration schema
+    GENIE_AGENT_SCHEMA = {
+        "name": {"required": True, "type": str, "min_length": 1},
+        "description": {"required": True, "type": str, "min_length": 1},
+        "genie": {
+            "required": False,
+            "type": dict,
+            "fields": {
+                "executor": {"required": False, "type": (str, list)},
+                "background": {"required": False, "type": bool},
+                "variant": {"required": False, "type": str},
+                "permissionMode": {"required": False, "type": str},
+            },
+        },
+        "forge": {"required": False, "type": dict},
+    }
+
     @classmethod
     def validate_agent(cls, config: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate agent configuration.
@@ -163,6 +180,87 @@ class ConfigValidator:
             Tuple of (is_valid, error_messages)
         """
         return cls._validate_config(config, cls.TOOL_SCHEMA, "tool")
+
+    @classmethod
+    def validate_genie_agent(cls, config: dict[str, Any]) -> bool:
+        """Validate Genie agent frontmatter against schema.
+
+        Args:
+            config: Parsed Genie frontmatter YAML
+
+        Returns:
+            True if valid, raises ValueError if invalid
+
+        Raises:
+            ValueError: If configuration is invalid, with clear error message
+        """
+        errors = []
+
+        # Check required fields
+        if "name" not in config:
+            errors.append("Missing required field: 'name'")
+        elif not isinstance(config["name"], str):
+            errors.append(f"Field 'name' must be a string, got {type(config['name']).__name__}")
+        elif len(config["name"]) == 0:
+            errors.append("Field 'name' cannot be empty")
+
+        if "description" not in config:
+            errors.append("Missing required field: 'description'")
+        elif not isinstance(config["description"], str):
+            errors.append(f"Field 'description' must be a string, got {type(config['description']).__name__}")
+        elif len(config["description"]) == 0:
+            errors.append("Field 'description' cannot be empty")
+
+        # Validate optional genie section
+        if "genie" in config:
+            if not isinstance(config["genie"], dict):
+                errors.append(f"Field 'genie' must be a dict, got {type(config['genie']).__name__}")
+            else:
+                genie = config["genie"]
+
+                # Validate executor (can be str or list)
+                if "executor" in genie:
+                    if not isinstance(genie["executor"], (str, list)):
+                        errors.append(
+                            f"Field 'genie.executor' must be a string or list, got {type(genie['executor']).__name__}"
+                        )
+                    elif isinstance(genie["executor"], list):
+                        for i, item in enumerate(genie["executor"]):
+                            if not isinstance(item, str):
+                                errors.append(
+                                    f"Field 'genie.executor[{i}]' must be a string, got {type(item).__name__}"
+                                )
+
+                # Validate background (must be bool)
+                if "background" in genie:
+                    if not isinstance(genie["background"], bool):
+                        errors.append(
+                            f"Field 'genie.background' must be a boolean, got {type(genie['background']).__name__}"
+                        )
+
+                # Validate variant (must be str)
+                if "variant" in genie:
+                    if not isinstance(genie["variant"], str):
+                        errors.append(f"Field 'genie.variant' must be a string, got {type(genie['variant']).__name__}")
+
+                # Validate permissionMode (must be str)
+                if "permissionMode" in genie:
+                    if not isinstance(genie["permissionMode"], str):
+                        errors.append(
+                            f"Field 'genie.permissionMode' must be a string, got {type(genie['permissionMode']).__name__}"
+                        )
+
+        # Validate optional forge section
+        if "forge" in config:
+            if not isinstance(config["forge"], dict):
+                errors.append(f"Field 'forge' must be a dict, got {type(config['forge']).__name__}")
+
+        # Raise ValueError if any errors found
+        if errors:
+            error_msg = "Genie agent validation failed:\n" + "\n".join(f"  - {err}" for err in errors)
+            raise ValueError(error_msg)
+
+        return True
 
     @classmethod
     def validate_file(cls, file_path: str) -> tuple[bool, list[str]]:
