@@ -18,6 +18,11 @@ from hive.scaffolder.validator import (
     ValidationError,
     validate_yaml,
 )
+from hive.scaffolder.genie_mapper import (
+    MODEL_CONVERSION_MAP,
+    convert_genie_model_to_hive,
+    map_genie_to_hive,
+)
 
 __all__ = [
     # Generator
@@ -30,4 +35,8 @@ __all__ = [
     "ConfigValidator",
     "ValidationError",
     "validate_yaml",
+    # Genie Mapper
+    "MODEL_CONVERSION_MAP",
+    "convert_genie_model_to_hive",
+    "map_genie_to_hive",
 ]
