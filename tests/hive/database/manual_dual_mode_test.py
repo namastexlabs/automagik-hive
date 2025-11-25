@@ -30,6 +30,7 @@ def test_external_mode():
 
     # Force reload settings to pick up env var
     from importlib import reload
+
     import hive.config.settings as settings_module
 
     reload(settings_module)
@@ -67,6 +68,7 @@ def test_embedded_mode():
 
     # Force reload settings
     from importlib import reload
+
     import hive.config.settings as settings_module
 
     reload(settings_module)
@@ -76,7 +78,7 @@ def test_embedded_mode():
 
     config = HiveSettings()
 
-    print(f"✓ HIVE_DATABASE_URL not set (should be None)")
+    print("✓ HIVE_DATABASE_URL not set (should be None)")
     print(f"✓ config.hive_database_url: {config.hive_database_url}")
     print(f"✓ config.use_embedded_postgres: {config.use_embedded_postgres}")
     print(f"✓ config.database_mode: {config.database_mode}")
@@ -109,6 +111,7 @@ def test_embedded_mode_custom_config():
 
     # Force reload settings
     from importlib import reload
+
     import hive.config.settings as settings_module
 
     reload(settings_module)
@@ -148,6 +151,7 @@ def test_mode_switching():
     os.environ["HIVE_DATABASE_URL"] = "postgresql://localhost/external"
 
     from importlib import reload
+
     import hive.config.settings as settings_module
 
     reload(settings_module)

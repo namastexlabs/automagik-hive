@@ -10,11 +10,12 @@ Run with:
 import os
 import sys
 
+
 def test_external_mode():
     """Test external PostgreSQL mode."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: External PostgreSQL Mode")
-    print("="*60)
+    print("=" * 60)
 
     # Set HIVE_DATABASE_URL
     test_url = "postgresql+psycopg://user:pass@localhost:5432/testdb"
@@ -22,6 +23,7 @@ def test_external_mode():
 
     # Get fresh settings (Pydantic reads from env)
     from hive.config.settings import HiveSettings
+
     config = HiveSettings(_env_file=None)
 
     print(f"  HIVE_DATABASE_URL set to: {test_url}")
@@ -42,9 +44,9 @@ def test_external_mode():
 
 def test_embedded_mode():
     """Test embedded PostgreSQL mode."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: Embedded PostgreSQL Mode (Serverless)")
-    print("="*60)
+    print("=" * 60)
 
     # Ensure HIVE_DATABASE_URL is not set
     if "HIVE_DATABASE_URL" in os.environ:
@@ -52,6 +54,7 @@ def test_embedded_mode():
 
     # Get fresh settings
     from hive.config.settings import HiveSettings
+
     config = HiveSettings(_env_file=None)
 
     print(f"  HIVE_DATABASE_URL: {os.environ.get('HIVE_DATABASE_URL', 'NOT SET')}")
@@ -73,9 +76,9 @@ def test_embedded_mode():
 
 def test_custom_config():
     """Test embedded mode with custom configuration."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: Embedded Mode with Custom Config")
-    print("="*60)
+    print("=" * 60)
 
     # Set custom embedded postgres config
     os.environ["HIVE_EMBEDDED_POSTGRES_PORT"] = "15432"
@@ -87,6 +90,7 @@ def test_custom_config():
 
     # Get fresh settings
     from hive.config.settings import HiveSettings
+
     config = HiveSettings(_env_file=None)
 
     print(f"  HIVE_EMBEDDED_POSTGRES_PORT: {os.environ['HIVE_EMBEDDED_POSTGRES_PORT']}")
@@ -111,18 +115,18 @@ def test_custom_config():
 
 def main():
     """Run all tests."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("SERVERLESS MODE - DUAL MODE VALIDATION")
-    print("="*60)
+    print("=" * 60)
 
     try:
         test_external_mode()
         test_embedded_mode()
         test_custom_config()
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("SUCCESS - ALL TESTS PASSED")
-        print("="*60)
+        print("=" * 60)
         print("\nSummary:")
         print("  - External mode detection: WORKING")
         print("  - Embedded mode detection: WORKING")
@@ -137,6 +141,7 @@ def main():
     except Exception as e:
         print(f"\nERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

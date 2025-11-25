@@ -12,8 +12,8 @@ Serverless Mode:
 
 import os
 import warnings
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from agno.os import AgentOS
 from fastapi import FastAPI

@@ -5,7 +5,6 @@ Unit tests use mocks to avoid downloading PostgreSQL binaries.
 Integration tests (marked @pytest.mark.slow) test the full lifecycle.
 """
 
-import asyncio
 import platform
 import tempfile
 from pathlib import Path

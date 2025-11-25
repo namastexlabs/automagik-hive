@@ -20,7 +20,6 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 import os
 import platform
@@ -31,7 +30,6 @@ import tempfile
 import uuid
 import zipfile
 from pathlib import Path
-from typing import Optional
 from urllib.request import urlretrieve
 
 logger = logging.getLogger(__name__)
@@ -101,10 +99,10 @@ class EmbeddedPostgres:
 
     def __init__(
         self,
-        data_dir: Optional[Path] = None,
+        data_dir: Path | None = None,
         port: int = 5432,
         postgres_version: str = DEFAULT_VERSION,
-        bin_cache_dir: Optional[Path] = None,
+        bin_cache_dir: Path | None = None,
     ):
         """
         Initialize EmbeddedPostgres manager.
@@ -123,7 +121,7 @@ class EmbeddedPostgres:
         self.data_dir = Path(data_dir)
         self.port = port
         self.postgres_version = postgres_version
-        self.process: Optional[subprocess.Popen] = None
+        self.process: subprocess.Popen | None = None
         self._initialized = False
 
         # Binary cache (shared across warm starts)
@@ -323,10 +321,10 @@ class EmbeddedPostgres:
         conf_path = self.data_dir / "postgresql.conf"
 
         # Optimizations for embedded use
-        config_additions = """
+        config_additions = f"""
 # Embedded Postgres Configuration
 listen_addresses = 'localhost'
-port = {port}
+port = {self.port}
 
 # Logging (minimal)
 log_statement = 'none'
@@ -350,7 +348,7 @@ full_page_writes = off
 # Checkpoints
 checkpoint_timeout = 30min
 max_wal_size = 256MB
-""".format(port=self.port)
+"""
 
         # Append to existing config
         with open(conf_path, "a") as f:
@@ -654,7 +652,7 @@ host    all             all             ::1/128                 trust
 
 
 # Global singleton for serverless warm starts
-_embedded_pg: Optional[EmbeddedPostgres] = None
+_embedded_pg: EmbeddedPostgres | None = None
 _embedded_pg_lock = asyncio.Lock()
 
 
