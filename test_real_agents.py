@@ -9,7 +9,6 @@ from hive.scaffolder.frontmatter_parser import parse_markdown_frontmatter
 from hive.scaffolder.genie_mapper import map_genie_to_hive
 from hive.scaffolder.validator import ConfigValidator
 
-
 PROJECT_ROOT = Path("/Users/caiorod/Documents/Namastex/automagik-hive")
 
 
@@ -64,7 +63,10 @@ class TestRealGenieAgents:
 
         # Assertions
         assert hive_config["agent"]["name"] == "fix"
-        assert hive_config["agent"]["description"] == "Apply fixes using debug spell and other code agents/spells as needed"
+        assert (
+            hive_config["agent"]["description"]
+            == "Apply fixes using debug spell and other code agents/spells as needed"
+        )
 
         # Check executor chain (multiple executors)
         assert "executor_chain" in hive_config["agent"]

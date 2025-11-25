@@ -8,8 +8,6 @@ This test suite validates all components:
 5. Full discovery pipeline integration
 """
 
-import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -17,7 +15,6 @@ from hive.discovery import derive_genie_agent_id, discover_agents_with_frontmatt
 from hive.scaffolder.frontmatter_parser import parse_markdown_frontmatter
 from hive.scaffolder.genie_mapper import convert_genie_model_to_hive, map_genie_to_hive
 from hive.scaffolder.validator import ConfigValidator
-
 
 # ============================================================================
 # TEST 1: Frontmatter Parser Tests

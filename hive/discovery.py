@@ -26,7 +26,6 @@ from hive.scaffolder.frontmatter_parser import parse_markdown_frontmatter
 from hive.scaffolder.genie_mapper import map_genie_to_hive
 from hive.scaffolder.validator import ConfigValidator
 
-
 # Genie agent discovery paths (relative to project root)
 GENIE_DISCOVERY_PATHS = [
     ".genie/agents",

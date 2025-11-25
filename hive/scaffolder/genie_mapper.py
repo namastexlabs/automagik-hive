@@ -9,7 +9,6 @@ from Genie schema to Hive AGENT_SCHEMA structure.
 
 from typing import Any
 
-
 # Model name conversion table: Genie -> Hive
 MODEL_CONVERSION_MAP = {
     # Anthropic models (primary)

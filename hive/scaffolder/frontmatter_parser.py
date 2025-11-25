@@ -1,14 +1,15 @@
 """Markdown frontmatter parser for YAML extraction."""
 
 import re
-import yaml
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
+
+import yaml
 
 FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)^---\s*\n(.*)$", re.DOTALL | re.MULTILINE)
 
 
-def parse_markdown_frontmatter(file_path: str) -> Dict[str, Any]:
+def parse_markdown_frontmatter(file_path: str) -> dict[str, Any]:
     """
     Parse markdown file with YAML frontmatter.
 

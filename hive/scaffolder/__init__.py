@@ -13,15 +13,15 @@ from hive.scaffolder.generator import (
     generate_team_from_yaml,
     generate_workflow_from_yaml,
 )
-from hive.scaffolder.validator import (
-    ConfigValidator,
-    ValidationError,
-    validate_yaml,
-)
 from hive.scaffolder.genie_mapper import (
     MODEL_CONVERSION_MAP,
     convert_genie_model_to_hive,
     map_genie_to_hive,
+)
+from hive.scaffolder.validator import (
+    ConfigValidator,
+    ValidationError,
+    validate_yaml,
 )
 
 __all__ = [
