@@ -11,12 +11,17 @@ from typing import Any
 
 
 # Model name conversion table: Genie -> Hive
+# NOTE: Using OpenAI gpt-4o-mini as default (cost-effective)
 MODEL_CONVERSION_MAP = {
-    "sonnet": "anthropic:claude-sonnet-4-20250514",
-    "opus": "anthropic:claude-opus-4-20250514",
-    "haiku": "anthropic:claude-haiku-3-5-20241022",
-    "gpt-5-codex": "openai:gpt-4o",
-    "opencode/glm-4.6": "openai:gpt-4o",  # fallback
+    # Anthropic aliases -> OpenAI equivalents
+    "sonnet": "openai:gpt-4o-mini",
+    "opus": "openai:gpt-4o-mini",
+    "haiku": "openai:gpt-4o-mini",
+    # OpenAI models
+    "gpt-5-codex": "openai:gpt-4o-mini",
+    "gpt-4o": "openai:gpt-4o",
+    "gpt-4o-mini": "openai:gpt-4o-mini",
+    "opencode/glm-4.6": "openai:gpt-4o-mini",  # fallback
 }
 
 
@@ -91,6 +96,8 @@ def map_genie_to_hive(genie_config: dict[str, Any], markdown_content: str) -> di
     hive_model = convert_genie_model_to_hive(genie_model)
 
     # Build Hive configuration structure
+    # Note: Genie agents don't need storage by default (they're orchestrated via CLI)
+    # Storage can be enabled per-agent in frontmatter if needed
     hive_config: dict[str, Any] = {
         "agent": {
             "name": genie_config.get("name", "unnamed-agent"),
@@ -100,7 +107,6 @@ def map_genie_to_hive(genie_config: dict[str, Any], markdown_content: str) -> di
         },
         "instructions": markdown_content,
         "tools": [],  # Genie doesn't specify tools
-        "storage": {"type": "sqlite"},  # Default Hive storage
     }
 
     # Add executor_chain if present

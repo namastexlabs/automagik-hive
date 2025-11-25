@@ -119,7 +119,7 @@ class ConfigValidator:
     # Genie agent configuration schema
     GENIE_AGENT_SCHEMA = {
         "name": {"required": True, "type": str, "min_length": 1},
-        "description": {"required": True, "type": str, "min_length": 1},
+        "description": {"required": False, "type": str},  # Optional field
         "genie": {
             "required": False,
             "type": dict,
@@ -204,12 +204,10 @@ class ConfigValidator:
         elif len(config["name"]) == 0:
             errors.append("Field 'name' cannot be empty")
 
-        if "description" not in config:
-            errors.append("Missing required field: 'description'")
-        elif not isinstance(config["description"], str):
-            errors.append(f"Field 'description' must be a string, got {type(config['description']).__name__}")
-        elif len(config["description"]) == 0:
-            errors.append("Field 'description' cannot be empty")
+        # Description is optional, but validate type if present
+        if "description" in config:
+            if not isinstance(config["description"], str):
+                errors.append(f"Field 'description' must be a string, got {type(config['description']).__name__}")
 
         # Validate optional genie section
         if "genie" in config:
@@ -410,9 +408,10 @@ class ConfigValidator:
                 nested_errors = cls._validate_nested_fields(value, rules["fields"], field)
                 errors.extend(nested_errors)
 
-        # Environment variable validation
-        env_errors = cls._validate_env_vars(config)
-        errors.extend(env_errors)
+        # Environment variable validation (warnings only, don't block validation)
+        # These are informational - runtime agents may use variables passed by orchestrator
+        # env_warnings = cls._validate_env_vars(config)
+        # Note: Removed from errors - env vars are handled at runtime, not validation time
 
         return len(errors) == 0, errors
 

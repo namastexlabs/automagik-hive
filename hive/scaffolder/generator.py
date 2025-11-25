@@ -141,12 +141,16 @@ class ConfigGenerator:
             raise GeneratorError(f"Failed to create agent: {e}") from e
 
     @classmethod
-    def generate_agent_from_dict(cls, config: dict, validate: bool = True, **overrides) -> Agent:
+    def generate_agent_from_dict(
+        cls, config: dict, validate: bool = True, strict_env_vars: bool = False, **overrides
+    ) -> Agent:
         """Generate an Agno Agent from configuration dictionary.
 
         Args:
             config: Agent configuration dictionary (Hive-compatible format)
             validate: Validate config before generation
+            strict_env_vars: If True, raise error for missing env vars. If False, leave placeholders.
+                            Default False for Genie agents (runtime variables).
             **overrides: Runtime overrides (session_id, user_id, etc.)
 
         Returns:
@@ -167,8 +171,8 @@ class ConfigGenerator:
             if not is_valid:
                 raise GeneratorError("Invalid agent config:\n" + "\n".join(errors))
 
-        # Substitute environment variables
-        config = cls._substitute_env_vars(config)
+        # Substitute environment variables (non-strict for Genie runtime agents)
+        config = cls._substitute_env_vars(config, strict=strict_env_vars)
 
         # Extract agent config
         agent_config = config.get("agent", {})
@@ -556,28 +560,32 @@ class ConfigGenerator:
                 )
 
     @classmethod
-    def _substitute_env_vars(cls, config: Any) -> Any:
+    def _substitute_env_vars(cls, config: Any, strict: bool = True) -> Any:
         """Recursively substitute ${VAR} with environment variables.
 
         Args:
             config: Configuration object (dict, list, str, etc.)
+            strict: If True, raise error for missing vars. If False, leave placeholder.
 
         Returns:
             Config with substituted values
         """
         if isinstance(config, dict):
-            return {k: cls._substitute_env_vars(v) for k, v in config.items()}
+            return {k: cls._substitute_env_vars(v, strict) for k, v in config.items()}
         elif isinstance(config, list):
-            return [cls._substitute_env_vars(item) for item in config]
+            return [cls._substitute_env_vars(item, strict) for item in config]
         elif isinstance(config, str):
             # Replace ${VAR} patterns
             def replace_var(match):
                 var_name = match.group(1)
                 value = os.getenv(var_name)
                 if value is None:
-                    raise GeneratorError(
-                        f"Environment variable not set: {var_name}\n💡 Add {var_name} to your .env file"
-                    )
+                    if strict:
+                        raise GeneratorError(
+                            f"Environment variable not set: {var_name}\n💡 Add {var_name} to your .env file"
+                        )
+                    # Non-strict: leave placeholder as-is (for runtime agents)
+                    return match.group(0)
                 return value
 
             return re.sub(r"\$\{(\w+)\}", replace_var, config)

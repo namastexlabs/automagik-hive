@@ -53,21 +53,22 @@ def _find_project_root() -> Path | None:
 def derive_genie_agent_id(file_path: str) -> str:
     """Derive agent ID from Genie markdown file path.
 
-    Converts file paths to agent IDs using pattern: genie/<collection>/<name>
+    Converts file paths to agent IDs using pattern: genie-<collection>-<name>
+    Uses hyphens (-) as separators for URL-safe agent IDs.
 
     Args:
         file_path: Path to Genie .md file
 
     Returns:
-        Agent ID in format "genie/<name>" or "genie/<collection>/<name>"
+        Agent ID in format "genie-<name>" or "genie-code-<name>"
 
     Examples:
         >>> derive_genie_agent_id(".genie/agents/review.md")
-        'genie/review'
+        'genie-review'
         >>> derive_genie_agent_id(".genie/code/agents/fix.md")
-        'genie/code/fix'
+        'genie-code-fix'
         >>> derive_genie_agent_id("/abs/path/.genie/agents/test.md")
-        'genie/test'
+        'genie-test'
     """
     path = Path(file_path)
 
@@ -81,16 +82,16 @@ def derive_genie_agent_id(file_path: str) -> str:
             if path_parts[i : i + len(base_parts)] == base_parts:
                 # Get path after base_path, remove .md extension
                 relative_parts = path_parts[i + len(base_parts) :]
-                agent_name = "/".join(relative_parts).replace(".md", "")
+                agent_name = "-".join(relative_parts).replace(".md", "")
 
-                # Build agent ID based on which base path matched
+                # Build agent ID based on which base path matched (URL-safe with hyphens)
                 if base_path == ".genie/agents":
-                    return f"genie/{agent_name}"
+                    return f"genie-{agent_name}"
                 elif base_path == ".genie/code/agents":
-                    return f"genie/code/{agent_name}"
+                    return f"genie-code-{agent_name}"
 
     # Fallback: use filename without extension
-    return f"genie/{path.stem}"
+    return f"genie-{path.stem}"
 
 
 def discover_agents_with_frontmatter(project_root: Path) -> list[Agent]:
@@ -126,6 +127,10 @@ def discover_agents_with_frontmatter(project_root: Path) -> list[Agent]:
         for md_file in genie_dir.rglob("*.md"):
             # Skip files starting with underscore (private/templates)
             if md_file.name.startswith("_"):
+                continue
+
+            # Skip common documentation files (not agents)
+            if md_file.name.upper() in ("README.MD", "CHANGELOG.MD", "LICENSE.MD", "CONTRIBUTING.MD"):
                 continue
 
             try:
