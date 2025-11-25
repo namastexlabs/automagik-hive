@@ -3,10 +3,12 @@
 This module discovers and loads agents from:
 1. Project directory (ai/agents/) if hive.yaml exists
 2. Package examples (hive/examples/agents/) as fallback
+3. Genie markdown agents (.genie/agents/, .genie/code/agents/)
 
-Supports two loading strategies:
+Supports three loading strategies:
 - Python factory files (agent.py, team.py, workflow.py) - takes precedence
 - YAML-only configs (config.yaml) - fallback when no Python file exists
+- Markdown with frontmatter (.md files in Genie directories)
 """
 
 import importlib.util
@@ -16,6 +18,17 @@ import yaml
 from agno.agent import Agent
 from agno.team import Team
 from agno.workflow import Workflow
+
+from hive.scaffolder.frontmatter_parser import parse_markdown_frontmatter
+from hive.scaffolder.genie_mapper import map_genie_to_hive
+from hive.scaffolder.validator import ConfigValidator
+
+
+# Genie agent discovery paths (relative to project root)
+GENIE_DISCOVERY_PATHS = [
+    ".genie/agents",
+    ".genie/code/agents",
+]
 
 
 def _find_project_root() -> Path | None:
@@ -37,16 +50,128 @@ def _find_project_root() -> Path | None:
     return None
 
 
+def derive_genie_agent_id(file_path: str) -> str:
+    """Derive agent ID from Genie markdown file path.
+
+    Converts file paths to agent IDs using pattern: genie/<collection>/<name>
+
+    Args:
+        file_path: Path to Genie .md file
+
+    Returns:
+        Agent ID in format "genie/<name>" or "genie/<collection>/<name>"
+
+    Examples:
+        >>> derive_genie_agent_id(".genie/agents/review.md")
+        'genie/review'
+        >>> derive_genie_agent_id(".genie/code/agents/fix.md")
+        'genie/code/fix'
+        >>> derive_genie_agent_id("/abs/path/.genie/agents/test.md")
+        'genie/test'
+    """
+    path = Path(file_path)
+
+    # Find which Genie base path this file is under
+    for base_path in GENIE_DISCOVERY_PATHS:
+        base_parts = Path(base_path).parts
+
+        # Check if base_path exists in the file path
+        path_parts = path.parts
+        for i in range(len(path_parts) - len(base_parts) + 1):
+            if path_parts[i : i + len(base_parts)] == base_parts:
+                # Get path after base_path, remove .md extension
+                relative_parts = path_parts[i + len(base_parts) :]
+                agent_name = "/".join(relative_parts).replace(".md", "")
+
+                # Build agent ID based on which base path matched
+                if base_path == ".genie/agents":
+                    return f"genie/{agent_name}"
+                elif base_path == ".genie/code/agents":
+                    return f"genie/code/{agent_name}"
+
+    # Fallback: use filename without extension
+    return f"genie/{path.stem}"
+
+
+def discover_agents_with_frontmatter(project_root: Path) -> list[Agent]:
+    """Discover and load Genie agents from markdown files with frontmatter.
+
+    Searches GENIE_DISCOVERY_PATHS for .md files, parses frontmatter,
+    validates schema, maps to Hive config, and generates Agent instances.
+
+    Args:
+        project_root: Project root directory containing .genie/ directories
+
+    Returns:
+        List of Agent instances loaded from Genie markdown files
+
+    Example:
+        >>> project_root = Path("/path/to/project")
+        >>> agents = discover_agents_with_frontmatter(project_root)
+        >>> print(f"Found {len(agents)} Genie agents")
+        Found 3 Genie agents
+    """
+    agents: list[Agent] = []
+
+    # Search each Genie discovery path
+    for base_path in GENIE_DISCOVERY_PATHS:
+        genie_dir = project_root / base_path
+
+        if not genie_dir.exists():
+            continue
+
+        print(f"  📂 Scanning Genie agents: {genie_dir}")
+
+        # Find all .md files recursively
+        for md_file in genie_dir.rglob("*.md"):
+            # Skip files starting with underscore (private/templates)
+            if md_file.name.startswith("_"):
+                continue
+
+            try:
+                # Parse frontmatter and content
+                parsed = parse_markdown_frontmatter(str(md_file))
+                frontmatter = parsed["frontmatter"]
+                content = parsed["content"]
+
+                # Validate Genie schema
+                ConfigValidator.validate_genie_agent(frontmatter)
+
+                # Map to Hive config
+                hive_config = map_genie_to_hive(frontmatter, content)
+
+                # Derive agent ID from file path
+                agent_id = derive_genie_agent_id(str(md_file))
+                hive_config["agent"]["id"] = agent_id
+
+                # Generate Agent instance
+                from hive.scaffolder.generator import ConfigGenerator
+
+                agent = ConfigGenerator.generate_agent_from_dict(hive_config, validate=True)
+
+                agents.append(agent)
+                print(f"  ✅ Loaded Genie agent: {agent.name} (id: {agent_id})")
+
+            except ValueError as e:
+                print(f"  ⚠️  Skipping {md_file.name}: {e}")
+            except Exception as e:  # noqa: S112
+                print(f"  ❌ Failed to load {md_file.name}: {e}")
+
+    return agents
+
+
 def discover_agents() -> list[Agent]:
     """Discover and load agents from project or package.
 
     Discovery order:
     1. If hive.yaml exists: use discovery_path from config
     2. Otherwise: use package examples (hive/examples/agents/)
+    3. Additionally scan Genie markdown agents (.genie/agents/, .genie/code/agents/)
 
     Scans for agent directories containing:
-    - agent.py: Factory function (get_*_agent)
-    - config.yaml: Agent configuration
+    - agent.py: Factory function (get_*_agent) - takes precedence
+    - config.yaml: Agent configuration - fallback
+    - *.md: Genie markdown with frontmatter (in .genie/ directories)
 
     Returns:
         List[Agent]: Loaded agent instances ready for AgentOS
@@ -122,6 +247,11 @@ def discover_agents() -> list[Agent]:
 
             # Neither found
             print(f"  ⏭️  Skipping {agent_path.name} (no agent.py or config.yaml)")
+
+    # Strategy 3: Discover Genie markdown agents (only in project mode)
+    if project_root:
+        genie_agents = discover_agents_with_frontmatter(project_root)
+        agents.extend(genie_agents)
 
     print(f"\n🎯 Total agents loaded: {len(agents)}")
     return agents

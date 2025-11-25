@@ -141,6 +141,115 @@ class ConfigGenerator:
             raise GeneratorError(f"Failed to create agent: {e}") from e
 
     @classmethod
+    def generate_agent_from_dict(cls, config: dict, validate: bool = True, **overrides) -> Agent:
+        """Generate an Agno Agent from configuration dictionary.
+
+        Args:
+            config: Agent configuration dictionary (Hive-compatible format)
+            validate: Validate config before generation
+            **overrides: Runtime overrides (session_id, user_id, etc.)
+
+        Returns:
+            Configured Agno Agent instance
+
+        Raises:
+            GeneratorError: If generation fails
+
+        Example:
+            >>> config = {
+            ...     "agent": {"name": "test", "model": "openai:gpt-4o"},
+            ...     "instructions": "Test agent instructions"
+            ... }
+            >>> agent = ConfigGenerator.generate_agent_from_dict(config)
+        """
+        if validate:
+            is_valid, errors = ConfigValidator.validate_agent(config)
+            if not is_valid:
+                raise GeneratorError("Invalid agent config:\n" + "\n".join(errors))
+
+        # Substitute environment variables
+        config = cls._substitute_env_vars(config)
+
+        # Extract agent config
+        agent_config = config.get("agent", {})
+        name = agent_config.get("name")
+        agent_id = agent_config.get("id")
+        description = agent_config.get("description")
+        model_string = agent_config.get("model")
+
+        # Instructions
+        instructions = config.get("instructions")
+
+        # Load tools
+        tools = cls._load_tools(config.get("tools", []))
+
+        # Setup knowledge base
+        knowledge = cls._setup_knowledge(config.get("knowledge"))
+
+        # Setup storage (db parameter for Agent)
+        db = cls._setup_storage(config.get("storage"))
+
+        # Extract settings
+        settings = config.get("settings", {})
+        temperature = settings.get("temperature")
+        max_tokens = settings.get("max_tokens")
+        show_tool_calls = settings.get("show_tool_calls")
+        markdown = settings.get("markdown")
+        stream = settings.get("stream")
+        debug_mode = settings.get("debug_mode")
+
+        # MCP servers
+        mcp_servers = config.get("mcp_servers")
+
+        # Build agent parameters
+        # Parse model string into Model object
+        model = cls._parse_model(model_string)
+
+        agent_params = {
+            "name": name,
+            "description": description,
+            "model": model,
+            "instructions": instructions,
+        }
+
+        # Add optional parameters
+        if tools:
+            agent_params["tools"] = tools
+        if knowledge:
+            agent_params["knowledge"] = knowledge
+        if db:
+            agent_params["db"] = db
+            # Enable history loading from database when db is configured
+            agent_params["add_history_to_context"] = True
+        if mcp_servers:
+            agent_params["mcp_servers"] = mcp_servers
+        if temperature is not None:
+            agent_params["temperature"] = temperature
+        if max_tokens is not None:
+            agent_params["max_tokens"] = max_tokens
+        if show_tool_calls is not None:
+            agent_params["show_tool_calls"] = show_tool_calls
+        if markdown is not None:
+            agent_params["markdown"] = markdown
+        if stream is not None:
+            agent_params["stream"] = stream
+        if debug_mode is not None:
+            agent_params["debug_mode"] = debug_mode
+
+        # Apply runtime overrides
+        agent_params.update(overrides)
+
+        # Create agent
+        try:
+            agent = Agent(**agent_params)
+            # Set agent id as instance attribute (not in constructor)
+            if agent_id:
+                agent.id = agent_id
+            return agent
+        except Exception as e:
+            raise GeneratorError(f"Failed to create agent: {e}") from e
+
+    @classmethod
     def generate_team_from_yaml(cls, yaml_path: str, validate: bool = True, **overrides) -> Team:
         """Generate an Agno Team from YAML configuration.
 
