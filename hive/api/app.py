@@ -26,6 +26,33 @@ from hive.discovery import discover_agents, discover_teams, discover_workflows
 # Suppress AgentOS route conflict warnings (expected behavior when merging routes)
 warnings.filterwarnings("ignore", message=".*Route conflict detected.*")
 
+
+def _mask_database_url(url: str | None) -> str:
+    """Mask credentials in database URL to avoid leaking secrets in logs.
+
+    Transforms: postgresql://user:password@host:5432/db
+    Into:       postgresql://***:***@host:5432/db
+    """
+    if not url:
+        return "<empty>"
+
+    try:
+        # Handle postgresql:// and postgres:// schemes
+        if "://" in url:
+            scheme, rest = url.split("://", 1)
+            if "@" in rest:
+                # Has credentials: user:pass@host/db
+                credentials_and_host = rest.split("@", 1)
+                if len(credentials_and_host) == 2:
+                    host_and_db = credentials_and_host[1]
+                    return f"{scheme}://***:***@{host_and_db}"
+            # No credentials, safe to show
+            return url
+        return "<invalid-url-format>"
+    except Exception:
+        return "<url-parse-error>"
+
+
 # Global reference to embedded postgres (for cleanup)
 _embedded_postgres = None
 
@@ -47,7 +74,7 @@ async def _initialize_embedded_postgres() -> None:
     config = settings()
 
     if not config.use_embedded_postgres:
-        print(f"📡 Using external PostgreSQL: {config.hive_database_url[:50]}...")
+        print(f"📡 Using external PostgreSQL: {_mask_database_url(config.hive_database_url)}")
         return
 
     print("🚀 Serverless mode: Starting embedded PostgreSQL...")
