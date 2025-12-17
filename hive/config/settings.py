@@ -1,6 +1,7 @@
 """Essential settings for Hive V2 - only functional environment variables."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,9 +24,21 @@ class HiveSettings(BaseSettings):
     hive_api_port: int = Field(default=8886, description="API server port")
     hive_cors_origins: str = Field(default="*", description="Comma-separated CORS origins")
 
-    # Database
-    hive_database_url: str = Field(
-        default="postgresql+psycopg://hive:hive@localhost:5532/automagik_hive", description="Database connection URL"
+    # Database - Now OPTIONAL for serverless/embedded mode
+    # If None, embedded PostgreSQL will be auto-started
+    hive_database_url: str | None = Field(
+        default=None,
+        description="Database connection URL. If not set, embedded PostgreSQL is used (serverless mode)",
+    )
+
+    # Embedded PostgreSQL settings (used when hive_database_url is None)
+    hive_embedded_postgres_port: int = Field(
+        default=5432,
+        description="Port for embedded PostgreSQL (only used in embedded mode)",
+    )
+    hive_embedded_postgres_data_dir: Path | None = Field(
+        default=None,
+        description="Data directory for embedded PostgreSQL. If None, uses temp directory",
     )
 
     # AI Providers (at least one required)
@@ -65,6 +78,22 @@ class HiveSettings(BaseSettings):
             self.cohere_api_key,
         ]
         return any(provider is not None for provider in providers)
+
+    @property
+    def use_embedded_postgres(self) -> bool:
+        """Check if embedded PostgreSQL should be used.
+
+        Returns True when hive_database_url is not set, indicating
+        serverless/embedded mode should be activated.
+        """
+        return self.hive_database_url is None
+
+    @property
+    def database_mode(self) -> str:
+        """Get current database mode description."""
+        if self.use_embedded_postgres:
+            return "embedded"
+        return "external"
 
 
 @lru_cache
