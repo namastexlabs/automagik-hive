@@ -964,44 +964,42 @@ class TestSetupStorage:
 
     def test_sqlite_storage_setup(self):
         """Should setup SQLite storage."""
-        mock_storage_class = MagicMock()
-        mock_storage_instance = MagicMock()
-        mock_storage_class.return_value = mock_storage_instance
+        mock_db_class = MagicMock()
+        mock_db_instance = MagicMock()
+        mock_db_class.return_value = mock_db_instance
 
-        mock_storage_module = MagicMock()
-        mock_storage_module.SqliteStorage = mock_storage_class
+        mock_db_module = MagicMock()
+        mock_db_module.SqliteDb = mock_db_class
 
-        with patch.dict("sys.modules", {"agno.storage": mock_storage_module}):
+        with patch.dict("sys.modules", {"agno.db.sqlite": mock_db_module}):
             storage_config = {"type": "sqlite", "db_file": "./test.db", "table_name": "agents"}
 
             result = ConfigGenerator._setup_storage(storage_config)
 
-            assert result == mock_storage_instance
-            mock_storage_class.assert_called_once_with(
+            assert result == mock_db_instance
+            mock_db_class.assert_called_once_with(
                 db_file="./test.db",
-                table_name="agents",
-                auto_upgrade_schema=True,
+                session_table="agents",
             )
 
     def test_sqlite_storage_uses_defaults(self):
         """SQLite storage should use default values."""
-        mock_storage_class = MagicMock()
-        mock_storage_instance = MagicMock()
-        mock_storage_class.return_value = mock_storage_instance
+        mock_db_class = MagicMock()
+        mock_db_instance = MagicMock()
+        mock_db_class.return_value = mock_db_instance
 
-        mock_storage_module = MagicMock()
-        mock_storage_module.SqliteStorage = mock_storage_class
+        mock_db_module = MagicMock()
+        mock_db_module.SqliteDb = mock_db_class
 
-        with patch.dict("sys.modules", {"agno.storage": mock_storage_module}):
+        with patch.dict("sys.modules", {"agno.db.sqlite": mock_db_module}):
             storage_config = {"type": "sqlite"}
 
             result = ConfigGenerator._setup_storage(storage_config)
 
-            assert result == mock_storage_instance
-            mock_storage_class.assert_called_once_with(
+            assert result == mock_db_instance
+            mock_db_class.assert_called_once_with(
                 db_file="./data/agent.db",
-                table_name="agent_sessions",
-                auto_upgrade_schema=True,
+                session_table="agent_sessions",
             )
 
     def test_unknown_storage_type_raises_error(self):
