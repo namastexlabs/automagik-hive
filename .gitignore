@@ -97,5 +97,4 @@ agent.pid
 temp/
 env
 *.pid
-.genie
 docker/main/.env

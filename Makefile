@@ -125,7 +125,20 @@ endef
 
 define generate_hive_api_key
     $(call print_status,Checking/generating secure Hive API key...); \
-    uv run python -c "from lib.auth.init_service import AuthInitService; auth = AuthInitService(); key = auth.get_current_key(); print('API key already exists') if key else auth.ensure_api_key()"
+    CURRENT_KEY=$$(grep "^HIVE_API_KEY=" .env 2>/dev/null | cut -d'=' -f2); \
+    if [ -n "$$CURRENT_KEY" ] && [ "$$CURRENT_KEY" != "your-hive-api-key-here" ] && echo "$$CURRENT_KEY" | grep -q "^hive_"; then \
+        echo "API key already exists"; \
+    else \
+        NEW_KEY="hive_$$(uv run python -c 'import secrets; print(secrets.token_urlsafe(32))')"; \
+        if grep -q "^HIVE_API_KEY=" .env; then \
+            uv run python -c "import re; f=open('.env','r'); c=f.read(); f.close(); c=re.sub(r'^HIVE_API_KEY=.*', 'HIVE_API_KEY=$$NEW_KEY', c, flags=re.MULTILINE); f=open('.env','w'); f.write(c); f.close()"; \
+        elif grep -q "^#.*HIVE_API_KEY=" .env; then \
+            uv run python -c "import re; f=open('.env','r'); c=f.read(); f.close(); c=re.sub(r'^#.*HIVE_API_KEY=.*', 'HIVE_API_KEY=$$NEW_KEY', c, flags=re.MULTILINE); f=open('.env','w'); f.write(c); f.close()"; \
+        else \
+            echo "HIVE_API_KEY=$$NEW_KEY" >> .env; \
+        fi; \
+        $(call print_success,Generated new API key: $$NEW_KEY); \
+    fi
 endef
 
 

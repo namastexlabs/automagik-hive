@@ -10,12 +10,16 @@ Serverless Mode:
 - Zero configuration required for development/serverless deployments
 """
 
+import logging
 import os
 import warnings
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from agno.os import AgentOS
+
+# Suppress AgentOS route conflict warnings (expected behavior when merging routes)
+logging.getLogger("agno.os.app").setLevel(logging.ERROR)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

@@ -964,6 +964,9 @@ class TestSetupStorage:
 
     def test_sqlite_storage_setup(self):
         """Should setup SQLite storage."""
+        # Clear cache before test
+        ConfigGenerator._db_cache.clear()
+
         mock_db_class = MagicMock()
         mock_db_instance = MagicMock()
         mock_db_class.return_value = mock_db_instance
@@ -984,6 +987,9 @@ class TestSetupStorage:
 
     def test_sqlite_storage_uses_defaults(self):
         """SQLite storage should use default values."""
+        # Clear cache before test
+        ConfigGenerator._db_cache.clear()
+
         mock_db_class = MagicMock()
         mock_db_instance = MagicMock()
         mock_db_class.return_value = mock_db_instance
