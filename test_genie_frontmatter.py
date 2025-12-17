@@ -305,12 +305,11 @@ class TestGenieValidator:
         with pytest.raises(ValueError, match="Missing required field: 'name'"):
             ConfigValidator.validate_genie_agent(config)
 
-    def test_missing_description(self):
-        """Test validation fails when description is missing."""
+    def test_missing_description_is_valid(self):
+        """Test validation passes when description is missing (optional field)."""
         config = {"name": "test-agent"}
-
-        with pytest.raises(ValueError, match="Missing required field: 'description'"):
-            ConfigValidator.validate_genie_agent(config)
+        # description is optional, so this should not raise
+        ConfigValidator.validate_genie_agent(config)
 
     def test_empty_name(self):
         """Test validation fails when name is empty."""
@@ -319,12 +318,11 @@ class TestGenieValidator:
         with pytest.raises(ValueError, match="Field 'name' cannot be empty"):
             ConfigValidator.validate_genie_agent(config)
 
-    def test_empty_description(self):
-        """Test validation fails when description is empty."""
+    def test_empty_description_is_valid(self):
+        """Test validation passes when description is empty (optional field)."""
         config = {"name": "test", "description": ""}
-
-        with pytest.raises(ValueError, match="Field 'description' cannot be empty"):
-            ConfigValidator.validate_genie_agent(config)
+        # description is optional, so empty is allowed
+        ConfigValidator.validate_genie_agent(config)
 
     def test_invalid_name_type(self):
         """Test validation fails when name is not a string."""
@@ -397,37 +395,37 @@ class TestAgentIdDerivation:
         """Test agent ID derivation from .genie/agents/ path."""
         file_path = ".genie/agents/review.md"
         agent_id = derive_genie_agent_id(file_path)
-        assert agent_id == "genie/review"
+        assert agent_id == "genie-review"  # Uses hyphens for URL-safe IDs
 
     def test_code_agents_path(self):
         """Test agent ID derivation from .genie/code/agents/ path."""
         file_path = ".genie/code/agents/fix.md"
         agent_id = derive_genie_agent_id(file_path)
-        assert agent_id == "genie/code/fix"
+        assert agent_id == "genie-code-fix"  # Uses hyphens for URL-safe IDs
 
     def test_nested_agent_path(self):
         """Test nested agent path (subdirectory)."""
         file_path = ".genie/agents/teams/analyze.md"
         agent_id = derive_genie_agent_id(file_path)
-        assert agent_id == "genie/teams/analyze"
+        assert agent_id == "genie-teams-analyze"  # Uses hyphens for URL-safe IDs
 
     def test_absolute_path(self):
         """Test with absolute path."""
         file_path = "/Users/test/project/.genie/agents/test.md"
         agent_id = derive_genie_agent_id(file_path)
-        assert agent_id == "genie/test"
+        assert agent_id == "genie-test"  # Uses hyphens for URL-safe IDs
 
     def test_code_agents_nested(self):
         """Test nested path in code agents."""
         file_path = ".genie/code/agents/qa/hive-qa-tester.md"
         agent_id = derive_genie_agent_id(file_path)
-        assert agent_id == "genie/code/qa/hive-qa-tester"
+        assert agent_id == "genie-code-qa-hive-qa-tester"  # Uses hyphens for URL-safe IDs
 
     def test_fallback_for_unknown_path(self):
         """Test fallback when path doesn't match known patterns."""
         file_path = "/some/random/path/agent.md"
         agent_id = derive_genie_agent_id(file_path)
-        assert agent_id == "genie/agent"  # fallback to filename
+        assert agent_id == "genie-agent"  # fallback to filename with hyphen prefix
 
 
 # ============================================================================
@@ -469,7 +467,7 @@ This is a test agent for integration testing.
         assert len(agents) == 1
         agent = agents[0]
         assert agent.name == "test-agent"
-        assert agent.id == "genie/test-agent"
+        assert agent.id == "genie-test-agent"  # Uses hyphens for URL-safe IDs
         assert agent.description == "Test agent for integration"
         assert "This is a test agent" in agent.instructions
 
@@ -546,19 +544,19 @@ Valid instructions.
 """
         (agents_dir / "valid.md").write_text(valid_agent)
 
-        # Write invalid agent (missing required field)
+        # Write invalid agent (missing required 'name' field)
         invalid_agent = """---
-name: invalid-agent
+description: Missing name field
 ---
 
-Missing description.
+This agent has no name.
 """
         (agents_dir / "invalid.md").write_text(invalid_agent)
 
         # Run discovery
         agents = discover_agents_with_frontmatter(tmp_path)
 
-        # Verify only valid agent loaded
+        # Verify only valid agent loaded (invalid one should be skipped)
         assert len(agents) == 1
         assert agents[0].name == "valid-agent"
 
@@ -581,7 +579,7 @@ Code agent instructions.
 
         assert len(agents) == 1
         assert agents[0].name == "code-agent"
-        assert agents[0].id == "genie/code/code-agent"
+        assert agents[0].id == "genie-code-code-agent"  # Uses hyphens for URL-safe IDs
 
 
 # ============================================================================
