@@ -42,7 +42,7 @@ class TestKnowledgeBaseWithEmbedded:
                             csv_path = f.name
 
                         try:
-                            kb = create_knowledge_base(
+                            _kb = create_knowledge_base(
                                 csv_path=csv_path,
                                 use_shared=False,
                             )

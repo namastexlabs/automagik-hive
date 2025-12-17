@@ -103,7 +103,7 @@ def test_embedded_mode_custom_config():
 
     # Set custom embedded postgres config
     os.environ["HIVE_EMBEDDED_POSTGRES_PORT"] = "15432"
-    os.environ["HIVE_EMBEDDED_POSTGRES_DATA_DIR"] = "/tmp/custom-pgdata"
+    os.environ["HIVE_EMBEDDED_POSTGRES_DATA_DIR"] = "/tmp/custom-pgdata"  # noqa: S108
 
     # Ensure HIVE_DATABASE_URL is not set
     if "HIVE_DATABASE_URL" in os.environ:
@@ -130,7 +130,7 @@ def test_embedded_mode_custom_config():
 
     # Assertions
     assert config.hive_embedded_postgres_port == 15432, "Custom port not applied"
-    assert str(config.hive_embedded_postgres_data_dir) == "/tmp/custom-pgdata", "Custom data dir not applied"
+    assert str(config.hive_embedded_postgres_data_dir) == "/tmp/custom-pgdata", "Custom data dir not applied"  # noqa: S108
     assert config.use_embedded_postgres is True, "Should use embedded postgres"
     assert config.database_mode == "embedded", "Mode should be 'embedded'"
 

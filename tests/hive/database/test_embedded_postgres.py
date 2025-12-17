@@ -39,7 +39,7 @@ class TestEmbeddedPostgresInit:
 
     def test_custom_initialization(self):
         """Test custom constructor values."""
-        data_dir = Path("/tmp/custom-pgdata")
+        data_dir = Path("/tmp/custom-pgdata")  # noqa: S108
         pg = EmbeddedPostgres(
             data_dir=data_dir,
             port=5433,
