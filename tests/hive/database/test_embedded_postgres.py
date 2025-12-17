@@ -200,6 +200,7 @@ class TestEnsureBinaries:
         pg = EmbeddedPostgres()
         pg._system = "windows"  # Not supported
         pg._machine = "x86_64"
+        pg._target = ""  # Clear target to ensure platform check is reached
 
         with pytest.raises(BinaryDownloadError) as exc_info:
             await pg._ensure_binaries()
