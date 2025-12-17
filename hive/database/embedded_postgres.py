@@ -276,12 +276,13 @@ class EmbeddedPostgres:
 
     def _extract_archive(self, archive_path: Path) -> None:
         """Extract downloaded archive."""
+        # S202: extractall is safe here - we download from trusted source (GitHub releases)
         if archive_path.suffix == ".zip" or str(archive_path).endswith(".zip"):
             with zipfile.ZipFile(archive_path, "r") as zf:
-                zf.extractall(self.bin_cache)
+                zf.extractall(self.bin_cache)  # noqa: S202
         else:
             with tarfile.open(archive_path, "r:gz") as tf:
-                tf.extractall(self.bin_cache)
+                tf.extractall(self.bin_cache)  # noqa: S202
 
     async def _init_cluster(self) -> None:
         """Initialize PostgreSQL cluster with initdb."""
@@ -430,7 +431,7 @@ host    all             all             ::1/128                 trust
             self.DEFAULT_USER,
         ]
 
-        for i in range(timeout * 2):  # Poll every 0.5s
+        for _ in range(timeout * 2):  # Poll every 0.5s
             result = await asyncio.to_thread(
                 subprocess.run,
                 cmd,
