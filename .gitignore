@@ -77,6 +77,7 @@ data/
 # Environment variables - CRITICAL SECURITY
 .env
 .env.*
+!.env.example
 .env.local
 .env.*.local
 .env.production

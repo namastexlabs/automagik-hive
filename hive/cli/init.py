@@ -224,11 +224,9 @@ def _generate_config_files(project_path: Path, project_name: str):
     # Create .env.example
     env_content = """# Hive Environment Configuration
 HIVE_ENVIRONMENT=development
-HIVE_DEBUG=true
 
 # API Configuration
 HIVE_API_PORT=8886
-HIVE_API_HOST=0.0.0.0
 
 # Database
 HIVE_DATABASE_URL=postgresql+psycopg://hive:hive@localhost:5532/automagik_hive
@@ -237,13 +235,8 @@ HIVE_DATABASE_URL=postgresql+psycopg://hive:hive@localhost:5532/automagik_hive
 ANTHROPIC_API_KEY=your_anthropic_key_here
 OPENAI_API_KEY=your_openai_key_here
 
-# Default Models
-HIVE_DEFAULT_MODEL=gpt-4o-mini
-HIVE_EMBEDDER_MODEL=text-embedding-3-small
-
-# Logging
-HIVE_LOG_LEVEL=INFO
-AGNO_LOG_LEVEL=WARNING
+# CORS Origins (comma-separated)
+HIVE_CORS_ORIGINS=http://localhost:3000,http://localhost:8886
 """
     (project_path / ".env.example").write_text(env_content)
     (project_path / ".env").write_text(env_content)
